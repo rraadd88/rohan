@@ -1,0 +1,36 @@
+language: python
+cache: pip
+sudo: false
+env:
+  global:
+  - PACKAGENAME="meld"
+  - MINICONDA_URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+python:
+- 3.6
+before_install:
+- export MINICONDA=$HOME/miniconda
+- export PATH="$MINICONDA/bin:$PATH"
+- hash -r
+- echo $MINICONDA_URL
+- wget $MINICONDA_URL -O miniconda.sh;
+- bash miniconda.sh -b -f -p $MINICONDA;
+- conda config --set always_yes yes
+- conda update conda
+- conda info -a
+- conda env create -f environment.yml
+- source activate meld
+install:
+- python setup.py install --record installed_files.txt
+script:
+- python test/test_install.py
+after_success:
+- coveralls
+deploy:
+  provider: pypi
+  user: rraadd88
+  distributions: sdist bdist_wheel
+  password:
+    secure: bwTQZshWT7FVBkgVTKimF/0C80Aum3R1Yyyd3pOdLdZM1cD9l6KfaYw6GAZ4M3YLuuL3MGMv3vATNyDfq616BVNbxao2sE7zqwvQKqON+G6dm9d9Ryl3pczMV3+sPcJZF/Waqx598yQsjStOSQDpLoDk+7TeelF1a/vjvdpWpDoWMhJ7RrmOAK4KVKSzF6uYPiPeMkZOV52hf9AM4hKluOFGuwonc8PQhywKYRuLx0yPKs3oIImDGVO0xVDZD0iXPrBF1OdqYium7TH7s96640gZyDXGgo0Y1+1bm434NWgpRJ5gEJghlEwxgga4FmRHUQuVGLBNAE8qeQZ8FiGq1FGFnPjKR05ch+AiUnA8sLW77RFVu557WovN9hL8dZyBt+msTkJvWBZSq9U//3xv8dR33r/PZjpm62/krE3xs5ukh2MoFyU360Is4zhekbOWCeUSTWfJTXQuU8V0MEABfJbOTQgDHnTGNH9wEVb0/kzUh4tLgbewNKxb6hZc5ITH1XIGWSNOqJmMAL41zaNQlMX+8fB0xKXz1T1ouYU1QBK3/xDsUtah9B1lDp5/W28MPXxikYHbIZV3yeYQLkMfdKUG4zGFoIXu9OTckD5K6Z/V5m65z7XJQypt5XpwntkMMDnMhKNpKJRwMgMG0YGmkSmwVocC5UlzRdAyNYjnSNo=
+  on:
+    tags: true
+    branch: master  
