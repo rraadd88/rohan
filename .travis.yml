@@ -3,7 +3,7 @@ cache: pip
 sudo: false
 env:
   global:
-  - PACKAGENAME="meld"
+  - PACKAGENAME="rohan"
   - MINICONDA_URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 python:
 - 3.6
@@ -18,7 +18,7 @@ before_install:
 - conda update conda
 - conda info -a
 - conda env create -f environment.yml
-- source activate meld
+- source activate rohan
 install:
 - python setup.py install --record installed_files.txt
 script:

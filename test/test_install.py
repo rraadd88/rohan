@@ -1,6 +1,6 @@
 def test_install():
     try:
-        import meld
+        import rohan
         # cfg=get_deps(cfg)
         # cfg=get_genomes(cfg)
         print(f">>> SUCCESS")

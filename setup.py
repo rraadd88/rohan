@@ -5,7 +5,7 @@
 setup.py
 ========
 
-installs meld
+installs rohan
 
 USAGE :
 python setup.py install
@@ -26,14 +26,14 @@ if (sys.version_info[0], sys.version_info[1],sys.version_info[2]) != (3, 6 ,5):
 
 # main setup
 setup(
-name='meld',
+name='rohan',
 author='Rohan Dandage',
 author_email='rraadd8888@gmail.com, rohan.dandage.1@ulaval.ca',
 version='0.0.1',
-url='https://github.com/rraadd88/meld',
-download_url='https://github.com/rraadd88/meld/archive/master.zip',
+url='https://github.com/rraadd88/rohan',
+download_url='https://github.com/rraadd88/rohan/archive/master.zip',
 # description='',
-long_description='https://github.com/rraadd88/meld/README.md',
+long_description='https://github.com/rraadd88/rohan/README.md',
 # keywords=['','',''],
 license='General Public License v. 3',
 install_requires=['biopython==1.71',
@@ -51,9 +51,9 @@ install_requires=['biopython==1.71',
                     ],
 platforms='Tested on Ubuntu 16.04 64bit',
 packages=find_packages(),
-package_data={'': ['meld/data']},
+package_data={'': ['rohan/data']},
 include_package_data=True,
 entry_points={
-    'console_scripts': ['meld = meld.pipeline:main',],
+    'console_scripts': ['rohan = rohan.pipeline:main',],
     },
 )

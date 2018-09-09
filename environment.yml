@@ -1,4 +1,4 @@
-name: meld
+name: rohan
 channels:
   - conda-forge
   - biocore
