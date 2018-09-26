@@ -47,6 +47,46 @@ def fa2df(alignedfastap,ids2cols=False):
             dtmp.loc[i,'end']=end
     return dtmp
 
+def bedids2bed(df, col_genomeocoord):
+    bed_colns=['chromosome', 'start', 'end', 'id', 'NM', 'strand']
+    dbed=df.apply(lambda x: x[col_genomeocoord].split('|'),axis=1).apply(pd.Series)
+    dbed.columns=['gene id','chromosome', 'strand', 'start', 'end']
+
+    dbed['id']=df[col_genomeocoord]
+    dbed['NM']=np.nan
+    return dbed[bed_colns]
+
+def genomeocoords2sections(genomecoord):
+    try:
+        chrom=genomecoord.split(':')[0]
+    except:
+        raise ValueError(genomecoord)
+    start=genomecoord.split(':')[1].split('-')[0]
+
+    end=genomecoord.split(':')[1].split('-')[1].replace('+','').replace('-','')
+
+    tail=genomecoord.split(':')[1].replace(start,'')
+    if tail.endswith('+'):
+        strand='+'
+    elif tail.endswith('-'):
+        strand='-'
+    else:
+        strand=''
+#     print(tail,strand)
+    return chrom,start,end,strand
+
+def genomeocoords2bed(df, col_genomeocoord):
+    bed_colns=['chromosome', 'start', 'end', 'id', 'NM', 'strand']
+    df=df.dropna(subset=[col_genomeocoord])
+    dbed=df.apply(lambda x: genomeocoords2sections(x[col_genomeocoord]),axis=1).apply(pd.Series)
+    if len(dbed)!=0:
+        dbed.columns=['chromosome', 'start', 'end','strand']
+        dbed['id']=df[col_genomeocoord]
+        dbed['NM']=np.nan
+        return dbed[bed_colns]
+    else:
+        return pd.DataFrame(columns=['chromosome', 'start', 'end','strand','id','NM'])
+
 from Bio import Alphabet,Seq
 def str2seq(s,prt=False):
     if prt:
@@ -85,16 +125,37 @@ def hamming_distance(s1, s2):
     if len(s1) != len(s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1.upper(), s2.upper()))
-def align(s1,s2,test=False):
+def align(s1,s2,test=False,
+         psm=2,pmm=0.5,pgo=-3,pge=-1):
     """
     Creates pairwise local alignment between seqeunces.
     Get the visualization and alignment scores.
     :param s1: seqeunce 1
     :param s2: seqeunce 2    
+    
+    REF: http://biopython.org/DIST/docs/api/Bio.pairwise2-module.html
+    The match parameters are:
+
+    CODE  DESCRIPTION
+    x     No parameters. Identical characters have score of 1, otherwise 0.
+    m     A match score is the score of identical chars, otherwise mismatch
+          score.
+    d     A dictionary returns the score of any pair of characters.
+    c     A callback function returns scores.
+    The gap penalty parameters are:
+
+    CODE  DESCRIPTION
+    x     No gap penalties.
+    s     Same open and extend gap penalties for both sequences.
+    d     The sequences have different open and extend gap penalties.
+    c     A callback function returns the gap penalties.    
     """
     import operator
     from Bio import pairwise2
-    alignments = pairwise2.align.localms(s1.upper(),s2.upper(),1,-1,-5,-5)
+    if any([p is None for p in [psm,pmm,pgo,pge]]):
+        alignments = pairwise2.align.localxx(s1.upper(),s2.upper())
+    else:
+        alignments = pairwise2.align.localms(s1.upper(),s2.upper(),psm,pmm,pgo,pge)
     if test:
         print(alignments)
     alignsymb=np.nan
@@ -107,7 +168,7 @@ def align(s1,s2,test=False):
         if test:
             print(alignstr)
         break
-    return alignsymb,score
+    return alignsymb.replace(' ','-'),score
 
 def translate(dnaseq,host='human',fmtout=str,tax_id=None):
     """

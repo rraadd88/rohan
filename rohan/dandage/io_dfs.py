@@ -129,11 +129,15 @@ def fhs2data_combo_appended(fhs, cols=None,labels=None,labels_coln='labels',sep=
         data_all=pd.DataFrame(columns=cols)
         for fhi,fh in enumerate(fhs):
             label=labels[fhi]
-            data=pd.read_csv(fh,sep=sep)
-            data.loc[:,labels_coln]=label
-            if not cols is None:
-                data=data.loc[:,cols]
-            data_all=data_all.append(data,sort=True)
+            try:
+                data=pd.read_csv(fh,sep=sep)
+            except:
+                raise ValueError(f"something wrong with file pd.read_csv({fh},sep={sep})")
+            if len(data)!=0:
+                data.loc[:,labels_coln]=label
+                if not cols is None:
+                    data=data.loc[:,cols]
+                data_all=data_all.append(data,sort=True)
         return data_all
 
 def rename_cols(df,names,renames=None,prefix=None,suffix=None):
@@ -177,11 +181,15 @@ def df2unstack(df,coln='columns',idxn='index',col='value'):
     df.name=col
     return pd.DataFrame(df).reset_index()
 
-def df2info(df):
+def df2info(df,col_searches=None):
     if len(df.columns)>5:
         print('**COLS**: ',df.columns.tolist())
     print('**HEAD**: ',df.loc[:,df.columns[:5]].head())
     print('**SHAPE**: ',df.shape)
+    if not col_searches is None:
+        cols_searched=[c2 for c1 in col_searches for c2 in df if c1 in c2]
+        print('**SEARCHEDCOLS**:\n',cols_searched)
+        print('**HEAD**: ',df.loc[:,cols_searched].head())
     
 def lambda2cols(df,lambdaf,in_coln,to_colns):
     df_=df.apply(lambda x: lambdaf(x[in_coln]),
@@ -234,4 +242,36 @@ def filldiagonal(df,cols,filler=None):
         filler=np.nan
     for r,c in zip(cols,cols):
         df.loc[r,c]=filler
+    return df
+
+def df2submap(df,col,idx,aggfunc='sum',binary=False,binaryby='nan'):
+    df['#']=1
+    dsubmap=df.pivot_table(columns=col,index=idx,values='#',
+                       aggfunc=aggfunc)
+    if binary:
+        if binaryby=='nan':
+            dsubmap=~pd.isnull(dsubmap)
+        else:
+            dsubmap=dsubmap!=binaryby
+    return dsubmap
+
+def completesubmap(dsubmap,fmt,
+    fmt2vals={'aminoacid':["A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y","*"], 
+    'aminoacid_3letter':['ALA','ARG','ASN','ASP','CYS','GLN','GLU','GLY','HIS','ILE','LEU','LYS','MET','PHE','PRO','SER','THR','TRP','TYR','VAL'],
+    'codon':["TTT",    "TTC",    "TTA",  "TTG",  "TCT",  "TCC",  "TCA",  "TCG",  "TAT",  "TAC",  "TAA",  "TAG",  "TGT",  "TGC",  "TGA",  "TGG",  "CTT",  "CTC",  "CTA",  "CTG",  "CCT",  "CCC",  "CCA",  "CCG",  "CAT",  "CAC",  "CAA",  "CAG",  "CGT",  "CGC",  "CGA",  "CGG",  "ATT",  "ATC",  "ATA",  "ATG",  "ACT",  "ACC",  "ACA",  "ACG",  "AAT",  "AAC",  "AAA",  "AAG",  "AGT",  "AGC",  "AGA",  "AGG",  "GTT",  "GTC",  "GTA",  "GTG",  "GCT",  "GCC",  "GCA",  "GCG",  "GAT",  "GAC",  "GAA",  "GAG",  "GGT",  "GGC",  "GGA",  "GGG"],
+    'nucleotide': ['A','T','G','C'],}):
+    
+    vals=fmt2vals[fmt]
+    for v in vals: 
+        if not v in dsubmap.columns:            
+            dsubmap[v]=np.nan
+        if not v in dsubmap.index:
+            dsubmap.loc[v,:]=np.nan
+    return dsubmap.loc[vals,vals]
+
+def dfswapcols(df,cols):
+    df[f"_{cols[0]}"]=df[cols[0]].copy()
+    df[cols[0]]=df[cols[1]].copy()
+    df[cols[1]]=df[f"_{cols[0]}"].copy()
+    df=df.drop([f"_{cols[0]}"],axis=1)
     return df
