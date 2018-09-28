@@ -275,3 +275,17 @@ def dfswapcols(df,cols):
     df[cols[1]]=df[f"_{cols[0]}"].copy()
     df=df.drop([f"_{cols[0]}"],axis=1)
     return df
+
+#aggregate dataframes
+def dfaggregate_unique(df,colgroupby,colaggs):
+    for colaggi,colagg in enumerate(colaggs):  
+        ds=dpep_lin_unique.groupby(colgroupby)[colagg].apply(list).apply(pd.Series).apply(lambda x: x.dropna().unique(),axis=1).head()
+        ds.name=f"{colagg}: list"
+        if all(ds.apply(len)==1):
+            ds=ds.apply(lambda x : x[0])        
+            ds.name=colagg       
+        if colaggi==0:
+            df_=pd.DataFrame(ds)
+        else:
+            df_=df_.join(ds)
+    return df_
