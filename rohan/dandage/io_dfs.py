@@ -279,7 +279,7 @@ def dfswapcols(df,cols):
 #aggregate dataframes
 def dfaggregate_unique(df,colgroupby,colaggs):
     for colaggi,colagg in enumerate(colaggs):  
-        ds=dpep_lin_unique.groupby(colgroupby)[colagg].apply(list).apply(pd.Series).apply(lambda x: x.dropna().unique(),axis=1).head()
+        ds=df.groupby(colgroupby)[colagg].apply(list).apply(pd.Series).apply(lambda x: x.dropna().unique(),axis=1)
         ds.name=f"{colagg}: list"
         if all(ds.apply(len)==1):
             ds=ds.apply(lambda x : x[0])        
