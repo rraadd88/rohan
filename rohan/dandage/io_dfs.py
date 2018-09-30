@@ -288,4 +288,17 @@ def dfaggregate_unique(df,colgroupby,colaggs):
             df_=pd.DataFrame(ds)
         else:
             df_=df_.join(ds)
-    return df_
+    return df_.reset_index()
+
+def get_colwise_unique_counts(df,cols,out=False):
+    col2uniquec={}
+    for col in cols:
+        if col in df:
+            col2uniquec[col]=len(df.loc[:,col].unique())
+        else:
+            col2uniquec[col]='column not found'
+    dcol2uniquec=pd.Series(col2uniquec)
+    if out:
+        return dcol2uniquec
+    else:
+        print(dcol2uniquec)
