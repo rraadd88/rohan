@@ -281,8 +281,8 @@ def dfaggregate_unique(df,colgroupby,colaggs):
     for colaggi,colagg in enumerate(colaggs):  
         ds=df.groupby(colgroupby)[colagg].apply(list).apply(pd.Series).apply(lambda x: x.dropna().unique(),axis=1)
         ds.name=f"{colagg}: list"
-        if all(ds.apply(len)==1):
-            ds=ds.apply(lambda x : x[0])        
+        if all((ds.apply(len)==1) | (ds.apply(len)==0)):
+            ds=ds.apply(lambda x : x[0] if len(x)>0 else np.nan)        
             ds.name=colagg       
         if colaggi==0:
             df_=pd.DataFrame(ds)
@@ -290,7 +290,16 @@ def dfaggregate_unique(df,colgroupby,colaggs):
             df_=df_.join(ds)
     return df_.reset_index()
 
-def get_colwise_unique_counts(df,cols,out=False):
+def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
+    df_agg=dfaggregate_unique(df,colgroupby,colaggs)
+    df_agg['has values']=df_agg.apply(lambda x : len(x[f'{colval}: list'])!=0,axis=1)
+    varswithvals=df_agg.loc[(df_agg['has values']),colvar].tolist()
+    if test:
+        df2info(df_agg)
+    df=df.loc[df[colvar].isin(varswithvals),:] 
+    return df
+
+def df2colwise_unique_counts(df,cols,out=False):
     col2uniquec={}
     for col in cols:
         if col in df:
@@ -302,3 +311,4 @@ def get_colwise_unique_counts(df,cols,out=False):
         return dcol2uniquec
     else:
         print(dcol2uniquec)
+        
