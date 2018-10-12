@@ -112,7 +112,7 @@ def fhs2data_combo(fhs,cols,index,labels=None,col_sep=': '):
             else:
                 for col in cols:
                     data_combo.loc[:,'%s%s%s' % (label,col_sep,col)]=data.loc[:,col]    
-        return data_combo
+        return del_Unnamed(data_combo)
     else:
         logging.error('no fhs found: len(fhs)=0')
 
@@ -138,7 +138,7 @@ def fhs2data_combo_appended(fhs, cols=None,labels=None,labels_coln='labels',sep=
                 if not cols is None:
                     data=data.loc[:,cols]
                 data_all=data_all.append(data,sort=True)
-        return data_all
+        return del_Unnamed(data_all)
 
 def rename_cols(df,names,renames=None,prefix=None,suffix=None):
     """
@@ -173,9 +173,9 @@ def reorderbydf(df2,df1):
     return df3
 
 def df2unstack(df,coln='columns',idxn='index',col='value'):
-    if df.columns.name is None:
+    if (df.columns.name is None) or (coln!='columns'):
         df.columns.name=coln
-    if df.index.name is None:
+    if (df.index.name is None) or (idxn!='columns'):
         df.index.name=idxn
     df=df.unstack()
     df.name=col
