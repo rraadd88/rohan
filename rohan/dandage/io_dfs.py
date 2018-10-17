@@ -15,6 +15,25 @@ from beditor.lib.io_nums import is_numeric
 
 import logging
 
+def df2info(df,col_searches=None):
+    if len(df.columns)>5:
+        print('**COLS**: ',df.columns.tolist())
+    print('**HEAD**: ',df.loc[:,df.columns[:5]].head())
+    print('**SHAPE**: ',df.shape)
+    if not col_searches is None:
+        cols_searched=[c2 for c1 in col_searches for c2 in df if c1 in c2]
+        print('**SEARCHEDCOLS**:\n',cols_searched)
+        print('**HEAD**: ',df.loc[:,cols_searched].head())
+        
+def del_Unnamed(df):
+    """
+    Deletes all the unnamed columns
+
+    :param df: pandas dataframe
+    """
+    cols_del=[c for c in df.columns if 'Unnamed' in c]
+    return df.drop(cols_del,axis=1)
+
 def set_index(data,col_index):
     """
     Sets the index if the index is not present
@@ -32,6 +51,13 @@ def set_index(data,col_index):
     else:
         logging.error("something's wrong with the df")
         df2info(data)
+
+#tsv io
+def read_table(p):
+    return del_Unnamed(pd.read_table(p))
+    
+def to_table(df,p):
+    df.to_csv(p,sep='\t')
 
 # dfs
 def concat_cols(df1,df2,idx_col,df1_cols,df2_cols,
@@ -66,17 +92,7 @@ def concat_cols(df1,df2,idx_col,df1_cols,df2_cols,
             df2_cols[df2_cols.index(col)]="%s%s" % (col,df2_suffix)
     combo.columns=df1_cols+df2_cols
     combo.index.name=idx_col
-    return combo
-
-def del_Unnamed(df):
-    """
-    Deletes all the unnamed columns
-
-    :param df: pandas dataframe
-    """
-    cols_del=[c for c in df.columns if 'Unnamed' in c]
-    return df.drop(cols_del,axis=1)
-     
+    return combo     
 
 def get_colmin(data):
     """
@@ -172,6 +188,13 @@ def reorderbydf(df2,df1):
         df3=df3.append(df2.loc[idx,:])
     return df3
 
+def dfswapcols(df,cols):
+    df[f"_{cols[0]}"]=df[cols[0]].copy()
+    df[cols[0]]=df[cols[1]].copy()
+    df[cols[1]]=df[f"_{cols[0]}"].copy()
+    df=df.drop([f"_{cols[0]}"],axis=1)
+    return df
+
 def df2unstack(df,coln='columns',idxn='index',col='value'):
     if (df.columns.name is None) or (coln!='columns'):
         df.columns.name=coln
@@ -180,16 +203,6 @@ def df2unstack(df,coln='columns',idxn='index',col='value'):
     df=df.unstack()
     df.name=col
     return pd.DataFrame(df).reset_index()
-
-def df2info(df,col_searches=None):
-    if len(df.columns)>5:
-        print('**COLS**: ',df.columns.tolist())
-    print('**HEAD**: ',df.loc[:,df.columns[:5]].head())
-    print('**SHAPE**: ',df.shape)
-    if not col_searches is None:
-        cols_searched=[c2 for c1 in col_searches for c2 in df if c1 in c2]
-        print('**SEARCHEDCOLS**:\n',cols_searched)
-        print('**HEAD**: ',df.loc[:,cols_searched].head())
     
 def lambda2cols(df,lambdaf,in_coln,to_colns):
     df_=df.apply(lambda x: lambdaf(x[in_coln]),
@@ -233,6 +246,8 @@ def df2chucks(din,chunksize,outd,fn,return_fmt='\t',force=False):
     else:
         return chunkps        
 
+## symmetric dfs eg. submaps    
+    
 def filldiagonal(df,cols,filler=None):
     try:
         d=df.loc[cols,cols]
@@ -269,14 +284,22 @@ def completesubmap(dsubmap,fmt,
             dsubmap.loc[v,:]=np.nan
     return dsubmap.loc[vals,vals]
 
-def dfswapcols(df,cols):
-    df[f"_{cols[0]}"]=df[cols[0]].copy()
-    df[cols[0]]=df[cols[1]].copy()
-    df[cols[1]]=df[f"_{cols[0]}"].copy()
-    df=df.drop([f"_{cols[0]}"],axis=1)
-    return df
+def get_offdiag_vals(dcorr):
+    del_indexes=[]
+    for spc1 in np.unique(dcorr.index.get_level_values(0)):
+        for spc2 in np.unique(dcorr.index.get_level_values(0)):
+            if (not (spc1,spc2) in del_indexes) and (not (spc2,spc1) in del_indexes):
+                del_indexes.append((spc1,spc2))
+    #         break
+    for spc1 in np.unique(dcorr.index.get_level_values(0)):
+        for spc2 in np.unique(dcorr.index.get_level_values(0)):
+            if spc1==spc2:
+                del_indexes.append((spc1,spc2))
+    
+    return dcorr.drop(del_indexes)
 
-#aggregate dataframes
+# aggregate dataframes
+
 def dfaggregate_unique(df,colgroupby,colaggs):
     for colaggi,colagg in enumerate(colaggs):  
         ds=df.groupby(colgroupby)[colagg].apply(list).apply(pd.Series).apply(lambda x: x.dropna().unique(),axis=1)
@@ -312,3 +335,19 @@ def df2colwise_unique_counts(df,cols,out=False):
     else:
         print(dcol2uniquec)
         
+def dfdupval2unique(df,coldupval,preffix_unique='variant'):  
+    dups=df[coldupval].value_counts()[(df[coldupval].value_counts()>1)].index
+
+    for dup in dups:
+        ddup=df.loc[(df[coldupval]==dup)]
+        df.loc[(df[coldupval]==dup),preffix_unique]=range(1, len(ddup)+1)
+    #     break
+    df[coldupval]=df.apply(lambda x : x[coldupval] if pd.isnull(x[preffix_unique]) else f"{x[coldupval]}: {preffix_unique} {int(x[preffix_unique])}",axis=1)
+    return df
+
+def dfliststr2dflist(df,colliststrs):
+    import ast
+    for c in colliststrs:
+#         print(c)
+        df[c]=df.apply(lambda x : ast.literal_eval(x[c].replace("nan","''")) if not isinstance(x[c], (list)) else x[c],axis=1)
+    return df
