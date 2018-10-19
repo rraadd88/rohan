@@ -21,8 +21,8 @@ try:
     from setuptools import setup, find_packages, Extension
 except ImportError:
     from distutils.core import setup, find_packages, Extension
-if (sys.version_info[0], sys.version_info[1],sys.version_info[2]) != (3, 6 ,5):
-    raise RuntimeError('Python 3.6.5 required ')
+#if (sys.version_info[0], sys.version_info[1],sys.version_info[2]) != (3, 6 ,5):
+#    raise RuntimeError('Python 3.6.5 required ')
 
 # main setup
 setup(
@@ -40,7 +40,7 @@ install_requires=['biopython==1.71',
                   'regex==2018.7.11',
                     'pandas == 0.23.3',
                     # 'pyyaml',
-                    'numpy==1.13.1',
+                    #'numpy==1.13.1',
                     'matplotlib==2.2.2',
                     #'pysam==0.14.1',
                     'requests==2.19.1',
