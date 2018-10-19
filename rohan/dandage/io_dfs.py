@@ -11,7 +11,7 @@
 from os.path import basename,exists
 import pandas as pd
 import numpy as np
-from beditor.lib.io_nums import is_numeric
+from rohan.dandage.io_nums import is_numeric
 
 import logging
 

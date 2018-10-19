@@ -1,8 +1,13 @@
 import subprocess
 import sys
 
-def runbashcmd(cmd,test=False,logf=None):
-    from beditor.lib.global_vars import dirs2ps 
+def runbashcmd(cmd,test=False,logf=None,dirs2ps=None):
+    if dirs2ps is None:
+        import rohan
+        dirs2ps={'pyp':str(subprocess.check_output('which python3'.split(' '))).replace("b'",'').replace("\\n'",''),
+        'binDir':dirname(rohan.__file__)+'/bin', 
+        'scriptDir':dirname(rohan.__file__)+'/bin',
+        }
     cmd = cmd.replace("$BIN", dirs2ps['binDir'])
     cmd = cmd.replace("$PYTHON", dirs2ps['pyp'])
     cmd = cmd.replace("$SCRIPT", dirs2ps['scriptDir'])

@@ -6,7 +6,7 @@ from os.path import exists, basename,dirname
 plt.style.use('ggplot')
 from scipy import stats
 
-from beditor.lib.io_strs import make_pathable_string
+from rohan.dandage.io_strs import make_pathable_string
 
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
              scafmt='hexbin',
