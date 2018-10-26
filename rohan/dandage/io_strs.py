@@ -10,10 +10,20 @@
 """
 import logging
 
+# convert
 def s2re(s,ss2re):
     for ss in ss2re:
         s=s.replace(ss,ss2re[ss])
     return s
+
+def tuple2str(tup,sep=' '): 
+    if isinstance(tup,tuple):
+        tup=[str(s) for s in tup]
+        tup=sep.join(list(tup))
+    elif not isinstance(tup,str):
+        logging.error("tup is not str either")
+    return tup
+
 
 import logging
 import os.path

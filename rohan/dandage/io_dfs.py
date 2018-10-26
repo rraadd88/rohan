@@ -8,7 +8,8 @@
 ``io_dfs``
 ================================
 """
-from os.path import basename,exists
+from os.path import basename,dirname,exists
+from os import makedirs
 import pandas as pd
 import numpy as np
 from rohan.dandage.io_nums import is_numeric
@@ -57,6 +58,8 @@ def read_table(p):
     return del_Unnamed(pd.read_table(p))
     
 def to_table(df,p):
+    if not exists(dirname(p)):
+        makedirs(dirname(p),exist_ok=True)
     df.to_csv(p,sep='\t')
 
 # dfs
@@ -351,3 +354,11 @@ def dfliststr2dflist(df,colliststrs):
 #         print(c)
         df[c]=df.apply(lambda x : ast.literal_eval(x[c].replace("nan","''")) if not isinstance(x[c], (list)) else x[c],axis=1)
     return df
+
+# multiindex
+from .io_strs import tuple2str
+def coltuples2str(cols):
+    cols_str=[]
+    for col in cols:
+        cols_str.append(tuple2str(col))
+    return cols_str

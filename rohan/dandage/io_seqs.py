@@ -75,8 +75,8 @@ def genomeocoords2sections(genomecoord):
 #     print(tail,strand)
     return chrom,start,end,strand
 
+bed_colns=['chromosome', 'start', 'end', 'id', 'NM', 'strand']
 def genomeocoords2bed(df, col_genomeocoord):
-    bed_colns=['chromosome', 'start', 'end', 'id', 'NM', 'strand']
     df=df.dropna(subset=[col_genomeocoord])
     dbed=df.apply(lambda x: genomeocoords2sections(x[col_genomeocoord]),axis=1).apply(pd.Series)
     if len(dbed)!=0:
