@@ -18,8 +18,11 @@ def s2re(s,ss2re):
 
 def tuple2str(tup,sep=' '): 
     if isinstance(tup,tuple):
-        tup=[str(s) for s in tup]
-        tup=sep.join(list(tup))
+        tup=[str(s) for s in tup if not s=='']
+        if len(tup)!=1:
+            tup=sep.join(list(tup))
+        else:
+            tup=tup[0]
     elif not isinstance(tup,str):
         logging.error("tup is not str either")
     return tup

@@ -62,7 +62,43 @@ def to_table(df,p):
         makedirs(dirname(p),exist_ok=True)
     df.to_csv(p,sep='\t')
 
-# dfs
+def read_table_pqt(p):
+    return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
+
+def to_table_pqt(df,p):
+    if not exists(dirname(p)):
+        makedirs(dirname(p),exist_ok=True)
+    df.to_parquet(p,engine='fastparquet',compression='gzip',)
+
+    
+#slice     
+def dfvslicebysstr(df,sstr,include=True,how='and',outcols=False):
+    if isinstance(sstr,str):        
+        if include:
+            cols=[c for c in df if sstr in c]
+        else:
+            cols=[c for c in df if not sstr in c]            
+    elif isinstance(sstr,list):
+        cols=[]
+        for s in sstr:
+            if include:
+                cols.append([c for c in df if s in c])
+            else:
+                cols.append([c for c in df if not s in c])
+#         print()
+        from rohan.dandage.io_sets import list2union,list2intersection
+        if how=='or':
+            cols=list2union(cols)
+        elif how=='and':
+            cols=list2intersection(cols)
+    else:
+        logging.error('sstr should be str or list')
+    if outcols:
+        return cols
+    else:
+        return df.loc[:,cols]
+
+# multi dfs
 def concat_cols(df1,df2,idx_col,df1_cols,df2_cols,
                 df1_suffix,df2_suffix,wc_cols=[],suffix_all=False):
     """
@@ -306,7 +342,10 @@ def get_offdiag_vals(dcorr):
 def dfaggregate_unique(df,colgroupby,colaggs):
     for colaggi,colagg in enumerate(colaggs):  
         ds=df.groupby(colgroupby)[colagg].apply(list).apply(pd.Series).apply(lambda x: x.dropna().unique(),axis=1)
-        ds.name=f"{colagg}: list"
+        colaggname=f"{colagg}: list"
+        if colaggname in df:
+            colaggname=f"{colagg}: list: list"            
+        ds.name=colaggname
         if all((ds.apply(len)==1) | (ds.apply(len)==0)):
             ds=ds.apply(lambda x : x[0] if len(x)>0 else np.nan)        
             ds.name=colagg       
@@ -314,8 +353,11 @@ def dfaggregate_unique(df,colgroupby,colaggs):
             df_=pd.DataFrame(ds)
         else:
             df_=df_.join(ds)
+    if df_.index.name in df_:
+        df_.index.name=f"{colgroupby} groupby"
     return df_.reset_index()
-
+        
+        
 def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
     df_agg=dfaggregate_unique(df,colgroupby,colaggs)
     df_agg['has values']=df_agg.apply(lambda x : len(x[f'{colval}: list'])!=0,axis=1)
@@ -352,11 +394,14 @@ def dfliststr2dflist(df,colliststrs):
     import ast
     for c in colliststrs:
 #         print(c)
-        df[c]=df.apply(lambda x : ast.literal_eval(x[c].replace("nan","''")) if not isinstance(x[c], (list)) else x[c],axis=1)
+        if df[c].apply(lambda x : (('[' in x) and (']' in x))).all():
+            df[c]=df.apply(lambda x : ast.literal_eval(x[c].replace("nan","''")) if not isinstance(x[c], (list)) else x[c],axis=1)
+        else:
+            df[c]=df.apply(lambda x : x[c].replace("nan","").split(',') if not isinstance(x[c], (list)) else x[c],axis=1)
     return df
 
 # multiindex
-from .io_strs import tuple2str
+from rohan.dandage.io_strs import tuple2str
 def coltuples2str(cols):
     cols_str=[]
     for col in cols:
