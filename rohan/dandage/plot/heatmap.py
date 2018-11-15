@@ -12,8 +12,8 @@ def annot_submap(ax,dplot,colx,coly,cols,
             offset=0.325
         else:
             offset=0
-        ax.scatter(x=dplot.loc[dplot[cols[coli]],colx]+offset, 
-                    y=dplot.loc[dplot[cols[coli]],coly],                    
+        ax.scatter(x=dplot.loc[dplot[cols[coli]],colx]+offset,
+                    y=dplot.loc[dplot[cols[coli]],coly],
                    marker=markers[coli],
                     linewidth=linewidths[coli],
                     s=sizes[coli], facecolors=fcs[coli], edgecolors=ecs[coli])

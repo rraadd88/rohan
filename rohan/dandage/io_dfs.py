@@ -12,7 +12,6 @@ from os.path import basename,dirname,exists
 from os import makedirs
 import pandas as pd
 import numpy as np
-from rohan.dandage.io_nums import is_numeric
 
 import logging
 
@@ -401,8 +400,8 @@ def dfliststr2dflist(df,colliststrs):
     return df
 
 # multiindex
-from rohan.dandage.io_strs import tuple2str
 def coltuples2str(cols):
+    from rohan.dandage.io_strs import tuple2str
     cols_str=[]
     for col in cols:
         cols_str.append(tuple2str(col))

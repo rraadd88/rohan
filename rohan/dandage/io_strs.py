@@ -107,6 +107,10 @@ def make_pathable_string(s,replacewith='_'):
     import re
     return re.sub('\W+',replacewith, s )
 
+def normalisestr(s):
+    import re
+    return re.sub('\W+','', s.lower()).replace('_','')
+
 def linebreaker(l,break_pt=16):
     """
     used for adding labels in plots.
