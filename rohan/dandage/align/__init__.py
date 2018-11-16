@@ -11,6 +11,12 @@ import pandas as pd
 import subprocess
 import logging
 from rohan.dandage.io_sys import runbashcmd    
+
+def validate_cfg(cfg):
+    import pyensembl
+    cfg['host']=pyensembl.species.normalize_species_name(cfg['host'])        
+    cfg['scriptp']=abspath(__file__)
+    return cfg
     
 # GET INPTS    
 def get_genomes(cfg):
@@ -49,10 +55,7 @@ def get_genomes(cfg):
     cfg['genomep']='{}/genome.fa'.format(genome_fastad)
     if not exists(cfg['genomep']):
         logging.error('not found: {}'.format(cfg['genomep']))
-        if not '/test_beditor/' in cfg['cfgp']:
-            ifdlref = input("Download genome at {}?[Y/n]: ".format(genome_fastad))
-        else:
-            ifdlref='Y'
+        ifdlref = input("Genome file ({genome_fastad}) are not there. Download?[Y/n]: ")
         if ifdlref=='Y':
         # #FIXME download contigs and cat and get index, sizes
             for contig in contigs:
@@ -63,14 +66,14 @@ def get_genomes(cfg):
                     fn=f"{cfg['host'].capitalize()}.{cfg['genomeassembly']}.dna_sm.chromosome.{contig}.fa.gz"
                 fp='{}/{}'.format(ensembl_fastad,fn)
                 if not exists(fp):
-                    cmd=f"wget -q -x -nH ftp://ftp.ensembl.org/{fp} -P {dirname(realpath(__file__))}"
+                    cmd=f"wget -q -x -nH ftp://ftp.ensembl.org/{fp} -P {cfg['genomed']}"
                     try:
                         runbashcmd(cmd,test=cfg['test'])
                     except:
                         fn=f"{cfg['host'].capitalize()}.{cfg['genomeassembly']}.dna_sm.toplevel.fa.gz"
                         fp='{}/{}'.format(ensembl_fastad,fn)                        
                         if not exists(fp):
-                            cmd=f"wget -q -x -nH ftp://ftp.ensembl.org/{fp} -P {dirname(realpath(__file__))}"
+                            cmd=f"wget -q -x -nH ftp://ftp.ensembl.org/{fp} -P {cfg['genomed']}"
                             # print(cmd)
                             runbashcmd(cmd,test=cfg['test'])
                             break
@@ -112,7 +115,7 @@ def get_genomes(cfg):
             fn='{}.{}.{}.gff3.gz'.format(cfg['host'].capitalize(),cfg['genomeassembly'],cfg['genomerelease'])
             fp='{}/{}'.format(ensembl_gff3d,fn)
             if not exists(fp):
-                cmd='wget -x -nH ftp://ftp.ensembl.org/{} -P {}'.format(fp,dirname(realpath(__file__)))
+                cmd="wget -x -nH ftp://ftp.ensembl.org/{fp} -P {cfg['genomed']}"
                 runbashcmd(cmd,test=cfg['test'])
             # move to genome.gff3
                 cmd='cp {}/{} {}'.format(genome_gff3d,fn,cfg['genomegffp'])

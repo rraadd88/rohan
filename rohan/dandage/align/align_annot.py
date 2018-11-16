@@ -394,8 +394,8 @@ def dguides2offtargets(cfg):
     :param cfg: Configuration settings provided in .yml file
     """
     from rohan.dandage.global_vars import saveemptytable
-    from rohan.dandage.configure import get_genomes
-    from rohan.dandage.align.configure import get_genomes
+    from rohan.dandage import get_genomes
+    from rohan.dandage.align import get_genomes
     
     get_deps(cfg)
     get_genomes(cfg)
