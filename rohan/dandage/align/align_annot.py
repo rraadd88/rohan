@@ -19,12 +19,9 @@ from glob import glob
 
 from rohan.dandage.global_vars import bed_colns,gff_colns    
 from rohan.dandage.io_sys import runbashcmd
-from rohan.dandage.io_seqs import fa2df 
-from rohan.dandage.io_dfs import set_index,del_Unnamed,df2info 
-
-from rohan.dandage.io_dfs import lambda2cols
+from rohan.dandage.io_seqs import fa2df,gffatributes2ids,hamming_distance,align 
+from rohan.dandage.io_dfs import set_index,del_Unnamed,df2info,lambda2cols 
 from rohan.dandage.io_nums import str2num
-from rohan.dandage.io_seqs import gffatributes2ids,hamming_distance,align
 
 def dguides2guidessam(cfg,dguides):    
     """
@@ -335,15 +332,15 @@ def dannotsagg2dannots2dalignbedannot(cfg):
         dalignbedannot=dalignbedstats.set_index('id').join(set_index(dannotsagg,'id'),
                                               rsuffix=' annotation')
         dalignbedannot['NM']=dalignbedannot['NM'].apply(int)
-        from rohan.dandage.get_scores import get_beditorscore_per_alignment,get_cfdscore
-        dalignbedannot['beditor score']=dalignbedannot.apply(lambda x : get_beditorscore_per_alignment(NM=x['NM'],
-                               genic=True if x['region']=='genic' else False,
-                               alignment=x['alignment'],
-                               pam_length=len(x['PAM']),
-                               pam_position=x['original position'],
-                               # test=cfg['test'],
-                                ),axis=1) 
-        dalignbedannot['CFD score']=dalignbedannot.apply(lambda x : get_cfdscore(x['guide+PAM sequence'].upper(), x['aligned sequence'].upper()), axis=1)            
+#         from rohan.dandage.get_scores import get_beditorscore_per_alignment,get_cfdscore
+#         dalignbedannot['beditor score']=dalignbedannot.apply(lambda x : get_beditorscore_per_alignment(NM=x['NM'],
+#                                genic=True if x['region']=='genic' else False,
+#                                alignment=x['alignment'],
+#                                pam_length=len(x['PAM']),
+#                                pam_position=x['original position'],
+#                                # test=cfg['test'],
+#                                 ),axis=1) 
+#         dalignbedannot['CFD score']=dalignbedannot.apply(lambda x : get_cfdscore(x['guide+PAM sequence'].upper(), x['aligned sequence'].upper()), axis=1)            
         dalignbedannot.to_csv(dalignbedannotp,sep='\t')
     return cfg
 
@@ -397,6 +394,11 @@ def dguides2offtargets(cfg):
     :param cfg: Configuration settings provided in .yml file
     """
     from rohan.dandage.global_vars import saveemptytable
+    from rohan.dandage.configure import get_genomes
+    from rohan.dandage.align.configure import get_genomes
+    
+    get_deps(cfg)
+    get_genomes(cfg)
     
     cfg['datad']=cfg[cfg['step']]
     cfg['plotd']=cfg['datad']
