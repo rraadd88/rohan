@@ -36,7 +36,9 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     fig.text(textxy[0],textxy[1],textstr,
             ha='left',va='top',bbox=props)
     if scafmt=='hexbin':
-        if cbar_label is None:
+        if cbar_label is None and d.index.name is None:
+            cbar_label='# of points'
+        else:
             cbar_label=f"# of {d.index.name}s"
         fig.text(1,0.5,cbar_label,rotation=90,
                 ha='center',va='center')
@@ -55,3 +57,5 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
             plotp=f"plot/{scafmt}_{make_pathable_string(xcol)}_vs_{make_pathable_string(ycol)}.svg"
         print(plotp)
         plt.savefig(plotp)
+    else:
+        return fig, ax
