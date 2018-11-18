@@ -54,7 +54,7 @@ def get_genomes(cfg):
     genome_fastad=f"{cfg['genomed']}/{ensembl_fastad}"
     cfg['genomep']=f'{genome_fastad}/genome.fa'.format()
     if not exists(cfg['genomep']):
-        logging.error('not found: {}'.format(cfg['genomep']))
+        logging.error(f"not found: {cfg['genomep']}")
         ifdlref = input(f"Genome file are not there at {genome_fastad}.\n Download?[Y/n]: ")
         if ifdlref=='Y':
         # #FIXME download contigs and cat and get index, sizes
@@ -87,17 +87,17 @@ def get_genomes(cfg):
             logging.error('abort')
             sys.exit(1)
     if not exists(cfg['genomep']+'.bwt'):
-        cmd='{} index {}'.format(cfg['bwa'],cfg['genomep'])
+        cmd=f"{cfg['bwa']} index {cfg['genomep']}"
         runbashcmd(cmd,test=cfg['test'])
     else:        
         logging.info('bwa index is present')
     if not exists(cfg['genomep']+'.fai'):
-        cmd='{} faidx {}'.format(cfg['samtools'],cfg['genomep'])
+        cmd=f"{cfg['samtools']} faidx {cfg['genomep']}"
         runbashcmd(cmd,test=cfg['test'])
     else:
         logging.info('samtools index is present')
     if not exists(cfg['genomep']+'.sizes'):
-        cmd='cut -f1,2 {}.fai > {}.sizes'.format(cfg['genomep'],cfg['genomep'])            
+        cmd=f"cut -f1,2 {cfg['genomep']}.fai > {cfg['genomep']}.sizes"            
         runbashcmd(cmd,test=cfg['test'])
     else:
         logging.info('sizes of contigs are present')
@@ -110,13 +110,13 @@ def get_genomes(cfg):
         ifdlref = input("Download genome annotations at {}?[Y/n]: ".format(genome_gff3d))
         if ifdlref=='Y':
         # #FIXME download contigs and cat and get index, sizes
-            fn='{}.{}.{}.gff3.gz'.format(cfg['host'].capitalize(),cfg['genomeassembly'],cfg['genomerelease'])
-            fp='{}/{}'.format(ensembl_gff3d,fn)
+            fn=f"{cfg['host'].capitalize()}.{cfg['genomeassembly']}.{cfg['genomerelease']}.gff3.gz"
+            fp=f"{ensembl_gff3d}/{fn}"
             if not exists(fp):
                 cmd="wget -x -nH ftp://ftp.ensembl.org/{fp} -P {cfg['genomed']}"
                 runbashcmd(cmd,test=cfg['test'])
             # move to genome.gff3
-                cmd='cp {}/{} {}'.format(genome_gff3d,fn,cfg['genomegffp'])
+                cmd=f"cp {genome_gff3d}/{fn} {cfg['genomegffp']}"
                 runbashcmd(cmd,test=cfg['test'])
 
         else:

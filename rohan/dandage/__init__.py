@@ -7,12 +7,15 @@ def get_deps(cfg=None,deps=[]):
 
     :param cfg: configuration dict
     """
-    if cfg is None:
+    if not cfg is None:
         if not 'deps' in cfg:
             cfg['deps']=deps
+        else:
+            deps=cfg['deps']
     if not len(deps)==0:
         for dep in deps:
-            rubashcmd('conda install {dep}',test=cfg['test'])
-            cfg[dep]=dep
+            if not dep in cfg:
+                runbashcmd(f'conda install {dep}',test=cfg['test'])
+                cfg[dep]=dep
     logging.info(f"{len(deps)} deps installed.")
     return cfg
