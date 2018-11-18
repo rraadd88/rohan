@@ -4,7 +4,7 @@
 # This program is distributed under General Public License v. 3.  
 
 import sys
-from os.path import exists,splitext,dirname,splitext,basename,realpath,abspath
+from os.path import exists,splitext,dirname,splitext,basename,abspath
 from os import makedirs
 from glob import glob
 import pandas as pd
@@ -51,11 +51,11 @@ def get_genomes(cfg):
         cfg['host']='saccharomyces_cerevisiae'
     host_="_".join(s for s in cfg['host'].split('_')).capitalize()
     ensembl_fastad='pub/release-{}/fasta/{}/dna/'.format(cfg['genomerelease'],cfg['host'])
-    genome_fastad='{}/{}'.format(dirname(realpath(__file__)),ensembl_fastad)
-    cfg['genomep']='{}/genome.fa'.format(genome_fastad)
+    genome_fastad=f"{cfg['genomed']}/{ensembl_fastad}"
+    cfg['genomep']=f'{genome_fastad}/genome.fa'.format()
     if not exists(cfg['genomep']):
         logging.error('not found: {}'.format(cfg['genomep']))
-        ifdlref = input("Genome file ({genome_fastad}) are not there. Download?[Y/n]: ")
+        ifdlref = input(f"Genome file are not there at {genome_fastad}.\n Download?[Y/n]: ")
         if ifdlref=='Y':
         # #FIXME download contigs and cat and get index, sizes
             for contig in contigs:
@@ -64,8 +64,9 @@ def get_genomes(cfg):
                     fn=f"{cfg['host'].capitalize()}.{cfg['genomeassembly']}.{cfg['genomerelease']}.dna_sm.chromosome.{contig}.fa.gz"
                 else:
                     fn=f"{cfg['host'].capitalize()}.{cfg['genomeassembly']}.dna_sm.chromosome.{contig}.fa.gz"
-                fp='{}/{}'.format(ensembl_fastad,fn)
+                fp=f'{ensembl_fastad}/{fn}'
                 if not exists(fp):
+                    logging.info(f'downloading {fp}')
                     cmd=f"wget -q -x -nH ftp://ftp.ensembl.org/{fp} -P {cfg['genomed']}"
                     try:
                         runbashcmd(cmd,test=cfg['test'])
@@ -80,7 +81,7 @@ def get_genomes(cfg):
             #                 break
             # make the fa ready
             if not exists(cfg['genomep']):
-                cmd='gunzip {}*.fa.gz;cat {}/*.fa > {}/genome.fa;'.format(genome_fastad,genome_fastad,genome_fastad)
+                cmd=f"gunzip {genome_fastad}*.fa.gz;cat {genome_fastad}/*.fa > {genome_fastad}/genome.fa;"
                 runbashcmd(cmd,test=cfg['test'])
         else:
             logging.error('abort')
@@ -101,15 +102,12 @@ def get_genomes(cfg):
     else:
         logging.info('sizes of contigs are present')
 
-    ensembl_gff3d='pub/release-{}/gff3/{}/'.format(cfg['genomerelease'],cfg['host'])    
-    genome_gff3d='{}/{}'.format(dirname(realpath(__file__)),ensembl_gff3d)
-    cfg['genomegffp']='{}/genome.gff3'.format(genome_gff3d)
+    ensembl_gff3d=f"pub/release-{cfg['genomerelease']}/gff3/{cfg['host']}/"    
+    genome_gff3d=f"{cfg['genomed']}/{ensembl_gff3d}"
+    cfg['genomegffp']=f'{genome_gff3d}/genome.gff3'
     if not exists(cfg['genomegffp']):
         logging.error('not found: {}'.format(cfg['genomegffp']))
-        if not '/test_beditor/' in cfg['cfgp']:
-            ifdlref = input("Download genome annotations at {}?[Y/n]: ".format(genome_gff3d))
-        else:
-            ifdlref = 'Y'
+        ifdlref = input("Download genome annotations at {}?[Y/n]: ".format(genome_gff3d))
         if ifdlref=='Y':
         # #FIXME download contigs and cat and get index, sizes
             fn='{}.{}.{}.gff3.gz'.format(cfg['host'].capitalize(),cfg['genomeassembly'],cfg['genomerelease'])

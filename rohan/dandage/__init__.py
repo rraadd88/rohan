@@ -14,5 +14,5 @@ def get_deps(cfg=None,deps=[]):
         for dep in deps:
             rubashcmd('conda install {dep}',test=cfg['test'])
             cfg[dep]=dep
-    logging.info("{len(deps)} deps installed.")
+    logging.info(f"{len(deps)} deps installed.")
     return cfg

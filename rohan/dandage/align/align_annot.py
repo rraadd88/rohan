@@ -5,8 +5,6 @@ import subprocess
 import re
 import sys
 import logging 
-
-from collections import defaultdict
 from os.path import join, basename, dirname, abspath, exists
 from os import makedirs,stat
 
@@ -23,28 +21,28 @@ from rohan.dandage.io_seqs import fa2df,gffatributes2ids,hamming_distance,align
 from rohan.dandage.io_dfs import set_index,del_Unnamed,df2info,lambda2cols 
 from rohan.dandage.io_nums import str2num
 
-def dguides2guidessam(cfg,dguides):    
+def dqueries2queriessam(cfg,dqueries):    
     """
-    Aligns guides to genome and gets SAM file
+    Aligns queries to genome and gets SAM file
     step#1
 
     :param cfg: configuration dict
-    :param dguides: dataframe of guides
+    :param dqueries: dataframe of queries
     """
     datatmpd=cfg['datatmpd']
-    dguides=set_index(dguides,'guide: id')
-    guidels=dguides.loc[:,'guide+PAM length'].unique()
-    for guidel in guidels:
-        logging.debug(f"now aligning guides of length {guidel}")
-        guidesfap = f'{datatmpd}/01_guides_guidel{guidel:02}.fa'
-        logging.info(basename(guidesfap))
-        if not exists(guidesfap) or cfg['force']:
-            with open(guidesfap,'w') as f:
-                for gi in dguides.index:
-                    f.write('>{}\n{}\n'.format(gi.replace(' ','_'),dguides.loc[gi,'guide+PAM sequence']))
+    dqueries=set_index(dqueries,'query id')
+    queryls=dqueries.loc[:,'query sequence'].apply(len).unique()
+    for queryl in queryls:
+        logging.debug(f"now aligning queries of length {queryl}")
+        queriesfap = f'{datatmpd}/01_queries_queryl{queryl:02}.fa'
+        logging.info(basename(queriesfap))
+        if not exists(queriesfap) or cfg['force']:
+            with open(queriesfap,'w') as f:
+                for gi in dqueries.index:
+                    f.write('>{}\n{}\n'.format(gi.replace(' ','_'),dqueries.loc[gi,'query sequence']))
         ## BWA alignment command is adapted from cripror 
         ## https://github.com/rraadd88/crisporWebsite/blob/master/crispor.py
-        # BWA: allow up to X mismatches
+        # BWA allow up to X mismatches
         # maximum number of occurences in the genome to get flagged as repeats. 
         # This is used in bwa samse, when converting the sam file
         # and for warnings in the table output.
@@ -59,20 +57,20 @@ def dguides2guidessam(cfg,dguides):
 
         # increase MAXOCC if there is only a single query, but only in CGI mode
         bwaM = MFAC*MAXOCC # -m is queue size in bwa
-        guidessap = f'{datatmpd}/01_guides_guidel{guidel:02}.sa'
-        logging.info(basename(guidessap))
-        if not exists(guidessap) or cfg['force']:
-            cmd=f"{cfg['bwa']} aln -t 1 -o 0 -m {bwaM} -n {cfg['mismatches_max']} -k {cfg['mismatches_max']} -N -l {guidel} {genomep} {guidesfap} > {guidessap} 2> {guidessap}.log"
+        queriessap = f'{datatmpd}/01_queries_queryl{queryl:02}.sa'
+        logging.info(basename(queriessap))
+        if not exists(queriessap) or cfg['force']:
+            cmd=f"{cfg['bwa']} aln -t 1 -o 0 -m {bwaM} -n {cfg['mismatches_max']} -k {cfg['mismatches_max']} -N -l {queryl} {genomep} {queriesfap} > {queriessap} 2> {queriessap}.log"
             runbashcmd(cmd)
 
-        guidessamp = f'{datatmpd}/01_guides_guidel{guidel:02}.sam'
-        logging.info(basename(guidessamp))        
-        if not exists(guidessamp) or cfg['force']:
-            cmd=f"{cfg['bwa']} samse -n {MAXOCC} {genomep} {guidessap} {guidesfap} > {guidessamp} 2> {guidessamp}.log"
+        queriessamp = f'{datatmpd}/01_queries_queryl{queryl:02}.sam'
+        logging.info(basename(queriessamp))        
+        if not exists(queriessamp) or cfg['force']:
+            cmd=f"{cfg['bwa']} samse -n {MAXOCC} {genomep} {queriessap} {queriesfap} > {queriessamp} 2> {queriessamp}.log"
             runbashcmd(cmd)
     return cfg
 
-def guidessam2dalignbed(cfg):
+def queriessam2dalignbed(cfg):
     """
     Processes SAM file to get the genomic coordinates in BED format
     step#2
@@ -85,10 +83,10 @@ def guidessam2dalignbed(cfg):
     logging.info(basename(dalignbedp))
     if not exists(alignmentbedp) or cfg['force']:
         #input/s
-        guidessamps=glob(f'{datatmpd}/01_guides_guidel*.sam')
-        for guidessamp in guidessamps:
-            if stat(guidessamp).st_size != 0:
-                samfile=pysam.AlignmentFile(guidessamp, "rb")
+        queriessamps=glob(f'{datatmpd}/01_queries_queryl*.sam')
+        for queriessamp in queriessamps:
+            if stat(queriessamp).st_size != 0:
+                samfile=pysam.AlignmentFile(queriessamp, "rb")
                 dalignbed=pd.DataFrame(columns=bed_colns)
                 for read in samfile.fetch():
                     algnids=[]
@@ -122,12 +120,12 @@ def guidessam2dalignbed(cfg):
                                    'strand':strands}
                 #     col2dalignbed=dict(zip(cols,[a.split('|')[0],a.split('|')[1],a.split('|')[2],a,a.split('|')[3],a.split('|')[4] for a in algnids]))
                     dalignbed_=pd.DataFrame(col2dalignbed)
-                    dalignbed_['guide: id']=read.qname.replace('_',' ')
+                    dalignbed_['query id']=read.qname.replace('_',' ')
                     dalignbed = dalignbed.append(dalignbed_,ignore_index=True,sort=True)
                 #     break
                 samfile.close()
             else:
-                logging.warning(f"file is empty: {guidessamp}")
+                logging.warning(f"file is empty: {queriessamp}")
         dalignbed.to_csv(dalignbedp,sep='\t')
         from rohan.dandage.io_nums import str2numorstr
         dalignbed['chromosome']=dalignbed.apply(lambda x : str2numorstr(x['chromosome']),axis=1)
@@ -166,23 +164,23 @@ def dalignbed2annotationsbed(cfg):
         runbashcmd(cmd)
     return cfg
 
-def dalignbed2dalignbedguides(cfg):
+def dalignbed2dalignbedqueries(cfg):
     """
-    Get guide seqeunces from the BED file
+    Get query seqeunces from the BED file
     step#4
 
     :param cfg: configuration dict
     """
     datatmpd=cfg['datatmpd']
     dalignbed=del_Unnamed(pd.read_csv(cfg['dalignbedp'],sep='\t'))
-    dguides=set_index(del_Unnamed(pd.read_csv(cfg['dguidesp'],sep='\t')),'guide: id')
+    dqueries=set_index(del_Unnamed(pd.read_csv(cfg['dqueriesp'],sep='\t')),'query id')
     
 #     if the error in human, use: `cut -f 1 data/alignment.bed.sorted.bed | sort| uniq -c | grep -v CHR | grep -v GL | grep -v KI`
-    dalignbedguidesp=cfg['dalignbedguidesp']
-    logging.info(basename(dalignbedguidesp))
-    if not exists(dalignbedguidesp) or cfg['force']:
-        dalignbed=pd.merge(dalignbed,dguides,on='guide: id',suffixes=('', '.1'))
-        dalignbed.to_csv(dalignbedguidesp,'\t')
+    dalignbedqueriesp=cfg['dalignbedqueriesp']
+    logging.info(basename(dalignbedqueriesp))
+    if not exists(dalignbedqueriesp) or cfg['force']:
+        dalignbed=pd.merge(dalignbed,dqueries,on='query id',suffixes=('', '.1'))
+        dalignbed.to_csv(dalignbedqueriesp,'\t')
     return cfg
 
 def alignmentbed2dalignedfasta(cfg):
@@ -210,7 +208,7 @@ def alignmentbed2dalignedfasta(cfg):
         dalignedfasta.to_csv(dalignedfastap,sep='\t')
     return cfg
 
-def dalignbed2dalignbedguidesseq(cfg):
+def dalignbed2dalignbedqueriesseq(cfg):
     """
     Get sequences from BED file
     step#6
@@ -218,42 +216,42 @@ def dalignbed2dalignbedguidesseq(cfg):
     :param cfg: configuration dict
     """
     datatmpd=cfg['datatmpd']
-    dalignbedguides=del_Unnamed(pd.read_csv(cfg['dalignbedguidesp'],sep='\t'))
+    dalignbedqueries=del_Unnamed(pd.read_csv(cfg['dalignbedqueriesp'],sep='\t'))
     dalignedfasta=del_Unnamed(pd.read_csv(cfg['dalignedfastap'],sep='\t'))
-    dalignbedguidesseqp=cfg['dalignbedguidesseqp']
-    logging.info(basename(dalignbedguidesseqp))
-    if not exists(dalignbedguidesseqp) or cfg['force']:        
-        dalignbedguidesseq=pd.merge(dalignbedguides,dalignedfasta,on='id',suffixes=('', '.2'))
-        dalignbedguidesseq=dalignbedguidesseq.dropna(subset=['aligned sequence'],axis=0)
+    dalignbedqueriesseqp=cfg['dalignbedqueriesseqp']
+    logging.info(basename(dalignbedqueriesseqp))
+    if not exists(dalignbedqueriesseqp) or cfg['force']:        
+        dalignbedqueriesseq=pd.merge(dalignbedqueries,dalignedfasta,on='id',suffixes=('', '.2'))
+        dalignbedqueriesseq=dalignbedqueriesseq.dropna(subset=['aligned sequence'],axis=0)
 
         # dalignbed.index.name='id'
-        dalignbedguidesseq=dalignbedguidesseq.drop_duplicates()
-        dalignbedguidesseq.to_csv(dalignbedguidesseqp,sep='\t')
+        dalignbedqueriesseq=dalignbedqueriesseq.drop_duplicates()
+        dalignbedqueriesseq.to_csv(dalignbedqueriesseqp,sep='\t')
     return cfg
 
-def dalignbedguidesseq2dalignbedstats(cfg):
+def dalignbedqueriesseq2dalignbedstats(cfg):
     """
-    Gets scores for guides
+    Gets scores for queries
     step#7
 
     :param cfg: configuration dict
     """
     datatmpd=cfg['datatmpd']
-    dalignbedguidesseq=del_Unnamed(pd.read_csv(cfg['dalignbedguidesseqp'],sep='\t'))
+    dalignbedqueriesseq=del_Unnamed(pd.read_csv(cfg['dalignbedqueriesseqp'],sep='\t'))
     
     dalignbedstatsp=cfg['dalignbedstatsp']  
     logging.info(basename(dalignbedstatsp))
     if not exists(dalignbedstatsp) or cfg['force']:
-        df=dalignbedguidesseq.apply(lambda x: align(x['guide+PAM sequence'],x['aligned sequence']),
+        df=dalignbedqueriesseq.apply(lambda x: align(x['query sequence'],x['aligned sequence']),
                            axis=1).apply(pd.Series)
         df.columns=['alignment','alignment: score']
-        dalignbedstats=dalignbedguidesseq.join(df)
+        dalignbedstats=dalignbedqueriesseq.join(df)
         del df
         dalignbedstats.to_csv(dalignbedstatsp,sep='\t')
     return cfg
 def dannots2dalignbed2dannotsagg(cfg):
     """
-    Aggregate annotations per guide
+    Aggregate annotations per query
     step#8
 
     :param cfg: configuration dict
@@ -315,7 +313,7 @@ def dannots2dalignbed2dannotsagg(cfg):
 
 def dannotsagg2dannots2dalignbedannot(cfg):
     """
-    Map aggregated annotations to guides
+    Map aggregated annotations to queries
     step#9
 
     :param cfg: configuration dict
@@ -340,13 +338,13 @@ def dannotsagg2dannots2dalignbedannot(cfg):
 #                                pam_position=x['original position'],
 #                                # test=cfg['test'],
 #                                 ),axis=1) 
-#         dalignbedannot['CFD score']=dalignbedannot.apply(lambda x : get_cfdscore(x['guide+PAM sequence'].upper(), x['aligned sequence'].upper()), axis=1)            
+#         dalignbedannot['CFD score']=dalignbedannot.apply(lambda x : get_cfdscore(x['query sequence'].upper(), x['aligned sequence'].upper()), axis=1)            
         dalignbedannot.to_csv(dalignbedannotp,sep='\t')
     return cfg
 
-def dalignbedannot2daggbyguide(cfg):
+def dalignbedannot2daggbyquery(cfg):
     """
-    Aggregate annotations per alignment to annotations per guide.
+    Aggregate annotations per alignment to annotations per query.
     step#10
 
     :param cfg: configuration dict
@@ -355,65 +353,43 @@ def dalignbedannot2daggbyguide(cfg):
 
     dalignbedannot=del_Unnamed(pd.read_csv(cfg['dalignbedannotp'],sep='\t',low_memory=False))
     
-    daggbyguidep='{}/10_daggbyguide.tsv'.format(datatmpd)      
-    logging.info(basename(daggbyguidep))
-    if not exists(daggbyguidep) or cfg['force']:
-        daggbyguide=dalignbedannot.loc[(dalignbedannot['NM']==0),['guide: id','guide+PAM sequence','gene names', 'gene ids','transcript ids']].drop_duplicates(subset=['guide: id'])
-        if len(daggbyguide)!=0:
-            daggbyguide=set_index(daggbyguide,'guide: id')            
-            guideids=daggbyguide.index.tolist()
-            for gi in range(len(guideids)):
-                gid=guideids[gi]
-                dalignbedannoti=dalignbedannot.loc[dalignbedannot['guide: id']==gid,:]
+    daggbyqueryp='{}/10_daggbyquery.tsv'.format(datatmpd)      
+    logging.info(basename(daggbyqueryp))
+    if not exists(daggbyqueryp) or cfg['force']:
+        daggbyquery=dalignbedannot.loc[(dalignbedannot['NM']==0),['query id','query sequence','gene names', 'gene ids','transcript ids']].drop_duplicates(subset=['query id'])
+        if len(daggbyquery)!=0:
+            daggbyquery=set_index(daggbyquery,'query id')            
+            queryids=daggbyquery.index.tolist()
+            for gi in range(len(queryids)):
+                gid=queryids[gi]
+                dalignbedannoti=dalignbedannot.loc[dalignbedannot['query id']==gid,:]
                 if len(dalignbedannoti.shape)==1:
                     dalignbedannoti=pd.DataFrame(dalignbedannoti).T
                 for col in ['types','gene names','gene ids','transcript ids','protein ids','exon ids']:
-                    if (col in daggbyguide) and (col in dalignbedannoti):
-                        daggbyguide.loc[gid,col]=";".join(np.unique(dalignbedannoti[col].fillna('nan').tolist()))
-            from rohan.dandage.get_scores import get_beditorscore_per_guide
-            for guideid in daggbyguide.index:
-                dalignbedannotguide=dalignbedannot.loc[(dalignbedannot['guide: id']==guideid),:]
-                daggbyguide.loc[guideid,'beditor score']=get_beditorscore_per_guide(guide_seq=dalignbedannotguide['guide+PAM sequence'].unique()[0], 
-                                           strategy=dalignbedannotguide['strategy'].unique()[0],
-                                           align_seqs_scores=dalignbedannotguide['beditor score'],
-                                           BEs=cfg['BEs']
-    #                                        test=cfg['test']
-                                          )
-                daggbyguide.loc[guideid,'CFD score']=dalignbedannotguide['CFD score'].mean() #FIXME if mean is not appropriate
-            daggbyguide['beditor score (log10)']=daggbyguide['beditor score'].apply(np.log10)
+                    if (col in daggbyquery) and (col in dalignbedannoti):
+                        daggbyquery.loc[gid,col]=";".join(np.unique(dalignbedannoti[col].fillna('nan').tolist()))
             dalignbedannot['alternate alignments count']=1
-            daggbyguide=daggbyguide.join(pd.DataFrame(dalignbedannot.groupby('guide: id')['alternate alignments count'].agg('sum')))
-            daggbyguide.to_csv(daggbyguidep,sep='\t')
-            daggbyguide.to_csv(cfg['dofftargetsp'],sep='\t')
+            daggbyquery=daggbyquery.join(pd.DataFrame(dalignbedannot.groupby('query id')['alternate alignments count'].agg('sum')))
+            daggbyquery.to_csv(daggbyqueryp,sep='\t')
+            daggbyquery.to_csv(cfg['dalignannotedp'],sep='\t')
     return cfg
 
-def dguides2offtargets(cfg):
+def queries2alignments(cfg):
     """
-    All the processes in offtarget detection are here.
+    All the processes in alignannoted detection are here.
     
     :param cfg: Configuration settings provided in .yml file
     """
-    from rohan.dandage.global_vars import saveemptytable
-    from rohan.dandage import get_genomes
     from rohan.dandage.align import get_genomes
-    
-    get_deps(cfg)
     get_genomes(cfg)
     
     cfg['datad']=cfg[cfg['step']]
     cfg['plotd']=cfg['datad']
-    dofftargetsp='{}/dofftargets.tsv'.format(cfg['datad'])  
+    dalignannotedp='{}/dalignannoted.tsv'.format(cfg['datad'])  
     
-    stepn='04_offtargets'
+    stepn='04_alignannoteds'
     logging.info(stepn)
-    dguidesp=f"{cfg[cfg['step']-1]}/dguides.tsv"
-    if not exists(dguidesp):        
-        logging.warning(f"not found {dguidesp}")
-        return saveemptytable(cfg,dofftargetsp)
-    dguides=pd.read_csv(dguidesp,sep='\t')
-    if len(dguides)==0:
-        logging.warning(f"dguides is empty.")
-        return saveemptytable(cfg,dofftargetsp)       
+    dqueriesp=f"{cfg[cfg['step']-1]}/dqueries.tsv"
 
     cfg['datatmpd']=f"{cfg['datad']}/tmp"
     for dp in [cfg['datatmpd']]:
@@ -421,27 +397,27 @@ def dguides2offtargets(cfg):
             makedirs(dp)
             
     step2doutp={
-    1:'01_guides_guidel*.fa',
+    1:'01_queries_queryl*.fa',
     2:'02_dalignbed.tsv',
     3:'03_annotations.bed',
-    4:'04_dalignbedguides.tsv',
+    4:'04_dalignbedqueries.tsv',
     5:'05_dalignedfasta.tsv',
-    6:'06_dalignbedguidesseq.tsv',
+    6:'06_dalignbedqueriesseq.tsv',
     7:'07_dalignbedstats.tsv',
     8:'08_dannotsagg.tsv',
     9:'09_dalignbedannot.tsv',
-    10:'10_daggbyguide.tsv',
+    10:'10_daggbyquery.tsv',
     }
-    cfg['dguidesp']=dguidesp
+    cfg['dqueriesp']=dqueriesp
     cfg['alignmentbedp']=f"{cfg['datatmpd']}/02_alignment.bed"
     cfg['dalignbedp']=f"{cfg['datatmpd']}/02_dalignbed.tsv"
-    cfg['dalignbedguidesp']=f"{cfg['datatmpd']}/04_dalignbedguides.tsv"
+    cfg['dalignbedqueriesp']=f"{cfg['datatmpd']}/04_dalignbedqueries.tsv"
     cfg['dalignedfastap']=f"{cfg['datatmpd']}/05_dalignedfasta.tsv"
-    cfg['dalignbedguidesseqp']=f"{cfg['datatmpd']}/06_dalignbedguidesseq.tsv"
+    cfg['dalignbedqueriesseqp']=f"{cfg['datatmpd']}/06_dalignbedqueriesseq.tsv"
     cfg['dalignbedstatsp']=f"{cfg['datatmpd']}/07_dalignbedstats.tsv"
     cfg['dannotsaggp']=f"{cfg['datatmpd']}/08_dannotsagg.tsv"
     cfg['dalignbedannotp']=f"{cfg['datatmpd']}/09_dalignbedannot.tsv"
-    cfg['daggbyguidep']=f"{cfg['datatmpd']}/10_daggbyguide.tsv"
+    cfg['daggbyqueryp']=f"{cfg['datatmpd']}/10_daggbyquery.tsv"
 
     #check which step to process
     for step in range(2,10+1,1):
@@ -450,32 +426,32 @@ def dguides2offtargets(cfg):
                 step='all'
             break
     logging.info(f'process from step:{step}')
-    cfg['dofftargetsp']='{}/dofftargets.tsv'.format(cfg['datad'])
-    if not exists(cfg['dofftargetsp']) or cfg['force']:
+    cfg['dalignannotedp']='{}/dalignannoted.tsv'.format(cfg['datad'])
+    if not exists(cfg['dalignannotedp']) or cfg['force']:
         if step==1 or step=='all':
-            cfg=dguides2guidessam(cfg,dguides)
+            cfg=dqueries2queriessam(cfg,dqueries)
         if step==2 or step=='all' or (not cfg is None):
-            cfg=guidessam2dalignbed(cfg)
+            cfg=queriessam2dalignbed(cfg)
         if step==3 or step=='all' or (not cfg is None):
             cfg=dalignbed2annotationsbed(cfg)
         if step==4 or step=='all' or (not cfg is None):
-            cfg=dalignbed2dalignbedguides(cfg)
+            cfg=dalignbed2dalignbedqueries(cfg)
         if step==5 or step=='all' or (not cfg is None):
             cfg=alignmentbed2dalignedfasta(cfg)
         if step==6 or step=='all' or (not cfg is None):
-            cfg=dalignbed2dalignbedguidesseq(cfg)
+            cfg=dalignbed2dalignbedqueriesseq(cfg)
         if step==7 or step=='all' or (not cfg is None):
-            cfg=dalignbedguidesseq2dalignbedstats(cfg)
+            cfg=dalignbedqueriesseq2dalignbedstats(cfg)
         if step==8 or step=='all' or (not cfg is None):
             cfg=dannots2dalignbed2dannotsagg(cfg)
         if step==9 or step=='all' or (not cfg is None):
             cfg=dannotsagg2dannots2dalignbedannot(cfg)
         if step==10 or step=='all' or (not cfg is None):
-            cfg=dalignbedannot2daggbyguide(cfg)
+            cfg=dalignbedannot2daggbyquery(cfg)
 
         if cfg is None:        
             logging.warning(f"no alignment found")
             cfg['step']=4
-            return saveemptytable(cfg,cfg['dofftargetsp'])
+            return saveemptytable(cfg,cfg['dalignannotedp'])
         import gc
         gc.collect()
