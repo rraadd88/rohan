@@ -4,7 +4,9 @@ from os.path import basename,dirname,exists
 from rohan.dandage.io_dfs import *
 
 def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmapp,dbiogrid_intlin_ppip,dbiogrid_intmap_ppip,
-                        genefmt='name',force=False,test=False,del_exp_syss=[],
+                        experimental_system_type='physical',
+                        genefmt='name',
+                        force=False,test=False,del_exp_syss=[],
                         filldiagonal_withna=False):
     """
     taxid=559292
@@ -20,7 +22,7 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmapp,dbiogrid_intlin_ppip,db
                        sep='\t',low_memory=False)
                 # filter biogrid
                 # taxonomic id of Scer
-                dbiogrid=dbiogrid.loc[((dbiogrid['Experimental System Type']=='physical') \
+                dbiogrid=dbiogrid.loc[((dbiogrid['Experimental System Type']==experimental_system_type) \
                            & (dbiogrid['Organism Interactor A']==taxid) \
                            & (dbiogrid['Organism Interactor B']==taxid)),:]
 
