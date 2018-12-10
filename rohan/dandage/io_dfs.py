@@ -49,7 +49,7 @@ def set_index(data,col_index):
     elif data.index.name==col_index:
         return data
     else:
-        logging.error("something's wrong with the df")
+        logging.error("set_index: something's wrong with the df")
         df2info(data)
 
 #tsv io
