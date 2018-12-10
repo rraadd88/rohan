@@ -12,6 +12,12 @@ import subprocess
 import logging
 from rohan.dandage.io_sys import runbashcmd    
 
+#use good old bash programs for speed
+# bed_colns = ['chromosome','start','end','id','NM','strand']
+gff_colns = ['chromosome', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
+bed_colns = ['chromosome','start','end','id','NM','strand']
+
+
 def validate_cfg(cfg):
     import pyensembl
     cfg['host']=pyensembl.species.normalize_species_name(cfg['host'])        
@@ -113,7 +119,7 @@ def get_genomes(cfg):
             fn=f"{cfg['host'].capitalize()}.{cfg['genomeassembly']}.{cfg['genomerelease']}.gff3.gz"
             fp=f"{ensembl_gff3d}/{fn}"
             if not exists(fp):
-                cmd="wget -x -nH ftp://ftp.ensembl.org/{fp} -P {cfg['genomed']}"
+                cmd=f"wget -x -nH ftp://ftp.ensembl.org/{fp} -P {cfg['genomed']}"
                 runbashcmd(cmd,test=cfg['test'])
             # move to genome.gff3
                 cmd=f"cp {genome_gff3d}/{fn} {cfg['genomegffp']}"

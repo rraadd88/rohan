@@ -15,10 +15,10 @@ import pysam
 import numpy as np
 from glob import glob
 
-from rohan.dandage.global_vars import bed_colns,gff_colns    
+from rohan.dandage.align import bed_colns,gff_colns    
 from rohan.dandage.io_sys import runbashcmd
 from rohan.dandage.io_seqs import fa2df,gffatributes2ids,hamming_distance,align 
-from rohan.dandage.io_dfs import set_index,del_Unnamed,df2info,lambda2cols 
+from rohan.dandage.io_dfs import set_index,del_Unnamed,df2info,lambda2cols,read_table,to_table 
 from rohan.dandage.io_nums import str2num
 
 def dqueries2queriessam(cfg,dqueries):    
@@ -90,8 +90,22 @@ def queriessam2dalignbed(cfg):
                 dalignbed=pd.DataFrame(columns=bed_colns)
                 for read in samfile.fetch():
                     algnids=[]
-                    algnids.append('{}|{}{}|{}|{}'.format(read.reference_name,
-                             ('-' if read.is_reverse else '+'),read.positions[0],read.cigarstring,read.get_tag('NM')))
+                    
+#                     read_position=read.positions[0]
+#                     tag_NM=read.get_tag('NM')                    
+                    if len(read.positions)!=0:
+                        read_position=read.positions[0]
+                    else:
+                        print(read)
+                        continue
+#                         read_position=[None]
+                    try: 
+                        tag_NM=read.get_tag('NM')
+                    except: 
+                        print(read)
+                        continue
+#                         tag_NM=None
+                    algnids.append(f"{read.reference_name}|{'-' if read.is_reverse else '+'}{read_position}|{read.cigarstring}|{tag_NM}")
                     if read.has_tag('XA'):
                         algnids+=['|'.join(s.split(',')) for s in read.get_tag('XA').split(';') if len(s.split(','))>1]
                     chroms=[]
@@ -244,6 +258,7 @@ def dalignbedqueriesseq2dalignbedstats(cfg):
     if not exists(dalignbedstatsp) or cfg['force']:
         df=dalignbedqueriesseq.apply(lambda x: align(x['query sequence'],x['aligned sequence']),
                            axis=1).apply(pd.Series)
+        print(df.head())
         df.columns=['alignment','alignment: score']
         dalignbedstats=dalignbedqueriesseq.join(df)
         del df
@@ -383,14 +398,13 @@ def queries2alignments(cfg):
     from rohan.dandage.align import get_genomes
     get_genomes(cfg)
     
-    cfg['datad']=cfg[cfg['step']]
+    cfg['datad']=cfg['prjd']
     cfg['plotd']=cfg['datad']
-    dalignannotedp='{}/dalignannoted.tsv'.format(cfg['datad'])  
+    dalignannotedp=f"{cfg['datad']}/dalignannoted.tsv"  
     
-    stepn='04_alignannoteds'
-    logging.info(stepn)
-    dqueriesp=f"{cfg[cfg['step']-1]}/dqueries.tsv"
-
+#     stepn='04_alignannoteds'
+#     logging.info(stepn)
+    
     cfg['datatmpd']=f"{cfg['datad']}/tmp"
     for dp in [cfg['datatmpd']]:
         if not exists(dp):
@@ -408,7 +422,7 @@ def queries2alignments(cfg):
     9:'09_dalignbedannot.tsv',
     10:'10_daggbyquery.tsv',
     }
-    cfg['dqueriesp']=dqueriesp
+    cfg['dqueriesp']=cfg['dinp']
     cfg['alignmentbedp']=f"{cfg['datatmpd']}/02_alignment.bed"
     cfg['dalignbedp']=f"{cfg['datatmpd']}/02_dalignbed.tsv"
     cfg['dalignbedqueriesp']=f"{cfg['datatmpd']}/04_dalignbedqueries.tsv"
@@ -418,7 +432,9 @@ def queries2alignments(cfg):
     cfg['dannotsaggp']=f"{cfg['datatmpd']}/08_dannotsagg.tsv"
     cfg['dalignbedannotp']=f"{cfg['datatmpd']}/09_dalignbedannot.tsv"
     cfg['daggbyqueryp']=f"{cfg['datatmpd']}/10_daggbyquery.tsv"
-
+    
+    dqueries=read_table(cfg['dqueriesp'])
+    print(dqueries.head())
     #check which step to process
     for step in range(2,10+1,1):
         if not exists(f"{cfg['datatmpd']}/{step2doutp[step]}"):
