@@ -18,7 +18,7 @@ from glob import glob
 from rohan.dandage.align import bed_colns,gff_colns    
 from rohan.dandage.io_sys import runbashcmd
 from rohan.dandage.io_seqs import fa2df,gffatributes2ids,hamming_distance,align 
-from rohan.dandage.io_dfs import set_index,del_Unnamed,df2info,lambda2cols,read_table,to_table 
+from rohan.dandage.io_dfs import * 
 from rohan.dandage.io_nums import str2num
 
 def dqueries2queriessam(cfg,dqueries):    
@@ -293,37 +293,49 @@ def dannots2dalignbed2dannotsagg(cfg):
         dannots['annotation coordinate']=dannots.apply(lambda x: '{}:{}-{}({})'.format(x['chromosome annotation'],x['start annotation'],x['end annotation'], x['strand annotation']),axis=1)
         logging.debug('or this step takes more time?')
         dannots.to_csv(daannotp,sep='\t')
+#         to_table_pqt(dannots,daannotp)
     else:
-        dannots=pd.read_csv(daannotp,sep='\t',low_memory=False)
+#         dannots=read_table_pqt(daannotp)
+        dannots=read_table(daannotp)
         dannots=del_Unnamed(dannots)
+        
     logging.info(basename(dannotsaggp))
     if not exists(dannotsaggp) or cfg['force']:
         if not 'dannots' in locals():
-            dannots=pd.read_table(daannotp,low_memory=False)
+            dannots=read_table_pqt(daannotp)
+#             dannots=pd.read_table(daannotp,low_memory=False)
         dannots=del_Unnamed(dannots)
         dannots=dannots.reset_index()
-        
-        dannotsagg=pd.DataFrame(dannots.groupby('id')['annotations count'].agg('sum'))-1
+        logging.debug('aggregating the annotations')
+        from rohan.dandage.io_sets import unique 
+        cols2aggf={'annotations count':np.sum,
+                  'type': unique,
+                  'gene name': unique,
+                  'gene id': unique,
+                  'transcript id': unique,
+                  'protein id': unique,
+                  'exon id': unique}
+        dannotsagg=dannots.groupby('id').agg(cols2aggf)
+        dannotsagg['annotations count']=dannotsagg['annotations count']-1
         dannotsagg.loc[dannotsagg['annotations count']==0,'region']='intergenic'
         dannotsagg.loc[dannotsagg['annotations count']!=0,'region']='genic'
-
-        alignids=dannots['id'].unique()#[:15]
-        logging.debug('start of the slowest step')
-        for alignidi in range(len(alignids)):
-            alignid=alignids[alignidi]
-            dannoti=dannots.loc[dannots['id']==alignid,:]
-            if len(dannoti.shape)==1:
-                dannoti=pd.DataFrame(dannoti).T
-            dannoti=dannoti.dropna(subset=['type'])
-            if len(dannoti)!=0:
-                dannoti=dannoti.loc[dannoti['type']!='chromosome',:].drop_duplicates(subset=['start annotation','end annotation'])
-                for col in ['type','gene name','gene id','transcript id','protein id','exon id']:    
-                    dannotsagg.loc[alignid,col+'s']=";".join(np.unique(dannoti[col].fillna('nan').tolist()))
-        logging.debug('end of the slowest step')
-            
+#         alignids=dannots['id'].unique()#[:15]
+#         logging.debug('start of the slowest step')
+#         for alignidi in range(len(alignids)):
+#             alignid=alignids[alignidi]
+#             dannoti=dannots.loc[dannots['id']==alignid,:]
+#             if len(dannoti.shape)==1:
+#                 dannoti=pd.DataFrame(dannoti).T
+#             dannoti=dannoti.dropna(subset=['type'])
+#             if len(dannoti)!=0:
+#                 dannoti=dannoti.loc[dannoti['type']!='chromosome',:].drop_duplicates(subset=['start annotation','end annotation'])
+#                 for col in ['type','gene name','gene id','transcript id','protein id','exon id']:    
+#                     dannotsagg.loc[alignid,col+'s']=";".join(np.unique(dannoti[col].fillna('nan').tolist()))
+        logging.debug('end of the slowest step')            
         del dannots    
         dannotsagg=dannotsagg.reset_index()
-        dannotsagg.to_csv(dannotsaggp,sep='\t')
+#         to_table_pqt(dannotsagg,dannotsaggp)
+        dannotsagg.to_csv(dannotsaggp,sep='\t')        
     return cfg
 
 def dannotsagg2dannots2dalignbedannot(cfg):
@@ -368,25 +380,46 @@ def dalignbedannot2daggbyquery(cfg):
 
     dalignbedannot=del_Unnamed(pd.read_csv(cfg['dalignbedannotp'],sep='\t',low_memory=False))
     
-    daggbyqueryp='{}/10_daggbyquery.tsv'.format(datatmpd)      
+    daggbyqueryp=f'{datatmpd}/10_daggbyquery.tsv'      
     logging.info(basename(daggbyqueryp))
     if not exists(daggbyqueryp) or cfg['force']:
-        daggbyquery=dalignbedannot.loc[(dalignbedannot['NM']==0),['query id','query sequence','gene names', 'gene ids','transcript ids']].drop_duplicates(subset=['query id'])
-        if len(daggbyquery)!=0:
-            daggbyquery=set_index(daggbyquery,'query id')            
-            queryids=daggbyquery.index.tolist()
-            for gi in range(len(queryids)):
-                gid=queryids[gi]
-                dalignbedannoti=dalignbedannot.loc[dalignbedannot['query id']==gid,:]
-                if len(dalignbedannoti.shape)==1:
-                    dalignbedannoti=pd.DataFrame(dalignbedannoti).T
-                for col in ['types','gene names','gene ids','transcript ids','protein ids','exon ids']:
-                    if (col in daggbyquery) and (col in dalignbedannoti):
-                        daggbyquery.loc[gid,col]=";".join(np.unique(dalignbedannoti[col].fillna('nan').tolist()))
-            dalignbedannot['alternate alignments count']=1
-            daggbyquery=daggbyquery.join(pd.DataFrame(dalignbedannot.groupby('query id')['alternate alignments count'].agg('sum')))
-            daggbyquery.to_csv(daggbyqueryp,sep='\t')
-            daggbyquery.to_csv(cfg['dalignannotedp'],sep='\t')
+        dalignbedannot=dfliststr2dflist(dalignbedannot,
+                                ['type', 'gene name', 'gene id', 'transcript id', 'protein id', 'exon id'],
+                                colfmt='tuple')    
+        dalignbedannot['alternate alignments count']=1
+        import itertools
+        from rohan.dandage.io_sets import unique
+        def unique_dropna(l): return unique(l,drop='nan')
+        def merge_unique_dropna(l): return unique(list(itertools.chain(*l)),drop='nan')
+        cols2aggf={'id':unique_dropna,
+         'type':merge_unique_dropna,
+         'gene name':merge_unique_dropna,
+         'gene id':merge_unique_dropna,
+         'transcript id':merge_unique_dropna,
+         'protein id':merge_unique_dropna,
+         'exon id':merge_unique_dropna,
+         'region':unique_dropna,
+         'alternate alignments count':sum,
+        }
+        daggbyquery=dalignbedannot.groupby('query id').agg(cols2aggf)
+        daggbyquery.to_csv(daggbyqueryp,sep='\t')
+        daggbyquery.to_csv(cfg['dalignannotedp'],sep='\t')
+#         daggbyquery=dalignbedannot.loc[(dalignbedannot['NM']==0),['query id','query sequence','gene names', 'gene ids','transcript ids']].drop_duplicates(subset=['query id'])
+#         if len(daggbyquery)!=0:
+#             daggbyquery=set_index(daggbyquery,'query id')            
+#             queryids=daggbyquery.index.tolist()
+#             for gi in range(len(queryids)):
+#                 gid=queryids[gi]
+#                 dalignbedannoti=dalignbedannot.loc[dalignbedannot['query id']==gid,:]
+#                 if len(dalignbedannoti.shape)==1:
+#                     dalignbedannoti=pd.DataFrame(dalignbedannoti).T
+#                 for col in ['types','gene names','gene ids','transcript ids','protein ids','exon ids']:
+#                     if (col in daggbyquery) and (col in dalignbedannoti):
+#                         daggbyquery.loc[gid,col]=";".join(np.unique(dalignbedannoti[col].fillna('nan').tolist()))
+#             dalignbedannot['alternate alignments count']=1
+#             daggbyquery=daggbyquery.join(pd.DataFrame(dalignbedannot.groupby('query id')['alternate alignments count'].agg('sum')))
+#             daggbyquery.to_csv(daggbyqueryp,sep='\t')
+#             daggbyquery.to_csv(cfg['dalignannotedp'],sep='\t')
     return cfg
 
 def queries2alignments(cfg):
@@ -446,23 +479,23 @@ def queries2alignments(cfg):
     if not exists(cfg['dalignannotedp']) or cfg['force']:
         if step==1 or step=='all':
             cfg=dqueries2queriessam(cfg,dqueries)
-        if step==2 or step=='all' or (not cfg is None):
+        if step==2 or step=='all':
             cfg=queriessam2dalignbed(cfg)
-        if step==3 or step=='all' or (not cfg is None):
+        if step==3 or step=='all':
             cfg=dalignbed2annotationsbed(cfg)
-        if step==4 or step=='all' or (not cfg is None):
+        if step==4 or step=='all':
             cfg=dalignbed2dalignbedqueries(cfg)
-        if step==5 or step=='all' or (not cfg is None):
+        if step==5 or step=='all':
             cfg=alignmentbed2dalignedfasta(cfg)
-        if step==6 or step=='all' or (not cfg is None):
+        if step==6 or step=='all':
             cfg=dalignbed2dalignbedqueriesseq(cfg)
-        if step==7 or step=='all' or (not cfg is None):
+        if step==7 or step=='all':
             cfg=dalignbedqueriesseq2dalignbedstats(cfg)
-        if step==8 or step=='all' or (not cfg is None):
+        if step==8 or step=='all':
             cfg=dannots2dalignbed2dannotsagg(cfg)
-        if step==9 or step=='all' or (not cfg is None):
+        if step==9 or step=='all':
             cfg=dannotsagg2dannots2dalignbedannot(cfg)
-        if step==10 or step=='all' or (not cfg is None):
+        if step==10 or step=='all':
             cfg=dalignbedannot2daggbyquery(cfg)
 
         if cfg is None:        

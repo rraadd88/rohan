@@ -57,7 +57,7 @@ def read_table(p):
     return del_Unnamed(pd.read_table(p))
     
 def to_table(df,p):
-    if not exists(dirname(p)):
+    if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     df.to_csv(p,sep='\t')
 
@@ -65,10 +65,12 @@ def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
 def to_table_pqt(df,p):
-    if not exists(dirname(p)):
+    if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     df.to_parquet(p,engine='fastparquet',compression='gzip',)
 
+def tsv2pqt(p):
+    to_table_pqt(pd.read_table(p,low_memory=False),f"{p}.pqt")
     
 #slice     
 def dfvslicebysstr(df,sstr,include=True,how='and',outcols=False):
@@ -390,12 +392,14 @@ def dfdupval2unique(df,coldupval,preffix_unique='variant'):
     df[coldupval]=df.apply(lambda x : x[coldupval] if pd.isnull(x[preffix_unique]) else f"{x[coldupval]}: {preffix_unique} {int(x[preffix_unique])}",axis=1)
     return df
 
-def dfliststr2dflist(df,colliststrs):
+def dfliststr2dflist(df,colliststrs,colfmt='list'):
     import ast
     for c in colliststrs:
 #         print(c)
-        if df[c].apply(lambda x : (('[' in x) and (']' in x))).all():
+        if colfmt=='list' or df[c].apply(lambda x : (('[' in x) and (']' in x))).all(): #is list
             df[c]=df.apply(lambda x : ast.literal_eval(x[c].replace("nan","''")) if not isinstance(x[c], (list)) else x[c],axis=1)
+        elif colfmt=='tuple' or df[c].apply(lambda x : (('(' in x) and (')' in x))).all(): #is tuple        
+            df[c]=df.apply(lambda x : ast.literal_eval(x[c]) if not isinstance(x[c], (tuple)) else x[c],axis=1)
         else:
             df[c]=df.apply(lambda x : x[c].replace("nan","").split(',') if not isinstance(x[c], (list)) else x[c],axis=1)
     return df

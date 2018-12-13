@@ -8,9 +8,12 @@ def list2intersection(l):
 def list2union(l):
     return np.unique(np.ravel(l))
 
-def unique(l):
+def unique(l,drop=None):
     l=[str(s) for s in l]
+    if drop is not None:
+        l=[s for s in l if s!=drop]        
     return tuple(np.unique(l))
+
 def tuple2str(tup,sep=' '): 
     if isinstance(tup,tuple):
         tup=[str(s) for s in tup]
