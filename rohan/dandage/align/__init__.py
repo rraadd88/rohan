@@ -132,7 +132,12 @@ def get_genomes(cfg):
     else:
         logging.info('sizes of contigs are present')
 
-    ensembl_gff3d=f"pub/release-{cfg['genomerelease']}/gff3/{cfg['host']}/"    
+    if 'GRCh37' in cfg['genomeassembly']:    
+#     ftp://ftp.ensembl.org/pub/grch37/update/gff3/homo_sapiens/Homo_sapiens.GRCh37.87.gff3.gz
+        ensembl_gff3d=f"pub/grch37/update/gff3/{cfg['host']}/"    
+    else:
+        ensembl_gff3d=f"pub/release-{cfg['genomerelease']}/gff3/{cfg['host']}/"    
+    
     genome_gff3d=f"{cfg['genomed']}/{ensembl_gff3d}"
     cfg['genomegffp']=f'{genome_gff3d}/genome.gff3'
     if not exists(cfg['genomegffp']):

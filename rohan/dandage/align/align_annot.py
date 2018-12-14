@@ -96,12 +96,14 @@ def queriessam2dalignbed(cfg):
                     if len(read.positions)!=0:
                         read_position=read.positions[0]
                     else:
+                        logging.error('no alignments found')
                         print(read)
                         continue
 #                         read_position=[None]
                     try: 
                         tag_NM=read.get_tag('NM')
                     except: 
+                        logging.error('no NM tag found')
                         print(read)
                         continue
 #                         tag_NM=None
