@@ -50,10 +50,10 @@ install_requires=['biopython>=1.71',
                     # 'pyensembl==1.4.0',
                     ],
 platforms='Tested on Ubuntu 16.04 64bit',
-packages=find_packages(),
-package_data={'': ['rohan/data']},
-include_package_data=True,
-entry_points={
-    'console_scripts': ['rohan = rohan.pipeline:main',],
-    },
+packages=['rohan','rohan.dandage'], #find_packages(),
+#package_data={'': ['rohan/data']},
+#include_package_data=True,
+#entry_points={
+#    'console_scripts': ['rohan = rohan.pipeline:main',],
+#    },
 )
