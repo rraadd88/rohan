@@ -115,7 +115,7 @@ def queriessam2dalignbed(cfg):
                     chroms=[]
                     starts=[]
                     ends=[]
-                    algnids=algnids[:100]
+                    algnids=algnids[:20]
                     NMs=[]
                     strands=[]
                     for a in algnids:
@@ -165,7 +165,7 @@ def dalignbed2annotationsbed(cfg):
     alignmentbedsortedp=alignmentbedp+'.sorted.bed'
     logging.info(basename(alignmentbedsortedp))
     if not exists(alignmentbedsortedp) or cfg['force']:
-        cmd='{} sort -i {} > {}'.format(cfg['bedtools'],alignmentbedp,alignmentbedsortedp)
+        cmd=f"{cfg['bedtools']} sort -i {alignmentbedp} > {alignmentbedsortedp}"
         runbashcmd(cmd)
     
     genomegffsortedp=cfg['genomegffp']+'.sorted.gff3.gz'
@@ -260,7 +260,8 @@ def dalignbedqueriesseq2dalignbedstats(cfg):
     dalignbedstatsp=cfg['dalignbedstatsp']  
     logging.info(basename(dalignbedstatsp))
     if not exists(dalignbedstatsp) or cfg['force']:
-        df=dalignbedqueriesseq.apply(lambda x: align(x['query sequence'],x['aligned sequence']),
+        df=dalignbedqueriesseq.apply(lambda x: align(x['query sequence'],x['aligned sequence'],
+                                                    psm=2,pmm=0.5,pgo=-3,pge=-1,),
                            axis=1).apply(pd.Series)
         print(df.head())
         df.columns=['alignment','alignment: score']
@@ -483,25 +484,25 @@ def queries2alignments(cfg):
     logging.info(f'process from step:{step}')
     cfg['dalignannotedp']='{}/dalignannoted.tsv'.format(cfg['datad'])
     if not exists(cfg['dalignannotedp']) or cfg['force']:
-        if step==1 or step=='all':
+        if step<=1 or step=='all':
             cfg=dqueries2queriessam(cfg,dqueries)
-        if step==2 or step=='all':
+        if step<=2 or step=='all':
             cfg=queriessam2dalignbed(cfg)
-        if step==3 or step=='all':
+        if step<=3 or step=='all':
             cfg=dalignbed2annotationsbed(cfg)
-        if step==4 or step=='all':
+        if step<=4 or step=='all':
             cfg=dalignbed2dalignbedqueries(cfg)
-        if step==5 or step=='all':
+        if step<=5 or step=='all':
             cfg=alignmentbed2dalignedfasta(cfg)
-        if step==6 or step=='all':
+        if step<=6 or step=='all':
             cfg=dalignbed2dalignbedqueriesseq(cfg)
-        if step==7 or step=='all':
+        if step<=7 or step=='all':
             cfg=dalignbedqueriesseq2dalignbedstats(cfg)
-        if step==8 or step=='all':
+        if step<=8 or step=='all':
             cfg=dannots2dalignbed2dannotsagg(cfg)
-        if step==9 or step=='all':
+        if step<=9 or step=='all':
             cfg=dannotsagg2dannots2dalignbedannot(cfg)
-        if step==10 or step=='all':
+        if step<=10 or step=='all':
             cfg=dalignbedannot2daggbyquery(cfg)
 
         if cfg is None:        

@@ -159,3 +159,17 @@ def get_genomes(cfg):
             sys.exit(1)
     logging.info('genomes are installed!')
     return cfg
+
+## protein
+diamond_blastp_cols=['query',
+'subject',
+'% identity',
+'alignment length',
+'# of mistmatches',
+'gap openings',
+'query start',
+'query end',
+'subject start',
+'subject end',
+'E-value',
+'bit score']
