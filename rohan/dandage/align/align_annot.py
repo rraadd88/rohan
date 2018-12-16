@@ -110,12 +110,13 @@ def queriessam2dalignbed(cfg):
                     algnids.append(f"{read.reference_name}|{'-' if read.is_reverse else '+'}{read_position}|{read.cigarstring}|{tag_NM}")
                     if read.has_tag('XA'):
                         algnids+=['|'.join(s.split(',')) for s in read.get_tag('XA').split(';') if len(s.split(','))>1]
+#                     print(len(algnids))
                     chroms=[]
                     starts=[]
                     ends=[]
-                    ids=algnids
+                    algnids=algnids[:100]
                     NMs=[]
-                    strands=[]    
+                    strands=[]
                     for a in algnids:
                         strand=a.split('|')[1][0]
                         chroms.append(a.split('|')[0])
@@ -131,7 +132,7 @@ def queriessam2dalignbed(cfg):
                     col2dalignbed={'chromosome':chroms,
                                    'start':starts,
                                    'end':ends,
-                                   'id':ids,
+                                   'id':algnids,
                                    'NM':NMs,
                                    'strand':strands}
                 #     col2dalignbed=dict(zip(cols,[a.split('|')[0],a.split('|')[1],a.split('|')[2],a,a.split('|')[3],a.split('|')[4] for a in algnids]))
@@ -172,7 +173,7 @@ def dalignbed2annotationsbed(cfg):
         cmd=f"{cfg['bedtools']} sort -i {cfg['genomegffp']} > {genomegffsortedp}"
         runbashcmd(cmd)
 
-    annotationsbedp='{}/03_annotations.bed'.format(datatmpd)
+    annotationsbedp=f'{datatmpd}/03_annotations.bed'
     cfg['annotationsbedp']=annotationsbedp
     logging.info(basename(annotationsbedp))
     if not exists(annotationsbedp) or cfg['force']:    
@@ -294,11 +295,11 @@ def dannots2dalignbed2dannotsagg(cfg):
 
         dannots['annotation coordinate']=dannots.apply(lambda x: '{}:{}-{}({})'.format(x['chromosome annotation'],x['start annotation'],x['end annotation'], x['strand annotation']),axis=1)
         logging.debug('or this step takes more time?')
-        dannots.to_csv(daannotp,sep='\t')
-#         to_table_pqt(dannots,daannotp)
+#         dannots.to_csv(daannotp,sep='\t')
+        to_table_pqt(dannots,daannotp)
     else:
-#         dannots=read_table_pqt(daannotp)
-        dannots=read_table(daannotp)
+        dannots=read_table_pqt(daannotp)
+#         dannots=read_table(daannotp)
         dannots=del_Unnamed(dannots)
         
     logging.info(basename(dannotsaggp))
@@ -467,6 +468,9 @@ def queries2alignments(cfg):
     cfg['dannotsaggp']=f"{cfg['datatmpd']}/08_dannotsagg.tsv"
     cfg['dalignbedannotp']=f"{cfg['datatmpd']}/09_dalignbedannot.tsv"
     cfg['daggbyqueryp']=f"{cfg['datatmpd']}/10_daggbyquery.tsv"
+
+    annotationsbedp=f"{cfg['datatmpd']}/03_annotations.bed"
+    cfg['annotationsbedp']=annotationsbedp
     
     dqueries=read_table(cfg['dqueriesp'])
     print(dqueries.head())
