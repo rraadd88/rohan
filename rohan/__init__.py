@@ -1,1 +1,1 @@
-import rohan.dandage
+from rohan import dandage
