@@ -5,6 +5,7 @@ import subprocess
 import re
 import sys
 import logging 
+logging.basicConfig(level=logging.INFO)
 from os.path import join, basename, dirname, abspath, exists
 from os import makedirs,stat
 
@@ -292,21 +293,20 @@ def dannots2dalignbed2dannotsagg(cfg):
         dannots=lambda2cols(dannots,lambdaf=gffatributes2ids,
                     in_coln='attributes',
                 to_colns=['gene name','gene id','transcript id','protein id','exon id'])
-
-        dannots['annotation coordinate']=dannots.apply(lambda x: '{}:{}-{}({})'.format(x['chromosome annotation'],x['start annotation'],x['end annotation'], x['strand annotation']),axis=1)
+        dannots['annotation coordinate']=dannots.apply(lambda x: f"{x['chromosome annotation']}:{x['start annotation']}-{x['end annotation']}({x['strand annotation']})",axis=1)
         logging.debug('or this step takes more time?')
-#         dannots.to_csv(daannotp,sep='\t')
-        to_table_pqt(dannots,daannotp)
+        to_table(dannots,daannotp)
+#         to_table_pqt(dannots,daannotp)
     else:
-        dannots=read_table_pqt(daannotp)
-#         dannots=read_table(daannotp)
+#         dannots=read_table_pqt(daannotp)
+        dannots=read_table(daannotp)
         dannots=del_Unnamed(dannots)
         
     logging.info(basename(dannotsaggp))
     if not exists(dannotsaggp) or cfg['force']:
         if not 'dannots' in locals():
-            dannots=read_table_pqt(daannotp)
-#             dannots=pd.read_table(daannotp,low_memory=False)
+#             dannots=read_table_pqt(daannotp)
+            dannots=pd.read_table(daannotp,low_memory=False)
         dannots=del_Unnamed(dannots)
         dannots=dannots.reset_index()
         logging.debug('aggregating the annotations')

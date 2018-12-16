@@ -125,8 +125,11 @@ def hamming_distance(s1, s2):
     if len(s1) != len(s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1.upper(), s2.upper()))
-def align(s1,s2,test=False,
-         psm=2,pmm=0.5,pgo=-3,pge=-1):
+
+def align(s1,s2,test=False,seqfmt='dna',
+         psm=None,pmm=None,pgo=None,pge=None,
+         matrix=None,
+         outscore=False):
     """
     Creates pairwise local alignment between seqeunces.
     Get the visualization and alignment scores.
@@ -148,14 +151,27 @@ def align(s1,s2,test=False,
     x     No gap penalties.
     s     Same open and extend gap penalties for both sequences.
     d     The sequences have different open and extend gap penalties.
-    c     A callback function returns the gap penalties.    
+    c     A callback function returns the gap penalties.  
+    --
+    DNA: 
+    localms: psm=2,pmm=0.5,pgo=-3,pge=-1):
+    Protein:
+    http://resources.qiagenbioinformatics.com/manuals/clcgenomicsworkbench/650/Use_scoring_matrices.html
     """
     import operator
     from Bio import pairwise2
-    if any([p is None for p in [psm,pmm,pgo,pge]]):
-        alignments = pairwise2.align.localxx(s1.upper(),s2.upper())
-    else:
-        alignments = pairwise2.align.localms(s1.upper(),s2.upper(),psm,pmm,pgo,pge)
+    if seqfmt=='dna':
+        if any([p is None for p in [psm,pmm,pgo,pge]]):
+            alignments = pairwise2.align.localxx(s1.upper(),s2.upper())
+        else:
+            alignments = pairwise2.align.localms(s1.upper(),s2.upper(),psm,pmm,pgo,pge)
+    elif seqfmt=='protein':
+        from Bio.pairwise2 import format_alignment
+        from Bio.SubsMat import MatrixInfo
+        if matrix is None:
+            matrix = MatrixInfo.blosum62
+        alignments =pairwise2.align.globaldx(s1, s2, matrix)
+#         print(format_alignment(*a))        
     if test:
         print(alignments)
     alignsymb=np.nan
@@ -168,8 +184,11 @@ def align(s1,s2,test=False,
         if test:
             print(alignstr)
         break
-    return alignsymb.replace(' ','-'),score
-
+    if not outscore:
+        return alignsymb.replace(' ','-'),score
+    else:
+        return score
+    
 def translate(dnaseq,host='human',fmtout=str,tax_id=None):
     """
     Translates a DNA seqeunce
