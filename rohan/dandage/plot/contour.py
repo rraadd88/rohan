@@ -59,7 +59,7 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
     from scipy.interpolate import griddata
     xi=get_linspace(x)
     yi=get_linspace(y)
-    zi = griddata(x, y, z, xi, yi, interp=interp)#interp) #interp)
+    zi = griddata(x, y, z, xi, yi, method=interp)#interp) #interp)
     #FIXME giddata is deprecated
 #     from scipy.interpolate import griddata    
 #     zi=griddata((x, y), z, (xi[None,:], yi[:,None]), method=interp)
