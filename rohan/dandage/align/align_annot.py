@@ -283,8 +283,9 @@ def dannots2dalignbed2dannotsagg(cfg):
     dannotsaggp=cfg['dannotsaggp']
     logging.info(basename(daannotp))
     if ((not exists(daannotp)) and (not exists(dannotsaggp))) or cfg['force']:
+        gff_renamed_cols=[c+' annotation' if c in set(bed_colns).intersection(gff_colns) else c for c in gff_colns]
         dannots=pd.read_csv(cfg['annotationsbedp'],sep='\t',
-                   names=bed_colns+[c+' annotation' if c in set(bed_colns).intersection(gff_colns) else c for c in gff_colns ],
+                   names=bed_colns+gff_renamed_cols,
                            low_memory=False)
         dannots=del_Unnamed(dannots)
 
@@ -294,7 +295,7 @@ def dannots2dalignbed2dannotsagg(cfg):
         dannots=lambda2cols(dannots,lambdaf=gffatributes2ids,
                     in_coln='attributes',
                 to_colns=['gene name','gene id','transcript id','protein id','exon id'])
-        dannots['annotation coordinate']=dannots.apply(lambda x: f"{x['chromosome annotation']}:{x['start annotation']}-{x['end annotation']}({x['strand annotation']})",axis=1)
+        dannots=dannots.drop(['attributes']+[c for c in gff_renamed_cols if 'annotation' in c],axis=1)
         logging.debug('or this step takes more time?')
         to_table(dannots,daannotp)
 #         to_table_pqt(dannots,daannotp)
@@ -323,18 +324,6 @@ def dannots2dalignbed2dannotsagg(cfg):
         dannotsagg['annotations count']=dannotsagg['annotations count']-1
         dannotsagg.loc[dannotsagg['annotations count']==0,'region']='intergenic'
         dannotsagg.loc[dannotsagg['annotations count']!=0,'region']='genic'
-#         alignids=dannots['id'].unique()#[:15]
-#         logging.debug('start of the slowest step')
-#         for alignidi in range(len(alignids)):
-#             alignid=alignids[alignidi]
-#             dannoti=dannots.loc[dannots['id']==alignid,:]
-#             if len(dannoti.shape)==1:
-#                 dannoti=pd.DataFrame(dannoti).T
-#             dannoti=dannoti.dropna(subset=['type'])
-#             if len(dannoti)!=0:
-#                 dannoti=dannoti.loc[dannoti['type']!='chromosome',:].drop_duplicates(subset=['start annotation','end annotation'])
-#                 for col in ['type','gene name','gene id','transcript id','protein id','exon id']:    
-#                     dannotsagg.loc[alignid,col+'s']=";".join(np.unique(dannoti[col].fillna('nan').tolist()))
         logging.debug('end of the slowest step')            
         del dannots    
         dannotsagg=dannotsagg.reset_index()
@@ -479,30 +468,30 @@ def queries2alignments(cfg):
     for step in range(2,10+1,1):
         if not exists(f"{cfg['datatmpd']}/{step2doutp[step]}"):
             if step==2:
-                step='all'
+                step=-1
             break
     logging.info(f'process from step:{step}')
     cfg['dalignannotedp']='{}/dalignannoted.tsv'.format(cfg['datad'])
     if not exists(cfg['dalignannotedp']) or cfg['force']:
-        if step<=1 or step=='all':
+        if step<=1:
             cfg=dqueries2queriessam(cfg,dqueries)
-        if step<=2 or step=='all':
+        if step<=2:
             cfg=queriessam2dalignbed(cfg)
-        if step<=3 or step=='all':
+        if step<=3:
             cfg=dalignbed2annotationsbed(cfg)
-        if step<=4 or step=='all':
+        if step<=4:
             cfg=dalignbed2dalignbedqueries(cfg)
-        if step<=5 or step=='all':
+        if step<=5:
             cfg=alignmentbed2dalignedfasta(cfg)
-        if step<=6 or step=='all':
+        if step<=6:
             cfg=dalignbed2dalignbedqueriesseq(cfg)
-        if step<=7 or step=='all':
+        if step<=7:
             cfg=dalignbedqueriesseq2dalignbedstats(cfg)
-        if step<=8 or step=='all':
+        if step<=8:
             cfg=dannots2dalignbed2dannotsagg(cfg)
-        if step<=9 or step=='all':
+        if step<=9:
             cfg=dannotsagg2dannots2dalignbedannot(cfg)
-        if step<=10 or step=='all':
+        if step<=10:
             cfg=dalignbedannot2daggbyquery(cfg)
 
         if cfg is None:        
