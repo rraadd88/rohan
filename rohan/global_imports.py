@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 # plots
 import matplotlib.pyplot as plt
-plt.style.use('ggplot')
+plt.style.use('default')
 import seaborn as sns
 sns.set('notebook',font='Monaco')
 # stats
