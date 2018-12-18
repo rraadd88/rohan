@@ -55,8 +55,8 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
                 a=0.5,vmin=None,vmax=None,interp='linear',#'nn',
                 xlog=False,test=False,
                 fig=None,ax=None,plot_fh=None):
-#     from matplotlib.mlab import griddata
-    from scipy.interpolate import griddata
+    from matplotlib.mlab import griddata
+#     from scipy.interpolate import griddata
     xi=get_linspace(x)
     yi=get_linspace(y)
     zi = griddata(x, y, z, xi, yi, method=interp)#interp) #interp)
