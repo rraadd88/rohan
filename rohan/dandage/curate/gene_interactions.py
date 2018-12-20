@@ -3,10 +3,20 @@ import numpy as np
 from os.path import basename,dirname,exists
 from rohan.dandage.io_dfs import *
 
+def get_degrees(dintmap):
+    dintmap=filldiagonal(dintmap,dintmap.columns,0)
+    dintmap_binary=dintmap!=0
+    dints=dintmap_binary.sum()
+    dints.name='# of interactions'
+    dints=pd.DataFrame(dints)
+    return dints
+
 def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,dbiogrid_intmapp,
+                        logf=None,
                         experimental_system_type='physical',
                         genefmt='name',
-                        force=False,test=False,del_exp_syss=[],
+                        force=False,test=False,
+                        keep_exp_syss=[],del_exp_syss=[],
                         filldiagonal_withna=False):
     """
     taxid=559292
@@ -35,16 +45,26 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
 
                 print('All physical Experimental Systems.')
                 if test:
-                    print(pd.DataFrame(dbiogrid['Experimental System'].value_counts()))
-                if len(del_exp_syss)!=0:
+                    dlog=pd.DataFrame(dbiogrid['Experimental System'].value_counts())
+                    print(dlog)
+                    if not logf is None:
+                        to_table(dlog,f'{logf}.all_int.tsv')                    
+                if len(keep_exp_syss)!=0:
+                    dbiogrid=dbiogrid.loc[((dbiogrid['Experimental System'].isin(keep_exp_syss))),:]
+                elif len(del_exp_syss)!=0:
                     dbiogrid=dbiogrid.loc[((~dbiogrid['Experimental System'].isin(del_exp_syss))),:]
-                    if test:
-                        print('After removing',del_exp_syss)
-                        print('Physical Experimental Systems used.')
-                        print(pd.DataFrame(dbiogrid['Experimental System'].value_counts()))
-                dbiogrid.to_csv(dbiogrid_intlinp,sep='\t')
+                elif len(del_exp_syss)!=0 and len(keep_exp_syss)!=0:
+                    print('Error: either specify keep_exp_syss or del_exp_syss')
+                    return False
+                if test:
+                    print('Experimental Systems used.')
+                    dlog=pd.DataFrame(dbiogrid['Experimental System'].value_counts())
+                    if not logf is None:
+                        to_table(dlog,f'{logf}.kept_int.tsv')
+                    print(dlog)
+                to_table_pqt(dbiogrid,dbiogrid_intlinp)
             else:
-                dbiogrid=pd.read_table(dbiogrid_intlinp)
+                dbiogrid=read_table_pqt(dbiogrid_intlinp)
             # this cell makes a symmetric interaction map
             dbiogrid['count']=1
             if test:
@@ -59,8 +79,7 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
             # make it symmetric
             if test:
                 print('shape of non-symm intmap: ',dbiogrid_grid.shape)
-            to_table(dbiogrid_grid,dbiogrid_intmapp)
-            to_table_pqt(dbiogrid_grid,dbiogrid_intmapp+'.pqt')
+            to_table_pqt(dbiogrid_grid,dbiogrid_intmapp)
         else:         
 #             dbiogrid_grid=pd.read_table(dbiogrid_intmapp)
             dbiogrid_grid=read_table_pqt(dbiogrid_intmapp+'.pqt')
@@ -83,9 +102,11 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
 #             dbiogrid_intmap_symm=dbiogrid_intmap_symm.iloc[:5,:5]
         if filldiagonal_withna:
             dbiogrid_intmap_symm=filldiagonal(dbiogrid_intmap_symm)
-        to_table(dbiogrid_intmap_symm,dbiogrid_intmap_symmp)
-        to_table_pqt(dbiogrid_intmap_symm,dbiogrid_intmap_symmp+'.pqt')
+        to_table_pqt(dbiogrid_intmap_symm,dbiogrid_intmap_symmp)
         print('file saved at: ',dbiogrid_intmap_symmp)
+        dbiogrid_intmap_symm_lin=get_degrees(dbiogrid_intmap_symm)
+        dbiogrid_intmap_symm_lin.index.name=f'gene {genefmt}'
+        to_table(dbiogrid_intmap_symm_lin,f'{dbiogrid_intmap_symmp}.lin.tsv')
     else:
-        dbiogrid_intmap_symm=read_table_pqt(dbiogrid_intmap_symmp+'.pqt')
+        dbiogrid_intmap_symm=read_table_pqt(dbiogrid_intmap_symmp)
     return dbiogrid_intmap_symm

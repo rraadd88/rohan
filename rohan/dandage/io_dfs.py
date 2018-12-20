@@ -64,6 +64,13 @@ def to_table(df,p):
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
+def read_excel(p,sheet_name=None,):
+    xl = pd.ExcelFile(p)
+    xl.sheet_names  # see all sheet names
+    if sheet_name is None:
+        sheet_name=input(', '.join(xl.sheet_names))
+    return xl.parse(sheet_name) 
+
 def to_table_pqt(df,p):
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)

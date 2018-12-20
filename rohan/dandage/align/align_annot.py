@@ -397,22 +397,6 @@ def dalignbedannot2daggbyquery(cfg):
         daggbyquery=dalignbedannot.groupby('query id').agg(cols2aggf)
         daggbyquery.to_csv(daggbyqueryp,sep='\t')
         daggbyquery.to_csv(cfg['dalignannotedp'],sep='\t')
-#         daggbyquery=dalignbedannot.loc[(dalignbedannot['NM']==0),['query id','query sequence','gene names', 'gene ids','transcript ids']].drop_duplicates(subset=['query id'])
-#         if len(daggbyquery)!=0:
-#             daggbyquery=set_index(daggbyquery,'query id')            
-#             queryids=daggbyquery.index.tolist()
-#             for gi in range(len(queryids)):
-#                 gid=queryids[gi]
-#                 dalignbedannoti=dalignbedannot.loc[dalignbedannot['query id']==gid,:]
-#                 if len(dalignbedannoti.shape)==1:
-#                     dalignbedannoti=pd.DataFrame(dalignbedannoti).T
-#                 for col in ['types','gene names','gene ids','transcript ids','protein ids','exon ids']:
-#                     if (col in daggbyquery) and (col in dalignbedannoti):
-#                         daggbyquery.loc[gid,col]=";".join(np.unique(dalignbedannoti[col].fillna('nan').tolist()))
-#             dalignbedannot['alternate alignments count']=1
-#             daggbyquery=daggbyquery.join(pd.DataFrame(dalignbedannot.groupby('query id')['alternate alignments count'].agg('sum')))
-#             daggbyquery.to_csv(daggbyqueryp,sep='\t')
-#             daggbyquery.to_csv(cfg['dalignannotedp'],sep='\t')
     return cfg
 
 def queries2alignments(cfg):
