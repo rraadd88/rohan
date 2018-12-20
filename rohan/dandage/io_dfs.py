@@ -436,5 +436,5 @@ def pd_merge_dfwithobjcols(df1,df2,left_on=None,right_on=None,on=None,
         right_on=on
     df1=set_index(df1,left_on)
     df2=set_index(df2,right_on)
-    df=pd.concat([df1,df2], axis=0, join=how)
+    df=pd.concat([df1,df2], axis=1, join=how)
     return df.reset_index()
