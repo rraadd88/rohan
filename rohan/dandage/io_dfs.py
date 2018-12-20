@@ -418,3 +418,23 @@ def coltuples2str(cols):
     for col in cols:
         cols_str.append(tuple2str(col))
     return cols_str
+
+def colobj2str(df,test=False):
+    cols_obj=df.dtypes[df.dtypes=='object'].index.tolist()
+    if test:
+        print(cols_obj)
+    for c in cols_obj:
+        df[c]=df[c].astype('|S80')
+    return df
+
+#merge
+##fix for merge of object cols + non-object cols
+def pd_merge_dfwithobjcols(df1,df2,left_on=None,right_on=None,on=None,
+                          how='inner'):
+    if not on is None:
+        left_on=on
+        right_on=on
+    df1=set_index(df1,left_on)
+    df2=set_index(df2,right_on)
+    df=pd.concat([df1,df2], axis=0, join=how)
+    return df.reset_index()
