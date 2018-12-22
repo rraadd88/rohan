@@ -17,3 +17,28 @@ def add_corner_labels(fig,pos,test=False,kw_text=None):
         fig.text(dpos.loc[pos[2],'x'],dpos.loc[pos[2],'y'],label,va='baseline' ,**kw_text)
         del dpos
     return fig
+
+def dfannot2color(df,colannot,cmap='Spectral',
+                  renamecol=True,
+                  test=False,):
+    annots=dropna(df[colannot].unique())
+    if df.dtypes[colannot]=='O' or df.dtypes[colannot]=='S' or df.dtypes[colannot]=='a':
+        annots_keys=annots
+        annots=[ii for ii, i in enumerate(annots)]
+    import matplotlib
+    cmap = matplotlib.cm.get_cmap(cmap)
+    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    rgbas = [cmap(norm(a)) for a in annots]
+
+    if df.dtypes[colannot]=='O' or df.dtypes[colannot]=='S' or df.dtypes[colannot]=='a':
+        annot2color=dict(zip(annots_keys,rgbas))
+    else:
+        annot2color=dict(zip(annots,rgbas)) 
+    if renamecol:
+        colcolor=colannot
+    else:
+        colcolor=f"{colannot} color"
+    if test:
+        print(annot2color)
+    df[colcolor]=df[colannot].apply(lambda x : annot2color[x] if not pd.isnull(x) else x)
+    return df
