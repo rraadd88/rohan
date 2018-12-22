@@ -1,4 +1,4 @@
-## Also includes list and tuple things
+## Also includes list, np vectors and tuple things
 
 from functools import reduce
 import numpy as np
@@ -22,3 +22,5 @@ def tuple2str(tup,sep=' '):
         tup=[str(s) for s in tup]
         tup=sep.join(list(tup))
     return tup
+
+def dropna(x): return x[~pd.isnull(x)]

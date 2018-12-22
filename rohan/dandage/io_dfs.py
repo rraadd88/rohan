@@ -7,7 +7,21 @@
 ================================
 ``io_dfs``
 ================================
+
+dtypes
+'b'       boolean
+'i'       (signed) integer
+'u'       unsigned integer
+'f'       floating-point
+'c'       complex-floating point
+'O'       (Python) objects
+'S', 'a'  (byte-)string
+'U'       Unicode
+'V'       raw data (void)
 """
+
+
+
 from os.path import basename,dirname,exists
 from os import makedirs
 import pandas as pd
@@ -54,7 +68,12 @@ def set_index(data,col_index):
 
 #tsv io
 def read_table(p):
-    return del_Unnamed(pd.read_table(p))
+    if p.endswith('.tsv') or p.endswith('.tab'):
+        return del_Unnamed(pd.read_table(p))
+    elif p.endswith('.csv'):
+        return del_Unnamed(pd.read_csv(p,sep=','))
+    elif p.endswith('.pqt') or p.endswith('.parquet'):
+        return del_Unnamed(read_table_pqt(p))
     
 def to_table(df,p):
     if not exists(dirname(p)) and dirname(p)!='':
