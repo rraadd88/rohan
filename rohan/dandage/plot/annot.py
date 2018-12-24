@@ -18,6 +18,7 @@ def add_corner_labels(fig,pos,test=False,kw_text=None):
         del dpos
     return fig
 
+from rohan.dandage.io_sets import dropna
 def dfannot2color(df,colannot,cmap='Spectral',
                   renamecol=True,
                   test=False,):
@@ -27,7 +28,7 @@ def dfannot2color(df,colannot,cmap='Spectral',
         annots=[ii for ii, i in enumerate(annots)]
     import matplotlib
     cmap = matplotlib.cm.get_cmap(cmap)
-    norm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+    norm = matplotlib.colors.Normalize(vmin=np.min(annots), vmax=np.max(annots))
     rgbas = [cmap(norm(a)) for a in annots]
 
     if df.dtypes[colannot]=='O' or df.dtypes[colannot]=='S' or df.dtypes[colannot]=='a':
@@ -41,4 +42,4 @@ def dfannot2color(df,colannot,cmap='Spectral',
     if test:
         print(annot2color)
     df[colcolor]=df[colannot].apply(lambda x : annot2color[x] if not pd.isnull(x) else x)
-    return df
+    return df,annot2color

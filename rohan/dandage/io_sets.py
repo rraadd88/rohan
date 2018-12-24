@@ -2,6 +2,7 @@
 
 from functools import reduce
 import numpy as np
+import pandas as pd
 
 def list2intersection(l):
     return reduce(np.intersect1d, (l))

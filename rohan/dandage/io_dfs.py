@@ -457,3 +457,32 @@ def pd_merge_dfwithobjcols(df1,df2,left_on=None,right_on=None,on=None,
     df2=set_index(df2,right_on)
     df=pd.concat([df1,df2], axis=1, join=how)
     return df.reset_index()
+
+import logging
+def merge_dn2df(dn2df,on,how='left',
+               test=False):
+    dn2dflen=dict(zip([len(dn2df[dn].drop_duplicates(subset=on)) for dn in dn2df.keys()],dn2df.keys()))
+    if test:
+        print(dn2dflen)
+    for dni,dflen in enumerate(sorted(dn2dflen,reverse=True)):
+        dn=dn2dflen[dflen]
+        df=dn2df[dn]
+        df_ddup=df.drop_duplicates(subset=on)
+        if len(df)!=len(df_ddup):
+            df=df_ddup.copy()
+            logging.warning(f'{dn}: dropped duplicates. size drop from {len(df)} to {len(df_ddup)}')
+        cols=[c for c in df.columns.tolist() if not ((c in on) or (c==on))]
+        if test:
+            print(dn,cols)
+            print(dict(zip(cols,[f"{c} {dn}" for c in cols])))
+        df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
+        if dni==0:
+            dfmerged=df.copy()
+        else:
+            dfmerged=dfmerged.merge(df,on=on,how=how,
+#                                     suffixes=['',f" {dn}"],
+                                   )
+            if test:
+                print(f" {dn}",dfmerged.columns.tolist(),df.columns.tolist())
+        del df
+    return dfmerged
