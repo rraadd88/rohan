@@ -24,4 +24,9 @@ def tuple2str(tup,sep=' '):
         tup=sep.join(list(tup))
     return tup
 
-def dropna(x): return x[~pd.isnull(x)]
+def dropna(x):
+    x_=[]
+    for i in x:
+        if not pd.isnull(i):
+            x_.append(i)
+    return x_

@@ -486,3 +486,11 @@ def merge_dn2df(dn2df,on,how='left',
                 print(f" {dn}",dfmerged.columns.tolist(),df.columns.tolist())
         del df
     return dfmerged
+
+## sorting
+
+def dfsortbybins(df, col):
+    d=dict(zip(bins,[float(s.split(',')[0].split('(')[1]) for s in bins]))
+    df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
+    df=df.sort_values(f'{col} dfrankbybins').drop(f'{col} dfrankbybins',axis=1)
+    return df
