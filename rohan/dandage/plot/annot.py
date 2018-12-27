@@ -71,3 +71,23 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
         return df
     else:
         return ax
+
+    
+def annot_boxplot(dmetrics,dist=0.85,dist_=1.6,
+                  test=False):
+    """
+    :param dmetrics: hue in index, x in columns
+    """
+    if test:
+        dmetrics.index.name='index'
+        dmetrics.columns.name='columns'
+        dm=dmetrics.melt()
+        dm['value']=1
+        ax=sns.boxplot(data=dm,x='columns',y='value')
+    for huei,hue in enumerate(dmetrics.index):  
+        for xi,x in enumerate(dmetrics.columns):
+            if not pd.isnull(dmetrics.loc[hue,x]):
+                ax.text(xi+(huei*dist/len(dmetrics.index)-(dist_/len(dmetrics.index))),
+                        ax.get_ylim()[1],dmetrics.loc[hue,x],
+                       ha='center')
+    return ax

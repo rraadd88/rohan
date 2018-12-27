@@ -507,6 +507,19 @@ def dfsyn2appended(df,colsyn):
     #     break
     return dfdup
 
+def dfsyn2appended(df,colsyn):
+    """
+    for merging dfs with names with df with synonymns
+    param colsyn: col containing tuples of synonymns 
+    """
+    colsynappended=colsyn+' appended'
+    df.index=range(len(df))
+    #make duplicated row for each synonymn
+    dfsynappended=df[colsyn].apply(pd.Series).unstack().reset_index().drop('level_0',axis=1).set_index('level_1')
+    dfsynappended.columns=[colsynappended]
+    dfsynappended=dfsynappended.dropna()
+    return dfsynappended.join(df,how='left')
+
 ## sorting
 
 def dfsortbybins(df, col):
