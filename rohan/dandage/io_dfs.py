@@ -487,6 +487,26 @@ def merge_dn2df(dn2df,on,how='left',
         del df
     return dfmerged
 
+def dfsyn2appended(df,colsyn):
+    """
+    for merging dfs with names with df with synonymns
+    param colsyn: col containing tuples of synonymns 
+    """
+    colsynappended=colsyn+' appended'
+    df.index=range(len(df))
+    #make duplicated row for each synonymn
+    dfdup=pd.DataFrame(columns=df.columns.tolist()+[colsynappended])
+    for i in df.index:
+        for syn in df.loc[i,colsyn]:
+            ds=df.loc[i,:]
+            ds[colsynappended]=syn
+            dfdup=dfdup.append(ds,ignore_index=True)
+            del ds
+        del i
+    #         break
+    #     break
+    return dfdup
+
 ## sorting
 
 def dfsortbybins(df, col):

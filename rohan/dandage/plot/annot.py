@@ -26,6 +26,9 @@ def dfannot2color(df,colannot,cmap='Spectral',
     if df.dtypes[colannot]=='O' or df.dtypes[colannot]=='S' or df.dtypes[colannot]=='a':
         annots_keys=annots
         annots=[ii for ii, i in enumerate(annots)]
+    if test:
+        print(annots_keys,annots)
+
     import matplotlib
     cmap = matplotlib.cm.get_cmap(cmap)
     norm = matplotlib.colors.Normalize(vmin=np.min(annots), vmax=np.max(annots))
@@ -34,6 +37,8 @@ def dfannot2color(df,colannot,cmap='Spectral',
     if df.dtypes[colannot]=='O' or df.dtypes[colannot]=='S' or df.dtypes[colannot]=='a':
         annot2color=dict(zip(annots_keys,rgbas))
     else:
+        if test:
+            print('non string data')
         annot2color=dict(zip(annots,rgbas)) 
     if renamecol:
         colcolor=colannot
@@ -43,3 +48,26 @@ def dfannot2color(df,colannot,cmap='Spectral',
         print(annot2color)
     df[colcolor]=df[colannot].apply(lambda x : annot2color[x] if not pd.isnull(x) else x)
     return df,annot2color
+
+def plot_scatterbysubsets(df,colx,coly,colannot,
+                        ax=None,outdf=True,test=False,
+                        kws_dfannot2color={'cmap':'spring'},
+                        label_n=False,
+                        kws_scatter={'s':10,'alpha':0.5},):
+    if ax is None:
+        ax=plt.subplot()
+    df,annot2color=dfannot2color(df,colannot,renamecol=False,
+                                 test=test,
+                                 **kws_dfannot2color)
+    colc=f"{colannot} color"
+    for annot in annot2color.keys():
+        df_=df.loc[df[colannot]==annot,[colx,coly,colc]].dropna()
+        ax.scatter(x=df_[colx],y=df_[coly],c=df_[colc],
+        label=f"{annot} (n={len(df_)})" if label_n else annot,
+                  **kws_scatter)
+    ax.set_xlabel(colx)
+    ax.set_ylabel(coly)
+    if outdf:
+        return df
+    else:
+        return ax
