@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 import pandas as pd
 
-def add_corner_labels(fig,pos,test=False,kw_text=None):
+def add_corner_labels(fig,pos,xoff=0,yoff=0,test=False,kw_text=None):
     import string
     label2pos=dict(zip(string.ascii_uppercase[:len(pos)],pos))
     for label in label2pos:
@@ -14,7 +15,7 @@ def add_corner_labels(fig,pos,test=False,kw_text=None):
         dpos.index=dpos.reset_index().index+1
         if test:
             print(dpos.loc[pos[2],'x'],dpos.loc[pos[2],'y'])
-        fig.text(dpos.loc[pos[2],'x'],dpos.loc[pos[2],'y'],label,va='baseline' ,**kw_text)
+        fig.text(dpos.loc[pos[2],'x']+xoff,dpos.loc[pos[2],'y']+yoff,label,va='baseline' ,**kw_text)
         del dpos
     return fig
 
@@ -73,7 +74,8 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
         return ax
 
     
-def annot_boxplot(dmetrics,dist=0.85,dist_=1.6,
+def annot_boxplot(ax,dmetrics,distxwithin=0.85,distx=1.6,
+                  disty=0,
                   test=False):
     """
     :param dmetrics: hue in index, x in columns
@@ -87,7 +89,23 @@ def annot_boxplot(dmetrics,dist=0.85,dist_=1.6,
     for huei,hue in enumerate(dmetrics.index):  
         for xi,x in enumerate(dmetrics.columns):
             if not pd.isnull(dmetrics.loc[hue,x]):
-                ax.text(xi+(huei*dist/len(dmetrics.index)-(dist_/len(dmetrics.index))),
-                        ax.get_ylim()[1],dmetrics.loc[hue,x],
+                ax.text(xi+(huei*distxwithin/len(dmetrics.index)-(distx/len(dmetrics.index))),
+                ax.get_ylim()[1]+disty,dmetrics.loc[hue,x],
                        ha='center')
     return ax
+
+def pval2stars(pval,alternative='two-sided',swarm=False):
+    if pd.isnull(pval):
+        return pval
+    elif pval < 0.0001:
+        return "****" if not swarm else "*\n**\n*"
+    elif (pval < 0.001):
+        return "***" if not swarm else "*\n**"
+    elif (pval < 0.01):
+        return "**"
+    elif (pval < 0.025 if alternative=='two-sided' else 0.05):
+        return "*"
+    else:
+        return "ns"
+
+

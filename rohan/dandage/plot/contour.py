@@ -51,7 +51,7 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
                 scatter=False,contour=False,
                 annot_fit_land=True,
                 streamlines=False,
-                cmap="coolwarm",cbar=True,cbar_label="",
+                cmap="coolwarm",cbar=True,cbar_label="",cbar_ax_pos=[0.55, 0.3, 0.035, 0.5],
                 a=0.5,vmin=None,vmax=None,interp='linear',#'nn',
                 xlog=False,test=False,
                 fig=None,ax=None,plot_fh=None):
@@ -98,7 +98,7 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
 
     if cbar:
         # colorbar_ax = fig.add_axes([0.55, 0.15, 0.035, 0.5]) #[left, bottom, width, height]
-        colorbar_ax = fig.add_axes([0.55, 0.3, 0.035, 0.5]) #[left, bottom, width, height]
+        colorbar_ax = fig.add_axes(cbar_ax_pos) #[left, bottom, width, height]
         colorbar_ax2=fig.colorbar(CS, cax=colorbar_ax,extend='both')
         colorbar_ax2.set_label(cbar_label)
         clim=[-1,1]

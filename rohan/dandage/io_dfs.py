@@ -471,14 +471,14 @@ def merge_dn2df(dn2df,on,how='left',
         if len(df)!=len(df_ddup):
             df=df_ddup.copy()
             logging.warning(f'{dn}: dropped duplicates. size drop from {len(df)} to {len(df_ddup)}')
-        cols=[c for c in df.columns.tolist() if not ((c in on) or (c==on))]
-        if test:
-            print(dn,cols)
-            print(dict(zip(cols,[f"{c} {dn}" for c in cols])))
-        df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
         if dni==0:
             dfmerged=df.copy()
         else:
+            cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in dfmerged)]
+            if test:
+                print(dn,cols)
+                print(dict(zip(cols,[f"{c} {dn}" for c in cols])))
+            df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
             dfmerged=dfmerged.merge(df,on=on,how=how,
 #                                     suffixes=['',f" {dn}"],
                                    )
