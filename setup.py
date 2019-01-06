@@ -29,7 +29,7 @@ setup(
 name='rohan',
 author='Rohan Dandage',
 author_email='rohanadandage@gmail.com',
-version='0.0.5',
+version='0.0.6',
 url='https://github.com/rraadd88/rohan',
 download_url='https://github.com/rraadd88/rohan/archive/master.zip',
 description='stuff for doing stuff and such',
