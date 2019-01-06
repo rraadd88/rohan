@@ -43,6 +43,7 @@ def get_plots(plotp,doutp,force=False,symbols=False):
             runbashcmd(f"pdftocairo -svg {plotrawp} {plotsvgp}")
     return abspath(plotsvgp)
 
+from rohan.dandage.io_strs import str2num
 def get_svg_size(p,testp='test.txt',test=False):
     runbashcmd(f'head -60 {p} > {testp}')
     w,h=np.nan,np.nan
@@ -59,23 +60,21 @@ def get_svg_size(p,testp='test.txt',test=False):
     return w,h
 
 from rohan.dandage.io_dfs import *
-def configure(dcfg,version='001',dp='test'):
-    dout=abspath(f'{dp}/{version}')
-    if not exists(dout):
-        makedirs(dout,exist_ok=True)
+def configure(dcfg,doutp):
+    if not exists(doutp):
+        makedirs(doutp,exist_ok=True)
 
     dcfg['plotp']=dcfg['plotp'].apply(lambda x :abspath(x) )    
     if not dcfg.apply(lambda x : exists(x['plotp']),axis=1).all():
         print(dcfg.apply(lambda x : x['plotp'] if not exists(x['plotp']) else True,axis=1))
-    dcfg['plotsvgp']=dcfg.apply(lambda x : get_plots(x['plotp'],doutp=f"{dout}/{x['figi']:02d}",force=False,symbols=False),axis=1)
+    dcfg['plotsvgp']=dcfg.apply(lambda x : get_plots(x['plotp'],doutp=f"{doutp}/{x['figi']:02d}",force=False,symbols=False),axis=1)
 
-    dcfg['fightmlp']=dcfg.apply(lambda x : f"{dout}/fig{x['figi']:02d}.html",axis=1)
-    # dcfg['figrawp']=dcfg.apply(lambda x : f"{dout}/{x['figi']:02d}/{x['figi']:02d}.html",axis=1)
+    dcfg['fightmlp']=dcfg.apply(lambda x : f"{doutp}/fig{x['figi']:02d}.html",axis=1)
+    # dcfg['figrawp']=dcfg.apply(lambda x : f"{doutp}/{x['figi']:02d}/{x['figi']:02d}.html",axis=1)
     for figi in dcfg['figi'].unique():
         import string
         dcfg.loc[(dcfg['figi']==figi),'ploti']=list(string.ascii_uppercase[:len(dcfg.loc[(dcfg['figi']==figi),:])])
 
-    from rohan.dandage.io_strs import str2num
     df=dcfg.apply(lambda x: get_svg_size(x['plotp'],test=False),axis=1).apply(pd.Series)
     df.columns=['plot width','plot height']
     dcfg=dcfg.join(df)
@@ -83,17 +82,17 @@ def configure(dcfg,version='001',dp='test'):
 
     for size in ['width','height']:
         dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 3 if x>10 else 1 if x<4 else 2)
-    to_table(dcfg,f"{dout}/dcfg.tsv")
+    to_table(dcfg,f"{doutp}/dcfg.tsv")
     return dcfg
 
 
 def make_html(dcfgp,version,dp):
-    dcfgp='../../rohan/rohan/dandage/figs/dcfg.tsv'
+    doutp=abspath(f'{dp}/{version}')
     dcfg=pd.read_table(dcfgp,names=['figi','fign','plotn','plotp'])
-    dcfg=configure(dcfg,version='001',dp='test')
-    templatep=f"{dout}/masonry/index.html"
+    dcfg=configure(dcfg,doutp)
+    templatep=f"{doutp}/masonry/index.html"
     if not exists(dirname(templatep)):
-        runbashcmd(f"cd {dout};git clone https://github.com/rraadd88/masonry.git")
+        runbashcmd(f"cd {doutp};git clone https://github.com/rraadd88/masonry.git")
     else:
         runbashcmd(f"cd {dirname(templatep)};git pull")    
     from rohan.dandage.io_files import fill_form   
@@ -107,7 +106,7 @@ def make_html(dcfgp,version,dp):
                splitend='</div><!-- class="grid are-images-unloaded" -->',
                field2replace={'<link rel="stylesheet" href="css/style.css">':'<link rel="stylesheet" href="masonry/css/style.css">',
                              '<script  src="js/index.js"></script>':'<script  src="masonry/js/index.js"></script>',
-                             f'{dout}/':''})
+                             f'{doutp}/':''})
     #     break
 ##--
 ##--
