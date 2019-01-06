@@ -10,6 +10,8 @@
 """
 import logging
 
+from rohan.dandage.io_nums import str2num
+
 # convert
 def s2re(s,ss2re):
     for ss in ss2re:
@@ -163,3 +165,21 @@ def get_time():
     import datetime
     time=make_pathable_string('%s' % datetime.datetime.now())
     return time.replace('-','_').replace(':','_').replace('.','_')
+
+def byte2str(b): return b.decode("utf-8") 
+
+# find
+
+def findall(s,substring,outends=False):
+    import re
+    if outends:
+        return [(a.start(), a.end()) for a in list(re.finditer(substring, s))]
+    else:
+        return [a.start() for a in list(re.finditer(substring, s))]
+    
+def getall_fillers(s,leftmarker='{',rightmarker='}',
+                  leftoff=0,rightoff=0):
+    filers=[]
+    for ini, end in zip(findall(s,leftmarker,outends=False),findall(s,rightmarker,outends=False)):
+        filers.append(s[ini+1+leftoff:end+rightoff])
+    return filers    
