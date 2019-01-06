@@ -6,6 +6,7 @@ import string
 import svgutils.transform as sg
 from lxml import etree
 import logging
+from rohan.global_imports import *
 
 # from lxml.etree import XMLParser, parse
 def sgvfromhugefile(plotp):
@@ -42,7 +43,6 @@ def get_plots(plotp,doutp,force=False,symbols=False):
             runbashcmd(f"pdftocairo -svg {plotrawp} {plotsvgp}")
     return abspath(plotsvgp)
 
-from rohan.dandage.io_sys import runbashcmd
 def get_svg_size(p,testp='test.txt',test=False):
     runbashcmd(f'head -60 {p} > {testp}')
     w,h=np.nan,np.nan
@@ -58,6 +58,7 @@ def get_svg_size(p,testp='test.txt',test=False):
                 break
     return w,h
 
+from rohan.dandage.io_dfs import *
 def configure(dcfg,version='001',dp='test'):
     dout=abspath(f'{dp}/{version}')
     if not exists(dout):
@@ -82,8 +83,32 @@ def configure(dcfg,version='001',dp='test'):
 
     for size in ['width','height']:
         dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 3 if x>10 else 1 if x<4 else 2)
+    to_table(dcfg,f"{dout}/dcfg.tsv")
     return dcfg
 
+
+def make_html(dcfgp,version,dp):
+    dcfgp='../../rohan/rohan/dandage/figs/dcfg.tsv'
+    dcfg=pd.read_table(dcfgp,names=['figi','fign','plotn','plotp'])
+    dcfg=configure(dcfg,version='001',dp='test')
+    templatep=f"{dout}/masonry/index.html"
+    if not exists(dirname(templatep)):
+        runbashcmd(f"cd {dout};git clone https://github.com/rraadd88/masonry.git")
+    else:
+        runbashcmd(f"cd {dirname(templatep)};git pull")    
+    from rohan.dandage.io_files import fill_form   
+    for figi in dcfg['figi'].unique():
+    #     if len(dcfg.loc[(dcfg['figi']==figi),:])>0:
+        fill_form(dcfg.loc[(dcfg['figi']==figi),:],
+               templatep=templatep,
+               template_insert_line='<div class="grid__item grid__item--width{plot width scale} grid__item--height{plot height scale}">\n  <fig class="plot"><img src="{plotsvgp}"/><ploti>{ploti}</ploti></fig></div>',
+               outp=dcfg.loc[(dcfg['figi']==figi),'fightmlp'].unique()[0],
+               splitini='<div class="grid__gutter-sizer"></div>',
+               splitend='</div><!-- class="grid are-images-unloaded" -->',
+               field2replace={'<link rel="stylesheet" href="css/style.css">':'<link rel="stylesheet" href="masonry/css/style.css">',
+                             '<script  src="js/index.js"></script>':'<script  src="masonry/js/index.js"></script>',
+                             f'{dout}/':''})
+    #     break
 ##--
 ##--
 ##--
