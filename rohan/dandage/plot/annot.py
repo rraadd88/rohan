@@ -74,12 +74,14 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
         return ax
 
     
-def annot_boxplot(ax,dmetrics,distxwithin=0.85,distx=1.6,
-                  disty=0,
+def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
+                  yoff=0,
                   test=False):
     """
     :param dmetrics: hue in index, x in columns
     """
+    xlabel=ax.get_xlabel()
+    ylabel=ax.get_ylabel()
     if test:
         dmetrics.index.name='index'
         dmetrics.columns.name='columns'
@@ -89,23 +91,33 @@ def annot_boxplot(ax,dmetrics,distxwithin=0.85,distx=1.6,
     for huei,hue in enumerate(dmetrics.index):  
         for xi,x in enumerate(dmetrics.columns):
             if not pd.isnull(dmetrics.loc[hue,x]):
-                ax.text(xi+(huei*distxwithin/len(dmetrics.index)-(distx/len(dmetrics.index))),
-                ax.get_ylim()[1]+disty,dmetrics.loc[hue,x],
+                ax.text(xi+(huei*xoffwithin/len(dmetrics.index)+(xoff/len(dmetrics.index))),
+                ax.get_ylim()[1]+yoff,dmetrics.loc[hue,x],
                        ha='center')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     return ax
 
-def pval2stars(pval,alternative='two-sided',swarm=False):
+from rohan.dandage.io_nums import is_numeric
+def pval2annot(pval,alternative='two-sided',fmt='*',#swarm=False
+              ):
+    """
+    fmt: *|<|'num'
+    """
     if pd.isnull(pval):
         return pval
+    alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) if 0.05
     elif pval < 0.0001:
-        return "****" if not swarm else "*\n**\n*"
+        return "****" if fmt=='*' else "P<0.0001" if fmt=='<' else f"{pval:.2g}" #not swarm else "*\n**\n*"
     elif (pval < 0.001):
-        return "***" if not swarm else "*\n**"
+        return "***"  if fmt=='*' else "P<0.001" if fmt=='<' else f"{pval:.2g}"
     elif (pval < 0.01):
-        return "**"
-    elif (pval < 0.025 if alternative=='two-sided' else 0.05):
-        return "*"
+        return "**" if fmt=='*' else "P<0.01" if fmt=='<' else f"{pval:.2g}"
+    elif (pval < alpha):
+        return "*" if fmt=='*' else f"P<{alpha}" if fmt=='<' else f"{pval:.2g}"
     else:
-        return "ns"
+        return "ns" if (fmt=='*' or fmt=='<') else f"{pval:.2g}"
 
+def pval2stars(pval,alternative='two-sided'): return pval2annot(pval,alternative=alternative,fmt='*',)
 
+               

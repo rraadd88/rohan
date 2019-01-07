@@ -1,4 +1,8 @@
 import pandas as pd
+
+from shutil import copyfile
+def copy(src, dst):copyfile(src, dst)
+
 def sheetname2df_to_excel(sheetname2df,datap,):
     writer = pd.ExcelWriter(datap)
     for sn in sheetname2df:
