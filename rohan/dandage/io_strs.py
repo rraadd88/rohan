@@ -18,6 +18,14 @@ def s2re(s,ss2re):
         s=s.replace(ss,ss2re[ss])
     return s
 
+def replacelist(l,replaces,replacewith=''):
+    lout=[]    
+    for s in l:
+        for r in replaces:
+            s=s.replace(r,replacewith)
+        lout.append(s) 
+    return lout
+
 def tuple2str(tup,sep=' '): 
     if isinstance(tup,tuple):
         tup=[str(s) for s in tup if not s=='']

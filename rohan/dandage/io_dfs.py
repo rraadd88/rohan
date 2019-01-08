@@ -74,22 +74,20 @@ def read_table(p):
         return del_Unnamed(pd.read_csv(p,sep=','))
     elif p.endswith('.pqt') or p.endswith('.parquet'):
         return del_Unnamed(read_table_pqt(p))
-    
-def to_table(df,p):
-    if not exists(dirname(p)) and dirname(p)!='':
-        makedirs(dirname(p),exist_ok=True)
-    df.to_csv(p,sep='\t')
-
+    else: 
+        logging.error(f'unknown extension {p}')
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
-
-def read_excel(p,sheet_name=None,):
-    xl = pd.ExcelFile(p)
-    xl.sheet_names  # see all sheet names
-    if sheet_name is None:
-        sheet_name=input(', '.join(xl.sheet_names))
-    return xl.parse(sheet_name) 
-
+    
+def to_table(df,p):
+    if p.endswith('.tsv') or p.endswith('.tab'):
+        if not exists(dirname(p)) and dirname(p)!='':
+            makedirs(dirname(p),exist_ok=True)
+        df.to_csv(p,sep='\t')
+    elif p.endswith('.pqt') or p.endswith('.parquet'):
+        to_table_pqt(df,p)
+    else: 
+        logging.error(f'unknown extension {p}')        
 def to_table_pqt(df,p):
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
@@ -97,6 +95,13 @@ def to_table_pqt(df,p):
 
 def tsv2pqt(p):
     to_table_pqt(pd.read_table(p,low_memory=False),f"{p}.pqt")
+    
+def read_excel(p,sheet_name=None,):
+    xl = pd.ExcelFile(p)
+    xl.sheet_names  # see all sheet names
+    if sheet_name is None:
+        sheet_name=input(', '.join(xl.sheet_names))
+    return xl.parse(sheet_name) 
     
 #slice     
 def dfvslicebysstr(df,sstr,include=True,how='and',outcols=False):
@@ -270,7 +275,17 @@ def df2unstack(df,coln='columns',idxn='index',col='value'):
     df=df.unstack()
     df.name=col
     return pd.DataFrame(df).reset_index()
-    
+
+from rohan.dandage.io_strs import replacelist
+def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
+    dfs=[]
+    for cols in [df1cols,df2cols]:
+        df_=df[cols+cols_common]
+        df_=df_.rename(columns=dict(zip(df_.columns,replacelist(df_.columns,replace_suffix))))
+        dfs.append(df_)
+    dfout=dfs[0].append(dfs[1])
+    return dfout
+
 def lambda2cols(df,lambdaf,in_coln,to_colns):
     df_=df.apply(lambda x: lambdaf(x[in_coln]),
                  axis=1).apply(pd.Series)
