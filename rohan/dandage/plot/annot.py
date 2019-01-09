@@ -145,15 +145,15 @@ def pval2annot(pval,alternative='two-sided',fmt='*',#swarm=False
     if pd.isnull(pval):
         return ''
     elif pval < 0.0001:
-        return "****" if fmt=='*' else "P<0.0001" if fmt=='<' else f"{pval:.2g}" #not swarm else "*\n**\n*"
+        return "****" if fmt=='*' else "P<0.0001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<7 else f"P=\n{pval:.1g}"#not swarm else "*\n**\n*"
     elif (pval < 0.001):
-        return "***"  if fmt=='*' else "P<0.001" if fmt=='<' else f"{pval:.2g}"
+        return "***"  if fmt=='*' else "P<0.001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<7 else f"P=\n{pval:.1g}"
     elif (pval < 0.01):
-        return "**" if fmt=='*' else "P<0.01" if fmt=='<' else f"{pval:.2g}"
+        return "**" if fmt=='*' else "P<0.01" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<7 else f"P=\n{pval:.1g}"
     elif (pval < alpha):
-        return "*" if fmt=='*' else f"P<{alpha}" if fmt=='<' else f"{pval:.2g}"
+        return "*" if fmt=='*' else f"P<{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<7 else f"P=\n{pval:.1g}"
     else:
-        return "ns" if (fmt=='*' or fmt=='<') else f"{pval:.2g}"
+        return "ns" if (fmt=='*' or fmt=='<') else f"P={pval:.1g}" if len(f"P={pval:.1g}")<7 else f"P=\n{pval:.1g}"
 
 def pval2stars(pval,alternative='two-sided'): return pval2annot(pval,alternative=alternative,fmt='*',)
 

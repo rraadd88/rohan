@@ -366,7 +366,20 @@ def completesubmap(dsubmap,fmt,
             dsubmap.loc[v,:]=np.nan
     return dsubmap.loc[vals,vals]
 
+def get_offdiagonal_values(dcorr,take_diag=False,replace=np.nan):
+    for ii,i in enumerate(dcorr.index):
+        for ci,c in enumerate(dcorr.columns):
+            if ci>ii:
+                dcorr.loc[i,c]=replace
+            if not take_diag:
+                if ci==ii:
+                    dcorr.loc[i,c]=replace
+    return dcorr
+
 def get_offdiag_vals(dcorr):
+    """
+    for lin dcorr i guess
+    """
     del_indexes=[]
     for spc1 in np.unique(dcorr.index.get_level_values(0)):
         for spc2 in np.unique(dcorr.index.get_level_values(0)):
