@@ -73,6 +73,43 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
     else:
         return ax
 
+def get_dmetrics(df,metricsby,colx,coly,colhue,xs,hues,alternative,
+                test=False):
+    from scipy.stats import mannwhitneyu
+    if len(hues)==0:
+        hues=['a']
+        colhue='a'
+        df['a']='a'
+    dmetrics=pd.DataFrame(columns=xs,
+                          index=hues)
+    if test:
+        print(dmetrics)
+    if metricsby=='hues':
+        # first hue vs rest    
+        for hue in dmetrics.index[1:]:  
+            for x in dmetrics.columns:
+                X=df.loc[((df[colhue]==hues[0]) & (df[colx]==x)),coly]
+                Y=df.loc[((df[colhue]==hue) & (df[colx]==x)),coly]
+                if not (len(X)==0 or len(Y)==0):
+                    dmetrics.loc[hue,x]=mannwhitneyu(X,Y,
+                                                     alternative=alternative)[1]
+                else:
+                    dmetrics.loc[hue,x]=np.nan
+    # first x vs rest
+    elif metricsby=='xs':
+        # first hue vs rest    
+        for hue in dmetrics.index:
+            for x in dmetrics.columns[1:]:
+                X=df.loc[((df[colhue]==hue) & (df[colx]==xs[0])),coly]
+                Y=df.loc[((df[colhue]==hue) & (df[colx]==x)),coly]
+                if not (len(X)==0 or len(Y)==0):
+                    dmetrics.loc[hue,x]=mannwhitneyu(X,Y,
+                                                     alternative=alternative)[1]
+                else:
+                    dmetrics.loc[hue,x]=np.nan
+    if test:
+        print(dmetrics)
+    return dmetrics
     
 def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
                   yoff=0,
@@ -104,9 +141,9 @@ def pval2annot(pval,alternative='two-sided',fmt='*',#swarm=False
     """
     fmt: *|<|'num'
     """
+    alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) else 0.05
     if pd.isnull(pval):
-        return pval
-    alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) if 0.05
+        return ''
     elif pval < 0.0001:
         return "****" if fmt=='*' else "P<0.0001" if fmt=='<' else f"{pval:.2g}" #not swarm else "*\n**\n*"
     elif (pval < 0.001):

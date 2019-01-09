@@ -542,3 +542,18 @@ def dfsortbybins(df, col):
     df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
     df=df.sort_values(f'{col} dfrankbybins').drop(f'{col} dfrankbybins',axis=1)
     return df
+
+from rohan.dandage.io_sets import dropna
+def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids):
+    """
+    cols_fracby:
+    cols_subset:
+    """
+    for col_fracby in cols_fracby2vals:
+        val=cols_fracby2vals[col_fracby]
+        ids=df.loc[(df[col_fracby]==val),col_ids].dropna().unique()
+        for col_subset in cols_subset:
+            for subset in dropna(df[col_subset].unique()):
+                ids_subset=df.loc[(df[col_subset]==subset),col_ids].dropna().unique()
+                df.loc[(df[col_subset]==subset),f'P {col_fracby} {col_subset}']=len(set(ids_subset).intersection(ids))/len(ids_subset)
+    return df
