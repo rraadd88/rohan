@@ -2,17 +2,17 @@ import itertools
 import seaborn as sns
 import pandas as pd
 
-def plotc(cs):
+def plotc(cs,title=''):
     sns.set_palette(cs)
     ax=sns.palplot(sns.color_palette())
-    plt.title(f"{','.join(cs)}")
+    plt.title(f"{title}{','.join(cs)}")
     
 def get_colors(shade='light',
                 c1='r',
                 bright=False,
                test=False,
                 ):
-    dcolors=pd.DataFrame({'r':["#FF5555", "#D40000",'#C0C0C0','#888888'],
+    dcolors=pd.DataFrame({'r':["#FF5555", "#FF0000",'#C0C0C0','#888888'],
         'b':["#5599FF", "#0066FF",'#C0C0C0','#888888'],
         'o':['#FF9955','#FF6600','#C0C0C0','#888888'],
         'g':['#87DE87','#37C837','#C0C0C0','#888888'],

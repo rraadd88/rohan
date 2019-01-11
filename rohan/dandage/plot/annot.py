@@ -51,15 +51,21 @@ def dfannot2color(df,colannot,cmap='Spectral',
     return df,annot2color
 
 def plot_scatterbysubsets(df,colx,coly,colannot,
-                        ax=None,outdf=True,test=False,
-                        kws_dfannot2color={'cmap':'spring'},
+                        ax=None,dfout=True,
+                          kws_dfannot2color={'cmap':'spring'},
                         label_n=False,
-                        kws_scatter={'s':10,'alpha':0.5},):
+                        kws_scatter={},
+                         annot2color=None,
+                         test=False):
     if ax is None:
         ax=plt.subplot()
-    df,annot2color=dfannot2color(df,colannot,renamecol=False,
-                                 test=test,
-                                 **kws_dfannot2color)
+    if annot2color is None:
+        df,annot2color=dfannot2color(df,colannot,renamecol=False,
+                                     test=test,
+                                     **kws_dfannot2color)
+    else:
+        colcolor=f"{colannot} color"
+        df[colcolor]=df[colannot].apply(lambda x : annot2color[x] if not pd.isnull(x) else x)
     colc=f"{colannot} color"
     for annot in annot2color.keys():
         df_=df.loc[df[colannot]==annot,[colx,coly,colc]].dropna()
@@ -68,7 +74,7 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
                   **kws_scatter)
     ax.set_xlabel(colx)
     ax.set_ylabel(coly)
-    if outdf:
+    if dfout:
         return df
     else:
         return ax
@@ -133,6 +139,21 @@ def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
                        ha='center')
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    return ax
+
+def annot_heatmap(ax,dannot,
+                  xoff=0,yoff=0,
+                  kws_text={},# zip
+                       annot_left='(',annot_right=')',
+                ):
+    """
+    kws_text={'marker','s','linewidth','facecolors','edgecolors'}
+    """
+    for xtli,xtl in enumerate(ax.get_xticklabels()):
+        xtl=xtl.get_text()
+        for ytli,ytl in enumerate(ax.get_yticklabels()):
+            ytl=ytl.get_text()
+            ax.text(xtli+0.5+xoff,ytli+0.5+yoff,dannot.loc[xtl,ytl],**kws_text,ha='center')
     return ax
 
 from rohan.dandage.io_nums import is_numeric

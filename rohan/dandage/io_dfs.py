@@ -556,6 +556,10 @@ def dfsortbybins(df, col):
     df=df.sort_values(f'{col} dfrankbybins').drop(f'{col} dfrankbybins',axis=1)
     return df
 
+def sortdfcolbylist(df, col,l):
+    df[col]=pd.Categorical(df[col],categories=l, ordered=True)
+    return df.sort_values(col)
+
 from rohan.dandage.io_sets import dropna
 def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids):
     """
