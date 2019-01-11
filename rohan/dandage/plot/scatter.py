@@ -7,6 +7,9 @@ from scipy import stats
 
 from rohan.dandage.io_strs import make_pathable_string
 
+#rasterized=True
+# sns scatter_kws={'s':5, 'alpha':0.3, 'rasterized':True}
+
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
              scafmt='hexbin',
             rp=True,rs=True,vmax=10,cbar_label=None,

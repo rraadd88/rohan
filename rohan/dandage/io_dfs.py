@@ -30,11 +30,12 @@ import numpy as np
 import logging
 
 def df2info(df,col_searches=None):
-    if len(df.columns)>5:
-        print('**COLS**: ',df.columns.tolist())
-    print('**HEAD**: ',df.loc[:,df.columns[:5]].head())
-    print('**SHAPE**: ',df.shape)
-    if not col_searches is None:
+    if col_searches is None:
+        if len(df.columns)>5:
+            print('**COLS**: ',df.columns.tolist())
+        print('**HEAD**: ',df.loc[:,df.columns[:5]].head())
+        print('**SHAPE**: ',df.shape)
+    else:
         cols_searched=[c2 for c1 in col_searches for c2 in df if c1 in c2]
         print('**SEARCHEDCOLS**:\n',cols_searched)
         print('**HEAD**: ',df.loc[:,cols_searched].head())
