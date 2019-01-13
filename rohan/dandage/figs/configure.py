@@ -90,10 +90,10 @@ def configure(dcfg,doutp,force=False):
     dcfg['plot ratio']=dcfg['plot width']/dcfg['plot height']
 
     for size in ['width','height']:
-        if size=='width':
-            dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 3 if x>8 else 1 if x<4.5 else 2)
-        if size=='height':
-            dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 3 if x>8 else 1 if x<4 else 2)
+#         if size=='width':
+        dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 100 if x>8 else 75 if x>=6.5 else 50 if x>=5 else 25)
+#         if size=='height':
+#             dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 3 if x>8 else 1 if x<4 else 2)
     to_table(dcfg,f"{doutp}/dcfg.tsv")
     return dcfg
 
