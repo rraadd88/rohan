@@ -65,6 +65,7 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
                                      **kws_dfannot2color)
     else:
         colcolor=f"{colannot} color"
+        df=df.loc[df[colannot].isin(annot2color.keys()),:]
         df[colcolor]=df[colannot].apply(lambda x : annot2color[x] if not pd.isnull(x) else x)
     colc=f"{colannot} color"
     for annot in annot2color.keys():
