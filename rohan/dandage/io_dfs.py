@@ -516,25 +516,25 @@ def merge_dn2df(dn2df,on,how='left',
         del df
     return dfmerged
 
-def dfsyn2appended(df,colsyn):
-    """
-    for merging dfs with names with df with synonymns
-    param colsyn: col containing tuples of synonymns 
-    """
-    colsynappended=colsyn+' appended'
-    df.index=range(len(df))
-    #make duplicated row for each synonymn
-    dfdup=pd.DataFrame(columns=df.columns.tolist()+[colsynappended])
-    for i in df.index:
-        for syn in df.loc[i,colsyn]:
-            ds=df.loc[i,:]
-            ds[colsynappended]=syn
-            dfdup=dfdup.append(ds,ignore_index=True)
-            del ds
-        del i
-    #         break
-    #     break
-    return dfdup
+# def dfsyn2appended(df,colsyn):
+#     """
+#     for merging dfs with names with df with synonymns
+#     param colsyn: col containing tuples of synonymns 
+#     """
+#     colsynappended=colsyn+' appended'
+#     df.index=range(len(df))
+#     #make duplicated row for each synonymn
+#     dfdup=pd.DataFrame(columns=df.columns.tolist()+[colsynappended])
+#     for i in df.index:
+#         for syn in df.loc[i,colsyn]:
+#             ds=df.loc[i,:]
+#             ds[colsynappended]=syn
+#             dfdup=dfdup.append(ds,ignore_index=True)
+#             del ds
+#         del i
+#     #         break
+#     #     break
+#     return dfdup
 
 def dfsyn2appended(df,colsyn):
     """
@@ -548,6 +548,27 @@ def dfsyn2appended(df,colsyn):
     dfsynappended.columns=[colsynappended]
     dfsynappended=dfsynappended.dropna()
     return dfsynappended.join(df,how='left')
+
+## drop duplicates by aggregating the dups
+def drop_duplicates_agg(df,colsgroupby,cols2aggf,test=False):
+    """
+    colsgroupby: unique names ~index
+    cols2aggf: rest of the cols `unique_dropna_str` for categories
+    """
+    if test:
+        print(df.shape)
+        print(df.drop_duplicates(subset=colsgroupby).shape)
+    #ddup aggregated
+    dfdupagg=df.loc[(df.duplicated(subset=colsgroupby,keep=False)),:].groupby(colsgroupby).agg(cols2aggf)
+    #drop duplicates all
+    df_=df.drop_duplicates(subset=colsgroupby,keep=False)
+    if test:
+        print(df_.shape)
+    #append ddup aggregated
+    dfout=df_.append(dfdupagg,sort=True)
+    if test:
+        print(dfout.shape)
+    return dfout
 
 ## sorting
 
