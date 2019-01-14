@@ -66,5 +66,6 @@ def df2plotshape(dlen,xlabel_unit,ylabel_unit):
         else:
             kws_plot_rect['x']=x_
         kws_plot_rect['fig']=fig
-        plot_rect(**kws_plot_rect)
+        ax=plot_rect(**kws_plot_rect)
         x_=kws_plot_rect['x']+dlen.loc[idx,'xlen']+0.1  
+    return fig,ax

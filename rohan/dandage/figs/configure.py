@@ -91,7 +91,7 @@ def configure(dcfg,doutp,force=False):
 
     for size in ['width','height']:
 #         if size=='width':
-        dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 100 if x>8 else 75 if x>=6.5 else 50 if x>=5 else 25)
+        dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 100 if x>8 else 75 if x>=6.5 else 50 if x>=4 else 25)
 #         if size=='height':
 #             dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 3 if x>8 else 1 if x<4 else 2)
     to_table(dcfg,f"{doutp}/dcfg.tsv")
@@ -102,7 +102,8 @@ def make_html(dcfgp,version,dp,force=False):
     doutp=abspath(f'{dp}/{version}')
     cols=['figi','fign','plotn','plotp']
     dcfg=pd.read_table(dcfgp,names=cols,
-                       error_bad_lines=False)
+                       error_bad_lines=False,
+                      comment='#',)
 #     .dropna(subset=['figi','fign','plotn','plotp'])
     dcfg=configure(dcfg,doutp,force=force)
     templatep=f"{doutp}/masonry/index.html"
