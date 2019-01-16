@@ -3,7 +3,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 from os.path import exists, basename,dirname
-plt.style.use('ggplot')
+# plt.style.use('ggplot')
 from scipy import stats
 
 from rohan.dandage.io_strs import make_pathable_string

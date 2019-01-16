@@ -94,24 +94,24 @@ def get_dmetrics(df,metricsby,colx,coly,colhue,xs,hues,alternative,
     if metricsby=='hues':
         # first hue vs rest    
         for hue in dmetrics.index[1:]:  
-            for x in dmetrics.columns:
+            for xi,x in enumerate(dmetrics.columns):
                 X=df.loc[((df[colhue]==hues[0]) & (df[colx]==x)),coly]
                 Y=df.loc[((df[colhue]==hue) & (df[colx]==x)),coly]
                 if not (len(X)==0 or len(Y)==0):
                     dmetrics.loc[hue,x]=mannwhitneyu(X,Y,
-                                                     alternative=alternative)[1]
+                     alternative=alternative if isinstance(alternative,str) else alternative[xi])[1]
                 else:
                     dmetrics.loc[hue,x]=np.nan
     # first x vs rest
     elif metricsby=='xs':
         # first hue vs rest    
-        for hue in dmetrics.index:
+        for huei,hue in enumerate(dmetrics.index):
             for x in dmetrics.columns[1:]:
                 X=df.loc[((df[colhue]==hue) & (df[colx]==xs[0])),coly]
                 Y=df.loc[((df[colhue]==hue) & (df[colx]==x)),coly]
                 if not (len(X)==0 or len(Y)==0):
                     dmetrics.loc[hue,x]=mannwhitneyu(X,Y,
-                                                     alternative=alternative)[1]
+                    alternative=alternative if isinstance(alternative,str) else alternative[huei])[1]
                 else:
                     dmetrics.loc[hue,x]=np.nan
     if test:
