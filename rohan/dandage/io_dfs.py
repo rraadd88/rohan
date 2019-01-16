@@ -596,3 +596,6 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids):
                 ids_subset=df.loc[(df[col_subset]==subset),col_ids].dropna().unique()
                 df.loc[(df[col_subset]==subset),f'P {col_fracby} {col_subset}']=len(set(ids_subset).intersection(ids))/len(ids_subset)
     return df
+
+# import from stat
+from rohan.dandage.stat.transform import dflogcol
