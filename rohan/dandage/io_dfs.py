@@ -501,9 +501,11 @@ def merge_dn2df(dn2df,on,how='left',
             df=df_ddup.copy()
             logging.warning(f'{dn}: dropped duplicates. size drop from {len(df)} to {len(df_ddup)}')
         if dni==0:
+            cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
+            df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
             dfmerged=df.copy()
         else:
-            cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in dfmerged)]
+            cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
             if test:
                 print(dn,cols)
                 print(dict(zip(cols,[f"{c} {dn}" for c in cols])))
