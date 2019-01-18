@@ -538,13 +538,15 @@ def merge_dn2df(dn2df,on,how='left',
 #     #     break
 #     return dfdup
 
-def dfsyn2appended(df,colsyn):
+def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
     """
     for merging dfs with names with df with synonymns
     param colsyn: col containing tuples of synonymns 
     """
     colsynappended=colsyn+' appended'
     df.index=range(len(df))
+    if colsynfmt=='str':
+        df.loc[:,colsyn]=df.loc[:,colsyn].apply(lambda x : x.split(colsynstrsep))
     #make duplicated row for each synonymn
     dfsynappended=df[colsyn].apply(pd.Series).unstack().reset_index().drop('level_0',axis=1).set_index('level_1')
     dfsynappended.columns=[colsynappended]
