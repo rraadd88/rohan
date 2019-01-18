@@ -145,7 +145,8 @@ def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
 def annot_heatmap(ax,dannot,
                   xoff=0,yoff=0,
                   kws_text={},# zip
-                       annot_left='(',annot_right=')',
+                  annot_left='(',annot_right=')',
+                  annothalf='upper',
                 ):
     """
     kws_text={'marker','s','linewidth','facecolors','edgecolors'}
@@ -154,7 +155,10 @@ def annot_heatmap(ax,dannot,
         xtl=xtl.get_text()
         for ytli,ytl in enumerate(ax.get_yticklabels()):
             ytl=ytl.get_text()
-            ax.text(xtli+0.5+xoff,ytli+0.5+yoff,dannot.loc[xtl,ytl],**kws_text,ha='center')
+            if annothalf=='upper':
+                ax.text(xtli+0.5+xoff,ytli+0.5+yoff,dannot.loc[xtl,ytl],**kws_text,ha='center')
+            else:
+                ax.text(ytli+0.5+yoff,xtli+0.5+xoff,dannot.loc[xtl,ytl],**kws_text,ha='center')                
     return ax
 
 from rohan.dandage.io_nums import is_numeric

@@ -40,7 +40,10 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import numpy as np
 def get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100):
+    if isinstance(cmap,str):
+        cmap=plt.get_cmap(cmap)
     new_cmap = colors.LinearSegmentedColormap.from_list(
         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=vmin, b=vmax),
         cmap(np.linspace(vmin, vmax, n)))
     return new_cmap
+def cut_cmap(cmap, vmin=0.0, vmax=1.0, n=100):return get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100)
