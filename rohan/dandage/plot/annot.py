@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
+import logging
 
 def add_corner_labels(fig,pos,xoff=0,yoff=0,test=False,kw_text=None):
     import string
@@ -114,15 +115,32 @@ def get_dmetrics(df,metricsby,colx,coly,colhue,xs,hues,alternative,
                     alternative=alternative if isinstance(alternative,str) else alternative[huei])[1]
                 else:
                     dmetrics.loc[hue,x]=np.nan
+    # first y vs rest
+    elif metricsby=='ys':
+        # first hue vs rest    
+        for huei,hue in enumerate(dmetrics.index):
+            for x in dmetrics.columns[1:]:
+                X=df.loc[((df[colhue]==hue) & (df[colx]==xs[0])),coly]
+                Y=df.loc[((df[colhue]==hue) & (df[colx]==x)),coly]
+                if not (len(X)==0 or len(Y)==0):
+                    dmetrics.loc[hue,x]=mannwhitneyu(X,Y,
+                    alternative=alternative if isinstance(alternative,str) else alternative[huei])[1]
+                else:
+                    dmetrics.loc[hue,x]=np.nan
     if test:
         print(dmetrics)
     return dmetrics
     
 def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
-                  yoff=0,
+                  yoff=0,annotby='xs',
                   test=False):
     """
     :param dmetrics: hue in index, x in columns
+    
+    #todos
+    #x|y off in %
+    xmin,xmax=ax.get_xlim()
+    (xmax-xmin)+(xmax-xmin)*0.35+xmin
     """
     xlabel=ax.get_xlabel()
     ylabel=ax.get_ylabel()
@@ -135,9 +153,11 @@ def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
     for huei,hue in enumerate(dmetrics.index):  
         for xi,x in enumerate(dmetrics.columns):
             if not pd.isnull(dmetrics.loc[hue,x]):
-                ax.text(xi+(huei*xoffwithin/len(dmetrics.index)+(xoff/len(dmetrics.index))),
-                ax.get_ylim()[1]+yoff,dmetrics.loc[hue,x],
-                       ha='center')
+                xco=xi+(huei*xoffwithin/len(dmetrics.index)+(xoff/len(dmetrics.index)))
+                yco=ax.get_ylim()[1]+yoff
+                if annotby=='ys':
+                    xco,yco=yco,xco
+                ax.text(xco,yco,dmetrics.loc[hue,x],ha='center')
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     return ax
@@ -163,23 +183,25 @@ def annot_heatmap(ax,dannot,
 
 from rohan.dandage.io_nums import is_numeric
 def pval2annot(pval,alternative='two-sided',fmt='*',#swarm=False
+               linebreak=True,
               ):
     """
     fmt: *|<|'num'
     """
     alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) else 0.05
+    logging.warning(f'alpha={alpha}')
     if pd.isnull(pval):
         return ''
     elif pval < 0.0001:
-        return "****" if fmt=='*' else "P<0.0001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"#not swarm else "*\n**\n*"
+        return "****" if fmt=='*' else "P<0.0001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"  if linebreak else f"P={pval:.1g}"
     elif (pval < 0.001):
-        return "***"  if fmt=='*' else "P<0.001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"
+        return "***"  if fmt=='*' else "P<0.001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     elif (pval < 0.01):
-        return "**" if fmt=='*' else "P<0.01" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"
+        return "**" if fmt=='*' else "P<0.01" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     elif (pval < alpha):
-        return "*" if fmt=='*' else f"P<{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"
+        return "*" if fmt=='*' else f"P<{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     else:
-        return "ns" if (fmt=='*' or fmt=='<') else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"
+        return "ns" if (fmt=='*' or fmt=='<') else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
 
 def pval2stars(pval,alternative='two-sided'): return pval2annot(pval,alternative=alternative,fmt='*',)
 
