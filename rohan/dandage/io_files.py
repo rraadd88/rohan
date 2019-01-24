@@ -3,11 +3,6 @@ import pandas as pd
 from shutil import copyfile
 def copy(src, dst):copyfile(src, dst)
 
-def sheetname2df_to_excel(sheetname2df,datap,):
-    writer = pd.ExcelWriter(datap)
-    for sn in sheetname2df:
-        sheetname2df[sn].to_excel(writer,sn)
-    writer.save()
 
 from rohan.dandage.io_strs import getall_fillers    
 def fill_form(df,templatep,template_insert_line,outp,splitini,splitend,field2replace,

@@ -48,7 +48,7 @@ def df2plotshape(dlen,xlabel_unit,ylabel_unit):
     _ylen:
     title:
     """
-    dlen['xlabel']=dlen.apply(lambda x : f"~{x['_xlen']}{xlabel_unit}" if not len(np.unique(list(str(x['_xlen']))))==1 else '',axis=1)
+    dlen['xlabel']=dlen.apply(lambda x : f"{x['_xlen']}{xlabel_unit}" if not len(np.unique(list(str(x['_xlen']))))==1 else '',axis=1)
     dlen['ylabel']=dlen.apply(lambda x : f"~{x['_ylen']}{ylabel_unit}",axis=1)
     fix='h'
     if fix=='h':    

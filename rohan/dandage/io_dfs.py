@@ -103,6 +103,12 @@ def read_excel(p,sheet_name=None,):
     if sheet_name is None:
         sheet_name=input(', '.join(xl.sheet_names))
     return xl.parse(sheet_name) 
+
+def to_excel(sheetname2df,datap,):
+    writer = pd.ExcelWriter(datap)
+    for sn in sheetname2df:
+        sheetname2df[sn].to_excel(writer,sn)
+    writer.save()
     
 #slice     
 def dfvslicebysstr(df,sstr,include=True,how='and',outcols=False):
@@ -517,26 +523,6 @@ def merge_dn2df(dn2df,on,how='left',
                 print(f" {dn}",dfmerged.columns.tolist(),df.columns.tolist())
         del df
     return dfmerged
-
-# def dfsyn2appended(df,colsyn):
-#     """
-#     for merging dfs with names with df with synonymns
-#     param colsyn: col containing tuples of synonymns 
-#     """
-#     colsynappended=colsyn+' appended'
-#     df.index=range(len(df))
-#     #make duplicated row for each synonymn
-#     dfdup=pd.DataFrame(columns=df.columns.tolist()+[colsynappended])
-#     for i in df.index:
-#         for syn in df.loc[i,colsyn]:
-#             ds=df.loc[i,:]
-#             ds[colsynappended]=syn
-#             dfdup=dfdup.append(ds,ignore_index=True)
-#             del ds
-#         del i
-#     #         break
-#     #     break
-#     return dfdup
 
 def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
     """
