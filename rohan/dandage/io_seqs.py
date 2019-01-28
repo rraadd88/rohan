@@ -205,3 +205,9 @@ def translate(dnaseq,host='human',fmtout=str,tax_id=None):
         return str(prtseq)
     else:
         return prtseq
+    
+## io file
+def seqs2afasta(ids2seqs,fastap):
+    from Bio import SeqIO,SeqRecord,Seq,Alphabet
+    seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id], Alphabet.ProteinAlphabet), id) for id in ids2seqs)
+    SeqIO.write(seqs, fastap, "fasta")
