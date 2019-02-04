@@ -17,6 +17,7 @@ import re
 from rohan.dandage.io_strs import make_pathable_string
 # dict
 from collections import OrderedDict
+ordereddict=OrderedDict
 # recepies
 from rohan.dandage.io_dfs import *
 from rohan.dandage.io_sets import *

@@ -293,6 +293,22 @@ def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
     dfout=dfs[0].append(dfs[1])
     return dfout
 
+def merge_dfpairwithdf(dfpair,df,
+                        left_ons=['gene1 name','gene2 name'],
+                        right_on='gene name',
+                        suffixes=[' gene1',' gene2']):
+    # force suffixes                        
+    df1=df.copy()
+    df1.columns=df1.columns+suffixes[0]
+    df2=df.copy()
+    df2.columns=df2.columns+suffixes[1]
+    dfpair=dfpair.merge(df1,
+                    left_on=left_ons[0],right_on=f'{right_on}{suffixes[0]}',
+                    how='left').merge(df2,
+                    left_on=left_ons[1],right_on=f'{right_on}{suffixes[1]}',
+                    how='left')
+    return dfpair
+
 def lambda2cols(df,lambdaf,in_coln,to_colns):
     df_=df.apply(lambda x: lambdaf(x[in_coln]),
                  axis=1).apply(pd.Series)
@@ -523,6 +539,7 @@ def merge_dn2df(dn2df,on,how='left',
                 print(f" {dn}",dfmerged.columns.tolist(),df.columns.tolist())
         del df
     return dfmerged
+
 
 def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
     """
