@@ -99,9 +99,11 @@ def configure(dcfg,doutp,force=False):
 
 
 def make_html(dcfgp,version,dp,force=False):
+    """
+    'figi','plotp'
+    """
     doutp=abspath(f'{dp}/{version}')
-    cols=['figi','fign','plotn','plotp']
-    dcfg=pd.read_table(dcfgp,names=cols,
+    dcfg=pd.read_table(dcfgp,
                        error_bad_lines=False,
                       comment='#',)
 #     .dropna(subset=['figi','fign','plotn','plotp'])

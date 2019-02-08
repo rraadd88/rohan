@@ -187,13 +187,16 @@ def annot_heatmap(ax,dannot,
     return ax
 
 from rohan.dandage.io_nums import is_numeric
-def pval2annot(pval,alternative='two-sided',fmt='*',#swarm=False
+def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
                linebreak=True,
               ):
     """
     fmt: *|<|'num'
     """
-    alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) else 0.05
+    if alternative is None and alpha is None:
+        ValueError('both alternative and alpha are None')
+    if alpha is None:
+        alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) else 0.05
 #     logging.warning(f'alpha={alpha}')
     if pd.isnull(pval):
         return ''
@@ -208,6 +211,6 @@ def pval2annot(pval,alternative='two-sided',fmt='*',#swarm=False
     else:
         return "ns" if (fmt=='*' or fmt=='<') else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
 
-def pval2stars(pval,alternative='two-sided'): return pval2annot(pval,alternative=alternative,fmt='*',)
+def pval2stars(pval,alternative): return pval2annot(pval,alternative=alternative,fmt='*',)
 
                

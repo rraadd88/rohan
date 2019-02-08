@@ -51,7 +51,8 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
                 scatter=False,contour=False,
                 annot_fit_land=True,
                 streamlines=False,
-                cmap="coolwarm",cbar=True,cbar_label="",cbar_ax_pos=[0.55, 0.3, 0.035, 0.5],
+                cmap="coolwarm",cbar=True,cbar_label="",
+                cbar_ax_pos=[0.55, 0.3, 0.035, 0.5],
                 a=0.5,vmin=None,vmax=None,interp='linear',#'nn',
                 xlog=False,test=False,
                 fig=None,ax=None,plot_fh=None):
@@ -60,46 +61,30 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
     xi=get_linspace(x)
     yi=get_linspace(y)
     zi = griddata(x, y, z, xi, yi, interp=interp)
-    #FIXME giddata is deprecated
-#     from scipy.interpolate import griddata    
-#     zi=griddata((x, y), z, (xi[None,:], yi[:,None]), method=interp)
     if ax==None: 
         ax=plt.subplot(121)
-    #contour the gridded data, plotting dots at the nonuniform data points.
-    
     if vmax==None: 
         vmax=abs(zi).max()
     if vmin==None: 
         vmin=abs(zi).min()
-    #print vmin
     if contour:
         CS = ax.contour(xi, yi, zi, contourlevels, linewidths=0.5, colors='k',alpha=a)
     CS = ax.contourf(xi, yi, zi, contourlevels, 
                       cmap=cmap,
                       vmax=vmax, vmin=vmin)
 
-    #streamlines
-    # Plot flowlines
     if streamlines:
-#         dy, dx = np.gradient(-zi.T) # Flow goes down gradient (thus -zi)
         dy, dx = np.gradient(zi) # Flow goes down gradient (thus -zi)
         if test:
             print([np.shape(xi),np.shape(yi)])
             print([np.shape(dx),np.shape(dy)])
-        # ax.streamplot(xi[:,0], yi[0,:], dx, dy, color='0.5', density=0.5)
         ax.streamplot(xi, yi, dx, dy, color='k', density=0.5,
                          linewidth=1,minlength=0.05,arrowsize=1.5)
-
-    # # Contour gridded head observations
-    # contours = ax.contour(xi, yi, zi, linewidths=3,cmap='RdBu')
-    # ax.clabel(contours)
-
-    # CS=contours
-
     if cbar:
-        # colorbar_ax = fig.add_axes([0.55, 0.15, 0.035, 0.5]) #[left, bottom, width, height]
         colorbar_ax = fig.add_axes(cbar_ax_pos) #[left, bottom, width, height]
-        colorbar_ax2=fig.colorbar(CS, cax=colorbar_ax,extend='both')
+        colorbar_ax2=fig.colorbar(CS, cax=colorbar_ax,extend='both',
+#                                  boundaries=[-1,0,1]
+                                 )
         colorbar_ax2.set_label(cbar_label)
         clim=[-1,1]
         colorbar_ax2.set_clim(clim[0],clim[1])
@@ -108,16 +93,11 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
         ax.scatter(x, y, marker='o', c='b', s=5, zorder=10)
     if annot_fit_land:
         labels=["$F:cB$","$F:B$","$cF:cB$","$cF:B$"]
-        # labels=["$F,B$","$F,cB$","$cF,B$","$cF,cB$"]
         if xlog:
-            # x=np.log2(x)+1
-            # x=x-1.5
             x=x/1.61
         ax=annot_corners(labels,x,y,ax,fontsize=15)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
-#     ax.set_xscale("log")
-#     ax.set_yscale("log")
     if plot_fh!=None:
         fig.savefig(plot_fh,format="pdf")
     return ax  
