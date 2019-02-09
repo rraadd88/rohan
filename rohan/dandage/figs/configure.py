@@ -116,16 +116,18 @@ def make_figs(dcfgp,version,dp,force=False):
     from rohan.dandage.io_files import fill_form   
     for figi in dcfg['figi'].unique():
 #         if len(dcfg.loc[(dcfg['ploti']==figi),:])>0:
+        htmlp=dcfg.loc[(dcfg['figi']==figi),'fightmlp'].unique()[0]
         fill_form(dcfg.loc[(dcfg['figi']==figi),:],
            templatep=templatep,
            template_insert_line='<div class="grid__item grid__item--width{plot width scale} grid__item--height{plot height scale}">\n  <fig class="plot"><img src="{plotsvgp}"/><ploti>{ploti}</ploti></fig></div>',
-           outp=dcfg.loc[(dcfg['figi']==figi),'fightmlp'].unique()[0],
+           outp=htmlp,
            splitini='<div class="grid__gutter-sizer"></div>',
            splitend='</div><!-- class="grid are-images-unloaded" -->',
            field2replace={'<link rel="stylesheet" href="css/style.css">':'<link rel="stylesheet" href="masonry/css/style.css">',
                          '<script  src="js/index.js"></script>':'<script  src="masonry/js/index.js"></script>',
                          f'{doutp}/':''})
-            runbashcmd(f'google-chrome --headless --disable-gpu --print-to-pdf={outp}.pdf {outp}')
+        # make pdf
+        runbashcmd(f'google-chrome --headless --disable-gpu --virtual-time-budget=10000 --print-to-pdf={htmlp}.pdf {htmlp}')
     #     break
 ##--
 ##--
