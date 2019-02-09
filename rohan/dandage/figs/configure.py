@@ -98,7 +98,7 @@ def configure(dcfg,doutp,force=False):
     return dcfg
 
 
-def make_html(dcfgp,version,dp,force=False):
+def make_figs(dcfgp,version,dp,force=False):
     """
     'figi','plotp'
     """
@@ -124,7 +124,8 @@ def make_html(dcfgp,version,dp,force=False):
            splitend='</div><!-- class="grid are-images-unloaded" -->',
            field2replace={'<link rel="stylesheet" href="css/style.css">':'<link rel="stylesheet" href="masonry/css/style.css">',
                          '<script  src="js/index.js"></script>':'<script  src="masonry/js/index.js"></script>',
-                         f'{doutp}/':''})            
+                         f'{doutp}/':''})
+            runbashcmd(f'google-chrome --headless --disable-gpu --print-to-pdf={outp}.pdf {outp}')
     #     break
 ##--
 ##--
