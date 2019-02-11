@@ -55,6 +55,7 @@ def get_svg_size(p,testp='test.txt',test=False):
     runbashcmd(f'head -60 {p} > {testp}')
     w,h=np.nan,np.nan
     with open(testp,'r') as f:
+#         try:
         for line in f:
             if 'width=' in line:
                 if test:
@@ -66,6 +67,8 @@ def get_svg_size(p,testp='test.txt',test=False):
                 h=len2inches(line.split('height="')[1].split('"')[0])
             if not (pd.isnull(w) or pd.isnull(h)):
                 break
+#         except:
+#             logging.error(f'can not read {p}')
     return w,h
 
 from rohan.dandage.io_dfs import *
@@ -84,7 +87,7 @@ def configure(dcfg,doutp,force=False):
         import string
         dcfg.loc[(dcfg['figi']==figi),'ploti']=list(string.ascii_uppercase[:len(dcfg.loc[(dcfg['figi']==figi),:])]) if len(dcfg.loc[(dcfg['figi']==figi),:])>1 else ['']
             
-    df=dcfg.apply(lambda x: get_svg_size(x['plotp'],test=False),axis=1).apply(pd.Series)
+    df=dcfg.apply(lambda x: get_svg_size(x['plotsvgp'],test=False),axis=1).apply(pd.Series)
     df.columns=['plot width','plot height']
     dcfg=dcfg.join(df)
     dcfg['plot ratio']=dcfg['plot width']/dcfg['plot height']
@@ -94,18 +97,24 @@ def configure(dcfg,doutp,force=False):
         dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 100 if x>8 else 75 if x>=6.5 else 50 if x>=4 else 25)
 #         if size=='height':
 #             dcfg[f'plot {size} scale']=dcfg[f'plot {size}'].apply(lambda x : 3 if x>8 else 1 if x<4 else 2)
+    #single plot per fig -> 100 width
+    figis_single=dcfg['figi'].value_counts()[dcfg['figi'].value_counts()==1].index
+    for size in ['width','height']:
+        dcfg.loc[(dcfg['figi'].isin(figis_single)),f'plot {size} scale']=100
+                                                          
     to_table(dcfg,f"{doutp}/dcfg.tsv")
     return dcfg
 
 
-def make_figs(dcfgp,version,dp,force=False):
+def make_figs(dcfg,version,dp,force=False):
     """
     'figi','plotp'
     """
     doutp=abspath(f'{dp}/{version}')
-    dcfg=pd.read_table(dcfgp,
-                       error_bad_lines=False,
-                      comment='#',)
+    if isinstance(dcfg,str):
+        dcfg=pd.read_table(dcfg,
+                           error_bad_lines=False,
+                          comment='#',)        
 #     .dropna(subset=['figi','fign','plotn','plotp'])
     dcfg=configure(dcfg,doutp,force=force)
     templatep=f"{doutp}/masonry/index.html"
@@ -117,17 +126,20 @@ def make_figs(dcfgp,version,dp,force=False):
     for figi in dcfg['figi'].unique():
 #         if len(dcfg.loc[(dcfg['ploti']==figi),:])>0:
         htmlp=dcfg.loc[(dcfg['figi']==figi),'fightmlp'].unique()[0]
-        fill_form(dcfg.loc[(dcfg['figi']==figi),:],
-           templatep=templatep,
-           template_insert_line='<div class="grid__item grid__item--width{plot width scale} grid__item--height{plot height scale}">\n  <fig class="plot"><img src="{plotsvgp}"/><ploti>{ploti}</ploti></fig></div>',
-           outp=htmlp,
-           splitini='<div class="grid__gutter-sizer"></div>',
-           splitend='</div><!-- class="grid are-images-unloaded" -->',
-           field2replace={'<link rel="stylesheet" href="css/style.css">':'<link rel="stylesheet" href="masonry/css/style.css">',
-                         '<script  src="js/index.js"></script>':'<script  src="masonry/js/index.js"></script>',
-                         f'{doutp}/':''})
-        # make pdf
-        runbashcmd(f'google-chrome --headless --disable-gpu --virtual-time-budget=10000 --print-to-pdf={htmlp}.pdf {htmlp}')
+        if not exists(htmlp) or force:
+            fill_form(dcfg.loc[(dcfg['figi']==figi),:],
+               templatep=templatep,
+               template_insert_line='<div class="grid__item grid__item--width{plot width scale} grid__item--height{plot height scale}">\n  <fig class="plot"><img src="{plotsvgp}"/><ploti>{ploti}</ploti></fig></div>',
+               outp=htmlp,
+               splitini='<div class="grid__gutter-sizer"></div>',
+               splitend='</div><!-- class="grid are-images-unloaded" -->',
+               field2replace={'<link rel="stylesheet" href="css/style.css">':'<link rel="stylesheet" href="masonry/css/style.css">',
+                             '<script  src="js/index.js"></script>':'<script  src="masonry/js/index.js"></script>',
+                             f'{doutp}/':''})
+            # make pdf
+            runbashcmd(f'google-chrome --headless --disable-gpu --virtual-time-budget=10000 --print-to-pdf={htmlp}.pdf {htmlp}')
+    from rohan.dandage.figs.convert import vectors2rasters
+    vectors2rasters(doutp,ext='pdf')
     #     break
 ##--
 ##--

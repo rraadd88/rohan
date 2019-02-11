@@ -1,8 +1,11 @@
 from rohan.dandage.io_sys import runbashcmd
 from glob import glob
-def verctor2raster(plotd):
-    print(glob(f"{plotd}/*.svg"))
+import logging
+def vectors2rasters(plotd,ext='svg'):
+    logging.info(glob(f"{plotd}/*.{ext}"))
 #     plotd='plot/'
-    basename='f%%.*'
-    com=f'for f in {plotd}/*.svg; do convert -density 500 -alpha off -resize "2000" -trim "$f" "${basename}.png"; done'
+#     com=f'for f in {plotd}/*.{ext}; do convert -density 500 -alpha off -resize "2000" -trim "$f" "$f.png"; done'
+    com=f'for f in {plotd}/*.{ext}; do inkscape "$f" -z --export-dpi=500 --export-area-drawing --export-png="$f.png"; done'
     runbashcmd(com)
+    
+    
