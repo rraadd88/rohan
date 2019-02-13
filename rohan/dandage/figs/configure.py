@@ -39,6 +39,7 @@ def get_plots(plotp,doutp,force=False,symbols=False):
     if (not exists(plotsvgp)) or force:
         if not symbols:
             runbashcmd(f"inkscape -l {plotsvgp} {plotrawp}")
+            runbashcmd(f"inkscape {plotsvgp} -z --export-dpi=500 --export-area-drawing --export-png={plotsvgp}.png")  
         else:
             runbashcmd(f"pdftocairo -svg {plotrawp} {plotsvgp}")
     return abspath(plotsvgp)
@@ -121,7 +122,10 @@ def make_figs(dcfg,version,dp,force=False):
     if not exists(dirname(templatep)):
         runbashcmd(f"cd {doutp};git clone https://github.com/rraadd88/masonry.git")
     else:
-        runbashcmd(f"cd {dirname(templatep)};git pull")    
+        try:
+            runbashcmd(f"cd {dirname(templatep)};git pull")    
+        except:
+            logging.error('can not pull in masonry.git')
     from rohan.dandage.io_files import fill_form   
     for figi in dcfg['figi'].unique():
 #         if len(dcfg.loc[(dcfg['ploti']==figi),:])>0:

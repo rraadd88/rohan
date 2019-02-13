@@ -35,7 +35,7 @@ def plot_rect(x,
     ax.text(np.mean([rect.get_x(),rect.get_x()+rect.get_width()]),rect.get_height(),title,va='bottom',ha='center')
     # xlabel
     ax.text(np.mean([rect.get_x(),rect.get_x()+rect.get_width()]),rect.get_y(),xlabel,va='top',ha='center')
-    # xlabel
+    # ylabel
     ax.text(-0.05,0,ylabel,va='bottom',ha='left',color=color,rotation=90)
     
     ax.add_patch(rect) 
