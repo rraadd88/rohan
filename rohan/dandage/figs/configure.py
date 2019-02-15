@@ -107,11 +107,11 @@ def configure(dcfg,doutp,force=False):
     return dcfg
 
 
-def make_figs(dcfg,version,dp,force=False):
+def make_figs(dcfg,dp='figs',force=False):
     """
     'figi','plotp'
     """
-    doutp=abspath(f'{dp}/{version}')
+    doutp=abspath(dp)
     if isinstance(dcfg,str):
         dcfg=pd.read_table(dcfg,
                            error_bad_lines=False,
@@ -130,6 +130,7 @@ def make_figs(dcfg,version,dp,force=False):
     for figi in dcfg['figi'].unique():
 #         if len(dcfg.loc[(dcfg['ploti']==figi),:])>0:
         htmlp=dcfg.loc[(dcfg['figi']==figi),'fightmlp'].unique()[0]
+        print(basename(htmlp))
         if not exists(htmlp) or force:
             fill_form(dcfg.loc[(dcfg['figi']==figi),:],
                templatep=templatep,
@@ -142,6 +143,8 @@ def make_figs(dcfg,version,dp,force=False):
                              f'{doutp}/':''})
             # make pdf
             runbashcmd(f'google-chrome --headless --disable-gpu --virtual-time-budget=10000 --print-to-pdf={htmlp}.pdf {htmlp}')
+            print(htmlp)
+            
     from rohan.dandage.figs.convert import vectors2rasters
     vectors2rasters(doutp,ext='pdf')
     #     break
