@@ -67,6 +67,11 @@ def set_index(data,col_index):
         logging.error("set_index: something's wrong with the df")
         df2info(data)
 
+def reset_index(df):
+    if df.index.name in df:
+        df.index.name=df.index.name+' index'
+    return df.reset_index()
+
 #tsv io
 def read_table(p):
     if p.endswith('.tsv') or p.endswith('.tab'):
@@ -281,7 +286,7 @@ def df2unstack(df,coln='columns',idxn='index',col='value'):
         df.index.name=idxn
     df=df.unstack()
     df.name=col
-    return pd.DataFrame(df).reset_index()
+    return reset_index(pd.DataFrame(df))
 
 from rohan.dandage.io_strs import replacelist
 def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
