@@ -174,7 +174,12 @@ def get_time():
     time=make_pathable_string('%s' % datetime.datetime.now())
     return time.replace('-','_').replace(':','_').replace('.','_')
 
-def byte2str(b): return b.decode("utf-8") 
+def byte2str(b): 
+    if not isinstance(b,str):
+        return b.decode("utf-8")
+    else:
+        return b
+        
 
 # find
 

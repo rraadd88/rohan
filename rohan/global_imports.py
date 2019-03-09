@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 plt.style.use('default')
 import seaborn as sns
 sns.set('notebook',font='Monaco')
+# paper < notebook < talk < poster
 # stats
 import scipy as sc
 # paths
