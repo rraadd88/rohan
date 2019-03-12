@@ -26,7 +26,7 @@ except ImportError:
 
 with open('requirements.txt') as f:
     required = f.read().splitlines()
-    
+
 # main setup
 setup(
 name='rohan',
@@ -41,7 +41,13 @@ long_description='https://github.com/rraadd88/rohan/README.md',
 license='General Public License v. 3',
 install_requires=required,
 platforms='Tested on Ubuntu 16.04 64bit',
-packages=['rohan','rohan.dandage'], #find_packages(),
+packages=['rohan','rohan.dandage',
+          'rohan.dandage.align',
+          'rohan.dandage.curate',
+          'rohan.dandage.figs',
+          'rohan.dandage.genome',
+          'rohan.dandage.html',
+         ], #find_packages(),
 #package_data={'': ['rohan/data']},
 #include_package_data=True,
 #entry_points={
