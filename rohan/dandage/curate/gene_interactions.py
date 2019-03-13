@@ -83,7 +83,7 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
         else:         
 #             dbiogrid_grid=pd.read_table(dbiogrid_intmapp)
             dbiogrid_grid=read_table_pqt(dbiogrid_intmapp+'.pqt')
-        dbiogrid_grid=set_index(dbiogrid_grid,'Official Symbol Interactor A')
+        dbiogrid_grid=set_index(dbiogrid_grid,f"{gene_fmt2colns['biogrid'][genefmt]} Interactor A")
         geneids=set(dbiogrid_grid.index).union(set(dbiogrid_grid.columns))
         if test:
             print('total number of genes',len(geneids))
@@ -106,7 +106,7 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
         print('file saved at: ',dbiogrid_intmap_symmp)
         dbiogrid_intmap_symm_lin=get_degrees(dbiogrid_intmap_symm)
         dbiogrid_intmap_symm_lin.index.name=f'gene {genefmt}'
-        to_table(dbiogrid_intmap_symm_lin,f'{dbiogrid_intmap_symmp}.lin.tsv')
+        to_table(dbiogrid_intmap_symm_lin,f'{dbiogrid_intmap_symmp}.degrees.tsv')
     else:
         dbiogrid_intmap_symm=read_table_pqt(dbiogrid_intmap_symmp)
     return dbiogrid_intmap_symm
