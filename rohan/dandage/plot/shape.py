@@ -102,3 +102,59 @@ def df2plotshape(dlen,xlabel_unit,ylabel_unit,
     ax.text(x_/2.3,0.9,suptitle,ha='center')
     ax.text(-0.1,0.4,f"total ~{ylen}{ylabel_unit}",va='center',rotation=90)
     return fig,ax
+
+# slankey
+from collections import OrderedDict
+ordereddict=OrderedDict
+
+def get_label2fractions(label2count):
+    # list(label2count.values())[0]
+    label2percent_forward=ordereddict({})
+    for k in label2count:
+        label2percent_forward[k]=label2count[k]/list(label2count.values())[0]
+
+    label2percent_in=ordereddict({})   
+    label2percent_out=ordereddict({})
+    label2percent_drop=ordereddict({})
+    for ki,k in enumerate(label2count):
+    #     if ki!=0:
+    #         ki=ki-1
+        if ki==0:
+            label2percent_in[k]=1
+            label2percent_out[f"out {k}"]=0
+            label2percent_drop[f"drop {k}"]=-1
+        else:
+            label2percent_in[k]=1
+            label2percent_drop[f"drop {k}"]=-1*(1-(list(label2percent_forward.values())[0]-label2percent_forward[k]))
+            label2percent_out[f"out {k}"]=-1*(label2percent_in[k]+label2percent_drop[f"drop {k}"])
+        prior_out=label2percent_out[f"out {k}"]
+        prior_drop=label2percent_drop[f"drop {k}"]
+    #     prior_out=label2percent_out[f"out {k}"]
+    #     prior_out=label2percent_drop[f"not {k}"]
+
+    label2percents=[]
+    for k1,k2,k3 in zip(label2percent_in.keys(),label2percent_drop.keys(),label2percent_out.keys()):
+        label2percent=ordereddict({})
+    #     label2percent[k1]=label2percent_forward[k1]
+        label2percent['in']=label2percent_in[k1]
+        label2percent['out']=label2percent_out[k3]
+        label2percent['drop']=label2percent_drop[k2]
+        label2percents.append(label2percent)
+    return label2percents
+def plot_slankey(dslankeys):
+    import matplotlib.pyplot as plt
+    from matplotlib.sankey import Sankey
+    plt.figure(figsize=[10,10])
+    ax=plt.subplot(111)
+    sankey = Sankey(ax=ax,scale=1,tolerance=0.1)
+    for prior,dslankey in enumerate(dslankeys):
+        orientations=np.ravel([(0,-1,0) for i in range(int(len(dslankey.keys())/2))])
+        pathlengths=np.ravel([(1,1,1) for i in range(int(len(dslankey.keys())/2))])
+        sankey.add(flows=list(dslankey.values()),
+               labels=list(dslankey.keys()),
+               orientations=orientations,
+                   pathlengths=pathlengths,
+                   prior=prior-1 if prior!=0 else None, 
+                   connect=(1, 0),
+                  trunklength=3)
+    sankey.finish()
