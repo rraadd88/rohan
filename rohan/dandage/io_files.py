@@ -6,6 +6,8 @@ def copy(src, dst):copyfile(src, dst)
 from os.path import splitext,basename
 def basenamenoext(p): return splitext(basename(p))[0]
 
+
+## text files
 from rohan.dandage.io_strs import getall_fillers    
 def fill_form(df,templatep,template_insert_line,outp,splitini,splitend,field2replace,
            test=False):
