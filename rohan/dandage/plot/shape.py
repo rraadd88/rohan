@@ -107,48 +107,44 @@ def df2plotshape(dlen,xlabel_unit,ylabel_unit,
 from collections import OrderedDict
 ordereddict=OrderedDict
 
-def get_label2fractions(label2count):
+def get_label2fractions(label2count,test=False):
     # list(label2count.values())[0]
-    label2percent_forward=ordereddict({})
+    label2fraction_input=ordereddict({})
     for k in label2count:
-        label2percent_forward[k]=label2count[k]/list(label2count.values())[0]
-
-    label2percent_in=ordereddict({})   
-    label2percent_out=ordereddict({})
-    label2percent_drop=ordereddict({})
-    for ki,k in enumerate(label2count):
-    #     if ki!=0:
-    #         ki=ki-1
-        if ki==0:
-            label2percent_in[k]=1
-            label2percent_out[f"out {k}"]=0
-            label2percent_drop[f"drop {k}"]=-1
-        else:
-            label2percent_in[k]=1
-            label2percent_drop[f"drop {k}"]=-1*(1-(list(label2percent_forward.values())[0]-label2percent_forward[k]))
-            label2percent_out[f"out {k}"]=-1*(label2percent_in[k]+label2percent_drop[f"drop {k}"])
-        prior_out=label2percent_out[f"out {k}"]
-        prior_drop=label2percent_drop[f"drop {k}"]
-    #     prior_out=label2percent_out[f"out {k}"]
-    #     prior_out=label2percent_drop[f"not {k}"]
-
-    label2percents=[]
-    for k1,k2,k3 in zip(label2percent_in.keys(),label2percent_drop.keys(),label2percent_out.keys()):
-        label2percent=ordereddict({})
-    #     label2percent[k1]=label2percent_forward[k1]
-        label2percent['in']=label2percent_in[k1]
-        label2percent['out']=label2percent_out[k3]
-        label2percent['drop']=label2percent_drop[k2]
-        label2percents.append(label2percent)
-    return label2percents
+        label2fraction_input[k]=round(label2count[k]/list(label2count.values())[0],2)
+    if test:
+        print(label2fraction_input)
+    label2fraction_in=ordereddict({})   
+    label2fraction_out=ordereddict({})
+    label2fraction_drop=ordereddict({})
+    for ki,k in enumerate(label2fraction_input):
+        if ki < len(label2fraction_input.values())-1:
+            label2fraction_in[k]=label2fraction_input[k]
+            label2fraction_out[f"out {k}"]=-1*(list(label2fraction_input.values())[ki+1])
+            label2fraction_drop[f"drop {k}"]=-1*(label2fraction_out[f"out {k}"]+label2fraction_in[k])
+    if test:
+        print(label2fraction_in)
+        print(label2fraction_out)
+        print(label2fraction_drop)
+    label2fractions=[]
+    for k1,k2,k3 in zip(label2fraction_in.keys(),label2fraction_drop.keys(),label2fraction_out.keys()):
+        label2fraction=ordereddict({})
+        label2fraction[k1]=label2fraction_in[k1]
+        label2fraction[k3 if test else '']=label2fraction_out[k3]
+        label2fraction[k2 if test else ' ']=label2fraction_drop[k2]
+        label2fractions.append(label2fraction)
+    return label2fractions
 def plot_slankey(dslankeys):
     import matplotlib.pyplot as plt
     from matplotlib.sankey import Sankey
-    plt.figure(figsize=[10,10])
-    ax=plt.subplot(111)
-    sankey = Sankey(ax=ax,scale=1,tolerance=0.1)
+    bg_color='w'
+#     fig=plt.figure()
+    fig = plt.figure(facecolor=bg_color, edgecolor=bg_color)
+    ax = fig.add_subplot(111)
+    ax.patch.set_facecolor(bg_color)
+    sankey = Sankey(ax=ax,scale=1,tolerance=0.000000000000001,offset=0.5)
     for prior,dslankey in enumerate(dslankeys):
-        orientations=np.ravel([(0,-1,0) for i in range(int(len(dslankey.keys())/2))])
+        orientations=np.ravel([(0,0,-1) for i in range(int(len(dslankey.keys())/2))])
         pathlengths=np.ravel([(1,1,1) for i in range(int(len(dslankey.keys())/2))])
         sankey.add(flows=list(dslankey.values()),
                labels=list(dslankey.keys()),
@@ -156,5 +152,13 @@ def plot_slankey(dslankeys):
                    pathlengths=pathlengths,
                    prior=prior-1 if prior!=0 else None, 
                    connect=(1, 0),
-                  trunklength=3)
+                  trunklength=1)
     sankey.finish()
+    # Hide grid lines
+    ax.grid(False)
+
+    # Hide axes ticks
+    ax.set_xticks([])
+    ax.set_yticks([])
+#     ax.set_zticks([])
+    return ax
