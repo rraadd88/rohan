@@ -26,6 +26,11 @@ def replacelist(l,replaces,replacewith=''):
         lout.append(s) 
     return lout
 
+def strreplacebyposition(s,i,replaceby):
+    l=list(s)
+    l[i]=replaceby
+    return "".join(l)
+
 def tuple2str(tup,sep=' '): 
     if isinstance(tup,tuple):
         tup=[str(s) for s in tup if not s=='']
