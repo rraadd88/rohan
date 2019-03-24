@@ -1,4 +1,5 @@
 import requests
+import pandas as pd
 def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
             organism_taxid=9606,test=False):
     """

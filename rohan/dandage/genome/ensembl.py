@@ -4,7 +4,7 @@
 # reference_assemblies={
 #     'R64-1-1': (92, 92),
 # }),release=92)
-
+import numpy as np
 
 def ensg2genename(id,ensembl):
     try:
