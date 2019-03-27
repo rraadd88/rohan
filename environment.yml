@@ -5,7 +5,7 @@ channels:
   - bioconda 
 dependencies:
   - biopython=1.71
-  - numpy=1.13.1
+  - numpy
   - python=3.6.5
   - setuptools=39.2.0
   - pyyaml
