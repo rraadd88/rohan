@@ -45,3 +45,22 @@ def split_ticklabels(ax,splitby='S'):
     ax.tick_params(axis='both', which='minor', pad=0)
     ax.tick_params(axis='both', which='major', pad=15)
     return ax
+
+import scipy as sc
+def get_clusters(clustergrid,axis=0,criterion='maxclust'):
+    if axis==0:
+        linkage=clustergrid.dendrogram_row.linkage
+        labels=clustergrid.data.index
+    elif axis==1:
+        linkage=clustergrid.dendrogram_column.linkage
+        labels=clustergrid.data.columns        
+    else:
+        ValueError(axis)    
+
+    fcluster=sc.cluster.hierarchy.fcluster(linkage,
+                                           t=int(len(linkage)*0.5),                                       
+                                           criterion=criterion)
+    dclst=pd.DataFrame(pd.Series(dict(zip(labels,fcluster)))).reset_index()
+    dclst.columns=['sample','cluster #']
+    dclst=dclst.sort_values(by='cluster #')
+    return dclst
