@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def annot_submap(ax,dplot,colx,coly,cols,
                        markers,sizes,linewidths,
@@ -47,7 +49,7 @@ def split_ticklabels(ax,splitby='S'):
     return ax
 
 import scipy as sc
-def get_clusters(clustergrid,axis=0,criterion='maxclust'):
+def get_clusters(clustergrid,axis=0,criterion='maxclust',clusters_fraction=0.25):
     if axis==0:
         linkage=clustergrid.dendrogram_row.linkage
         labels=clustergrid.data.index
@@ -58,7 +60,7 @@ def get_clusters(clustergrid,axis=0,criterion='maxclust'):
         ValueError(axis)    
 
     fcluster=sc.cluster.hierarchy.fcluster(linkage,
-                                           t=int(len(linkage)*0.5),                                       
+                                           t=int(len(linkage)*clusters_fraction),                                       
                                            criterion=criterion)
     dclst=pd.DataFrame(pd.Series(dict(zip(labels,fcluster)))).reset_index()
     dclst.columns=['sample','cluster #']
