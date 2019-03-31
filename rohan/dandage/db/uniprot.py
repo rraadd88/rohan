@@ -70,3 +70,11 @@ def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMB
         dgeneids=map_ids(queries=queries[ini:end],**params_map_ids)
         range2df[ini]=dgeneids
     return pd.concat(range2df,axis=0).drop_duplicates()
+
+from rohan.dandage.io_sys import runbashcmd
+def uniproitid2seq(id,fap):
+    runbashcmd(f"wget https://www.uniprot.org/uniprot/{id}.fasta -O tmp.fasta")
+    from Bio import SeqIO
+    for record in SeqIO.parse(fap, "fasta"):
+        return str(record.seq)
+        break
