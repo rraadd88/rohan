@@ -31,7 +31,7 @@ def tuple2str(tup,sep='; '):
     return tup
 
 def unique_dropna(l): return dropna(unique(l,drop='nan'))
-def unique_dropna_str(l): return tuple2str(dropna(unique(l,drop='nan')))
+def unique_dropna_str(l,sep='; '): return tuple2str(dropna(unique(l,drop='nan')),sep=sep)
 
 def merge_unique_dropna(l): return dropna(unique(list(itertools.chain(*l)),drop='nan'))
 

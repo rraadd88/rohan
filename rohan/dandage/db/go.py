@@ -19,4 +19,7 @@ def get_go_info(goterm,result='name'):
  'pageInfo': None}
     """
     response=requests.get(f'https://www.ebi.ac.uk/QuickGO/services/ontology/go/terms/{goterm}')
-    return response.json()['results'][0][result]
+    try:       
+        return response.json()['results'][0][result]
+    except:
+        print(response.json())
