@@ -9,7 +9,7 @@
 ================================
 """
 import logging
-
+import numpy as np
 from rohan.dandage.io_nums import str2num
 
 # convert
@@ -201,3 +201,25 @@ def getall_fillers(s,leftmarker='{',rightmarker='}',
     for ini, end in zip(findall(s,leftmarker,outends=False),findall(s,rightmarker,outends=False)):
         filers.append(s[ini+1+leftoff:end+rightoff])
     return filers    
+
+###
+def list2ranges(l):    
+    ls=[]
+    for l in zip(l[:-1],l[1:]):
+        ls.append(l)
+    return ls
+
+def str2tiles(s,tilelen=10,test=False):
+    tile2range={'tiles1': list(np.arange(0,len(s),tilelen)),
+    'tiles2': list(np.arange(tilelen/2,len(s),tilelen))}
+
+    for tile in tile2range:
+        if len(tile2range[tile])%2!=0:
+            tile2range[tile]=tile2range[tile]+[len(s)]
+        tile2range[tile]=list2ranges(tile2range[tile])    
+    range2tiles={}
+    for rang in sorted(tile2range['tiles1']+tile2range['tiles2']):
+        range2tiles[f"{int(rang[0])}_{int(rang[1])}"]=s[int(rang[0]):int(rang[1])]
+    if test:
+        print(tile2range)
+    return range2tiles
