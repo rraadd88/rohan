@@ -1,5 +1,11 @@
 import pandas as pd
 
+# paths
+from glob import glob
+from os import makedirs
+from os.path import exists,basename,dirname,abspath
+
+
 from shutil import copyfile
 def copy(src, dst):copyfile(src, dst)
 
@@ -35,4 +41,10 @@ def fill_form(df,templatep,template_insert_line,outp,splitini,splitend,field2rep
     with open(outp,'w') as f:
         f.write(output)
 #     return True
-    
+
+def cat(ps,outp):
+    makedirs(dirname(outp),exist_ok=True)
+    with open(outp, 'w') as outfile:
+        for p in ps:
+            with open(p) as infile:
+                outfile.write(infile.read())    

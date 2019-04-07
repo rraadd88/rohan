@@ -9,10 +9,6 @@ sns.set('notebook',font='Monaco')
 # paper < notebook < talk < poster
 # stats
 import scipy as sc
-# paths
-from glob import glob
-from os import makedirs
-from os.path import exists,basename,dirname,abspath
 # strings
 import re
 from rohan.dandage.io_strs import make_pathable_string
@@ -22,6 +18,6 @@ ordereddict=OrderedDict
 # recepies
 from rohan.dandage.io_dfs import *
 from rohan.dandage.io_sets import *
-from rohan.dandage.io_files import basenamenoext
+from rohan.dandage.io_files import *
 # debug
 import logging
