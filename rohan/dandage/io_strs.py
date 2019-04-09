@@ -26,7 +26,7 @@ def replacelist(l,replaces,replacewith=''):
         lout.append(s) 
     return lout
 
-def strreplacebyposition(s,i,replaceby):
+def replacebyposition(s,i,replaceby):
     l=list(s)
     l[i]=replaceby
     return "".join(l)
@@ -223,3 +223,4 @@ def str2tiles(s,tilelen=10,test=False):
     if test:
         print(tile2range)
     return range2tiles
+
