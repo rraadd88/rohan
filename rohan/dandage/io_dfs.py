@@ -611,3 +611,10 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids):
 
 # import from stat
 from rohan.dandage.stat.transform import dflogcol
+
+# filter with stats
+import logging
+def filterstats(df,boolcol):
+    df_=df.loc[boolcol,:]
+    logging.info(df,df_)
+    return df_
