@@ -102,7 +102,7 @@ def to_table_pqt(df,p):
 def tsv2pqt(p):
     to_table_pqt(pd.read_table(p,low_memory=False),f"{p}.pqt")
     
-def read_excel(p,sheet_name=None,):
+def read_excel(p,sheet_name=None):
     xl = pd.ExcelFile(p)
     xl.sheet_names  # see all sheet names
     if sheet_name is None:
