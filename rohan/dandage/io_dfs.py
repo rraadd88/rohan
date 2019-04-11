@@ -480,6 +480,7 @@ def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
     df=df.loc[df[colvar].isin(varswithvals),:] 
     return df
 
+## df stats
 def df2colwise_unique_counts(df,cols,out=False):
     col2uniquec={}
     for col in cols:
@@ -492,7 +493,12 @@ def df2colwise_unique_counts(df,cols,out=False):
         return dcol2uniquec
     else:
         print(dcol2uniquec)
-        
+
+def percentiles(ds):
+    return [(f"{per:.2f}",ds.quantile(per)) for per in np.arange(0,1.1,0.1)]        
+
+## dedup
+
 def dfdupval2unique(df,coldupval,preffix_unique='variant'):  
     dups=df[coldupval].value_counts()[(df[coldupval].value_counts()>1)].index
 
