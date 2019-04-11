@@ -22,8 +22,7 @@ dtypes
 
 
 
-from os.path import basename,dirname,exists
-from os import makedirs
+from rohan.dandage.io_files import *
 import pandas as pd
 import numpy as np
 
@@ -40,7 +39,8 @@ def df2info(df,col_searches=None):
         print('**SEARCHEDCOLS**:\n',cols_searched)
         print('**HEAD**: ',df.loc[:,cols_searched].head())
         
-def del_Unnamed(df):
+
+def delunnamedcol(df):
     """
     Deletes all the unnamed columns
 
@@ -49,6 +49,12 @@ def del_Unnamed(df):
     cols_del=[c for c in df.columns if 'Unnamed' in c]
     return df.drop(cols_del,axis=1)
 
+def del_Unnamed(df):
+    """
+    to be deprecated
+    """
+    return delunnamedcol(df)
+    
 def set_index(data,col_index):
     """
     Sets the index if the index is not present
@@ -73,18 +79,37 @@ def reset_index(df):
     return df.reset_index()
 
 #tsv io
-def read_table(p):
-    if p.endswith('.tsv') or p.endswith('.tab'):
-        return del_Unnamed(pd.read_table(p))
-    elif p.endswith('.csv'):
-        return del_Unnamed(pd.read_csv(p,sep=','))
-    elif p.endswith('.pqt') or p.endswith('.parquet'):
-        return del_Unnamed(read_table_pqt(p))
-    else: 
-        logging.error(f'unknown extension {p}')
+def read_table(p,params_read_csv={}):
+    if len(params_read_csv.keys())!=0:
+        return del_Unnamed(pd.read_csv(p,**params_read_csv))        
+    else:
+        if p.endswith('.tsv') or p.endswith('.tab'):
+            return del_Unnamed(pd.read_table(p))
+        elif p.endswith('.csv'):
+            return del_Unnamed(pd.read_csv(p,sep=','))
+        elif p.endswith('.pqt') or p.endswith('.parquet'):
+            return del_Unnamed(read_table_pqt(p))
+        else: 
+            logging.error(f'unknown extension {p}')
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
-    
+
+def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={},params_concat={}):
+    if len(labels)!=len(ps):            
+        ValueError('len(labels)!=len(ps)')
+    dn2df={}
+    for pi,p in enumerate(ps):
+        if len(labels)!=0:
+            label=labels[pi]
+        else:
+            label=basenamenoext(p)
+        df=read_table(p,params_read_csv)
+        if len(cols)!=0:
+            df=df.loc[:,cols]
+        dn2df[label]=df        
+    return delunnamedcol(pd.concat(dn2df,names=[collabel,'Unnamed'],axis=axis,**params_concat).reset_index())
+
+## save table
 def to_table(df,p):
     if p.endswith('.tsv') or p.endswith('.tab'):
         if not exists(dirname(p)) and dirname(p)!='':
@@ -189,8 +214,10 @@ def get_colmin(data):
         colmins.append(data[col].idxmin())
     return colmins
 
+    
 def fhs2data_combo(fhs,cols,index,labels=None,col_sep=': '):
     """
+    to be deprecated
     Collates data from multiple csv files
 
     :param fhs: list of paths to csv files
@@ -214,10 +241,11 @@ def fhs2data_combo(fhs,cols,index,labels=None,col_sep=': '):
         return del_Unnamed(data_combo)
     else:
         logging.error('no fhs found: len(fhs)=0')
-
+        
 def fhs2data_combo_appended(fhs, cols=None,labels=None,labels_coln='labels',sep=',',
                            error_bad_lines=True):
     """
+    to be deprecated
     Collates data from multiple csv files vertically
 
     :param fhs: list of paths to csv files
@@ -239,6 +267,7 @@ def fhs2data_combo_appended(fhs, cols=None,labels=None,labels_coln='labels',sep=
                     data=data.loc[:,cols]
                 data_all=data_all.append(data,sort=True)
         return del_Unnamed(data_all)
+    
 
 def rename_cols(df,names,renames=None,prefix=None,suffix=None):
     """
