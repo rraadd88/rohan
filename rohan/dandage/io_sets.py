@@ -47,3 +47,14 @@ def rankwithlist(l,lwith,test=False):
         print(rankdata(l),rankdata(lwith))
         print(rankdata(l+lwith))
     return rankdata(l+lwith)[:len(l)]
+
+# getting sections from boolian vector
+def bools2intervals(v):
+    return np.flatnonzero(np.diff(np.r_[0,v,0])!=0).reshape(-1,2) - [0,1]
+def dfbool2intervals(df,col_preffix=''):
+    df.index=range(len(df))
+    intervals=bools2intervals(dseqfeats['exposed and not a site'])
+    for interval in intervals:
+        df.loc[interval[0]:interval[1],f'{col_preffix}interval']=interval[1]-interval[0]+1
+        df.loc[interval[0]:interval[1],f'{col_preffix}interval index']=range(interval[1]-interval[0]+1)    
+    return df
