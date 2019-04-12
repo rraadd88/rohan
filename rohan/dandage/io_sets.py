@@ -51,10 +51,16 @@ def rankwithlist(l,lwith,test=False):
 # getting sections from boolian vector
 def bools2intervals(v):
     return np.flatnonzero(np.diff(np.r_[0,v,0])!=0).reshape(-1,2) - [0,1]
-def dfbool2intervals(df,col_preffix=''):
+def dfbool2intervals(df,colbool):
+    """
+    ds contains bool values
+    """
     df.index=range(len(df))
-    intervals=bools2intervals(dseqfeats['exposed and not a site'])
-    for interval in intervals:
-        df.loc[interval[0]:interval[1],f'{col_preffix}interval']=interval[1]-interval[0]+1
-        df.loc[interval[0]:interval[1],f'{col_preffix}interval index']=range(interval[1]-interval[0]+1)    
+    intervals=bools2intervals(df[colbool])
+    for intervali,interval in enumerate(intervals):
+        df.loc[interval[0]:interval[1],f'{colbool} interval id']=intervali
+        df.loc[interval[0]:interval[1],f'{colbool} interval start']=interval[0]
+        df.loc[interval[0]:interval[1],f'{colbool} interval stop']=interval[1]
+        df.loc[interval[0]:interval[1],f'{colbool} interval length']=interval[1]-interval[0]+1
+        df.loc[interval[0]:interval[1],f'{colbool} interval index']=range(interval[1]-interval[0]+1)    
     return df
