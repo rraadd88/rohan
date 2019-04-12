@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from Bio import SeqIO,SeqRecord,Seq,Alphabet
+import logging
 
 ##vars
 # common 
@@ -215,9 +217,26 @@ def translate(dnaseq,host='human',fmtout=str,tax_id=None):
     
 ## io file
 def seqs2afasta(ids2seqs,fastap):
-    from Bio import SeqIO,SeqRecord,Seq,Alphabet
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id], Alphabet.ProteinAlphabet), id) for id in ids2seqs)
     SeqIO.write(seqs, fastap, "fasta")
     
-    
+##     
+def seq_with_substitution(record,pos,sub,test=False):
+    from rohan.dandage.io_strs import replacebyposition    
+    subfrom=sub[0]
+    subto=sub[-1]
+    seq=str(record.seq)
+    if seq[pos]==subfrom:
+        seq=replacebyposition(seq,pos,subto)
+        return SeqRecord.SeqRecord(str2seq(seq),id=record.id)        
+    else:
+        logging.warning(f'indexing issue: {seq[pos-8:pos+7]} {seq[pos]}!={subfrom} {pos}')
+#         return None
+def process_fasta(infap,outfap,deff,deff_params):
+    record=deff(SeqIO.read(infap,format='fasta'),**deff_params)
+    record.description=outfap
+    if not record is None:
+        with open(outfap, "w") as handle:
+            SeqIO.write(record, handle, "fasta")    
+        return outfap
     
