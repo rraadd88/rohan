@@ -216,11 +216,16 @@ def translate(dnaseq,host='human',fmtout=str,tax_id=None):
         return prtseq
     
 ## io file
+### multiple seq fasta
+def fap2id2seq(fap):
+    id2seq=SeqIO.to_dict(SeqIO.parse(fap,format='fasta'))
+    id2seq={k:str(id2seq[k].seq) for k in id2seq}
+    return id2seq
 def seqs2afasta(ids2seqs,fastap):
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id], Alphabet.ProteinAlphabet), id) for id in ids2seqs)
     SeqIO.write(seqs, fastap, "fasta")
     
-##     
+## generate mutations
 def seq_with_substitution(record,pos,sub,test=False):
     from rohan.dandage.io_strs import replacebyposition    
     subfrom=sub[0]
@@ -232,6 +237,8 @@ def seq_with_substitution(record,pos,sub,test=False):
     else:
         logging.warning(f'indexing issue: {seq[pos-8:pos+7]} {seq[pos]}!={subfrom} {pos}')
 #         return None
+
+## lambda function
 def process_fasta(infap,outfap,deff,deff_params):
     record=deff(SeqIO.read(infap,format='fasta'),**deff_params)
     record.description=outfap
