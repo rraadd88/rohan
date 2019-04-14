@@ -3,10 +3,14 @@ import pandas as pd
 import numpy as np
 # plots
 import matplotlib.pyplot as plt
-plt.style.use('default')
+plt.style.use('ggplot')
 import seaborn as sns
-sns.set('notebook',font='Monaco')
 # paper < notebook < talk < poster
+sns.set('notebook',font='Monaco')
+print("nogrids: plt.style.use('seaborn-white');sns.set('notebook',font='Arial')")
+# plt.style.available
+# import matplotlib.font_manager
+# matplotlib.font_manager.findSystemFonts(fontpaths=None, fontext='ttf')
 # stats
 import scipy as sc
 # strings

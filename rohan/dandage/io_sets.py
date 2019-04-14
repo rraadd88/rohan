@@ -62,5 +62,6 @@ def dfbool2intervals(df,colbool):
         df.loc[interval[0]:interval[1],f'{colbool} interval start']=interval[0]
         df.loc[interval[0]:interval[1],f'{colbool} interval stop']=interval[1]
         df.loc[interval[0]:interval[1],f'{colbool} interval length']=interval[1]-interval[0]+1
-        df.loc[interval[0]:interval[1],f'{colbool} interval index']=range(interval[1]-interval[0]+1)    
+        df.loc[interval[0]:interval[1],f'{colbool} interval within index']=range(interval[1]-interval[0]+1)    
+    df[f'{colbool} interval index']=df.index    
     return df
