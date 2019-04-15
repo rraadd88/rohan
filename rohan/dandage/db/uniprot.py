@@ -123,3 +123,19 @@ def filter_compare_uniprot2ensembl(df,fap,coluid,colenst,test=False):
                                                                                     test=test),axis=1)
     
     return df.loc[df['unirpot id and ensembl match'],:]
+
+from rohan.dandage.io_seqs import ids2seqs2fasta
+from Bio import SeqIO,SeqRecord
+def normalise_uniprot_fasta(fap,test=True):
+    faoutp=f"{fap}.normalised.fasta"
+    id2seq={}
+    for record in SeqIO.parse(fap, "fasta"):
+        if record.description.startswith('sp|'):
+            record_id=record.description.split('|')[1]            
+        else:    
+            record_id=record.description.split(' ')[1]
+        if test:
+            print(record_id)
+        id2seq[record_id]=str(record.seq)
+    ids2seqs2fasta(id2seq,faoutp)
+    return faoutp

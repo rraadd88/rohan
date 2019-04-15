@@ -113,6 +113,10 @@ def convertstr2format(col,form):
                 col=col.replace(char,"_")
     return col
 
+def normalisestr(s):
+    import re
+    return re.sub('\W+','', s.lower()).replace('_','')
+
 def make_pathable_string(s,replacewith='_'):
     """
     Removes symbols from a string to be compatible with directory structure.
@@ -120,11 +124,7 @@ def make_pathable_string(s,replacewith='_'):
     :param s: string
     """
     import re
-    return re.sub('\W+',replacewith, s )
-
-def normalisestr(s):
-    import re
-    return re.sub('\W+','', s.lower()).replace('_','')
+    return re.sub('\W+',replacewith, s.lower() )
 
 def linebreaker(l,break_pt=16):
     """

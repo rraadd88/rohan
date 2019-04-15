@@ -221,7 +221,7 @@ def fap2id2seq(fap):
     id2seq=SeqIO.to_dict(SeqIO.parse(fap,format='fasta'))
     id2seq={k:str(id2seq[k].seq) for k in id2seq}
     return id2seq
-def seqs2afasta(ids2seqs,fastap):
+def ids2seqs2fasta(ids2seqs,fastap):
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id], Alphabet.ProteinAlphabet), id) for id in ids2seqs)
     SeqIO.write(seqs, fastap, "fasta")
     
