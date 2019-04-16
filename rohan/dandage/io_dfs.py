@@ -84,7 +84,7 @@ def read_table(p,params_read_csv={}):
         return del_Unnamed(pd.read_csv(p,**params_read_csv))        
     else:
         if p.endswith('.tsv') or p.endswith('.tab'):
-            return del_Unnamed(pd.read_table(p))
+            return del_Unnamed(read_csv(p,sep='\t'))
         elif p.endswith('.csv'):
             return del_Unnamed(pd.read_csv(p,sep=','))
         elif p.endswith('.pqt') or p.endswith('.parquet'):
@@ -125,7 +125,7 @@ def to_table_pqt(df,p):
     df.to_parquet(p,engine='fastparquet',compression='gzip',)
 
 def tsv2pqt(p):
-    to_table_pqt(pd.read_table(p,low_memory=False),f"{p}.pqt")
+    to_table_pqt(pd.read_csv(p,sep='\t',low_memory=False),f"{p}.pqt")
     
 def read_excel(p,sheet_name=None):
     xl = pd.ExcelFile(p)
