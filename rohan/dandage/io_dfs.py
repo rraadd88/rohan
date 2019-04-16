@@ -84,7 +84,7 @@ def read_table(p,params_read_csv={}):
         return del_Unnamed(pd.read_csv(p,**params_read_csv))        
     else:
         if p.endswith('.tsv') or p.endswith('.tab'):
-            return del_Unnamed(read_csv(p,sep='\t'))
+            return del_Unnamed(pd.read_csv(p,sep='\t'))
         elif p.endswith('.csv'):
             return del_Unnamed(pd.read_csv(p,sep=','))
         elif p.endswith('.pqt') or p.endswith('.parquet'):
