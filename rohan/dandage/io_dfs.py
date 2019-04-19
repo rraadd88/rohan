@@ -386,7 +386,7 @@ def df2chucks(din,chunksize,outd,fn,return_fmt='\t',force=False):
         return chunkps        
 
 ## symmetric dfs eg. submaps    
-def dfmap2symm(df,test=False):
+def dfmap2symmcolidx(df,test=False):
     geneids=set(df.index).union(set(df.columns))
     df_symm=pd.DataFrame(columns=geneids,index=geneids)
     df_symm.loc[df.index,:]=df.loc[df.index,:]
@@ -394,6 +394,29 @@ def dfmap2symm(df,test=False):
     if test:
         logging.debug(df_symm.shape)
     return df_symm
+
+def dflin2dfbinarymap(dflin,col1,col2,params_df2submap={'aggfunc':'sum','binary':True,'binaryby':'nan'},test=False):
+    """
+    if not binary:
+        dropna the df by value [col index and value] column
+    """
+    # get the submap ready
+    df_map=df2submap(df=dflin,
+              col=col1,idx=col2,**params_df2submap)
+    if test:           
+        logging.debug(df_map.unstack().unique())
+    # make columns and index symmetric
+    df_map_symm=dfmap2symmcolidx(df_map)
+    df_map_symm=df_map_symm.fillna(False)
+    if test:           
+        logging.debug(df_map_symm.unstack().unique())
+    df_map_symm=(df_map_symm+df_map_symm.T)/2
+    if test:           
+        logging.debug(df_map_symm.unstack().unique())
+    df_map_symm=df_map_symm!=0
+    if test:           
+        logging.debug(df_map_symm.unstack().unique())
+    return df_map_symm
 
 def filldiagonal(df,cols,filler=None):
     try:
