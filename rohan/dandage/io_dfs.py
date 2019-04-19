@@ -386,7 +386,15 @@ def df2chucks(din,chunksize,outd,fn,return_fmt='\t',force=False):
         return chunkps        
 
 ## symmetric dfs eg. submaps    
-    
+def dfmap2symm(df,test=False):
+    geneids=set(df.index).union(set(df.columns))
+    df_symm=pd.DataFrame(columns=geneids,index=geneids)
+    df_symm.loc[df.index,:]=df.loc[df.index,:]
+    df_symm.loc[:,df.columns]=df.loc[:,df.columns]
+    if test:
+        logging.debug(df_symm.shape)
+    return df_symm
+
 def filldiagonal(df,cols,filler=None):
     try:
         d=df.loc[cols,cols]

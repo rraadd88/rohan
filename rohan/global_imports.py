@@ -23,10 +23,16 @@ if not any([prj in path for prj in ms_prjs]):
     plt.style.use('ggplot')
     # paper < notebook < talk < poster
     sns.set('notebook',font='Monaco')
-    print("nogrids: plt.style.use('seaborn-white');sns.set('notebook',font='Arial')")
+#     print("nogrids: plt.style.use('seaborn-white');sns.set('notebook',font='Arial')")
     # plt.style.available
     # import matplotlib.font_manager
     # matplotlib.font_manager.findSystemFonts(fontpaths=None, fontext='ttf')
     # stats
+else:
+    sns.set('talk',font='Arial')    
+    plt.style.use('default')
+    plt.rc('grid', lw=0.4,linestyle="-", color=[0.9,0.9,0.9])
+    plt.rc('axes', axisbelow=True)
+    
 # debug
 import logging
