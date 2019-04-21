@@ -418,16 +418,24 @@ def dflin2dfbinarymap(dflin,col1,col2,params_df2submap={'aggfunc':'sum','binary'
         logging.debug(df_map_symm.unstack().unique())
     return df_map_symm
 
-def filldiagonal(df,cols,filler=None):
-    try:
-        d=df.loc[cols,cols]
-    except:
-        logging.error('cols should be in cols and idxs')
+def filldiagonal(df,filler=None):
+    if df.shape[0]!=df.shape[1]:
+        logging.warning('df not symmetric')
+    ids=set(df.columns).intersection(df.index)
     if filler is None:
         filler=np.nan
-    for r,c in zip(cols,cols):
+    for r,c in zip(ids,ids):
         df.loc[r,c]=filler
     return df
+
+def getdiagonalvals(df):
+    if df.shape[0]!=df.shape[1]:
+        logging.warning('df not symmetric')
+    ids=set(df.columns).intersection(df.index)
+    id2val={}
+    for i,c in zip(ids,ids):
+        id2val[i]=dintmap.loc[i,c]
+    return pd.DataFrame(pd.Series(id2val),columns=['diagonal value']).reset_index()
 
 def df2submap(df,col,idx,aggfunc='sum',binary=False,binaryby='nan'):
     df['#']=1
