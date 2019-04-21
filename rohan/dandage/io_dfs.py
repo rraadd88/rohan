@@ -308,7 +308,21 @@ def dfswapcols(df,cols):
     df=df.drop([f"_{cols[0]}"],axis=1)
     return df
 
+def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
+    """
+    dmap: ids in index and columns 
+    idxn,coln of dmap -> 1st and 2nd col
+    """
+    if (df.columns.name is None):
+        df.columns.name=coln
+    if (df.index.name is None):
+        df.index.name=idxn
+    return df.reset_index().melt(id_vars=[df.index.name],
+                             var_name=coln,value_name=colvalue_name)        
+     
+    
 def df2unstack(df,coln='columns',idxn='index',col='value'):
+    logging.warning("to be deprecated, instead use: dmap2lin(df,idxn='index',coln='column',colvalue_name='value')")
     if (df.columns.name is None) or (coln!='columns'):
         df.columns.name=coln
     if (df.index.name is None) or (idxn!='columns'):
