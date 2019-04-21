@@ -420,22 +420,24 @@ def dflin2dfbinarymap(dflin,col1,col2,params_df2submap={'aggfunc':'sum','binary'
 
 def filldiagonal(df,filler=None):
     if df.shape[0]!=df.shape[1]:
-        logging.warning('df not symmetric')
-    ids=set(df.columns).intersection(df.index)
+        logging.warning('df not symmetric')      
+#     ids=set(df.columns).intersection(df.index)
     if filler is None:
         filler=np.nan
-    for r,c in zip(ids,ids):
-        df.loc[r,c]=filler
+    if str(df.dtypes.unique()[0])=='bool' and (pd.isnull(filler)) :
+        print('warning diagonal is replaced by True rather than nan')
+    np.fill_diagonal(df.values, filler)        
     return df
 
 def getdiagonalvals(df):
     if df.shape[0]!=df.shape[1]:
         logging.warning('df not symmetric')
-    ids=set(df.columns).intersection(df.index)
-    id2val={}
-    for i,c in zip(ids,ids):
-        id2val[i]=dintmap.loc[i,c]
-    return pd.DataFrame(pd.Series(id2val),columns=['diagonal value']).reset_index()
+#     ids=set(df.columns).intersection(df.index)
+    ds=pd.Series(np.diag(df), index=[df.index, df.columns])
+#     id2val={}
+#     for i,c in zip(ids,ids):
+#         id2val[i]=df.loc[i,c]
+    return pd.DataFrame(ds,columns=['diagonal value']).reset_index()
 
 def df2submap(df,col,idx,aggfunc='sum',binary=False,binaryby='nan'):
     df['#']=1
