@@ -313,23 +313,17 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
     dmap: ids in index and columns 
     idxn,coln of dmap -> 1st and 2nd col
     """
-    if (df.columns.name is None):
-        df.columns.name=coln
-    if (df.index.name is None):
-        df.index.name=idxn
+#     df.columns.name=coln
+    df.index.name=idxn
     return df.reset_index().melt(id_vars=[df.index.name],
                              var_name=coln,value_name=colvalue_name)        
      
     
 def df2unstack(df,coln='columns',idxn='index',col='value'):
-    logging.warning("to be deprecated, instead use: dmap2lin(df,idxn='index',coln='column',colvalue_name='value')")
-    if (df.columns.name is None) or (coln!='columns'):
-        df.columns.name=coln
-    if (df.index.name is None) or (idxn!='columns'):
-        df.index.name=idxn
-    df=df.unstack()
-    df.name=col
-    return reset_index(pd.DataFrame(df))
+    """
+    will be deprecated
+    """
+    return dmap2lin(df,idxn=idxn,coln=coln,colvalue_name=col)
 
 from rohan.dandage.io_strs import replacelist
 def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
