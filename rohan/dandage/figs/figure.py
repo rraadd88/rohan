@@ -1,5 +1,18 @@
 from rohan.global_imports import *
 from rohan.dandage.plot.annot import add_corner_labels
+
+def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20}):
+    import string
+    label2ax=dict(zip(string.ascii_uppercase[:len(axes)],axes))
+    for label in label2ax:
+        pos=label2ax[label]
+        ax=label2ax[label]
+        xoff_=abs(ax.get_xlim()[1]-ax.get_xlim()[0])*(xoff)
+        yoff_=abs(ax.get_ylim()[1]-ax.get_ylim()[0])*(yoff)
+        ax.text(ax.get_xlim()[0]+xoff_,
+                ax.get_ylim()[1]+yoff_,
+                label,va='baseline' ,**kw_text)
+        
 def saveplot(dplot,logp,plotp,force=False,test=False):
     plotp=abspath(plotp)
     #save plot

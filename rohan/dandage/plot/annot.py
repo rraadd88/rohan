@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import logging
 
-def add_corner_labels(fig,pos,xoff=0,yoff=0,test=False,kw_text=None):
+def add_corner_labels(fig,pos,xoff=0,yoff=0,test=False,kw_text={}):
     import string
     label2pos=dict(zip(string.ascii_uppercase[:len(pos)],pos))
     for label in label2pos:
