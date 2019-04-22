@@ -1,4 +1,5 @@
 from rohan.global_imports import *
+from rohan.dandage.plot.annot import add_corner_labels
 def saveplot(dplot,logp,plotp,force=False,test=False):
     plotp=abspath(plotp)
     #save plot
@@ -14,21 +15,25 @@ def saveplot(dplot,logp,plotp,force=False,test=False):
     # get def
     srcp=f"{logp}.py"
     defn=f"plot_{basenamenoext(plotp)}"
-    if not exists(srcp) or force:
+    if not exists(srcp):
         with open(srcp,'w') as f:
             f.write('from rohan.global_imports import *\n')
     else:
-        with open(srcp,'r') as f:
-            if f"def {defn}(" in f.read() and not force:
+        lines=open(srcp,'r').read()
+        if f"def {defn}(" in lines:
+            if force:
+                with open(srcp,'w') as f:
+                    f.write(lines.replace(f"def {defn}(",f"def _{defn}("))
+            else:
                 print(f'{defn} exists; use force=True to rewrite')
                 return False
     with open(logp,'r') as f:
         lines=[]
         for linei,line in enumerate(f.readlines()[::-1]):
             lines.append(line)
-            if "get_ipython().run_line_magic('logon', '')" in line:
+            if "# ini" in line:
                 break
-    lines=lines[::-1][1:-2]
+    lines=lines[::-1][1:-1]
     if test:
         print(lines)
     #make def
