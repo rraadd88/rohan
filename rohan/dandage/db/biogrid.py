@@ -3,13 +3,14 @@ import numpy as np
 from os.path import basename,dirname,exists
 from rohan.dandage.io_dfs import *
 
-def get_degrees(dintmap):
-    dintmap=filldiagonal(dintmap,dintmap.columns,0)
-    dintmap_binary=dintmap!=0
-    dints=dintmap_binary.sum()
-    dints.name='# of interactions'
-    dints=pd.DataFrame(dints)
-    return dints
+# def get_degrees(dintmap):
+#     dintmap=filldiagonal(dintmap,0)
+#     dintmap_binary=dintmap!=0
+#     dints=dintmap_binary.sum()
+#     dints.name='# of interactions'
+#     dints=pd.DataFrame(dints)
+#     return dints
+from rohan.dandage.db.intact import get_degrees
 
 def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,dbiogrid_intmapp,
                         logf=None,

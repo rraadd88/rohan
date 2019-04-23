@@ -338,16 +338,18 @@ def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
 def merge_dfpairwithdf(dfpair,df,
                         left_ons=['gene1 name','gene2 name'],
                         right_on='gene name',
-                        suffixes=[' gene1',' gene2'],how='left'):
+                        suffixes=[' gene1',' gene2'],how='left',test=False):
     # force suffixes                        
     df1=df.copy()
     df1.columns=df1.columns+suffixes[0]
     df2=df.copy()
     df2.columns=df2.columns+suffixes[1]
+#     if test:
+#         print([f'{c}{suffixes[0]}' for c in right_on])
     dfpair=dfpair.merge(df1,
-                    left_on=left_ons[0],right_on=[f'{c}{suffixes[0]}' for c in right_on],
+                    left_on=left_ons[0],right_on=f'{right_on}{suffixes[0]}',
                     how=how).merge(df2,
-                    left_on=left_ons[1],right_on=[f'{c}{suffixes[1]}' for c in right_on],
+                    left_on=left_ons[1],right_on=f'{right_on}{suffixes[1]}',
                     how=how)
     return dfpair
 
