@@ -95,8 +95,11 @@ def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
 def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={},params_concat={}):
-    if len(labels)!=len(ps):            
-        ValueError('len(labels)!=len(ps)')
+    if isinstance(ps,str):
+        ps=glob(ps)
+    if len(labels)!=0
+        if len(labels)!=len(ps):
+            ValueError('len(labels)!=len(ps)')
     dn2df={}
     for pi,p in enumerate(ps):
         if len(labels)!=0:
@@ -118,7 +121,7 @@ def to_table(df,p):
     elif p.endswith('.pqt') or p.endswith('.parquet'):
         to_table_pqt(df,p)
     else: 
-        logging.error(f'unknown extension {p}')        
+        logging.error(f'unknown extension {p}')
 def to_table_pqt(df,p):
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
