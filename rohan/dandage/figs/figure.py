@@ -14,7 +14,9 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 label,**kw_text)
         
 def saveplot(dplot,logp,plotp,sep='# plot',params=None,force=False,test=False):
-    plotp=abspath(plotp)
+    plotp=abspath(make_pathable_string(plotp))
+    dplotp=f"{splitext(plotp)[0]}.tsv"
+    paramp=f"{splitext(plotp)[0]}.yml"    
     #save plot
     makedirs(dirname(plotp),exist_ok=True)
     plt.tight_layout()
@@ -24,9 +26,9 @@ def saveplot(dplot,logp,plotp,sep='# plot',params=None,force=False,test=False):
         plt.savefig(f"{plotp}.png",format='png',dpi=300)        
         plt.savefig(f"{plotp}.svg",format='svg')        
     #save data
-    to_table(dplot,f"{splitext(plotp)[0]}.tsv")
+    to_table(dplot,dplotp)
     if not params is None:
-        yaml.dump(params,open(f"{splitext(plotp)[0]}.yml",'w'))
+        yaml.dump(params,open(paramp,'w'))
     # get def
     srcp=f"{logp}.py"
     defn=f"plot_{basenamenoext(plotp)}"
@@ -69,3 +71,6 @@ def saveplot(dplot,logp,plotp,sep='# plot',params=None,force=False,test=False):
     #save def
     with open(srcp,'a') as f:
         f.write(lines)
+    if test:
+        print({'plot':plotp,'data':dplotp,'param':paramp})
+    return plotp

@@ -18,9 +18,9 @@ from rohan.dandage.io_files import *
 # plots
 import matplotlib.pyplot as plt
 import seaborn as sns
-path=abspath('.')
+pwd=abspath('.')
 ms_prjs=['03heterodim']
-if not any([prj in path for prj in ms_prjs]):
+if not any([prj in pwd for prj in ms_prjs]):
     plt.style.use('ggplot')
     # paper < notebook < talk < poster
     sns.set('notebook',font='Monaco')
@@ -37,9 +37,8 @@ else:
 
 # always save plots 
 from rohan.dandage.figs.figure import saveplot
-if basename(path).split('_')[0].isdigit():
-    logplotp=f"log_{basename(path)}.log"
-    get_ipython().run_line_magic('logstart',f"{logplotp} over")
+# if basename(pwd).split('_')[0].isdigit():
+print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log'\nget_ipython().run_line_magic('logstart',f'{logplotp} over')")
 
 # debug
 import logging
