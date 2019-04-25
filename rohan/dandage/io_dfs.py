@@ -97,7 +97,7 @@ def read_table_pqt(p):
 def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={},params_concat={}):
     if isinstance(ps,str):
         ps=glob(ps)
-    if len(labels)!=0
+    if len(labels)!=0:
         if len(labels)!=len(ps):
             ValueError('len(labels)!=len(ps)')
     dn2df={}

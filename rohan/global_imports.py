@@ -1,6 +1,7 @@
 # data
 import pandas as pd
 import numpy as np
+import yaml
 # stats    
 import scipy as sc
 # strings
@@ -9,6 +10,7 @@ from rohan.dandage.io_strs import make_pathable_string
 # dict
 from collections import OrderedDict
 ordereddict=OrderedDict
+import itertools
 # recepies
 from rohan.dandage.io_dfs import *
 from rohan.dandage.io_sets import *
@@ -35,5 +37,9 @@ else:
 
 # always save plots 
 from rohan.dandage.figs.figure import saveplot
+if basename(path).split('_')[0].isdigit():
+    logplotp=f"log_{basename(path)}.log"
+    get_ipython().run_line_magic('logstart',f"{logplotp} over")
+
 # debug
 import logging
