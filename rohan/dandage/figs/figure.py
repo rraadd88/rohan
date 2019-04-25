@@ -13,11 +13,8 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 ax.get_ylim()[1]+yoff_,
                 label,**kw_text)
         
-def saveplot(dplot,logp,plotp,sep='# plot',params=None,force=False,test=False):
+def savefig(plotp):
     plotp=abspath(make_pathable_string(plotp))
-    dplotp=f"{splitext(plotp)[0]}.tsv"
-    paramp=f"{splitext(plotp)[0]}.yml"    
-    #save plot
     makedirs(dirname(plotp),exist_ok=True)
     plt.tight_layout()
     if '.' in plotp:
@@ -25,6 +22,13 @@ def saveplot(dplot,logp,plotp,sep='# plot',params=None,force=False,test=False):
     else:
         plt.savefig(f"{plotp}.png",format='png',dpi=300)        
         plt.savefig(f"{plotp}.svg",format='svg')        
+    return plotp
+
+def saveplot(dplot,logp,plotp,sep='# plot',params=None,force=False,test=False):
+    #save plot
+    plotp=savefig(plotp)
+    dplotp=f"{splitext(plotp)[0]}.tsv"
+    paramp=f"{splitext(plotp)[0]}.yml"    
     #save data
     to_table(dplot,dplotp)
     if not params is None:
