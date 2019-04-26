@@ -57,7 +57,7 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False):
             lines.append(line)
             if test:
                 print(f"'{line}'")
-            if line.startswith(f"{sep} ") or line==f"{sep}\n" or line==f"{sep} \n":
+            if any([line.startswith(f"{sep} "),line==f"{sep}\n",line==f"{sep} \n"]):
                 break
     lines=lines[::-1][1:-1]
     #make def
