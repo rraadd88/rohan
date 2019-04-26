@@ -1,6 +1,6 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+from rohan.global_imports import *
+from rohan.dandage.plot.colors import *
+from rohan.dandage.plot.annot import *
 
 def annot_submap(ax,dplot,colx,coly,cols,
                        markers,sizes,linewidths,
@@ -66,3 +66,18 @@ def get_clusters(clustergrid,axis=0,criterion='maxclust',clusters_fraction=0.25)
     dclst.columns=['sample','cluster #']
     dclst=dclst.sort_values(by='cluster #')
     return dclst
+
+from rohan.dandage.plot.annot import annot_heatmap
+from rohan.dandage.stat.corr import corrdfs
+def heatmap_corr(dplot, ax=None):
+    if ax is None:ax=plt.subplot(111)
+    dcorr,dpval=corrdfs(dplot,dplot,method='spearman')
+    ax=sns.heatmap(dcorr.astype(float).copy(),
+                   cmap=get_cmap_subset(plt.get_cmap('Reds'), 0.0, 0.8),
+                   vmin=0,vmax=1,
+               cbar_kws={'label':'$\\rho$'},ax=ax)
+    annot_heatmap(ax,get_offdiagonal_values(dpval.applymap(lambda x: pval2annot(x,alpha=0.01,fmt='<')),replace=''),
+                  kws_text={'color':'k','va':'center'},)
+    annot_heatmap(ax,get_offdiagonal_values(dcorr.applymap(lambda x: f'$\\rho$=\n{x:.2g}'),replace=''),
+                  kws_text={'color':'k','va':'center'},annothalf='lower',)
+    return ax

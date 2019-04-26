@@ -16,6 +16,7 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
 def savefig(plotp):
     plotp=abspath(make_pathable_string(plotp))
     makedirs(dirname(plotp),exist_ok=True)
+    plt.grid()
     plt.tight_layout()
     if '.' in plotp:
         plt.savefig(plotp)
@@ -24,15 +25,14 @@ def savefig(plotp):
         plt.savefig(f"{plotp}.svg",format='svg')        
     return plotp
 
-def saveplot(dplot,logp,plotp,sep='# plot',params=None,force=False,test=False):
+def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False):
     #save plot
     plotp=savefig(plotp)
     dplotp=f"{splitext(plotp)[0]}.tsv"
     paramp=f"{splitext(plotp)[0]}.yml"    
     #save data
     to_table(dplot,dplotp)
-    if not params is None:
-        yaml.dump(params,open(paramp,'w'))
+    yaml.dump(params,open(paramp,'w'))
     # get def
     srcp=f"{logp}.py"
     defn=f"plot_{basenamenoext(plotp)}"
