@@ -80,7 +80,7 @@ def df2plotshape(dlen,xlabel_unit,ylabel_unit,
    
     dlen=dlen.drop([c for c in dlen if c.startswith('_')],axis=1)    
     if test: print(dlen.columns)
-    fig = plt.figure(figsize=[4,4])
+    if fig is None:fig = plt.figure(figsize=[4,4])
     for idx in dlen.index:
         if idx==0:x_=0
         kws_plot_rect=makekws_plot_rect(dlen,fig,idx,x_)
@@ -101,8 +101,10 @@ def df2plotshape(dlen,xlabel_unit,ylabel_unit,
     ax.text(x_/2.3,-0.1,xlabel_unit,ha='center')
     ax.text(x_/2.3,0.9,suptitle,ha='center')
     ax.text(-0.1,0.4,f"total ~{ylen}{ylabel_unit}",va='center',rotation=90)
-    return fig,ax
-
+    if fig is not None:
+        return fig,ax
+    else:
+        return ax
 # slankey
 from collections import OrderedDict
 ordereddict=OrderedDict

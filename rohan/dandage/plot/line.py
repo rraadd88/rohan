@@ -4,8 +4,9 @@ import pandas as pd
 import numpy as np
 from os.path import exists, basename,dirname
 
-def plot_summarystats(df,cols=['mean','min','max','50%'],plotp=None):
-    ax=df.loc[:,cols].plot()
+def plot_summarystats(df,cols=['mean','min','max','50%'],plotp=None,ax=None):
+    if ax is None:ax=plt.subplot(111)
+    ax=df.loc[:,cols].plot(ax=ax)
     ax.fill_between(df.index, df['mean']-df['std'], df['mean']+df['std'], color='b', alpha=0.2,label='std')
     ax.legend()
     plt.tight_layout()

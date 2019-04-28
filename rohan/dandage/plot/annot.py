@@ -197,19 +197,18 @@ def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
         ValueError('both alternative and alpha are None')
     if alpha is None:
         alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) else 0.05
-#     logging.warning(f'alpha={alpha}')
     if pd.isnull(pval):
         return ''
     elif pval < 0.0001:
-        return "****" if fmt=='*' else "P<0.0001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"  if linebreak else f"P={pval:.1g}"
+        return "****" if fmt=='*' else f"P<\n{0.0001:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"  if linebreak else f"P={pval:.1g}"
     elif (pval < 0.001):
-        return "***"  if fmt=='*' else "P<0.001" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        return "***"  if fmt=='*' else f"P<\n{0.001:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     elif (pval < 0.01):
-        return "**" if fmt=='*' else "P<0.01" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        return "**" if fmt=='*' else f"P<\n{0.01:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     elif (pval < alpha):
-        return "*" if fmt=='*' else f"P<{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        return "*" if fmt=='*' else f"P<\n{alpha:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     else:
-        return "ns" if (fmt=='*' or fmt=='<') else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        return "ns" if fmt=='*' else f"P=\n{pval:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
 
 def pval2stars(pval,alternative): return pval2annot(pval,alternative=alternative,fmt='*',)
 

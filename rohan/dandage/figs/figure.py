@@ -11,12 +11,11 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
         yoff_=abs(ax.get_ylim()[1]-ax.get_ylim()[0])*(yoff)
         ax.text(ax.get_xlim()[0]+xoff_,
                 ax.get_ylim()[1]+yoff_,
-                label,**kw_text)
+                f"{label}   ",**kw_text)
         
 def savefig(plotp):
     plotp=abspath(make_pathable_string(plotp))
     makedirs(dirname(plotp),exist_ok=True)
-    plt.grid()
     plt.tight_layout()
     if '.' in plotp:
         plt.savefig(plotp)
@@ -71,10 +70,15 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False):
 #         """\n    saved at:{plotp}\n    """\n
 #     lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,params=None):\n    if dplot is None:dplot=read_table('+splitext(plotp)[0]+'.tsv');\n    if params is None:params=yaml.load(open(f'{splitext(plotp)[0]}.yml','r'));\n'+lines+'    return ax\n'
 
-    lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,params=None):\n    if dplot is None:dplot=read_table(f"{splitext(plotp)[0]}.tsv");\n    if params is None:params=yaml.load(open(f"{splitext(plotp)[0]}.yml","r"));\n'+lines+'    return ax\n'
+    lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,params=None):\n    if dplot is None:dplot=read_table(f"{splitext(plotp)[0]}.tsv");\n    params_saved=yaml.load(open(f"{splitext(plotp)[0]}.yml","r"));params=params_saved if params is None else '+'{'+'k:params[k] if k in params else params_saved[k] for k in params_saved'+'}'+';\n'+lines+'    return ax\n'
+
+#     params_saved=yaml.load(open(f"{splitext(plotp)[0]}.yml","r"));params=params_saved if params is None else {k:params[k] if k in params else params_saved[k] for k in params_saved};
+        
+    
     #save def
     with open(srcp,'a') as f:
         f.write(lines)
     if test:
         print({'plot':plotp,'data':dplotp,'param':paramp})
+    print(plotp)
     return plotp
