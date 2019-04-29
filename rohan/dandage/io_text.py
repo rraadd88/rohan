@@ -1,5 +1,6 @@
+from rohan.global_imports import *
 from rohan.dandage.stat.cluster import get_clusters
-def corpus2clusters(corpus, index):
+def corpus2clusters(corpus, index,params_clustermap={'vmin':0,'vmax':1,'figsize':[6,6]}):
     """
     corpus: list of strings
     """
@@ -11,10 +12,8 @@ def corpus2clusters(corpus, index):
                 index=index,
                 columns=index,
                 )
-    clustergrid=sns.clustermap(df,
+    clustergrid=sns.clustermap(df,**params_clustermap
     #                                method='complete', metric='canberra',
-                               vmin=-0.15,vmax=0.15,
-                               cmap='coolwarm'
                                   )
     dclusters=get_clusters(clustergrid,axis=0,criterion='maxclust',clusters_fraction=0.25)
     return dclusters
