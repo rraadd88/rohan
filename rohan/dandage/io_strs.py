@@ -225,3 +225,6 @@ def str2tiles(s,tilelen=10,test=False):
         print(tile2range)
     return range2tiles
 
+def bracket(s,sbracket):
+    pos=s.find(sbracket)
+    return f"{s[:pos]}({s[pos:pos+len(sbracket)]})"

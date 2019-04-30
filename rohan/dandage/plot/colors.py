@@ -47,3 +47,9 @@ def get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100):
         cmap(np.linspace(vmin, vmax, n)))
     return new_cmap
 def cut_cmap(cmap, vmin=0.0, vmax=1.0, n=100):return get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100)
+
+import matplotlib
+def get_ncolors(n,cmap='Spectral'):
+    cmap = matplotlib.cm.get_cmap(cmap)
+    colors=[cmap(i) for i in np.arange(n)/n]
+    return colors
