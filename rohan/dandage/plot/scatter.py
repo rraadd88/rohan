@@ -61,3 +61,33 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         plt.savefig(plotp)
     else:
         return fig, ax
+    
+def plot_scatterbysubsets(df,colx,coly,colannot,
+                        ax=None,dfout=True,
+                          kws_dfannot2color={'cmap':'spring'},
+                        label_n=False,
+                        kws_scatter={},
+                         annot2color=None,
+                         test=False):
+    if ax is None:
+        ax=plt.subplot()
+    if annot2color is None:
+        df,annot2color=dfannot2color(df,colannot,renamecol=False,
+                                     test=test,
+                                     **kws_dfannot2color)
+    else:
+        colcolor=f"{colannot} color"
+        df=df.loc[df[colannot].isin(annot2color.keys()),:]
+        df[colcolor]=df[colannot].apply(lambda x : annot2color[x] if not pd.isnull(x) else x)
+    colc=f"{colannot} color"
+    for annot in annot2color.keys():
+        df_=df.loc[df[colannot]==annot,[colx,coly,colc]].dropna()
+        ax.scatter(x=df_[colx],y=df_[coly],c=df_[colc],
+        label=f"{annot} (n={len(df_)})" if label_n else annot,
+                  **kws_scatter)
+    ax.set_xlabel(colx)
+    ax.set_ylabel(coly)
+    if dfout:
+        return df
+    else:
+        return ax    
