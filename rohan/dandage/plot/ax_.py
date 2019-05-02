@@ -21,3 +21,9 @@ def grid(ax):
         logging.warning('w/h={w/h}')
     return ax
 
+def sort_legends(ax,params={}):
+    handles, labels = ax.get_legend_handles_labels()
+    # sort both labels and handles by labels
+    labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+    ax.legend(handles, labels,**params)
+    return ax

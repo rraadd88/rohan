@@ -73,8 +73,6 @@ def heatmap_corr(dplot, ax=None,params_heatmap={}):
     if ax is None:ax=plt.subplot(111)
     dcorr,dpval=corrdfs(dplot,dplot,method='spearman')
     ax=sns.heatmap(dcorr.astype(float).copy(),
-                   # cmap=get_cmap_subset(plt.get_cmap('Reds'), 0.0, 0.8),
-                   # vmin=0,vmax=1,
                cbar_kws={'label':'$\\rho$'},ax=ax,**params_heatmap)
     annot_heatmap(ax,get_offdiagonal_values(dpval.applymap(lambda x: pval2annot(x,alpha=0.01,fmt='<')),replace=''),
                   kws_text={'color':'k','va':'center'},)

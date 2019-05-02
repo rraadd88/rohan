@@ -56,7 +56,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     else:
         return fig, ax
     
-from rohan.dandage.plot.ax_ import set_equallim    
+from rohan.dandage.plot.ax_ import *    
 def plot_scatterbysubsets(df,colx,coly,colannot,
                         ax=None,dfout=True,
                           kws_dfannot2color={'cmap':'spring'},
@@ -75,7 +75,8 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
         df=df.loc[df[colannot].isin(annot2color.keys()),:]
         df[colcolor]=df[colannot].apply(lambda x : annot2color[x] if not pd.isnull(x) else x)
     colc=f"{colannot} color"    
-    for annot in annot2color.keys():
+    annot2len=df.groupby(colannot).agg(len).iloc[:,0].sort_values(ascending=False).to_dict()
+    for annot in annot2len:
         df_=df.loc[df[colannot]==annot,[colx,coly,colc]].dropna()
         ax.scatter(x=df_[colx],y=df_[coly],c=df_[colc],
         label=f"{annot} (n={len(df_)})" if label_n else annot,
@@ -84,18 +85,19 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
     ax.set_ylabel(coly)
     if equallim:
         ax=set_equallim(ax,diagonal=True)    
-    ax.legend(loc='best')
-    ax.grid()
+    ax=sort_legends(ax,params={'loc':'best'})    
+    ax.grid(True)
     if dfout:
         return df
     else:
         return ax    
 
-def plot_scatter(dplot,params,ax=None):
+def plot_scatter(dplot,params,equallim=True,
+                 ax=None):
     if ax is None:ax=plt.subplot()
     ax=dplot.plot.scatter(**params,ax=ax)
     ax=set_equallim(ax,diagonal=True)
     if equallim:
         ax=set_equallim(ax,diagonal=True)        
-    ax.grid()
+    ax.grid(True)
     return ax
