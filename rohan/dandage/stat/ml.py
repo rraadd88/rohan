@@ -18,7 +18,7 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
     
     h = .02  # step size in the mesh
 
-    cn2classifier = {"Nearest Neighbors":KNeighborsClassifier(3), 
+    cn2classifier = ordereddict({"Nearest Neighbors":KNeighborsClassifier(3), 
              "Linear SVM":SVC(kernel="linear", C=0.025),
              "RBF SVM":SVC(gamma=2, C=1),
              "Gaussian Process":GaussianProcessClassifier(1.0 * RBF(1.0)),
@@ -27,7 +27,7 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
              "Neural Net":MLPClassifier(alpha=1), 
              "AdaBoost":AdaBoostClassifier(),
              "Naive Bayes":GaussianNB(),
-             "QDA":QuadraticDiscriminantAnalysis()}
+             "QDA":QuadraticDiscriminantAnalysis()})
 
     if demo:
         test=True
@@ -37,13 +37,17 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
         X += 2 * rng.uniform(size=X.shape)
         linearly_separable = (X, y)
 
-        dn2dataset = {'moons':make_moons(noise=0.3, random_state=0),
+        dn2dataset = ordereddict({'moons':make_moons(noise=0.3, random_state=0),
                     'circle':make_circles(noise=0.2, factor=0.5, random_state=1),
-                    'linear':linearly_separable}
+                    'linear':linearly_separable})
                     
 #         return X,y
-    figure = plt.figure(figsize=(27, 9))
+    if test:
+        figure = plt.figure(figsize=(27, 9))
     i = 1
+    dscore=pd.DataFrame(index=dn2dataset.keys(),columns=cn2classifier.keys())
+    dscore.index.name='dataset'
+    dscore.columns.name='classifier'
     # iterate over datasets
     for ds_cnt, dn in enumerate(dn2dataset):
         ds=dn2dataset[dn]
@@ -82,7 +86,7 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
             clf=cn2classifier[name]
             clf.fit(X_train, y_train)
             score = clf.score(X_test, y_test)
-
+            dscore.loc[dn,name]=score
             if test:
                 ax = plt.subplot(len(dn2dataset), len(cn2classifier) + 1, i)
                 # Plot the decision boundary. For that, we will assign a color to each
@@ -112,3 +116,4 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
                 ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
                         size=15, horizontalalignment='right')
                 i += 1
+    return dscore
