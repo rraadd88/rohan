@@ -52,6 +52,7 @@ def many_classifiers(dn2dataset={},
     dscore=pd.DataFrame(index=dn2dataset.keys(),columns=cn2classifier.keys())
     dscore.index.name='dataset'
     dscore.columns.name='classifier'
+    dfeatimp=dscore.copy()
     # iterate over datasets
     for ds_cnt, dn in enumerate(dn2dataset):
         ds=dn2dataset[dn]
@@ -90,11 +91,15 @@ def many_classifiers(dn2dataset={},
             clf=cn2classifier[name]
             clf.fit(X_train, y_train)
             scores=cross_val_score(clf, X_test, y_test, cv=cv)
-            selector = RFECV(clf, step=1, cv=cv)
-            selector = selector.fit(X, y)
-            return selector
-#             score = clf.score(X_test, y_test)
             dscore.loc[dn,name]=scores
+            try:
+                selector = RFECV(clf, step=1, cv=cv)
+                selector = selector.fit(X, y)
+                dfeatimp.loc[dn,name]=list(selector.ranking_)
+            except:
+                print(f'{name} does not expose "coef_" or "feature_importances_" attributes')
+                pass
+            # score = clf.score(X_test, y_test)
             if test:
                 ax = plt.subplot(len(dn2dataset), len(cn2classifier) + 1, i)
                 # Plot the decision boundary. For that, we will assign a color to each
@@ -124,4 +129,5 @@ def many_classifiers(dn2dataset={},
                 ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
                         size=15, horizontalalignment='right')
                 i += 1
-    return dscore
+    return dmap2lin(dscore,idxn='dataset',coln='classifier',colvalue_name='ROC AUC').merge(dmap2lin(dfeatimp,idxn='dataset',coln='classifier',colvalue_name='feature importances ranks'),
+                                                                               on=['dataset','classifier'])
