@@ -1,5 +1,7 @@
 from rohan.global_imports import *
-def many_classifiers(dn2dataset={},demo=False,test=False):
+def many_classifiers(dn2dataset={},
+                     cv=5,
+                     demo=False,test=False,random_state=88):
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap
@@ -15,6 +17,8 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
     from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
     from sklearn.naive_bayes import GaussianNB
     from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+    from sklearn.model_selection import cross_val_score
+    from sklearn.feature_selection import RFECV    
     
     h = .02  # step size in the mesh
 
@@ -32,13 +36,13 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
     if demo:
         test=True
         X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
-                                   random_state=1, n_clusters_per_class=1)
-        rng = np.random.RandomState(2)
+                                   random_state=random_state, n_clusters_per_class=1)
+        rng = np.random.RandomState(random_state)
         X += 2 * rng.uniform(size=X.shape)
         linearly_separable = (X, y)
 
-        dn2dataset = ordereddict({'moons':make_moons(noise=0.3, random_state=0),
-                    'circle':make_circles(noise=0.2, factor=0.5, random_state=1),
+        dn2dataset = ordereddict({'moons':make_moons(noise=0.3, random_state=random_state),
+                    'circle':make_circles(noise=0.2, factor=0.5, random_state=random_state),
                     'linear':linearly_separable})
                     
 #         return X,y
@@ -56,7 +60,7 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
         print(X.shape,y.shape)
         X = StandardScaler().fit_transform(X)
         X_train, X_test, y_train, y_test = \
-            train_test_split(X, y, test_size=.4, random_state=42)
+            train_test_split(X, y, test_size=.4, random_state=random_state)
         if test:
             x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
             y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
@@ -85,8 +89,12 @@ def many_classifiers(dn2dataset={},demo=False,test=False):
         for name in cn2classifier:
             clf=cn2classifier[name]
             clf.fit(X_train, y_train)
-            score = clf.score(X_test, y_test)
-            dscore.loc[dn,name]=score
+            scores=cross_val_score(clf, X_test, y_test, cv=cv)
+            selector = RFECV(clf, step=1, cv=cv)
+            selector = selector.fit(X, y)
+            return selector
+#             score = clf.score(X_test, y_test)
+            dscore.loc[dn,name]=scores
             if test:
                 ax = plt.subplot(len(dn2dataset), len(cn2classifier) + 1, i)
                 # Plot the decision boundary. For that, we will assign a color to each
