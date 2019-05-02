@@ -130,13 +130,15 @@ def to_table_pqt(df,p):
 def tsv2pqt(p):
     to_table_pqt(pd.read_csv(p,sep='\t',low_memory=False),f"{p}.pqt")
     
-def read_excel(p,sheet_name=None):
-    xl = pd.ExcelFile(p)
-    xl.sheet_names  # see all sheet names
+def read_excel(p,sheet_name=None,params_read_excel={}):
     if sheet_name is None:
-        sheet_name=input(', '.join(xl.sheet_names))
-    return xl.parse(sheet_name) 
-
+        xl = pd.ExcelFile(p)
+        xl.sheet_names  # see all sheet names
+        if sheet_name is None:
+            sheet_name=input(', '.join(xl.sheet_names))
+        return xl.parse(sheet_name) 
+    else:
+        return pd.read_excel(p, sheet_name, **params_excel)
 def to_excel(sheetname2df,datap,):
     writer = pd.ExcelWriter(datap)
     for sn in sheetname2df:
