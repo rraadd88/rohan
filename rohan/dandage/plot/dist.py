@@ -43,7 +43,9 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
             hues=hues,
             alternative=alternative,)
         ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)),
-                         xoffwithin=1 if len(hues)==3 else 0.85,xoff=-1 if len(hues)==3 else -1.75,yoff=0.025)
+                         xoffwithin=1 if len(hues)==3 else 0.85,
+                         xoff=-1 if len(hues)==3 else -0.5,
+                         yoff=0.025)
 #         ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='*',alternative=alternative)),
 #                          xoffwithin=1 if len(hues)==3 else 0.85,xoff=-1 if len(hues)==3 else -1.75,yoff=0.025)
 #     ax=grid(ax)
