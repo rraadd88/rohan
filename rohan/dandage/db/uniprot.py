@@ -61,7 +61,11 @@ def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
         print(response.url)
     if response.ok:
         df=pd.read_table(response.url)
-        df.columns=[frm,to]
+        if len(df.columns)==2:
+            df.columns=[frm,to]
+        else:
+            renamecols=[c for c in df if c.startswith('yourlist:')]+[c for c in df if c.startswith('isomap:')]
+            df=df.rename(columns={c:c[:6] for c in renamecols})
         return df
     else:
         print('Something went wrong ', response.status_code)  

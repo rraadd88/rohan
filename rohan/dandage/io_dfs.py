@@ -138,7 +138,7 @@ def read_excel(p,sheet_name=None,params_read_excel={}):
             sheet_name=input(', '.join(xl.sheet_names))
         return xl.parse(sheet_name) 
     else:
-        return pd.read_excel(p, sheet_name, **params_excel)
+        return pd.read_excel(p, sheet_name, **params_read_excel)
 def to_excel(sheetname2df,datap,):
     writer = pd.ExcelWriter(datap)
     for sn in sheetname2df:

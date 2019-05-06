@@ -8,6 +8,7 @@
 ``io_strs``
 ================================
 """
+import re
 import logging
 import numpy as np
 from rohan.dandage.io_nums import str2num
@@ -228,3 +229,9 @@ def str2tiles(s,tilelen=10,test=False):
 def bracket(s,sbracket):
     pos=s.find(sbracket)
     return f"{s[:pos]}({s[pos:pos+len(sbracket)]})"
+
+## split
+def get_prefix(string,sep):
+    return re.match(f"(.*?){sep}",string).group()[:-1]
+def get_suffix(string,sep):
+    return ' '.join(string.split(sep)[1:])
