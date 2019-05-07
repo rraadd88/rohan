@@ -709,3 +709,14 @@ def filterstats(df,boolcol):
     df_=df.loc[boolcol,:]
     logging.info(df,df_)
     return df_
+
+# get numbers from annot 
+def get_colsubset2stats(dannot,colssubset=None):
+    if colssubset is None:
+        colssubset=dannot_stats.columns
+    dannot_stats=dannot.loc[:,colssubset].apply(pd.Series.value_counts)
+
+    colsubset2classes=dannot_stats.apply(lambda x: x.index,axis=0)[dannot_stats.apply(lambda x: ~pd.isnull(x),axis=0)].apply(lambda x: dropna(x),axis=0).to_dict()
+    colsubset2classns=dannot_stats[dannot_stats.apply(lambda x: ~pd.isnull(x),axis=0)].apply(lambda x: dropna(x),axis=0).to_dict()
+    colsubset2classns={k:[int(i) for i in colsubset2classns[k]] for k in colsubset2classns}
+    return dannot_stats,colsubset2classes,colsubset2classns

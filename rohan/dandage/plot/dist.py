@@ -56,19 +56,23 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
     return ax
 
 def hist_annot(dplot,colx,colsubsets,
-        subset_unclassified=True,cmap='tab10',
+        subset_unclassified=True,cmap='tab10',ylimoff=1.2,
+               params_scatter={'zorder':2,
+                               'alpha':0.5,
+                              'marker':'|'},
                ax=None):
     if ax is None:ax=plt.subplot(111)
     ax=dplot[colx].hist(bins=100,ax=ax,color='gray',zorder=1)
     ax.set_xlabel(colx)
     ax.set_ylabel('count')
+    ax.set_ylim(0,ax.get_ylim()[1]*ylimoff)
     subsets=[s for s in dplot[colsubsets].unique() if not (subset_unclassified and s=='unclassified')]
     cs=get_ncolors(len(subsets),cmap=cmap)
     for subseti,(subset,c) in enumerate(zip(subsets,cs)):
         y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-subseti)/10-0.05)+ax.set_ylim()[0]
         X=dplot.loc[(dplot[colsubsets]==subset),colx]
         Y=[y for i in X]
-        ax.scatter(X,Y,label=subset,color=c,marker="|",zorder=2)
+        ax.scatter(X,Y,label=subset,color=c,**params_scatter)
     #     break
     ax.legend(bbox_to_anchor=[1,1])
     return ax
