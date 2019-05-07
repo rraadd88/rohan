@@ -230,6 +230,12 @@ def bracket(s,sbracket):
     pos=s.find(sbracket)
     return f"{s[:pos]}({s[pos:pos+len(sbracket)]})"
 
+def get_bracket(s,l='(',r=')'):
+    if l in s and r in s:
+        return s[s.find(l)+1:s.find(r)]
+    else:
+        return '' 
+    
 ## split
 def get_prefix(string,sep):
     return re.match(f"(.*?){sep}",string).group()[:-1]
