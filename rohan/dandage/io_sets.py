@@ -72,7 +72,13 @@ def intersections(dn2list,jaccard=False):
     for k1 in dn2list:
         for k2 in dn2list:
             if jaccard:
-                df.loc[k1,k2]=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(set(dn2list[k1]).union(dn2list[k2]))                
+                df.loc[k1,k2]=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(set(dn2list[k1]).union(dn2list[k2]))     
             else:
                 df.loc[k1,k2]=len(set(dn2list[k1]).intersection(dn2list[k2]))
     return df
+
+def jaccard_index(l1,l2):
+    l1,l2=unique_dropna(l1),unique_dropna(l2)
+    i=len(set(l1).intersection(l2))
+    u=len(set(l1).union(l2))
+    return i/u,i,u

@@ -1,6 +1,6 @@
 from rohan.global_imports import *
 from rohan.dandage.io_strs import make_pathable_string
-
+from scipy import stats
 #rasterized=True
 # sns scatter_kws={'s':5, 'alpha':0.3, 'rasterized':True}
 
@@ -8,12 +8,10 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
              scafmt='hexbin',
             rp=True,rs=True,vmax=10,cbar_label=None,
              axscale_log=False,
-            ax=None,fig=None, 
+            ax=None,
             plotp=None,plotsave=False):
     d=d.dropna(subset=[xcol,ycol],how='any')
     d=d.dropna(subset=[xcol,ycol],how='all')
-    if fig is None:
-        fig=plt.figure(figsize=[3.5,3])
     if ax is None:
         ax=plt.subplot(111)
     if scafmt=='hexbin':
@@ -29,15 +27,18 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     elif not rp and rs:
         textstr=f'$\\rho$={rspea:.2f}'
     props = dict(facecolor='w', alpha=0.3)
-    fig.text(textxy[0],textxy[1],textstr,
+    ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,
             ha='left',va='top',bbox=props)
     if scafmt=='hexbin':
         if cbar_label is None and d.index.name is None:
             cbar_label='# of points'
         else:
             cbar_label=f"# of {d.index.name}s"
-        fig.text(1,0.5,cbar_label,rotation=90,
-                ha='center',va='center')
+        ax.text(ax.get_xlim()[1],ax.get_ylim()[0],cbar_label,
+                rotation=90,
+#                 ha='right',
+                va='bottom'
+               )
     if axscale_log:
         ax.set_xscale("log", nonposx='clip')
         ax.set_yscale("log", nonposy='clip')
@@ -54,8 +55,20 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         print(plotp)
         plt.savefig(plotp)
     else:
-        return fig, ax
-    
+        return ax
+
+def plot_corr(dplot,x,y,ax=None,params_sns_regplot={},params_ax={}):
+    if ax is None:ax=plt.subplot()
+    ax=sns.regplot(data=dplot,x=x,y=y,fit_reg=True,
+                lowess=True,
+#                 scatter_kws={'color':'gray'},
+#                 line_kws={'color':'r','label':'sc.stats.spearmanr(d[xcol], d[ycol])[0]'},
+                ax=ax,
+                **params_sns_regplot
+               )
+    ax.set(**params_ax)
+    return ax
+
 from rohan.dandage.plot.ax_ import *    
 def plot_scatterbysubsets(df,colx,coly,colannot,
                         ax=None,dfout=True,
