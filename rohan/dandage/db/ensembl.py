@@ -45,3 +45,15 @@ def enst2rnaseq(id,ensembl):
     except:
         return np.nan 
     
+def gene_id2homology(gene_id,headers={'target_taxon':'9606',
+                                          "type":"paralogues",
+                                          "format":"full",
+                                          "Content-Type" : "application/json",},test=False):
+    import requests, sys
+    server = "https://rest.ensembl.org"
+    ext = f"/homology/id/{gene_id}?"
+    r = requests.get(server+ext, headers=headers)
+    if test:
+        print(f"https://rest.ensembl.org/homology/id/{gene_id}?format=full;target_taxon=9606;type=paralogues;content-type=application/json")
+    if r.ok:
+        return r.json()
