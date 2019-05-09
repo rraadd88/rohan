@@ -107,7 +107,7 @@ def get_dmetrics(df,metricsby,colx,coly,colhue,xs,hues,alternative,
     return dmetrics
     
 def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
-                  yoff=0,annotby='xs',
+                  yoff=0,annotby='xs',position='top',
                   test=False):
     """
     :param dmetrics: hue in index, x in columns
@@ -133,6 +133,7 @@ def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
                 if annotby=='ys':
                     xco,yco=yco,xco
                 ax.text(xco,yco,dmetrics.loc[hue,x],ha='center')
+                print(xco)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     return ax

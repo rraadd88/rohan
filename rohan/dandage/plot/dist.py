@@ -5,14 +5,14 @@ from rohan.dandage.plot.ax_ import *
 
 def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
                          alternative='two-sided',
-                         show_metrics=False,
-                        metricsby='hues',
+                         show_metrics=False,metricsby='hues',
                          palette=None,
                         kws_annot_boxplot={'xoffwithin':0,'xoff':0,'yoff':0.025,'test':False},
                          legend_labels=None,
-                         ylims=[-1.5,1],
-                         ax=None,
-                        plotp=None):
+                         params_ax={},
+                         ax=None,plotp=None,
+                        test=False
+                        ):
     if ax is None:
         ax=plt.subplot()
     ax=sns.violinplot(x=colx,hue=colhue,y=coly,data=df,
@@ -20,6 +20,7 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
                 palette=palette,
                 zorder=-1,
                 order=xs,hue_order=hues,
+                cut=0,
 #                       linewidth=2,
 #                       legend=False,
                ax=ax)    
@@ -29,28 +30,33 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
                 order=xs,hue_order=hues,
                   ax=ax)    
     
-    handles, labels = ax.get_legend_handles_labels()
-    legend=ax.legend(handles=handles[:len(hues)],labels=labels[:len(hues)],
-                     title=colhue,bbox_to_anchor=[1,1],)
-    if not legend_labels is None:
-        for labeli,label in enumerate(legend_labels):
-            legend.get_texts()[labeli].set_text(label)
-    ax.set_ylim(ylims[0],ylims[1])
-    ax.set_title(' \n ')
+    if len(xs)!=1:
+        handles, labels = ax.get_legend_handles_labels()    
+        legend=ax.legend(handles=handles[:len(hues)],labels=labels[:len(hues)],
+                         title=colhue,bbox_to_anchor=[1,1],)
+        if len(legend.get_texts())!=0:
+            if not legend_labels is None:
+                for labeli,label in enumerate(legend_labels):
+                    legend.get_texts()[labeli].set_text(label)
+    else:
+        for x,s in zip(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels):
+            ax.text(x,ax.get_ylim()[0],s,va='top',ha='center')
+    ax.set(**params_ax)   
+#     print([t.get_text() for t in ax.get_xticklabels()])
+#     if len(xs)==1:
+#         ax.set_xticklabels([''])
     if show_metrics:
+        ax.set_title(' \n ')
         dmetrics=get_dmetrics(df,colx=colx,coly=coly,colhue=colhue,metricsby=metricsby,
             xs=xs,
             hues=hues,
             alternative=alternative,)
+        if test:
+            print(dmetrics)
         ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)),
                          xoffwithin=1 if len(hues)==3 else 0.85,
                          xoff=-1 if len(hues)==3 else -0.5,
-                         yoff=0.025)
-#         ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='*',alternative=alternative)),
-#                          xoffwithin=1 if len(hues)==3 else 0.85,xoff=-1 if len(hues)==3 else -1.75,yoff=0.025)
-#     ax=grid(ax)
-    plt.grid()
-    plt.tight_layout()
+                         yoff=0.025,test=test)
     if not plotp is None:
         plt.savefig(plotp)    
     return ax
