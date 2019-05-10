@@ -133,7 +133,7 @@ def annot_boxplot(ax,dmetrics,xoffwithin=0.85,xoff=1.6,
                 if annotby=='ys':
                     xco,yco=yco,xco
                 ax.text(xco,yco,dmetrics.loc[hue,x],ha='center')
-                print(xco)
+#                 print(xco)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     return ax

@@ -39,6 +39,13 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
                 for labeli,label in enumerate(legend_labels):
                     legend.get_texts()[labeli].set_text(label)
     else:
+        ax.get_legend().remove()
+        ax.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='both',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False)        
         for x,s in zip(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels):
             ax.text(x,ax.get_ylim()[0],s,va='top',ha='center')
     ax.set(**params_ax)   

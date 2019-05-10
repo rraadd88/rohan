@@ -118,6 +118,12 @@ def normalisestr(s):
     import re
     return re.sub('\W+','', s.lower()).replace('_','')
 
+
+def remove_accents_df(df):
+    cols=df.columns.tolist()
+    df[cols] = df[cols].apply(lambda x: x.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8'))
+    return df
+
 def make_pathable_string(s,replacewith='_'):
     """
     Removes symbols from a string to be compatible with directory structure.
