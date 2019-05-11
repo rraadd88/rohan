@@ -44,12 +44,31 @@ def enst2rnaseq(id,ensembl):
         return t.coding_sequence
     except:
         return np.nan 
+
+#restful api    
+import requests, sys    
+def ensembl_rest(id_,function,headers={'target_taxon':'9606',
+                                               'release':95,
+                                          "format":"full",
+                                          "Content-Type" : "application/json",},test=False):
+    """
+    param fmt: id sequence homology
+    
+    https://rest.ensembl.org/sequence/id/ENSP00000288602?content-type=application/json    
+    """
+    server = "https://rest.ensembl.org"
+    ext = f"/{function}/id/{id_}?"
+    r = requests.get(server+ext, headers=headers)
+    if test:
+        print(f"{server}/{ext}?format=full;content-type=application/json")
+    if r.ok:
+        return r.json()            
+
     
 def gene_id2homology(gene_id,headers={'target_taxon':'9606',
                                           "type":"paralogues",
                                           "format":"full",
                                           "Content-Type" : "application/json",},test=False):
-    import requests, sys
     server = "https://rest.ensembl.org"
     ext = f"/homology/id/{gene_id}?"
     r = requests.get(server+ext, headers=headers)
@@ -57,3 +76,18 @@ def gene_id2homology(gene_id,headers={'target_taxon':'9606',
         print(f"https://rest.ensembl.org/homology/id/{gene_id}?format=full;target_taxon=9606;type=paralogues;content-type=application/json")
     if r.ok:
         return r.json()
+    
+    
+def ensembl_lookup(id_,ensembl='rest',headers={'target_taxon':'9606',
+                                               'release':95,
+                                          "format":"full",
+                                          "Content-Type" : "application/json",},test=False):
+    """
+    prefer ensembl rest
+    to be deprecated
+    https://rest.ensembl.org/lookup/id/ENSP00000351933?target_taxon=9606;release=95;content-type=application/json    
+    """
+    if not isinstance(ensembl,str):
+        return ensembl.transcript_by_protein_id(proteinid).transcript_id
+    else:
+        return ensembl_rest(id_,function='lookup',headers=headers,test=test)
