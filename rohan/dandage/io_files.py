@@ -49,3 +49,9 @@ def cat(ps,outp):
         for p in ps:
             with open(p) as infile:
                 outfile.write(infile.read())    
+
+def get_encoding(p):
+    import chardet
+    with open(p, 'rb') as f:
+        result = chardet.detect(f.read())
+    return result['encoding']                

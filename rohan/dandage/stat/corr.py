@@ -30,3 +30,11 @@ def corrdfs(df1,df2,method):
         dcorr.index.name=df2.columns.name
         dpval.index.name=df2.columns.name
     return dcorr,dpval
+
+def get_spearmanr(x,y):
+    t=sc.stats.spearmanr(x,y,nan_policy='omit')
+    return t.correlation,float(t.pvalue.data)
+def get_spearmanr_str(x,y):    
+    r,p=get_spearmanr(x,y)
+    return f"$\\rho$={r:.1e} ({pval2annot(p,fmt='<')})".replace('\n','')
+

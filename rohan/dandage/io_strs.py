@@ -120,7 +120,8 @@ def normalisestr(s):
 
 
 def remove_accents_df(df):
-    cols=df.columns.tolist()
+    cols=df.dtypes[(df.dtypes!=float) & (df.dtypes!=int) ].index.tolist()
+    
     df[cols] = df[cols].apply(lambda x: x.str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8'))
     return df
 
