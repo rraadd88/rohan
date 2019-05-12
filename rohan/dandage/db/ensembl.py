@@ -5,7 +5,9 @@
 #     'R64-1-1': (92, 92),
 # }),release=92)
 import numpy as np
+import pandas as pd
 
+#pyensembl faster
 def ensg2genename(id,ensembl):
     try:
         return ensembl.gene_name_of_gene_id(id)
@@ -44,6 +46,12 @@ def enst2rnaseq(id,ensembl):
         return t.coding_sequence
     except:
         return np.nan 
+    
+def protein_id2transcript_id(protein_id,ensembl):    
+    if (protein_id in ensembl.protein_ids() and (not pd.isnull(protein_id))):
+        return ensembl.transcript_by_protein_id(protein_id).transcript_id
+    else:
+        return np.nan    
 
 #restful api    
 import requests, sys    
@@ -78,7 +86,7 @@ def gene_id2homology(gene_id,headers={'target_taxon':'9606',
         return r.json()
     
     
-def ensembl_lookup(id_,ensembl='rest',headers={'target_taxon':'9606',
+def ensembl_lookup(id_,headers={'target_taxon':'9606',
                                                'release':95,
                                           "format":"full",
                                           "Content-Type" : "application/json",},test=False):
@@ -87,7 +95,4 @@ def ensembl_lookup(id_,ensembl='rest',headers={'target_taxon':'9606',
     to be deprecated
     https://rest.ensembl.org/lookup/id/ENSP00000351933?target_taxon=9606;release=95;content-type=application/json    
     """
-    if not isinstance(ensembl,str):
-        return ensembl.transcript_by_protein_id(proteinid).transcript_id
-    else:
-        return ensembl_rest(id_,function='lookup',headers=headers,test=test)
+    return ensembl_rest(id_,function='lookup',headers=headers,test=test)
