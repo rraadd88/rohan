@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import scipy as sc
 
 def df2corrmean(df):
     return df.corr(method='spearman').replace(1,np.nan).mean().mean()
@@ -33,7 +34,9 @@ def corrdfs(df1,df2,method):
 
 def get_spearmanr(x,y):
     t=sc.stats.spearmanr(x,y,nan_policy='omit')
-    return t.correlation,float(t.pvalue.data)
+#     print(t)
+#     print(t.pvalue)    
+    return t.correlation,float(t.pvalue)
 def get_spearmanr_str(x,y):    
     r,p=get_spearmanr(x,y)
     return f"$\\rho$={r:.1e} ({pval2annot(p,fmt='<')})".replace('\n','')

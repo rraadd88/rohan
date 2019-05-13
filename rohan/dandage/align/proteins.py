@@ -48,7 +48,7 @@ def seqs2afasta(ids2seqs,fastap):
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id], Alphabet.ProteinAlphabet), id) for id in ids2seqs)
     SeqIO.write(seqs, fastap, "fasta")
 
-def get_dnds(x,pal2nald,clustalop,codemlp):
+def get_dnds(x,pal2nald,clustalop,codemlp,dndsd,fastad,test=False):
     """
     git clone https://github.com/faylward/dnds
     wget http://www.bork.embl.de/pal2nal/distribution/pal2nal.v14.tar.gz
@@ -58,7 +58,7 @@ def get_dnds(x,pal2nald,clustalop,codemlp):
     seqtype2fastap={}
     for seqtype in ['protein','transcript']:
 #         fastap=f"codeml/data/{dparalogs.loc[0,'gene ids']}.{seqtype}.fasta"
-        fastap=f"codeml/data/{x['gene ids']}.{seqtype}.fasta"
+        fastap=f"{fastad}/{x['gene ids']}.{seqtype}.fasta"
         seqtype2fastap[seqtype]=fastap
 #         seqs2afasta(ids2seqs=dict(zip(dparalogs.loc[0,[f'{seqtype}1 id',f'{seqtype}2 id']].tolist(),
 #         dparalogs.loc[0,[f'{seqtype}1 sequence',f'{seqtype}2 sequence']].tolist())),
@@ -69,22 +69,20 @@ def get_dnds(x,pal2nald,clustalop,codemlp):
 
     from rohan.dandage.io_sys import runbashcmd
     from os.path import abspath
-
-    dndsd=abspath('codeml/dnds/')+'/'
     # tmpd='codeml/tmp/'
     codemltxtp=f"{abspath(seqtype2fastap['protein'])}.codeml.txt"
     if not exists(codemltxtp):
-        coms=[f"cd {dndsd};git clean -f;",
-        f"{clustalop} --force -i {abspath(seqtype2fastap['protein'])} -o {abspath(seqtype2fastap['protein'])}.aln.faa;",
-        f"perl {pal2nald}/pal2nal.pl {abspath(seqtype2fastap['protein'])}.aln.faa {abspath(seqtype2fastap['transcript'])} -output paml -nogap > {dndsd}cluster_1.pal2nal;",
-        f"cd {dndsd};{codemlp};", #python2 parse_codeml_output.py codeml.txt
-        f"mv {dndsd}/codeml.txt {codemltxtp};",
+        coms=[f"cd {dndsd}/;git clean -f;",
+              f"conda activate human_paralogs;{clustalop} --force -i {abspath(seqtype2fastap['protein'])} -o {abspath(seqtype2fastap['protein'])}.aln.faa;",
+              f"perl {pal2nald}/pal2nal.pl {abspath(seqtype2fastap['protein'])}.aln.faa {abspath(seqtype2fastap['transcript'])} -output paml -nogap > {dndsd}/cluster_1.pal2nal;",
+              f"cd {dndsd};{codemlp};mv {dndsd}/codeml.txt {codemltxtp};",
         ]
+#         ", #python2 parse_codeml_output.py codeml.txt
 
         import subprocess
         for com in coms:
 #             print(com)
 #             subprocess.call(com,shell=True)
-            runbashcmd(com,test=True)
+            runbashcmd(com,test=test)
     codemltxtp2nums(codemltxtp)
     #     runbashcmd(com)
