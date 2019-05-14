@@ -684,13 +684,22 @@ def dfsortbybins(df, col):
 def sortdfcolbylist(df, col,l):
     df[col]=pd.Categorical(df[col],categories=l, ordered=True)
     return df.sort_values(col)
+def is_col_numeric(ds):
+    return np.issubdtype(ds.dtype, np.number)
 
 from rohan.dandage.io_sets import dropna
-def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids):
+def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids,params_qcut={'q':10}):
     """
     cols_fracby:
     cols_subset:
     """
+    for coli,col in enumerate(cols_subset):
+        if is_col_numeric(df[col]):
+            try:
+                df[f"{col} bin"]=pd.qcut(df[col],q=params_qcut['q'])
+            except:
+                print(col)
+            cols_subset[coli]=f"{col} bin"
     for col_fracby in cols_fracby2vals:
         val=cols_fracby2vals[col_fracby]
         ids=df.loc[(df[col_fracby]==val),col_ids].dropna().unique()
