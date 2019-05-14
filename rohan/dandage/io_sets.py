@@ -35,6 +35,9 @@ def unique_dropna_str(l,sep='; '): return tuple2str(dropna(unique(l,drop='nan'))
 
 def merge_unique_dropna(l): return dropna(unique(list(itertools.chain(*l)),drop='nan'))
 
+def flatten(l):
+    return list(np.hstack(np.array(l)))
+
 def rankwithlist(l,lwith,test=False):
     """
     rank l wrt lwith
