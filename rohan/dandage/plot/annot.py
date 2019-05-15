@@ -60,16 +60,14 @@ def get_dmetrics(df,metricsby,colx,coly,colhue,xs,hues,alternative,
         df['a']='a'
     dmetrics=pd.DataFrame(columns=xs,
                           index=hues)
-    if test:
-        print(dmetrics)
     if metricsby=='hues':
         # first hue vs rest    
         for hue in dmetrics.index[1:]:  
             for xi,x in enumerate(dmetrics.columns):
                 X=df.loc[((df[colhue]==hues[0]) & (df[colx]==x)),coly]
                 Y=df.loc[((df[colhue]==hue) & (df[colx]==x)),coly]
-#                 print(colhue,hue,colx,x)
-#                 print(df[colhue].unique(),df[colx].unique())
+                if test:
+                    print(len(X),len(Y))
                 if not (len(X)==0 or len(Y)==0):
                     dmetrics.loc[hue,x]=mannwhitneyu(X,Y,
                      alternative=alternative if isinstance(alternative,str) else alternative[xi])[1]
@@ -177,7 +175,7 @@ def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
     elif (pval < 0.01):
         return "**" if fmt=='*' else f"P<\n{0.01:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     elif (pval < alpha):
-        return "*" if fmt=='*' else f"P<\n{alpha:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        return "*" if fmt=='*' else f"P<\n{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
     else:
         return "ns" if fmt=='*' else f"P=\n{pval:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
 

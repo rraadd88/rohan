@@ -4,15 +4,15 @@ from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
 
     
-def compare(df,colx,xs,colhue,hues,coly,
-                         violin=True,box=True,swarm=False,
-                         alternative='two-sided',
-                         show_metrics=False,metricsby='hues',
-                         palette=None,
+def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
+                        violin=True,box=True,swarm=False,
+                        alternative='two-sided',
+                        show_metrics=False,metricsby='hues',
+                        palette=None,
                         kws_annot_boxplot={'xoffwithin':0,'xoff':0,'yoff':0.025,'test':False},
-                         legend_labels=None,
-                         params_ax={},
-                         ax=None,plotp=None,
+                        legend_labels=None,
+                        params_ax={},
+                        ax=None,plotp=None,
                         test=False
                         ):
     if ax is None:
@@ -27,19 +27,19 @@ def compare(df,colx,xs,colhue,hues,coly,
     #                       linewidth=2,
     #                       legend=False,
                    ax=ax)    
+    if swarm:
+        ax=sns.swarmplot(x=colx,hue=colhue,y=coly,data=df,
+                    zorder=1,
+                       dodge=True,
+                    palette=palette,
+                    order=xs,hue_order=hues,
+                      ax=ax)            
     if box:
         ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
                        zorder=1,showbox=False,showcaps=False,showfliers=False,
                     palette=palette,
                     order=xs,hue_order=hues,
                       ax=ax)    
-    if swarm:
-        ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
-#                        zorder=1,showbox=False,showcaps=False,showfliers=False,
-                       dodge=True,
-                    palette=palette,
-                    order=xs,hue_order=hues,
-                      ax=ax)            
     
     if len(xs)!=1:
         handles, labels = ax.get_legend_handles_labels()    
@@ -57,6 +57,7 @@ def compare(df,colx,xs,colhue,hues,coly,
             bottom=False,      # ticks along the bottom edge are off
             top=False,         # ticks along the top edge are off
             labelbottom=False)        
+        print(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels)
         for x,s in zip(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels):
             ax.text(x,ax.get_ylim()[0],s,va='top',ha='center')
     ax.set(**params_ax)   
