@@ -3,7 +3,9 @@ from rohan.dandage.plot.colors import *
 from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
 
-def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
+    
+def compare(df,colx,xs,colhue,hues,coly,
+                         violin=True,box=True,swarm=False,
                          alternative='two-sided',
                          show_metrics=False,metricsby='hues',
                          palette=None,
@@ -15,20 +17,29 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
                         ):
     if ax is None:
         ax=plt.subplot()
-    ax=sns.violinplot(x=colx,hue=colhue,y=coly,data=df,
-#                   showfliers=False,
-                palette=palette,
-                zorder=-1,
-                order=xs,hue_order=hues,
-                cut=0,
-#                       linewidth=2,
-#                       legend=False,
-               ax=ax)    
-    ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
-                   zorder=1,showbox=False,showcaps=False,showfliers=False,
-                palette=palette,
-                order=xs,hue_order=hues,
-                  ax=ax)    
+    if violin:
+        ax=sns.violinplot(x=colx,hue=colhue,y=coly,data=df,
+    #                   showfliers=False,
+                    palette=palette,
+                    zorder=-1,
+                    order=xs,hue_order=hues,
+                    cut=0,
+    #                       linewidth=2,
+    #                       legend=False,
+                   ax=ax)    
+    if box:
+        ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
+                       zorder=1,showbox=False,showcaps=False,showfliers=False,
+                    palette=palette,
+                    order=xs,hue_order=hues,
+                      ax=ax)    
+    if swarm:
+        ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
+#                        zorder=1,showbox=False,showcaps=False,showfliers=False,
+                       dodge=True,
+                    palette=palette,
+                    order=xs,hue_order=hues,
+                      ax=ax)            
     
     if len(xs)!=1:
         handles, labels = ax.get_legend_handles_labels()    
@@ -67,6 +78,23 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
     if not plotp is None:
         plt.savefig(plotp)    
     return ax
+
+def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
+                         violin=True,box=True,swarm=False,
+                         alternative='two-sided',
+                         show_metrics=False,metricsby='hues',
+                         palette=None,
+                        kws_annot_boxplot={'xoffwithin':0,'xoff':0,'yoff':0.025,'test':False},
+                         legend_labels=None,
+                         params_ax={},
+                         ax=None,plotp=None,
+                        test=False
+                        ):
+    """
+    to be deprecate in favour of compare
+    """
+    import inspect
+    return [locals()[arg] for arg in inspect.getargspec(compare).args]
 
 def hist_annot(dplot,colx,colsubsets,
         subset_unclassified=True,cmap='tab10',ylimoff=1.2,

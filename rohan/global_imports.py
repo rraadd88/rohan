@@ -4,7 +4,7 @@ import numpy as np
 import yaml
 # stats    
 import scipy as sc
-from rohan.dandage.plot.annot import pval2annot
+from rohan.dandage.plot.annot import *
 # strings
 import re
 from rohan.dandage.io_strs import make_pathable_string
