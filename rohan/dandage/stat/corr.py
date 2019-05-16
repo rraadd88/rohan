@@ -37,6 +37,8 @@ def get_spearmanr(x,y):
 #     print(t)
 #     print(t.pvalue)    
     return t.correlation,float(t.pvalue)
+
+from rohan.dandage.plot.annot import pval2annot
 def get_spearmanr_str(x,y):    
     r,p=get_spearmanr(x,y)
     return f"$\\rho$={r:.1e} ({pval2annot(p,fmt='<')})".replace('\n','')

@@ -5,10 +5,13 @@ from rohan.dandage.plot.ax_ import *
 
     
 def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
-                        violin=True,box=True,swarm=False,
+                         violin=True,params_violin={},
+                         boxline=True,params_boxline={}, 
+                         swarm=False,strip=False,params_swarm_strip={},
+                         box=False,params_box={},
                         alternative='two-sided',
                         show_metrics=False,metricsby='hues',
-                        palette=None,
+                        palette=None,palette_front=None,
                         kws_annot_boxplot={'xoffwithin':0,'xoff':0,'yoff':0.025,'test':False},
                         legend_labels=None,
                         params_ax={},
@@ -17,6 +20,18 @@ def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
                         ):
     if ax is None:
         ax=plt.subplot()
+    if box:
+        ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
+                       zorder=1,
+                    palette=palette,
+#                        saturation=0.1,
+                    order=xs,hue_order=hues,
+                          **params_box,
+                      ax=ax)    
+# boxplot alpha        
+#         for patch in ax.artists:
+#             r, g, b, a = patch.get_facecolor()
+#             patch.set_facecolor((r, g, b, .3))
     if violin:
         ax=sns.violinplot(x=colx,hue=colhue,y=coly,data=df,
     #                   showfliers=False,
@@ -26,19 +41,30 @@ def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
                     cut=0,
     #                       linewidth=2,
     #                       legend=False,
+                          **params_violin,
                    ax=ax)    
     if swarm:
         ax=sns.swarmplot(x=colx,hue=colhue,y=coly,data=df,
                     zorder=1,
                        dodge=True,
-                    palette=palette,
+                    palette=palette if palette_front is None else palette_front,
                     order=xs,hue_order=hues,
+                          **params_swarm_strip,
                       ax=ax)            
-    if box:
+    if strip:
+        ax=sns.stripplot(x=colx,hue=colhue,y=coly,data=df,
+                    zorder=1,
+                       dodge=True,
+                    palette=palette if palette_front is None else palette_front,
+                    order=xs,hue_order=hues,
+                          **params_swarm_strip,
+                      ax=ax)            
+    if boxline:
         ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
                        zorder=1,showbox=False,showcaps=False,showfliers=False,
                     palette=palette,
                     order=xs,hue_order=hues,
+                          **params_boxline,
                       ax=ax)    
     
     if len(xs)!=1:
