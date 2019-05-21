@@ -4,7 +4,8 @@ from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
 
     
-def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
+def plot_dist_comparison(df,colx,colhue,coly,
+                         hues=None,xs=None,
                          violin=True,params_violin={},
                          boxline=True,params_boxline={}, 
                          swarm=False,strip=False,params_swarm_strip={},
@@ -14,12 +15,15 @@ def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
                         palette=None,palette_front=None,
                         kws_annot_boxplot={'xoffwithin':0,'xoff':0,'yoff':0.025,'test':False},
                         legend_labels=None,
+                         legend2xticklabels=True,
                         params_ax={},
                         ax=None,plotp=None,
                         test=False
                         ):
     if ax is None:
         ax=plt.subplot()
+    if legend_labels is None:
+        legend_labels=hues
     if box:
         ax=sns.boxplot(x=colx,hue=colhue,y=coly,data=df,
                        zorder=1,
@@ -34,15 +38,16 @@ def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
 #             patch.set_facecolor((r, g, b, .3))
     if violin:
         ax=sns.violinplot(x=colx,hue=colhue,y=coly,data=df,
-    #                   showfliers=False,
                     palette=palette,
                     zorder=-1,
-                    order=xs,hue_order=hues,
+                    order=xs,
+                          hue_order=hues,
                     cut=0,
-    #                       linewidth=2,
-    #                       legend=False,
+#     #                       linewidth=2,
+#     #                       legend=False,
                           **params_violin,
-                   ax=ax)    
+                   ax=ax
+                         )    
     if swarm:
         ax=sns.swarmplot(x=colx,hue=colhue,y=coly,data=df,
                     zorder=1,
@@ -83,9 +88,12 @@ def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
             bottom=False,      # ticks along the bottom edge are off
             top=False,         # ticks along the top edge are off
             labelbottom=False)        
-        print(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels)
-        for x,s in zip(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels):
-            ax.text(x,ax.get_ylim()[0],s,va='top',ha='center')
+        if test:
+            print(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels)
+        if legend2xticklabels:
+            for x,s in zip(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels):
+                ax.text(x,ax.get_ylim()[0],s,va='top',ha='center')
+        ax.set_xlabel(xs[0],labelpad=10)
     ax.set(**params_ax)   
 #     print([t.get_text() for t in ax.get_xticklabels()])
 #     if len(xs)==1:
@@ -98,10 +106,14 @@ def plot_dist_comparison(df,colx,xs,colhue,hues,coly,
             alternative=alternative,)
         if test:
             print(dmetrics)
-        ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)),
-                         xoffwithin=1 if len(hues)==3 else 0.85,
-                         xoff=-1 if len(hues)==3 else -0.5,
-                         yoff=0.025,test=test)
+        if len(xs)==1 and len(hues)==2:
+            ax.set_title(dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)).loc[hues[1],xs[0]],
+                        size=[tick.label.get_fontsize() for tick in ax.yaxis.get_major_ticks()][0])
+        else:
+            ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)),
+                             xoffwithin=1 if len(hues)==3 else 0.85,
+                             xoff=-1 if len(hues)==3 else -0.5,
+                             yoff=0.025,test=test)
     if not plotp is None:
         plt.savefig(plotp)    
     return ax
