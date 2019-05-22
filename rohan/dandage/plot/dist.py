@@ -135,6 +135,7 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
     import inspect
     return [locals()[arg] for arg in inspect.getargspec(compare).args]
 
+from rohan.dandage.plot.colors import reset_legend_colors
 def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
                 subset_unclassified=True,cmap='tab10',ylimoff=1.2,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
@@ -156,8 +157,6 @@ def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
             Y=[y for i in X]
             ax.scatter(X,Y,label=subset,color=color,**params_scatter)
     #     break
+    ax=reset_legend_colors(ax)
     ax.legend(bbox_to_anchor=[1,1])
-    leg = ax.legend()
-    for lh in leg.legendHandles: 
-        lh.set_alpha(1)
     return ax

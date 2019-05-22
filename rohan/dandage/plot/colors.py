@@ -53,3 +53,9 @@ def get_ncolors(n,cmap='Spectral'):
     cmap = matplotlib.cm.get_cmap(cmap)
     colors=[cmap(i) for i in np.arange(n)/n]
     return colors
+
+# legends
+def reset_legend_colors(leg):
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)
+    return leg
