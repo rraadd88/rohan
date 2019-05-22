@@ -135,24 +135,29 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
     import inspect
     return [locals()[arg] for arg in inspect.getargspec(compare).args]
 
-def hist_annot(dplot,colx,colsubsets,
-        subset_unclassified=True,cmap='tab10',ylimoff=1.2,
-               params_scatter={'zorder':2,
-                               'alpha':0.5,
-                              'marker':'|'},
-               ax=None):
+def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
+                subset_unclassified=True,cmap='tab10',ylimoff=1.2,
+                params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
+                ax=None):
     if ax is None:ax=plt.subplot(111)
     ax=dplot[colx].hist(bins=100,ax=ax,color='gray',zorder=1)
     ax.set_xlabel(colx)
     ax.set_ylabel('count')
     ax.set_ylim(0,ax.get_ylim()[1]*ylimoff)
-    subsets=[s for s in dplot[colsubsets].unique() if not (subset_unclassified and s=='unclassified')]
-    cs=get_ncolors(len(subsets),cmap=cmap)
-    for subseti,(subset,c) in enumerate(zip(subsets,cs)):
-        y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-subseti)/10-0.05)+ax.set_ylim()[0]
-        X=dplot.loc[(dplot[colsubsets]==subset),colx]
-        Y=[y for i in X]
-        ax.scatter(X,Y,label=subset,color=c,**params_scatter)
+    if len(colssubsets)==0:
+        colssubsets=[colsubsets]
+    from rohan.dandage.plot.colors import get_ncolors
+    colors=get_ncolors(len(colssubsets),cmap=cmap)
+    for colsubsetsi,(colsubsets,color) in enumerate(zip(colssubsets,colors)):
+        subsets=[s for s in dplot[colsubsets].unique() if not (subset_unclassified and s=='unclassified')]
+        for subseti,subset in enumerate(subsets):
+            y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-(subseti+colsubsetsi))/10-0.05)+ax.set_ylim()[0]
+            X=dplot.loc[(dplot[colsubsets]==subset),colx]
+            Y=[y for i in X]
+            ax.scatter(X,Y,label=subset,color=color,**params_scatter)
     #     break
     ax.legend(bbox_to_anchor=[1,1])
+    leg = ax.legend()
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)
     return ax
