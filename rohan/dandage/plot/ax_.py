@@ -27,3 +27,5 @@ def sort_legends(ax,params={}):
     labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
     ax.legend(handles, labels,**params)
     return ax
+
+def ax2items

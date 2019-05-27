@@ -58,7 +58,7 @@ def get_dnds(x,pal2nald,clustalop,codemlp,dndsd,fastad,test=False):
     seqtype2fastap={}
     for seqtype in ['protein','transcript']:
 #         fastap=f"codeml/data/{dparalogs.loc[0,'gene ids']}.{seqtype}.fasta"
-        fastap=f"{fastad}/{x['gene ids']}.{seqtype}.fasta"
+        fastap=f"{fastad}/{x['gene ids'].replace(' ','_')}.{seqtype}.fasta"
         seqtype2fastap[seqtype]=fastap
 #         seqs2afasta(ids2seqs=dict(zip(dparalogs.loc[0,[f'{seqtype}1 id',f'{seqtype}2 id']].tolist(),
 #         dparalogs.loc[0,[f'{seqtype}1 sequence',f'{seqtype}2 sequence']].tolist())),
