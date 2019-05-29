@@ -105,7 +105,9 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
             dbiogrid_intmap_symm=filldiagonal(dbiogrid_intmap_symm)
         to_table_pqt(dbiogrid_intmap_symm,dbiogrid_intmap_symmp)
         print('file saved at: ',dbiogrid_intmap_symmp)
-        dbiogrid_intmap_symm_lin=get_degrees(dbiogrid_intmap_symm)
+        ddegnonself,ddegself=get_degrees(dbiogrid_intmap_symm)
+        print(ddegself.head())
+        dbiogrid_intmap_symm_lin=ddegself.copy()
         dbiogrid_intmap_symm_lin.index.name=f'gene {genefmt}'
         to_table(dbiogrid_intmap_symm_lin,f'{dbiogrid_intmap_symmp}.degrees.tsv')
     else:
