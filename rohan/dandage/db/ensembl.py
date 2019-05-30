@@ -6,6 +6,7 @@
 # }),release=92)
 import numpy as np
 import pandas as pd
+import logging
 
 #pyensembl faster
 def ensg2genename(id,ensembl):
@@ -16,9 +17,15 @@ def ensg2genename(id,ensembl):
 
 def genename2ensg(name,ensembl):
     try:
-        return gene_ids_of_gene_name('KRT8P11')
+        names=ensembl.gene_ids_of_gene_name(name)
+        if len(names)>1:
+            logging.warning('more than one ids')
+            return '; '.join(names)
+        else:
+            return names[0]
     except:
         return np.nan
+    
 def enst2ensp(id,ensembl):
     try:
         t=ensembl.transcript_by_id(id)
