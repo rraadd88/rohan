@@ -55,7 +55,9 @@ def get_ncolors(n,cmap='Spectral'):
     return colors
 
 # legends
-def reset_legend_colors(leg):
+def reset_legend_colors(ax):
+    leg=plt.legend()
     for lh in leg.legendHandles: 
         lh.set_alpha(1)
-    return leg
+#         lh._legmarker.set_alpha(1)
+    return ax
