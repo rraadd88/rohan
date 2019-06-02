@@ -33,6 +33,12 @@ def enst2ensp(id,ensembl):
     except:
         return np.nan    
     
+def ensp2enst(id,ensembl):
+    try:
+        return ensembl.transcript_id_of_protein_id(id)
+    except:
+        return np.nan    
+    
 def ensg2dnaseq(id,ensembl):
     try:
         g=ensembl.gene_by_id(id)
@@ -47,7 +53,7 @@ def enst2prtseq(id,ensembl):
         return t.protein_sequence
     except:
         return np.nan        
-def enst2rnaseq(id,ensembl):
+def enst2cdsseq(id,ensembl):
     try:
         t=ensembl.transcript_by_id(id)
         return t.coding_sequence

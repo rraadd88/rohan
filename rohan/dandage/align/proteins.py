@@ -55,6 +55,7 @@ def get_dnds(x,pal2nald,clustalop,codemlp,dndsd,fastad,test=False):
     tar xvzf pal2nal.v14.tar.gz
     """
 #     seqs=dparalogs.loc[0,['gene1 sequence','gene2 sequence']].tolist()
+    makedirs(fastad,exist_ok=True)
     seqtype2fastap={}
     for seqtype in ['protein','transcript']:
 #         fastap=f"codeml/data/{dparalogs.loc[0,'gene ids']}.{seqtype}.fasta"
