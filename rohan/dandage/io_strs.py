@@ -135,34 +135,29 @@ def make_pathable_string(s,replacewith='_'):
     return re.sub(r'[^\w+/.]',replacewith, s.lower())
 #     return re.sub('\W+',replacewith, s.lower() )
 
-def linebreaker(l,break_pt=16):
+def linebreaker(i,break_pt=16,sep=' '):
     """
     used for adding labels in plots.
 
     :param l: list of strings
     :param break_pt: number, insert new line after this many letters 
     """
-
-    l_out=[]
-    for i in l:
-        if len(i)>break_pt:
-            i_words=i.split(' ')
-            i_out=''
-            line_len=0
-            for w in i_words:
-                line_len+=len(w)+1
-                if i_words.index(w)==0:
-                    i_out=w
-                elif line_len>break_pt:
-                    line_len=0
-                    i_out="%s\n%s" % (i_out,w)
-                else:
-                    i_out="%s %s" % (i_out,w)
-            l_out.append(i_out)    
-#             l_out.append("%s\n%s" % (i[:break_pt],i[break_pt:]))
-        else:
-            l_out.append(i)
-    return l_out
+    if len(i)>break_pt:
+        i_words=i.split(sep)
+        i_out=''
+        line_len=0
+        for w in i_words:
+            line_len+=len(w)+1
+            if i_words.index(w)==0:
+                i_out=w
+            elif line_len>break_pt:
+                line_len=0
+                i_out="%s\n%s" % (i_out,w)
+            else:
+                i_out="%s %s" % (i_out,w)    
+        return i_out    
+    else:
+        return i
 
 def splitlabel(label,splitby=' ',ctrl='__'):
     """

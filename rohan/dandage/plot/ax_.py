@@ -9,16 +9,14 @@ def set_equallim(ax,diagonal=False):
     ax.plot([min_,max_],[min_,max_],'--',color='gray')
     return ax
 
-def grid(ax):
+def grid(ax,axis=None):
     w,h=ax.figure.get_size_inches()
-    if w/h>=1.1:
+    if w/h>=1.1 or axis=='y' or axis=='both':
         ax.set_axisbelow(True)
         ax.yaxis.grid(color='gray', linestyle='dashed')
-    elif w/h<=0.9:
+    if w/h<=0.9 or axis=='x' or axis=='both':
         ax.set_axisbelow(True)
         ax.xaxis.grid(color='gray', linestyle='dashed')
-    else:
-        logging.warning('w/h={w/h}')
     return ax
 
 def sort_legends(ax,params={}):
