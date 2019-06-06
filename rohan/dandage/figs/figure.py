@@ -30,9 +30,9 @@ def savefig(plotp,tight_layout=True):
         plt.savefig(f"{plotp}.svg",format='svg')        
     return plotp
 
-def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False):
+def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,params_savefig={}):
     #save plot
-    plotp=savefig(plotp)
+    plotp=savefig(plotp,**params_savefig)
     dplotp=f"{splitext(plotp)[0]}.tsv"
     paramp=f"{splitext(plotp)[0]}.yml"    
     #save data
@@ -73,14 +73,9 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False):
             lines[linei]=f'if ax is None:{line}'                
     lines=[f"    {l}" for l in lines]
     lines=''.join(lines)
-#         """\n    saved at:{plotp}\n    """\n
-#     lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,params=None):\n    if dplot is None:dplot=read_table('+splitext(plotp)[0]+'.tsv');\n    if params is None:params=yaml.load(open(f'{splitext(plotp)[0]}.yml','r'));\n'+lines+'    return ax\n'
 
     lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,params=None):\n    if dplot is None:dplot=read_table(f"{splitext(plotp)[0]}.tsv");\n    params_saved=yaml.load(open(f"{splitext(plotp)[0]}.yml","r"));params=params_saved if params is None else '+'{'+'k:params[k] if k in params else params_saved[k] for k in params_saved'+'}'+';\n'+lines+'    return ax\n'
 
-#     params_saved=yaml.load(open(f"{splitext(plotp)[0]}.yml","r"));params=params_saved if params is None else {k:params[k] if k in params else params_saved[k] for k in params_saved};
-        
-    
     #save def
     with open(srcp,'a') as f:
         f.write(lines)
