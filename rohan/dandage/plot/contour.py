@@ -106,12 +106,13 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
         fig.savefig(plot_fh,format="pdf")
     return ax  
 
-
+from rohan.dandage.plot.colors import get_cmap_subset
 from rohan.dandage.plot.ax_ import set_colorbar,grid
 def plot_contourf(x,y,z,test=False,ax=None,fig=None,
                  grid_n=50,
                   labelx='x',labely='y',labelz='z',
-                 params_contourf={}
+                 params_contourf={},
+                  figsize=[4,4],
                  ):
     from scipy.interpolate import griddata
     xi=np.linspace(np.min(x),np.max(x),grid_n)
@@ -119,7 +120,7 @@ def plot_contourf(x,y,z,test=False,ax=None,fig=None,
 
     X,Y= np.meshgrid(xi,yi)
     Z = griddata((x, y), z, (X, Y),method='linear')
-    fig=plt.figure() if fig is None else fig
+    fig=plt.figure(figsize=figsize) if fig is None else fig
     ax=plt.subplot() if ax is None else ax
     ax_pc=ax.contourf(X,Y,Z,int(grid_n/5),**params_contourf)
     if test:
@@ -145,7 +146,7 @@ def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
                               shade_lowest=False,
                                 n_levels=5,
                               cmap=get_cmap_subset(annot[ann][subset], vmin, vmax),
-                              cbar_ax=fig.add_axes([0.91+subseti*0.15, 0.15, 0.02, 0.35]),
+                              cbar_ax=fig.add_axes([0.94+subseti*0.25, 0.15, 0.02, 0.32]), #[left, bottom, width, height]
                               cbar_kws={'label':subset},
                               linewidths=3,
                              cbar=True)
@@ -154,5 +155,5 @@ def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
                 for subset in dannot:
                     ax.plot(dannot[subset]['x'],dannot[subset]['y'],marker='o', linestyle='-',color=dannot[subset]['color'][0])
                     for x,y,s,c in zip(dannot[subset]['x'],dannot[subset]['y'],dannot[subset]['text'],dannot[subset]['color']):
-                        ax.text(x,y,f" {s}",color=c)
+                        ax.text(x,y,f" {s}",color=c,weight = 'bold')
     return fig,ax
