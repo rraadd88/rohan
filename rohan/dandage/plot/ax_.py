@@ -27,19 +27,23 @@ def sort_legends(ax,params={}):
     ax.legend(handles, labels,**params)
     return ax
 
-def set_colorbar(fig,ax,ax_pc,label,bbox_to_anchor=(0.05, 0.5, 1, 0.45)):
+def set_colorbar(fig,ax,ax_pc,label,bbox_to_anchor=(0.05, 0.5, 1, 0.45),
+                orientation="vertical",):
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+    if orientation=="vertical":
+        width,height="5%","50%"
+    else:
+        width,height="50%","5%"        
     axins = inset_axes(ax,
-                       width="5%",  # width = 5% of parent_bbox width
-                       height="50%",  # height : 50%
+                       width=width,  # width = 5% of parent_bbox width
+                       height=height,  # height : 50%
                        loc=2,
                        bbox_to_anchor=bbox_to_anchor,
                        bbox_transform=ax.transAxes,
                        borderpad=0,
                        )
-    fig.colorbar(ax_pc, cax=axins, orientation="vertical",
-                 label=label,
-                )
+    fig.colorbar(ax_pc, cax=axins,
+                 label=label,orientation=orientation,)
     return fig
 
 def set_sizelegend(fig,ax,ax_pc,sizes,label,scatter_size_scale,xoff=0.05,bbox_to_anchor=(0, 0.2, 1, 0.4)):
