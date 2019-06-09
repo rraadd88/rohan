@@ -74,7 +74,7 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,para
     lines=[f"    {l}" for l in lines]
     lines=''.join(lines)
 
-    lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,params=None):\n    if dplot is None:dplot=read_table(f"{splitext(plotp)[0]}.tsv");\n    params_saved=yaml.load(open(f"{splitext(plotp)[0]}.yml","r"));params=params_saved if params is None else '+'{'+'k:params[k] if k in params else params_saved[k] for k in params_saved'+'}'+';\n'+lines+'    return ax\n'
+    lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,fig=None,params=None):\n    if dplot is None:dplot=read_table(f"{splitext(plotp)[0]}.tsv");\n    params_saved=yaml.load(open(f"{splitext(plotp)[0]}.yml","r"));params=params_saved if params is None else '+'{'+'k:params[k] if k in params else params_saved[k] for k in params_saved'+'}'+';\n'+lines+'    return ax\n'
 
     #save def
     with open(srcp,'a') as f:

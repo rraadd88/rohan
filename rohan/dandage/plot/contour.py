@@ -106,7 +106,7 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
         fig.savefig(plot_fh,format="pdf")
     return ax  
 
-from rohan.dandage.plot.colors import get_cmap_subset
+from rohan.dandage.plot.colors import get_cmap_subset,saturate_color
 from rohan.dandage.plot.ax_ import set_colorbar,grid
 def plot_contourf(x,y,z,test=False,ax=None,fig=None,
                  grid_n=50,
@@ -133,6 +133,7 @@ def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
     """
     annot can be none, dict,list like anything..
     """
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes    
     ax=plt.subplot() if ax is None else ax
     fig=plt.figure() if fig is None else fig
     if isinstance(annot,dict):
@@ -146,14 +147,24 @@ def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
                               shade_lowest=False,
                                 n_levels=5,
                               cmap=get_cmap_subset(annot[ann][subset], vmin, vmax),
-                              cbar_ax=fig.add_axes([0.94+subseti*0.25, 0.15, 0.02, 0.32]), #[left, bottom, width, height]
+#                               cbar_ax=fig.add_axes([0.94+subseti*0.25, 0.15, 0.02, 0.32]), #[left, bottom, width, height]
+                              cbar_ax=inset_axes(ax,
+                                               width="5%",  # width = 5% of parent_bbox width
+                                               height="50%",  # height : 50%
+                                               loc=2,
+                                               bbox_to_anchor=(1.36-subseti*0.35, -0.4, 0.5, 0.8),
+                                               bbox_transform=ax.transAxes,
+                                               borderpad=0,
+                                               ),                                
                               cbar_kws={'label':subset},
                               linewidths=3,
                              cbar=True)
             if ann=='line':
                 dannot=annot[ann]
                 for subset in dannot:
-                    ax.plot(dannot[subset]['x'],dannot[subset]['y'],marker='o', linestyle='-',color=dannot[subset]['color'][0])
+                    ax.plot(dannot[subset]['x'],dannot[subset]['y'],marker='o', linestyle='-',
+                            color=saturate_color(dannot[subset]['color'][0],1),
+                           )
                     for x,y,s,c in zip(dannot[subset]['x'],dannot[subset]['y'],dannot[subset]['text'],dannot[subset]['color']):
-                        ax.text(x,y,f" {s}",color=c,weight = 'bold')
+                        ax.text(x,y,f" {s}",color=saturate_color(c,1.1),weight = 'bold')
     return fig,ax
