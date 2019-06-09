@@ -46,6 +46,14 @@ def get_axlims(X,Y,space=0.2,equal=False):
     else:
         lim=[np.min([xlim[0],ylim[0]]),np.max([xlim[1],ylim[1]])]
         return lim,lim
+
+def get_grid3d(x,y,z,interp):
+#     from matplotlib.mlab import griddata
+    from scipy.interpolate import griddata
+    xi=get_linspace(x)
+    yi=get_linspace(y)
+    zi = griddata(x, y, z, xi, yi, interp=interp)
+    return xi,yi,zi
     
 def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
                 scatter=False,contour=False,
@@ -56,11 +64,7 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
                 a=0.5,vmin=None,vmax=None,interp='linear',#'nn',
                 xlog=False,test=False,
                 fig=None,ax=None,plot_fh=None):
-    from matplotlib.mlab import griddata
-#     from scipy.interpolate import griddata
-    xi=get_linspace(x)
-    yi=get_linspace(y)
-    zi = griddata(x, y, z, xi, yi, interp=interp)
+    xi,yi,zi=get_grid3d(x,y,z,interp)
     if ax==None: 
         ax=plt.subplot(121)
     if vmax==None: 
@@ -101,3 +105,54 @@ def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
     if plot_fh!=None:
         fig.savefig(plot_fh,format="pdf")
     return ax  
+
+
+from rohan.dandage.plot.ax_ import set_colorbar,grid
+def plot_contourf(x,y,z,test=False,ax=None,fig=None,
+                 grid_n=50,
+                  labelx='x',labely='y',labelz='z',
+                 params_contourf={}
+                 ):
+    from scipy.interpolate import griddata
+    xi=np.linspace(np.min(x),np.max(x),grid_n)
+    yi=np.linspace(np.min(y),np.max(y),grid_n)
+
+    X,Y= np.meshgrid(xi,yi)
+    Z = griddata((x, y), z, (X, Y),method='linear')
+    fig=plt.figure() if fig is None else fig
+    ax=plt.subplot() if ax is None else ax
+    ax_pc=ax.contourf(X,Y,Z,int(grid_n/5),**params_contourf)
+    if test:
+        ax.scatter(X,Y)        
+    ax.set_xlabel(labelx),ax.set_ylabel(labely)    
+    fig=set_colorbar(fig,ax,ax_pc,label=labelz,bbox_to_anchor=(1.01, 0.2, 0.5, 0.8))
+    ax=grid(ax,axis='both')
+    return fig,ax
+def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
+    """
+    annot can be none, dict,list like anything..
+    """
+    ax=plt.subplot() if ax is None else ax
+    fig=plt.figure() if fig is None else fig
+    if isinstance(annot,dict):
+        #kdeplot
+        # annot is a colannot
+        for ann in annot:
+            if not ann in ['line']:
+                for subseti,subset in enumerate(list(annot[ann])[::-1]):
+                    df_=dplot.loc[(dplot[ann]==subset),:]
+                    sns.kdeplot(df_[colx],df_[coly],ax=ax,
+                              shade_lowest=False,
+                                n_levels=5,
+                              cmap=get_cmap_subset(annot[ann][subset], vmin, vmax),
+                              cbar_ax=fig.add_axes([0.91+subseti*0.15, 0.15, 0.02, 0.35]),
+                              cbar_kws={'label':subset},
+                              linewidths=3,
+                             cbar=True)
+            if ann=='line':
+                dannot=annot[ann]
+                for subset in dannot:
+                    ax.plot(dannot[subset]['x'],dannot[subset]['y'],marker='o', linestyle='-',color=dannot[subset]['color'][0])
+                    for x,y,s,c in zip(dannot[subset]['x'],dannot[subset]['y'],dannot[subset]['text'],dannot[subset]['color']):
+                        ax.text(x,y,f" {s}",color=c)
+    return fig,ax
