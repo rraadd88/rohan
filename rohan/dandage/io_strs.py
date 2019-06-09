@@ -132,7 +132,7 @@ def make_pathable_string(s,replacewith='_'):
     :param s: string
     """
     import re
-    return re.sub(r'[^\w+/.]',replacewith, s.lower())
+    return re.sub(r'[^\w+/.]',replacewith, s.lower()).replace('+','_')
 #     return re.sub('\W+',replacewith, s.lower() )
 
 def linebreaker(i,break_pt=16,sep=' '):
