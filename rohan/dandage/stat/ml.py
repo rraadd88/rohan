@@ -1,4 +1,57 @@
 from rohan.global_imports import *
+
+def make_kfold2df(df,colxs,coly,colidx):
+    random_state=88
+    np.random.seed(random_state)
+    
+    df=df.loc[:,colxs+[coly,colidx]]
+    dn2df={}
+    dn2df['00 input']=df.copy()
+    dn2df['00 input'].index=range(len(dn2df['00 input']))
+    dn2df['01 fitered']=dn2df['00 input'].loc[(dn2df['00 input'][coly]!='unclassified'),:].dropna()
+
+    ### assign true false to classes
+    cls2binary={cls:int(True if not 'not' in cls else False) for cls in dn2df['01 fitered'].loc[:,coly].unique()}
+    dn2df['01 fitered'].loc[:,f"{coly} original"]=dn2df['01 fitered'].loc[:,coly]
+    dn2df['01 fitered'].loc[:,coly]=dn2df['01 fitered'].loc[:,coly].apply(lambda x : cls2binary[x])
+    df2info(dn2df['01 fitered'])
+
+    ### find the major cls
+    cls2n=ordereddict(dn2df['01 fitered'][coly].value_counts().to_dict())
+    print(dn2df['01 fitered'][coly].value_counts())
+    print(cls2n)
+
+    # k fold cross validate the larger class
+    k=round(cls2n[list(cls2n.keys())[0]]/cls2n[list(cls2n.keys())[1]])
+
+    #shuffle
+    dn2df['02 shuffle']=dn2df['01 fitered'].loc[np.random.permutation(dn2df['01 fitered'].index),:]
+    print(len(np.unique(dn2df['01 fitered'].index.tolist())))
+    print(dn2df['02 shuffle'][coly].value_counts())
+
+    from sklearn.model_selection import KFold
+    kf = KFold(n_splits=k,random_state=random_state)
+    df_=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]==list(cls2n.keys())[0],:]
+    df_.index=range(len(df_))
+    print(sum(dn2df['02 shuffle'][coly]==list(cls2n.keys())[0]))
+
+    fold2dx={}
+    for fold,(train_index, test_index) in enumerate(kf.split(df_.index)):
+        df_.loc[test_index,'k-fold #']=fold
+
+    print(df_['k-fold #'].value_counts())
+
+    ### put it back in the table
+    dn2df['02 k-folded major class']=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]!=list(cls2n.keys())[0],:].append(df_,sort=True)
+    dn2df['02 k-folded major class'].index=range(len(dn2df['02 k-folded major class']))
+
+    ### kfold to dataset
+    kfold2dataset={}
+    for kfold in dropna(dn2df['02 k-folded major class']['k-fold #'].unique()):
+        df_=dn2df['02 k-folded major class'].loc[((dn2df['02 k-folded major class']['k-fold #']==kfold) | (pd.isnull(dn2df['02 k-folded major class']['k-fold #']))),:]
+        kfold2dataset[kfold]=df_.loc[:,colxs].values,df_.loc[:,coly].values
+    return kfold2dataset
+
 def many_classifiers(dn2dataset={},
                      cv=5,
                      demo=False,test=False,random_state=88):
