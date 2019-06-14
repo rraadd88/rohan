@@ -130,10 +130,10 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
                         test=False
                         ):
     """
-    to be deprecate in favour of compare
+    to be deprecate in favour of plot_dist_comparison
     """
     import inspect
-    return [locals()[arg] for arg in inspect.getargspec(compare).args]
+    return [locals()[arg] for arg in inspect.getargspec(plot_dist_comparison).args]
 
 from rohan.dandage.plot.colors import reset_legend_colors
 def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
