@@ -184,3 +184,41 @@ def many_classifiers(dn2dataset={},
                 i += 1
     return dmap2lin(dscore,idxn='dataset',coln='classifier',colvalue_name='ROC AUC').merge(dmap2lin(dfeatimp,idxn='dataset',coln='classifier',colvalue_name='feature importances ranks'),
                                                                                on=['dataset','classifier'])
+
+def dclassifiers2dres(dclassifiers,dataset2cols,colxs):
+    from scipy.stats import rankdata
+    dmetrics=pd.DataFrame(index=dclassifiers['classifier'].unique(),
+    columns=dclassifiers.columns)
+    for clfn in dclassifiers['classifier'].unique():
+        df_=dclassifiers.loc[(dclassifiers['classifier']==clfn),:]
+        dmetrics.loc[clfn,'ROC AUC mean']=np.mean(np.ravel(df_['ROC AUC'].tolist()))
+        dmetrics.loc[clfn,'ROC AUC std']=np.std(np.ravel(df_['ROC AUC'].tolist()))
+        dmetrics.loc[clfn,'ROC AUC min']=np.min(np.ravel(df_['ROC AUC'].tolist()))
+        dmetrics.loc[clfn,'ROC AUC max']=np.max(np.ravel(df_['ROC AUC'].tolist()))
+        if all(df_['feature importances ranks'].isnull()):
+            imps=[np.nan for i in colxs]
+        else: 
+            imps=list(np.mean([list(t) for t in df_['feature importances ranks'].values],axis=0))
+            imps=1-rankdata(imps)/len(imps)
+        for colx,imp in zip(colxs,imps):
+            dmetrics.loc[clfn,colx]=imp        
+    dmetrics['classifier']=dmetrics.index
+    dmetrics=dmetrics.sort_values(by='ROC AUC mean',ascending=True)
+
+    col2datasets={k1:k for k in dataset2cols for k1 in dataset2cols[k]}
+
+    for col in dmetrics.columns[-3:]:
+        dmetrics[col2datasets[col]]=dmetrics[col]
+
+    ## plot
+
+    dplot=dmetrics.dropna(axis=0,subset=colxs).sort_values(by='ROC AUC mean',ascending=False)#.rename(columns=col2datasets)
+    dplot['x']=range(len(dplot))
+
+    def get_text(x):    
+        from rohan.dandage.io_strs import linebreaker
+    #     x=dplot[dplot.columns[-3:]].iloc[1,:]
+        ds=(1-x).rank().sort_values()
+        return "feature ranking:\n"+'\n'.join([linebreaker(': '.join(list(t)),14) for t in list(zip([str(int(i)) for i in ds.values.tolist()],ds.index.tolist()))])
+    dplot['text']=dplot.apply(lambda x: get_text(x[dplot.columns[-5:-2]]),axis=1)
+    return dplot
