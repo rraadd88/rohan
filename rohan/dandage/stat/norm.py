@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import stats
 
-def quantile_norm(X):
+def norm_by_quantile(X):
     """Normalize the columns of X to each have the same distribution.
 
     Given an expression matrix (microarray data, read counts, etc) of M genes
@@ -37,3 +37,18 @@ def quantile_norm(X):
     Xn = quantiles[rank_indices]
 
     return(Xn)
+
+def quantile_norm(X):
+    """
+    alias
+    """
+    return norm_by_quantile(X)
+
+def norm_by_gaussian_kde(values):
+    """
+    source: https://github.com/saezlab/protein_attenuation/blob/6c1e81af37d72ef09835ee287f63b000c7c6663c/src/protein_attenuation/utils.py
+    """    
+    kernel = stats.gaussian_kde(values)
+    return Series({k: np.log(kernel.integrate_box_1d(-1e4, v) / kernel.integrate_box_1d(v, 1e4)) for k, v in values.to_dict().items()})
+
+
