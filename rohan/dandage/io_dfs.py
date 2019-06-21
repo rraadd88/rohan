@@ -653,6 +653,8 @@ def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
     dfsynappended=dfsynappended.dropna()
     return dfsynappended.join(df,how='left')
 
+def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
+    return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
 ## drop duplicates by aggregating the dups
 def drop_duplicates_agg(df,colsgroupby,cols2aggf,test=False):
     """
