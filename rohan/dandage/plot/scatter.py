@@ -71,12 +71,14 @@ def plot_corr(dplot,x,y,ax=None,params_sns_regplot={},params_ax={}):
 
 from rohan.dandage.plot.ax_ import *    
 def plot_scatterbysubsets(df,colx,coly,colannot,
-                        ax=None,dfout=True,
+                        ax=None,dfout=False,
                           kws_dfannot2color={'cmap':'spring'},
                         label_n=False,
                         kws_scatter={},
                          annot2color=None,equallim=True,
                          test=False):
+    if test: 
+        dfout=True
     if ax is None:ax=plt.subplot()
     if annot2color is None:
         from rohan.dandage.plot.annot import dfannot2color
