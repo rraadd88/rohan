@@ -344,6 +344,9 @@ def merge_dfpairwithdf(dfpair,df,
                         left_ons=['gene1 name','gene2 name'],
                         right_on='gene name',right_ons_common=[],
                         suffixes=[' gene1',' gene2'],how='left',test=False):
+    """
+    :param right_ons_common: columns to merge the right ones. eg. cell line
+    """
     # force suffixes                        
     df1=df.copy()
     df1.columns=df1.columns+suffixes[0]
