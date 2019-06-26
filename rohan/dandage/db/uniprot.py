@@ -79,8 +79,8 @@ def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMB
     return pd.concat(range2df,axis=0).drop_duplicates()
 
 from rohan.dandage.io_sys import runbashcmd
-def uniproitid2seq(id,fap):
-    runbashcmd(f"wget https://www.uniprot.org/uniprot/{id}.fasta -O tmp.fasta")
+def uniproitid2seq(id,fap='tmp.fasta'):
+    runbashcmd(f"wget https://www.uniprot.org/uniprot/{id}.fasta -O {fap}")
     from Bio import SeqIO
     for record in SeqIO.parse(fap, "fasta"):
         return str(record.seq)
@@ -98,11 +98,13 @@ def get_ensembl_ids(df,coluid):
                       left_on=coluid,right_on='ACC',how='outer')
     return df_ens
 
-def compare_uniprot2ensembl(uid,enpt,id2seq,ensembl,test=False):
+def compare_uniprot2ensembl(uid,ensp,ensembl,test=False):
     if test:
         print(f"uid='{uid}',enpt='{enpt}'")
-    useq=id2seq[uid]
-    eseq=enst2prtseq(enpt,ensembl)
+    useq=uniproitid2seq(uid)    
+    eseq=ensembl.protein_sequence(ensp)
+#     print(useq)
+#     print(eseq)
     if useq==eseq:
         return True
     else:
@@ -110,10 +112,10 @@ def compare_uniprot2ensembl(uid,enpt,id2seq,ensembl,test=False):
 #         logging.info('lengths not equal')     
 
 from rohan.dandage.db.ensembl import enst2prtseq
-def filter_compare_uniprot2ensembl(df,fap,coluid,colenst,test=False): 
-    id2seq={}
-    for record in SeqIO.parse(fap, "fasta"):
-        id2seq[record.id]=str(record.seq)
+def filter_compare_uniprot2ensembl(df,coluid,colensp,test=False): 
+#     id2seq={}
+#     for record in SeqIO.parse(fap, "fasta"):
+#         id2seq[record.id]=str(record.seq)
     import pyensembl
     ensembl = pyensembl.EnsemblRelease(species=pyensembl.species.Species.register(
     latin_name='homo_sapiens',
@@ -122,8 +124,8 @@ def filter_compare_uniprot2ensembl(df,fap,coluid,colenst,test=False):
         'GRCh38': (95, 95),
     }),release=95)
 
-    df['unirpot id and ensembl match']=df.apply(lambda x: compare_uniprot2ensembl(x[coluid],x[colenst],
-                                                                                    id2seq=id2seq,ensembl=ensembl,
+    df['unirpot id and ensembl match']=df.apply(lambda x: compare_uniprot2ensembl(x[coluid],x[colensp],
+                                                                                    ensembl=ensembl,
                                                                                     test=test),axis=1)
     
     return df.loc[df['unirpot id and ensembl match'],:]
