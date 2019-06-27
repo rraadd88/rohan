@@ -111,25 +111,20 @@ def compare_uniprot2ensembl(uid,ensp,ensembl,test=False):
         return False
 #         logging.info('lengths not equal')     
 
-from rohan.dandage.db.ensembl import enst2prtseq
-def filter_compare_uniprot2ensembl(df,coluid,colensp,test=False): 
-#     id2seq={}
-#     for record in SeqIO.parse(fap, "fasta"):
-#         id2seq[record.id]=str(record.seq)
-    import pyensembl
-    ensembl = pyensembl.EnsemblRelease(species=pyensembl.species.Species.register(
-    latin_name='homo_sapiens',
-    synonyms=['homo_sapiens'],
-    reference_assemblies={
-        'GRCh38': (95, 95),
-    }),release=95)
-
-    df['unirpot id and ensembl match']=df.apply(lambda x: compare_uniprot2ensembl(x[coluid],x[colensp],
-                                                                                    ensembl=ensembl,
-                                                                                    test=test),axis=1)
+# from rohan.dandage.db.ensembl import enst2prtseq
+# def filter_compare_uniprot2ensembl(df,coluid,colensp,test=False): 
+# #     id2seq={}
+# #     for record in SeqIO.parse(fap, "fasta"):
+# #         id2seq[record.id]=str(record.seq)
+#     import pyensembl
+#     ensembl = pyensembl.EnsemblRelease(species=pyensembl.species.Species.register(
+#     latin_name='homo_sapiens',
+#     synonyms=['homo_sapiens'],
+#     reference_assemblies={
+#         'GRCh38': (95, 95),
+#     }),release=95)
+#     return=df.apply(lambda x: compare_uniprot2ensembl(x[coluid],x[colensp],ensembl=ensembl,test=test),axis=1)
     
-    return df.loc[df['unirpot id and ensembl match'],:]
-
 from rohan.dandage.io_seqs import ids2seqs2fasta
 from Bio import SeqIO,SeqRecord
 def normalise_uniprot_fasta(fap,test=True):
