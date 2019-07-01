@@ -16,8 +16,9 @@ python setup.py install --prefix=/your/local/dir
 
 DEV only:
 
-git commit -am "version bump";git push origin master """
+git commit -am "version bump";git push origin master
 git tag -a v$(python setup.py --version) -m "Update";git push --tags
+"""
 import sys
 try:
     from setuptools import setup, find_packages, Extension
