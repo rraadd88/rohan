@@ -157,7 +157,7 @@ def annot_heatmap(ax,dannot,
 
 from rohan.dandage.io_nums import is_numeric
 def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
-               linebreak=False,
+               linebreak=True,
               ):
     """
     fmt: *|<|'num'
@@ -180,7 +180,7 @@ def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
         annot= "*" if fmt=='*' else f"P<\n{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if not linebreak else f"P={pval:.1g}"
     else:
         annot= "ns" if fmt=='*' else f"P=\n{pval:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if not linebreak else f"P={pval:.1g}"
-    return annot if not linebreak else annot.replace('\n',' ')
+    return annot if linebreak else annot.replace('\n',' ')
 
 def pval2stars(pval,alternative): return pval2annot(pval,alternative=alternative,fmt='*',)
 
