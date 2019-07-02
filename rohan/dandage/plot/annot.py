@@ -157,27 +157,30 @@ def annot_heatmap(ax,dannot,
 
 from rohan.dandage.io_nums import is_numeric
 def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
-               linebreak=True,
+               linebreak=False,
               ):
     """
     fmt: *|<|'num'
+    
+    TODOS: use linebreak wisely and cleanly
     """
     if alternative is None and alpha is None:
         ValueError('both alternative and alpha are None')
     if alpha is None:
         alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) else 0.05
     if pd.isnull(pval):
-        return ''
+        annot= ''
     elif pval < 0.0001:
-        return "****" if fmt=='*' else f"P<\n{0.0001:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"  if linebreak else f"P={pval:.1g}"
+        annot= "****" if fmt=='*' else f"P<\n{0.0001:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}"  if not linebreak else f"P={pval:.1g}"
     elif (pval < 0.001):
-        return "***"  if fmt=='*' else f"P<\n{0.001:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        annot= "***"  if fmt=='*' else f"P<\n{0.001:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if not linebreak else f"P={pval:.1g}"
     elif (pval < 0.01):
-        return "**" if fmt=='*' else f"P<\n{0.01:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        annot= "**" if fmt=='*' else f"P<\n{0.01:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if not linebreak else f"P={pval:.1g}"
     elif (pval < alpha):
-        return "*" if fmt=='*' else f"P<\n{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        annot= "*" if fmt=='*' else f"P<\n{alpha}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if not linebreak else f"P={pval:.1g}"
     else:
-        return "ns" if fmt=='*' else f"P=\n{pval:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if linebreak else f"P={pval:.1g}"
+        annot= "ns" if fmt=='*' else f"P=\n{pval:.0e}" if fmt=='<' else f"P={pval:.1g}" if len(f"P={pval:.1g}")<6 else f"P=\n{pval:.1g}" if not linebreak else f"P={pval:.1g}"
+    return annot if not linebreak else annot.replace('\n',' ')
 
 def pval2stars(pval,alternative): return pval2annot(pval,alternative=alternative,fmt='*',)
 
