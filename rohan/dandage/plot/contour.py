@@ -165,6 +165,8 @@ def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
                     ax.plot(dannot[subset]['x'],dannot[subset]['y'],marker='o', linestyle='-',
                             color=saturate_color(dannot[subset]['color'][0],1),
                            )
+                    va_top=True
                     for x,y,s,c in zip(dannot[subset]['x'],dannot[subset]['y'],dannot[subset]['text'],dannot[subset]['color']):
-                        ax.text(x,y,f" {s}",color=saturate_color(c,1.1),weight = 'bold')
+                        ax.text(x,y,f" {s}",color=saturate_color(c,1.1),weight = 'bold',va='top' if va_top else 'bottom')
+                        va_top=False if va_top else True #flip
     return fig,ax
