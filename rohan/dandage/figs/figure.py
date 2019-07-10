@@ -1,7 +1,7 @@
 from rohan.global_imports import *
 from rohan.dandage.plot.annot import add_corner_labels
 
-def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom','ha':'right'}):
+def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom','ha':'right'},savepdf=False):
     import string
     label2ax=dict(zip(string.ascii_uppercase[:len(axes)],axes))
     for label in label2ax:
@@ -27,7 +27,9 @@ def savefig(plotp,tight_layout=True):
         plt.savefig(plotp)
     else:
         plt.savefig(f"{plotp}.png",format='png',dpi=300)        
-        plt.savefig(f"{plotp}.svg",format='svg')        
+        plt.savefig(f"{plotp}.svg",format='svg')       
+        if savepdf:
+            plt.savefig(f"{plotp}.pdf",format='pdf')
     return plotp
 
 def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,params_savefig={}):
