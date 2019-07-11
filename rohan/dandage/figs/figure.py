@@ -129,13 +129,12 @@ def fun2dplot(fun,test=False,colsindex=[]):
         ks=[k for k in params if k.startswith('col')]
         colsparams=merge_unique_dropna([[params[k]] if isinstance(params[k],str) else params[k] for k in ks])
         colscommon=list2intersection([dplot.columns.tolist(), colsparams])
-        print(colscommon) if test else None
+        print('colscommon',colscommon) if test else None
         colsindex=list2intersection([dplot.columns.tolist(), colsindex])
-        if len(colsindex)==0:
-            colsindex=dplot.apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(2).index.tolist()
-        print(colsindex) if test else None
+        colsindex=colsindex+dplot.apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(2).index.tolist()
+        print('colsindex',colsindex) if test else None
         colstake=list2union([colscommon,colsindex])                 
-        print(colstake) if test else None
+        print('colstake',colstake) if test else None
         if len(colstake)!=0:
             dplot=dplot.loc[:,colstake]
     return dplot
