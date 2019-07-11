@@ -1,7 +1,7 @@
 from rohan.global_imports import *
 from rohan.dandage.plot.annot import add_corner_labels
 
-def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom','ha':'right'},savepdf=False):
+def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom','ha':'right'}):
     import string
     label2ax=dict(zip(string.ascii_uppercase[:len(axes)],axes))
     for label in label2ax:
@@ -14,7 +14,7 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 f"{label}   ",**kw_text)
         
 # from rohan.dandage.io_strs import replacebyposition
-def savefig(plotp,tight_layout=True):
+def savefig(plotp,tight_layout=True,savepdf=False):
     plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
 #     print(plotp)
@@ -85,3 +85,57 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,para
         print({'plot':plotp,'data':dplotp,'param':paramp})
     print(plotp)
     return plotp
+
+
+def line2plotstr(line):
+    if ('plot_' in line) and (not "'plot_'" in line) and (not line.startswith('#')):
+        line=line.replace(',','').replace(' ','')
+        if '=' in line:
+            line=line.split('=')[1]
+        if '(' in line:
+            line=line.split('(')[0]
+        return line
+
+def fun2args(f,test=False):    
+    import inspect
+    sign=inspect.signature(f)
+    params={}
+    for arg in sign.parameters:
+        argo=sign.parameters[arg]
+        params[argo.name]=argo.default
+    #     break
+    return params
+def fun2df(f):
+    dplot=read_table(f"{f2params(f)['plotp']}.tsv")
+    params=yaml.load(open(f"{f2params(f)['plotp']}.yml",'r'))
+    params_f=f2params(get_dmetrics)
+    params_filled={p:params[p] for p in params if p in params_f}
+    dpvals=dmap2lin(get_dmetrics(dplot,**params_filled),colvalue_name='P')
+    # .merge(
+    deffss=dplot.groupby(['gene subset','dataset']).agg({'CS':np.mean}).reset_index()
+    deffss=deffss.rename(columns={'CS':'mean'})
+    # )
+    return dpvals.merge(deffss,left_on=['index','column'],right_on=['gene subset','dataset'])
+def fun2dplot(fun,test=False,colsindex=[]):
+    args=fun2args(fun)
+    print(args) if test else None
+    paramsp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.yml"
+    dplotp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.tsv"
+    dplot=read_table(dplotp)
+    ## filter dplot columns
+    if exists(paramsp):
+        params=yaml.load(open(paramsp,'r'))
+        print(params) if test else None
+        ks=[k for k in params if k.startswith('col')]
+        colsparams=merge_unique_dropna([[params[k]] if isinstance(params[k],str) else params[k] for k in ks])
+        colscommon=list2intersection([dplot.columns.tolist(), colsparams])
+        print(colscommon) if test else None
+        colsindex=list2intersection([dplot.columns.tolist(), colsindex])
+        if len(colsindex)==0:
+            colsindex=dplot.apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(2).index.tolist()
+        print(colsindex) if test else None
+        colstake=list2union([colscommon,colsindex])                 
+        print(colstake) if test else None
+        if len(colstake)!=0:
+            dplot=dplot.loc[:,colstake]
+    return dplot

@@ -1,5 +1,5 @@
 ## Also includes list, np vectors and tuple things
-
+import itertools
 from functools import reduce
 import numpy as np
 import pandas as pd
@@ -7,8 +7,8 @@ import pandas as pd
 def list2intersection(l):
     return reduce(np.intersect1d, (l))
 def list2union(l):
-    return np.unique(np.ravel(l))
-
+#     return np.unique(np.ravel(l))
+    return merge_unique_dropna(l)
 # lists mostly for agg
 def dropna(x):
     x_=[]
