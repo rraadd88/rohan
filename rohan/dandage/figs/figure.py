@@ -94,6 +94,10 @@ def line2plotstr(line):
             line=line.split('=')[1]
         if '(' in line:
             line=line.split('(')[0]
+        if '[' in line:
+            line=line.split('[')[1]
+        if ']' in line:
+            line=line.split(']')[0]
         return line
 
 def fun2args(f,test=False):    
@@ -126,14 +130,15 @@ def fun2dplot(fun,test=False,colsindex=[]):
     if exists(paramsp):
         params=yaml.load(open(paramsp,'r'))
         print(params) if test else None
-        ks=[k for k in params if k.startswith('col')]
-        colsparams=merge_unique_dropna([[params[k]] if isinstance(params[k],str) else params[k] for k in ks])
+        ks=[k for k in params if k.startswith('col') or isinstance(params[k],dict)]
+        colsparams=merge_unique_dropna([[params[k]] if isinstance(params[k],str) else params[k] if isinstance(params[k],list) else list(params[k].keys()) if isinstance(params[k],dict) else [] for k in ks])
         colscommon=list2intersection([dplot.columns.tolist(), colsparams])
         print('colscommon',colscommon) if test else None
         colsindex=list2intersection([dplot.columns.tolist(), colsindex])
-        colsindex=colsindex+dplot.apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(2).index.tolist()
         print('colsindex',colsindex) if test else None
-        colstake=list2union([colscommon,colsindex])                 
+        colsindex_inferred=dplot.select_dtypes(include='object').apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(2).index.tolist()
+        print('colsindex_inferred',colsindex_inferred) if test else None
+        colstake=list2union([colscommon,colsindex,colsindex_inferred])                 
         print('colstake',colstake) if test else None
         if len(colstake)!=0:
             dplot=dplot.loc[:,colstake]
