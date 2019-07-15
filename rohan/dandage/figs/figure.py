@@ -14,8 +14,9 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 f"{label}   ",**kw_text)
         
 # from rohan.dandage.io_strs import replacebyposition
-def savefig(plotp,tight_layout=True,savepdf=False):
-    plotp=abspath(make_pathable_string(plotp))
+def savefig(plotp,tight_layout=True,savepdf=False,normalise_path=True):
+    if normalise_path:
+        plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
 #     print(plotp)
 #     if basenamenoext(plotp).count('.')>0:
