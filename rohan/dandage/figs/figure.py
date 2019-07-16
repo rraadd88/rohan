@@ -1,6 +1,15 @@
 from rohan.global_imports import *
 from rohan.dandage.plot.annot import add_corner_labels
 
+def scatter_overlap(ax,funs):
+    axs_corr=np.repeat(ax,len(funs)) 
+    for fi,(f,ax) in enumerate(zip(funs[::-1],axs_corr)):
+        ax=f(ax=ax)
+    #     if fi!=0:
+    ax.grid(True)
+    ax.legend(bbox_to_anchor=[1,1],loc=0)
+    return ax
+
 def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom','ha':'right'}):
     import string
     label2ax=dict(zip(string.ascii_uppercase[:len(axes)],axes))
@@ -14,7 +23,7 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 f"{label}   ",**kw_text)
         
 # from rohan.dandage.io_strs import replacebyposition
-def savefig(plotp,tight_layout=True,savepdf=False,normalise_path=True):
+def savefig(plotp,tight_layout=True,fmts=[],savepdf=False,normalise_path=True):
     if normalise_path:
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
@@ -24,13 +33,16 @@ def savefig(plotp,tight_layout=True,savepdf=False,normalise_path=True):
     makedirs(dirname(plotp),exist_ok=True)
     if tight_layout:
         plt.tight_layout()
+    if (not 'pdf' in fmts) and len(fmts)==0:
+        fmts.append('pdf')
     if '.' in plotp:
         plt.savefig(plotp)
     else:
         plt.savefig(f"{plotp}.png",format='png',dpi=300)        
         plt.savefig(f"{plotp}.svg",format='svg')       
-        if savepdf:
-            plt.savefig(f"{plotp}.pdf",format='pdf')
+        if len(fmts)!=0:
+            for fmt in fmts:
+                plt.savefig(f"{plotp}.{fmt}",format=fmt)
     return plotp
 
 def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,params_savefig={}):
