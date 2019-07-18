@@ -3,7 +3,7 @@ from rohan.dandage.plot.annot import add_corner_labels
 
 def scatter_overlap(ax,funs):
     axs_corr=np.repeat(ax,len(funs)) 
-    for fi,(f,ax) in enumerate(zip(funs[::-1],axs_corr)):
+    for fi,(f,ax) in enumerate(zip(funs,axs_corr)):
         ax=f(ax=ax)
     #     if fi!=0:
     ax.grid(True)
