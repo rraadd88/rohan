@@ -41,7 +41,7 @@ def get_figure_source_data(figure_scriptp):
     params_fun2dplot={'colsindex':['gene name','gene id','gene names','gene ids','cell line','dataset'],}
     figuren2paneln2dplots={}
     for figuren in figuren2paneln2plots:              
-        datap=f"figs/{figuren}.xlsx".replace(' ','_')
+        datap=f"data_si/{figuren}.xlsx".replace(' ','_')
         if not exists(datap) or force:
             print(figuren)
             paneln2dplots={}
