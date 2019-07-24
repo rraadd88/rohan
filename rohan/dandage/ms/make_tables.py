@@ -1,9 +1,7 @@
-from rohan.global_vars import *
-# %run log_00_metaanalysis.log.py
-# %run ../../../rohan/rohan/dandage/io_sets.py
-# %run ../../../rohan/rohan/dandage/figs/figure.py
+from rohan.global_imports import *
+from rohan.dandage.figs.figure import *
 
-def get_figure_source_data(figure_scriptp):
+def get_figure_source_data(figure_scriptp,plotn2fun,figures=[]):
     figure_script_lines=open(figure_scriptp,'r').read().split('\n')
     import string
     figuren2lines={}
@@ -35,12 +33,15 @@ def get_figure_source_data(figure_scriptp):
             elif not paneln is None:
                 paneln2plots[paneln].append(line2plotstr(line))            
         figuren2paneln2plots[figuren]={k:dropna(paneln2plots[k]) for k in paneln2plots}
+    yaml.dump(figuren2paneln2plots,open('data_si/cfg.yml','w'))    
     #     break
 
     force=True
     params_fun2dplot={'colsindex':['gene name','gene id','gene names','gene ids','cell line','dataset'],}
-    figuren2paneln2dplots={}
-    for figuren in figuren2paneln2plots:              
+    if len(figures)==0:
+        figures=figuren2paneln2plots.keys()
+    for figuren in figures:              
+        figuren2paneln2dplots={}
         datap=f"data_si/{figuren}.xlsx".replace(' ','_')
         if not exists(datap) or force:
             print(figuren)
@@ -48,7 +49,7 @@ def get_figure_source_data(figure_scriptp):
             for paneln in figuren2paneln2plots[figuren]:
                 funi2dplot={}
                 for funi,funstr in enumerate(figuren2paneln2plots[figuren][paneln]):
-                    fun=globals()[funstr]
+                    fun=plotn2fun[funstr]
                     funi2dplot[f"plot#{funi+1}"]=fun2dplot(fun,test=False,**params_fun2dplot)
                 if len(funi2dplot.keys())>1:
                     dplot=pd.concat(funi2dplot,axis=1)

@@ -140,7 +140,7 @@ def fun2dplot(fun,test=False,colsindex=[]):
     dplotp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.tsv"
     dplot=read_table(dplotp)
     ## filter dplot columns
-    if exists(paramsp):
+    if exists(paramsp) and len(dplot)>3:
         params=yaml.load(open(paramsp,'r'))
         print(params) if test else None
         ks=[k for k in params if k.startswith('col') or isinstance(params[k],dict)]
