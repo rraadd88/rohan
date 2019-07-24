@@ -16,10 +16,7 @@ def f2df(f):
     params_f=f2params(get_dmetrics)
     params_filled={p:params[p] for p in params if p in params_f}
     dpvals=dmap2lin(get_dmetrics(dplot,**params_filled),colvalue_name='P')
-    # .merge(
-#     print(dplot.columns)
     deffss=dplot.groupby([colhue,colx]).agg({coly:np.mean}).reset_index()
-    # )
     return dpvals.merge(deffss,left_on=['index','column'],right_on=[colhue,colx])
                           
 def convert_dists2heatmap(label2fun,plotp,colx_dtype,colhue_dtype):
