@@ -1,6 +1,34 @@
 from rohan.global_imports import *
 from rohan.dandage.figs.figure import *
 
+def fun2dplot(fun,test=False,colsindex=[]):
+    args=fun2args(fun)
+    print(args) if test else None
+    paramsp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.yml"
+    dplotp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.tsv"
+    dplot=read_table(dplotp)
+    ## filter dplot columns
+    if exists(paramsp) and len(dplot)>3:
+        params=yaml.load(open(paramsp,'r'))
+        print(params) if test else None
+        ks=[k for k in params if k.startswith('col') or isinstance(params[k],dict)]
+        colsparams=merge_unique_dropna([[params[k]] if isinstance(params[k],str) else params[k] if isinstance(params[k],list) else list(params[k].keys()) if isinstance(params[k],dict) else [] for k in ks])
+        colscommon=list2intersection([dplot.columns.tolist(), colsparams])
+        print('colscommon',colscommon) if test else None
+        colsindex=list2intersection([dplot.columns.tolist(), colsindex])
+        print('colsindex',colsindex) if test else None
+        colsindex_inferred=dplot.select_dtypes(include='object').apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(2).index.tolist()
+        print('colsindex_inferred',colsindex_inferred) if test else None
+        colstake=list2union([colscommon,colsindex,colsindex_inferred])
+        print('colstake',colstake) if test else None
+        if len(colstake)!=0:
+            dplot=dplot.loc[:,colstake]
+    dplot=dplot.replace(' ',np.nan)
+    dplot=dplot.replace('',np.nan)
+    dplot=dplot.dropna(how='all',axis=1)
+    dplot=dplot.applymap(lambda x: x.replace('\n',' ').replace('\t',' ') if isinstance(x,str) else x)
+    return dplot
+
 def get_figure_source_data(figure_scriptp,plotn2fun,figures=[]):
     figure_script_lines=open(figure_scriptp,'r').read().split('\n')
     import string
