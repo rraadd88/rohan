@@ -1,7 +1,7 @@
 from rohan.global_imports import *
 from rohan.dandage.figs.figure import *
 
-def fun2dplot(fun,test=False,colsindex=[]):
+def fun2dplot(fun,test=False,colsindex=[],ret_params=False):
     args=fun2args(fun)
     print(args) if test else None
     paramsp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.yml"
@@ -12,24 +12,31 @@ def fun2dplot(fun,test=False,colsindex=[]):
         params=yaml.load(open(paramsp,'r'))
         print(params) if test else None
         ks=[k for k in params if k.startswith('col') or isinstance(params[k],dict)]
-        colsparams=merge_unique_dropna([[params[k]] if isinstance(params[k],str) else params[k] if isinstance(params[k],list) else list(params[k].keys()) if isinstance(params[k],dict) else [] for k in ks])
+        colsparams=merge_unique_dropna([[params[k]] if isinstance(params[k],str) else params[k] if isinstance(params[k],list) else list(params[k].keys()) if isinstance(params[k],dict) else [] for k in ks])+[params[k] for k in ['x','y'] if k in params]
         colscommon=list2intersection([dplot.columns.tolist(), colsparams])
         print('colscommon',colscommon) if test else None
         colsindex=list2intersection([dplot.columns.tolist(), colsindex])
         print('colsindex',colsindex) if test else None
-        colsindex_inferred=dplot.select_dtypes(include='object').apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(2).index.tolist()
+        colsindex_inferred=dplot.select_dtypes(include='object').apply(lambda x : len(unique_dropna(x))).sort_values(ascending=False).head(1).index.tolist()
+        print('colsindex_inferred',colsindex_inferred) if test else None
+        colsindex_inferred=[c for c in colsindex_inferred if not dplot[c].apply(lambda x: '[' in x if not pd.isnull(x) else False).all()]
         print('colsindex_inferred',colsindex_inferred) if test else None
         colstake=list2union([colscommon,colsindex,colsindex_inferred])
         print('colstake',colstake) if test else None
         if len(colstake)!=0:
             dplot=dplot.loc[:,colstake]
+    else:
+        params={}
     dplot=dplot.replace(' ',np.nan)
     dplot=dplot.replace('',np.nan)
     dplot=dplot.dropna(how='all',axis=1)
     dplot=dplot.applymap(lambda x: x.replace('\n',' ').replace('\t',' ') if isinstance(x,str) else x)
-    return dplot
+    if not ret_params:
+        return dplot
+    else:
+        return dplot,params        
 
-def get_figure_source_data(figure_scriptp,plotn2fun,figures=[]):
+def figure_scriptp2figuren2paneln2plots(figure_scriptp):
     figure_script_lines=open(figure_scriptp,'r').read().split('\n')
     import string
     figuren2lines={}
@@ -61,9 +68,11 @@ def get_figure_source_data(figure_scriptp,plotn2fun,figures=[]):
             elif not paneln is None:
                 paneln2plots[paneln].append(line2plotstr(line))            
         figuren2paneln2plots[figuren]={k:dropna(paneln2plots[k]) for k in paneln2plots}
-    yaml.dump(figuren2paneln2plots,open('data_si/cfg.yml','w'))    
-    #     break
+    return figuren2paneln2plots
 
+def get_figure_source_data(figure_scriptp,plotn2fun,figures=[]):
+    figuren2paneln2plots=figure_scriptp2figuren2paneln2plots(figure_scriptp)
+    yaml.dump(figuren2paneln2plots,open('data_si/cfg.yml','w'))
     force=True
     params_fun2dplot={'colsindex':['gene name','gene id','gene names','gene ids','cell line','dataset'],}
     if len(figures)==0:
