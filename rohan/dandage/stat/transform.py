@@ -16,3 +16,23 @@ def df2zscore(df,cols=None):
     if cols is None:
         cols=df.columns
     return (df[cols] - df[cols].mean())/df[cols].std()
+
+def plog(x,p = 0.5):
+    """
+    psudo-log
+
+    :param x: number
+    :param p: number added befor logarithm 
+    """
+
+    return np.log2(x+p)
+
+def glog(x,l = 2):
+    """
+    Generalised logarithm
+
+    :param x: number
+    :param p: number added befor logarithm 
+
+    """
+    return np.log((x+np.sqrt(x**2+l**2))/2)/np.log(l)

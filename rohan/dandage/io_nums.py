@@ -46,26 +46,6 @@ def str2numorstr(x,method=int):
     except:
         return x
 
-def plog(x,p = 0.5):
-    """
-    psudo-log
-
-    :param x: number
-    :param p: number added befor logarithm 
-    """
-
-    return np.log2(x+p)
-
-def glog(x,l = 2):
-    """
-    Generalised logarithm
-
-    :param x: number
-    :param p: number added befor logarithm 
-
-    """
-    return np.log((x+np.sqrt(x**2+l**2))/2)/np.log(l)
-
 def float2int(x):
     """
     converts floats to int when only float() is not enough.
