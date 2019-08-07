@@ -4,9 +4,14 @@ import logging
 
 def set_equallim(ax,diagonal=False):
     min_,max_=np.min([ax.get_xlim()[0],ax.get_ylim()[0]]),np.max([ax.get_xlim()[1],ax.get_ylim()[1]])
+    ax.plot([min_,max_],[min_,max_],'--',color='gray')
+    ax.set_xticks(ax.get_yticks())
     ax.set_xlim(min_,max_)
     ax.set_ylim(min_,max_)
-    ax.plot([min_,max_],[min_,max_],'--',color='gray')
+#     import matplotlib.ticker as plticker
+#     loc = plticker.MultipleLocator(base=(max_-min_)/5) # this locator puts ticks at regular intervals
+#     ax.xaxis.set_major_locator(loc)
+#     ax.yaxis.set_major_locator(loc)    
     return ax
 
 def grid(ax,axis=None):
