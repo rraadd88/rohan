@@ -1,4 +1,41 @@
 from rohan.global_imports import *
+def fit_curve_fit(xdata=None,ydata=None,test=False,plot=False):
+    from scipy.optimize import curve_fit
+    # >>>
+    def func(x, a):
+        return x**a
+    # Define the data to be fit with some noise:
+    if xdata is None and ydata is None:
+        # >>>
+        xdata = np.linspace(1, 4, 50)
+        y = func(xdata, -2.5)
+        np.random.seed(1729)
+        y_noise = 0.2 * np.random.normal(size=xdata.size)
+        ydata = y + y_noise
+        if test or plot:
+            plt.plot(xdata, ydata, 'b-', label='data')
+        # Fit for the parameters a, b, c of the function func:
+
+    # >>>
+    popt, pcov = curve_fit(func, xdata, ydata)
+    if test or plot:
+        plt.plot(xdata, func(xdata, *popt), 'r-',
+                 label='fit: a=%5.3f' % tuple(popt))
+    # Constrain the optimization to the region of 0 <= a <= 3, 0 <= b <= 1 and 0 <= c <= 0.5:
+    # >>>
+    popt, pcov = curve_fit(func, xdata, ydata, bounds=(-5, [-1]))
+
+    if test or plot:
+        plt.plot(xdata, func(xdata, *popt), 'g--',
+                 label='fit: a=%5.3f' % tuple(popt))
+        # >>>
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.legend()
+        plt.show()
+    return func(xdata, *popt),popt
+
+# deprecated
 def fit_power_law(xdata,ydata,yerr=None,pinit = [1.5, -1.5],axes=None):
     from scipy import optimize
     powerlaw = lambda x, amp, index: amp * (x**index)
