@@ -1,10 +1,8 @@
 from rohan.global_imports import *
-def fit_curve_fit(xdata=None,ydata=None,bounds=(-5, [-1]),
+def fit_curve_fit(func,xdata=None,ydata=None,bounds=(-np.inf, np.inf),
                   test=False,plot=False):
     from scipy.optimize import curve_fit
     # >>>
-    def func(x, a):
-        return a*x
     # Define the data to be fit with some noise:
     if xdata is None and ydata is None:
         # >>>
@@ -20,15 +18,17 @@ def fit_curve_fit(xdata=None,ydata=None,bounds=(-5, [-1]),
     # >>>
     popt, pcov = curve_fit(func, xdata, ydata)
     if test or plot:
+        print(popt)
         plt.plot(xdata, func(xdata, *popt), 'r-',
-                 label='non-bounded fit:\na=%5.3f' % tuple(popt))
+                 label=f'non-bounded fit:\na={popt[0]}')
     # Constrain the optimization to the region of 0 <= a <= 3, 0 <= b <= 1 and 0 <= c <= 0.5:
     # >>>
     popt, pcov = curve_fit(func, xdata, ydata, bounds=bounds)
-
+    
     if test or plot:
+        print(popt)
         plt.plot(xdata, func(xdata, *popt), 'g--',
-                 label='bounded fit:\na=%5.3f' % tuple(popt))
+                 label=f'bounded fit:\na={popt[0]}')
         # >>>
         plt.xlabel('x')
         plt.ylabel('y')
