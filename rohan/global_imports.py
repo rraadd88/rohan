@@ -23,8 +23,8 @@ from rohan.dandage.io_files import *
 import matplotlib.pyplot as plt
 import seaborn as sns
 pwd=abspath('.')
-ms_prjs=['00_metaanalysis']
-if not any([prj in pwd for prj in ms_prjs]):
+prjs=['00_metaanalysis']
+if not any([prj in pwd for prj in prjs]):
     plt.style.use('ggplot')
     # paper < notebook < talk < poster
     sns.set('notebook',font='Monaco')
