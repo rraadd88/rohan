@@ -23,7 +23,7 @@ from rohan.dandage.io_files import *
 import matplotlib.pyplot as plt
 import seaborn as sns
 pwd=abspath('.')
-ms_prjs=['03heterodim']
+ms_prjs=['00_metaanalysis']
 if not any([prj in pwd for prj in ms_prjs]):
     plt.style.use('ggplot')
     # paper < notebook < talk < poster
