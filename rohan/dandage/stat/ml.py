@@ -182,8 +182,10 @@ def many_classifiers(dn2dataset={},
                 ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
                         size=15, horizontalalignment='right')
                 i += 1
-    return dmap2lin(dscore,idxn='dataset',coln='classifier',colvalue_name='ROC AUC').merge(dmap2lin(dfeatimp,idxn='dataset',coln='classifier',colvalue_name='feature importances ranks'),
-                                                                               on=['dataset','classifier'])
+    return dmap2lin(dscore,idxn='dataset',coln='classifier',
+                    colvalue_name='ROC AUC').merge(dmap2lin(dfeatimp,
+                    idxn='dataset',coln='classifier',colvalue_name='feature importances ranks'),
+                    on=['dataset','classifier'])
 
 def dclassifiers2dres(dclassifiers,dataset2cols,colxs):
     from scipy.stats import rankdata
