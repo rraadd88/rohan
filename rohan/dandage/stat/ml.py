@@ -1,6 +1,10 @@
 from rohan.global_imports import *
 
 def make_kfold2df(df,colxs,coly,colidx):
+    """
+    split the major class
+    """
+    
     random_state=88
     np.random.seed(random_state)
     
@@ -26,33 +30,37 @@ def make_kfold2df(df,colxs,coly,colidx):
 
     # k fold cross validate the larger class
     k=round(cls2n[list(cls2n.keys())[0]]/cls2n[list(cls2n.keys())[1]])
+           
+    if k!=1:
+        from sklearn.model_selection import KFold
+        kf = KFold(n_splits=k,random_state=random_state)
+        #shuffle
+        dn2df['02 shuffle']=dn2df['01 fitered'].loc[np.random.permutation(dn2df['01 fitered'].index),:]
+        print(len(np.unique(dn2df['01 fitered'].index.tolist())))
+        print(dn2df['02 shuffle'][coly].value_counts())
 
-    #shuffle
-    dn2df['02 shuffle']=dn2df['01 fitered'].loc[np.random.permutation(dn2df['01 fitered'].index),:]
-    print(len(np.unique(dn2df['01 fitered'].index.tolist())))
-    print(dn2df['02 shuffle'][coly].value_counts())
+        df_=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]==list(cls2n.keys())[0],:]
+        df_.index=range(len(df_))
+        print(sum(dn2df['02 shuffle'][coly]==list(cls2n.keys())[0]))
 
-    from sklearn.model_selection import KFold
-    kf = KFold(n_splits=k,random_state=random_state)
-    df_=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]==list(cls2n.keys())[0],:]
-    df_.index=range(len(df_))
-    print(sum(dn2df['02 shuffle'][coly]==list(cls2n.keys())[0]))
+        fold2dx={}
+        for fold,(train_index, test_index) in enumerate(kf.split(df_.index)):
+            df_.loc[test_index,'k-fold #']=fold
 
-    fold2dx={}
-    for fold,(train_index, test_index) in enumerate(kf.split(df_.index)):
-        df_.loc[test_index,'k-fold #']=fold
+        print(df_['k-fold #'].value_counts())
 
-    print(df_['k-fold #'].value_counts())
+        ### put it back in the table
+        dn2df['02 k-folded major class']=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]!=list(cls2n.keys())[0],:].append(df_,sort=True)
+        dn2df['02 k-folded major class'].index=range(len(dn2df['02 k-folded major class']))
 
-    ### put it back in the table
-    dn2df['02 k-folded major class']=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]!=list(cls2n.keys())[0],:].append(df_,sort=True)
-    dn2df['02 k-folded major class'].index=range(len(dn2df['02 k-folded major class']))
-
-    ### kfold to dataset
-    kfold2dataset={}
-    for kfold in dropna(dn2df['02 k-folded major class']['k-fold #'].unique()):
-        df_=dn2df['02 k-folded major class'].loc[((dn2df['02 k-folded major class']['k-fold #']==kfold) | (pd.isnull(dn2df['02 k-folded major class']['k-fold #']))),:]
-        kfold2dataset[kfold]=df_.loc[:,colxs].values,df_.loc[:,coly].values
+        ### kfold to dataset
+        kfold2dataset={}
+        for kfold in dropna(dn2df['02 k-folded major class']['k-fold #'].unique()):
+            df_=dn2df['02 k-folded major class'].loc[((dn2df['02 k-folded major class']['k-fold #']==kfold) | (pd.isnull(dn2df['02 k-folded major class']['k-fold #']))),:]
+            kfold2dataset[kfold]=df_.loc[:,colxs].values,df_.loc[:,coly].values
+    else:
+        ### kfold to dataset
+        kfold2dataset={0:(df.loc[:,colxs].values,df.loc[:,coly].values)}
     return kfold2dataset
 
 def many_classifiers(dn2dataset={},
@@ -202,11 +210,11 @@ def dclassifiers2dres(dclassifiers,dataset2cols,colxs):
         dmetrics.loc[clfn,'ROC AUC max']=np.max(np.ravel(df_['ROC AUC'].tolist()))
         if all(df_['feature importances ranks'].isnull()):
             imps=[np.nan for i in colxs]
-        else: 
+        else:
             imps=list(np.mean([list(t) for t in df_['feature importances ranks'].values],axis=0))
             imps=1-rankdata(imps)/len(imps)
         for colx,imp in zip(colxs,imps):
-            dmetrics.loc[clfn,colx]=imp        
+            dmetrics.loc[clfn,colx]=imp
     dmetrics['classifier']=dmetrics.index
     dmetrics=dmetrics.sort_values(by='ROC AUC mean',ascending=True)
 
