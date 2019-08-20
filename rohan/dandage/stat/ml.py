@@ -8,7 +8,10 @@ def make_kfold2df(df,colxs,coly,colidx):
     dn2df={}
     dn2df['00 input']=df.copy()
     dn2df['00 input'].index=range(len(dn2df['00 input']))
-    dn2df['01 fitered']=dn2df['00 input'].loc[(dn2df['00 input'][coly]!='unclassified'),:].dropna()
+    if 'unclassified' in dn2df['00 input'][coly]:
+        dn2df['01 fitered']=dn2df['00 input'].loc[(dn2df['00 input'][coly]!='unclassified'),:].dropna()
+    else:
+        dn2df['01 fitered']=dn2df['00 input']
 
     ### assign true false to classes
     cls2binary={cls:int(True if not 'not' in cls else False) for cls in dn2df['01 fitered'].loc[:,coly].unique()}
@@ -224,3 +227,66 @@ def dclassifiers2dres(dclassifiers,dataset2cols,colxs):
         return "feature ranking:\n"+'\n'.join([linebreaker(': '.join(list(t)),14) for t in list(zip([str(int(i)) for i in ds.values.tolist()],ds.index.tolist()))])
     dplot['text']=dplot.apply(lambda x: get_text(x[dplot.columns[-5:-2]]),axis=1)
     return dplot
+
+## regression
+def make_kfold_regression(df,kfolds=5,random_state=88):
+    df.index=range(len(df))
+    #shuffle
+    df=df.loc[np.random.permutation(df.index),:]
+    print(len(np.unique(df.index.tolist())))
+    from sklearn.model_selection import KFold
+    kf = KFold(n_splits=kfolds,random_state=random_state)
+    for fold,(train_index, test_index) in enumerate(kf.split(df.index)):
+        df.loc[test_index,'k-fold #']=fold
+    print(df['k-fold #'].value_counts())
+    return df
+
+import itertools
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn import metrics
+from scipy.stats import pearsonr
+from sklearn.linear_model import LinearRegression
+
+def get_dmetrics_mlr(df,colxs,coly,
+                    random_state=88,degree=2,kfolds=5,):
+    test=False
+    if test:
+        dataset=pd.read_csv('test/petrol_consumption.csv')
+        print(dataset.shape)
+        dataset=dataset.reset_index()
+        colxs=['Average_income', 'Paved_Highways',
+               'Population_Driver_licence(%)']
+        colspredictor=['Petrol_tax']
+        coly='Petrol_Consumption'
+    
+    df=make_kfold_regression(df.dropna(subset=colxs+[coly],axis=0),kfolds=kfolds,random_state=random_state)
+    regressor = LinearRegression()
+    dmetrics=pd.DataFrame(columns=['interaction degree','Mean Absolute Error','Mean Squared Error','Root Mean Squared Error',"$r_p$","$r_p$ p-value"],
+                         index=pd.MultiIndex.from_tuples(list(itertools.product(range(kfolds),[True,False]))))
+    dmetrics.index.names=['k-fold #','interaction']
+    for interaction in [True,False]:
+        for kfi in range(kfolds):
+            dn2df={}
+            df_test,df_train=df.loc[(df['k-fold #']==kfi),:],df.loc[(df['k-fold #']!=kfi),:]
+            dn2df['X test'],dn2df['X train'] = df_test[colxs],df_train[colxs]
+            dn2df['y test'],dn2df['y train'] = df_test[coly],df_train[coly]
+            if interaction:
+                for x_subset in ['X test','X train']:
+                    poly = PolynomialFeatures(degree)
+                    dn2df[x_subset]=poly.fit_transform(dn2df[x_subset])
+                    dn2df[x_subset]=pd.DataFrame(dn2df[x_subset],columns=poly.get_feature_names())
+    #                 colxs=
+
+            regressor.fit(dn2df['X train'], dn2df['y train'])
+    #         coeff_df = pd.DataFrame(regressor.coef_, colxs, columns=['Coefficient'])
+            # coeff_df
+            dn2df['y pred'] = regressor.predict(dn2df['X test'])
+            df_ = pd.DataFrame({'Actual': dn2df['y test'], 'Predicted': dn2df['y pred']})
+
+            dmetrics.loc[(kfi,interaction),'Mean Absolute Error']= metrics.mean_absolute_error(dn2df['y test'], dn2df['y pred'])
+            dmetrics.loc[(kfi,interaction),'Mean Squared Error']= metrics.mean_squared_error(dn2df['y test'], dn2df['y pred'])
+            dmetrics.loc[(kfi,interaction),'Root Mean Squared Error']= np.sqrt(metrics.mean_squared_error(dn2df['y test'], dn2df['y pred']))
+            dmetrics.loc[(kfi,interaction),"$r_p$"],dmetrics.loc[(kfi,interaction),"$r_p$ p-value"]= pearsonr(df_['Actual'],df_['Predicted'])
+    #         brk
+    return dmetrics.reset_index()
+
