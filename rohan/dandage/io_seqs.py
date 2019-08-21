@@ -224,6 +224,10 @@ def fap2id2seq(fap):
 def ids2seqs2fasta(ids2seqs,fastap):
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id], Alphabet.ProteinAlphabet), id) for id in ids2seqs)
     SeqIO.write(seqs, fastap, "fasta")
+def read_fasta(fap):
+    return fap2id2seq(fap)
+def to_fasta(ids2seqs,fastap):
+    return ids2seqs2fasta(ids2seqs,fastap)
     
 ## generate mutations
 def seq_with_substitution(record,pos,sub,test=False):
