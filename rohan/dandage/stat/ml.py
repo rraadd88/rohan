@@ -231,7 +231,7 @@ def dclassifiers2dres(dclassifiers,dataset2cols,colxs):
     def get_text(x):    
         from rohan.dandage.io_strs import linebreaker
     #     x=dplot[dplot.columns[-3:]].iloc[1,:]
-        ds=(1-x).rank().sort_values()
+        ds=(1-x).rank(method='dense').apply(int).sort_index().sort_values()
         return "feature ranking:\n"+'\n'.join([linebreaker(': '.join(list(t)),14) for t in list(zip([str(int(i)) for i in ds.values.tolist()],ds.index.tolist()))])
     dplot['text']=dplot.apply(lambda x: get_text(x[dplot.columns[-5:-2]]),axis=1)
     return dplot
