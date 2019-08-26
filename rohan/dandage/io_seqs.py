@@ -198,11 +198,10 @@ def align(s1,s2,test=False,seqfmt='dna',
     else:
         return score
     
-def translate(dnaseq,host='human',fmtout=str,tax_id=None):
+def translate(dnaseq,fmtout=str,tax_id=None):
     """
     Translates a DNA seqeunce
     :param dnaseq: DNA sequence
-    :param host: host organism
     :param fmtout: format of output sequence
     """
     if isinstance(dnaseq,str): 
