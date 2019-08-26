@@ -10,7 +10,7 @@ dependencies:
   - setuptools=39.2.0
   - pyyaml
   - pip:
-    - matplotlib==2.2.2
+    - matplotlib>=2.2
     - requests==2.19.1
     - scipy==1.1.0
     - tqdm==4.23.4
