@@ -1,12 +1,12 @@
 biopython>=1.71
 regex>=2018.7.11
-pandas >= 0.23.3
+pandas >= 0.23
 pyyaml
 numpy
 matplotlib>=2.2
 requests>=2.19.1
 scipy>=1.1.0
 tqdm==4.23.4
-seaborn>=0.8.1
+seaborn>=0.8
 fastparquet
 pandas_profiling
