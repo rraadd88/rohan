@@ -18,7 +18,8 @@ def get_deps(cfg=None,deps=[]):
     if not len(deps)==0:
         for dep in deps:
             if not dep in cfg:
-                runbashcmd(f'conda install {dep}',test=cfg['test'])
+                runbashcmd(f'conda install {dep}',
+                           test=cfg['test'])
                 cfg[dep]=dep
     logging.info(f"{len(deps)} deps installed.")
     return cfg
