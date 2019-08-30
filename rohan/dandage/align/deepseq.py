@@ -3,6 +3,7 @@ from rohan.dandage.io_sys import runbashcmd
 from rohan.dandage.io_seqs import *
 from os.path import isdir
 from glob import iglob
+import logging
 
 def get_coverage(aligned,reference2seq,target_ini,target_end):
     cov=pd.DataFrame()
@@ -39,10 +40,11 @@ def get_location_first_indel(read):
         return location
     
 def get_aligned(dirp,test=False):
+    logging.info(dirp)    
     from rohan.dandage.io_sys import runbashcmd
-    coms=[f'fastp -i {dirp}/R1.fastq -I {dirp}/R2.fastq -o {dirp}/R1_flt.fastq -O {dirp}/R2_flt.fastq -q 20 -e 20 -j {dirp}/R2_flt.fastq.report.json -h {dirp}/R2_flt.fastq.report.html',
+    coms=[f'fastp -i {dirp}/R1.fastq -I {dirp}/R2.fastq -o {dirp}/R1_flt.fastq -O {dirp}/R2_flt.fastq -q 20 -e 20 -j {dirp}/R2_flt.fastq.report.json -h {dirp}/R2_flt.fastq.report.html 2> {dirp}/log_fastp.log',
     f'bowtie2-build --quiet {dirp}/reference.fasta {dirp}/reference',
-    f'bowtie2 -p 1 --very-sensitive-local --no-discordant --no-mixed -x {dirp}/reference -1 {dirp}/R1_flt.fastq -2 {dirp}/R2_flt.fastq -S {dirp}/aligned.sam 2> {dirp}/log_bowtie2.log',
+    f'bowtie2 -p 6 --very-sensitive-local --no-discordant --no-mixed -x {dirp}/reference -1 {dirp}/R1_flt.fastq -2 {dirp}/R2_flt.fastq -S {dirp}/aligned.sam 2> {dirp}/log_bowtie2.log',
     f'samtools view -bS {dirp}/aligned.sam | samtools sort - -o {dirp}/aligned.bam',
     f'samtools index {dirp}/aligned.bam',
     f'samtools flagstat {dirp}/aligned.bam > {dirp}/log_samtools_flagstat.log',]
@@ -52,10 +54,11 @@ def get_aligned(dirp,test=False):
         else:
             runbashcmd(com) 
             
-def get_dataframe(dirp):
+def get_daligned(dirp):
     import pysam
     from rohan.dandage.io_seqs import read_fasta
     from rohan.dandage.io_strs import findall
+    logging.info(dirp)
     aligned=pysam.AlignmentFile(f'{dirp}/aligned.bam', 'rb')
     reference2seq=read_fasta(f'{dirp}/reference.fasta')
     # target_region
