@@ -80,6 +80,9 @@ def reset_index(df):
 
 #tsv io
 def read_table(p,params_read_csv={}):
+    """
+    'decimal':'.'
+    """
     if len(params_read_csv.keys())!=0:
         return del_Unnamed(pd.read_csv(p,**params_read_csv))        
     else:
