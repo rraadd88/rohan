@@ -56,6 +56,7 @@ def get_aligned(dirp,test=False):
         if test:
             print(com)
         else:
+            logging.info(com)
             runbashcmd(com) 
             
 def get_daligned_target(dirp):
@@ -103,6 +104,7 @@ def get_daligned(dirp):
     reference2seq=read_fasta(f'{dirp}/reference.fasta')
     # target_region
     for ref in reference2seq:      
+        logging.info(ref)
         cfg={}
         cfg['target_ini']=0
         cfg['target_end']=len(reference2seq[ref])
