@@ -138,6 +138,40 @@ def hamming_distance(s1, s2):
         raise ValueError("Undefined for sequences of unequal length")
     return sum(el1 != el2 for el1, el2 in zip(s1.upper(), s2.upper()))
 
+
+def get_align_metrics(alignments,
+         outscore=False,test=False):
+    import operator
+    from Bio import pairwise2
+    alignsymb=np.nan
+    score=np.nan
+    sorted_alignments = sorted(alignments, key=operator.itemgetter(2))
+    for a in alignments:
+        alignstr=pairwise2.format_alignment(*a)
+        alignsymb=alignstr.split('\n')[1]
+        score=a[2]
+        if test:
+            print(alignstr)
+        break
+    if not outscore:
+        return alignsymb.replace(' ','-'),score
+    else:
+        return score
+def align_global(seq1, seq2,test=False):
+    # Import pairwise2 module
+    from Bio import pairwise2
+    # Import format_alignment method
+    from Bio.pairwise2 import format_alignment
+    # Get a list of the global alignments between the two sequences ACGGGT and ACG
+    # No parameters. Identical characters have score of 1, else 0.
+    # No gap penalties.
+    alignments = pairwise2.align.globalxx(seq1, seq2)
+    # Use format_alignment method to format the alignments in the list
+    if test:
+        for a in alignments:
+            return(format_alignment(*a))
+    return alignments
+
 def align(s1,s2,test=False,seqfmt='dna',
          psm=None,pmm=None,pgo=None,pge=None,
          matrix=None,
