@@ -124,11 +124,14 @@ def get_daligned(dirp):
                     pos2seq=dict(zip(range(read.reference_start,read.reference_end+1),
                             list(read.query_sequence[read.query_alignment_start:read.query_alignment_end])))
                     readid2seq[read.qname]=pd.Series(pos2seq)[list(range(cfg['target_ini'],cfg['target_end']))]
-        df=pd.concat(readid2seq,axis=1).T
-        df=df.sort_index(axis=1)
-        df.columns=[f"{i} {s}" for i,s in zip(df.columns.tolist(),list(reference2seq[ref]))]
-        # save
-        to_table(dcov,f"{dirp}/dcoverage_{ref}.tsv")
-        to_table(df,f"{dirp}/daligned_{ref}.pqt")  
-        yaml.dump(cfg,open(f"{dirp}/cfg_{ref}.yml",'w'))
+        if len(readid2seq.keys())!=0:
+            df=pd.concat(readid2seq,axis=1).T
+            df=df.sort_index(axis=1)
+            df.columns=[f"{i} {s}" for i,s in zip(df.columns.tolist(),list(reference2seq[ref]))]
+            # save
+            to_table(dcov,f"{dirp}/dcoverage_{ref}.tsv")
+            to_table(df,f"{dirp}/daligned_{ref}.pqt")  
+            yaml.dump(cfg,open(f"{dirp}/cfg_{ref}.yml",'w'))
+        else:
+            logging.warning(f'no alignments for reference: {ref} found')
 #     return df            
