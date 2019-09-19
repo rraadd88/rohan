@@ -4,6 +4,7 @@ import logging
 
 from Bio import SeqIO
 from rohan.dandage.io_seqs import *
+from rohan.dandage.align.deepseq import get_aligned,get_daligned
 
 def get_alignment_score_coff(sample2bcr1r2):
     """
@@ -91,6 +92,55 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
             break
     return sample2reads
 
+def align_demultiplexed(cfg,sample2readids,sample,test=False):
+    dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
+    # save the readids
+    if not exists(dirp):
+        makedirs(dirp,exist_ok=False)
+    with open(f'{dirp}/read_ids.txt','w') as f:
+        f.write('\n'.join(sample2readids[sample]))
+    # save reference
+    refn=sample.split(' ')[0]
+    to_fasta({refn:read_fasta(cfg['referencep'])[refn]},f'{dirp}/reference.fasta')
+    # trim fasq and align
+    coms=[]
+    for ri in [1,2]:
+        coms.append(f"seqtk subseq {cfg[f'input_r{ri}p']} {dirp}/read_ids.txt | seqtk trimfq -b {cfg['primer end']} -e 0 - > {dirp}/R{ri}.fastq")
+    for com in coms:
+        if test:
+            print(com)
+        else:
+            logging.info(com)
+            runbashcmd(com) 
+    get_aligned(dirp,test=test)
+    get_daligned(dirp)
+                    
+def check_undetermined(cfg,sample2readids,sample,test=False):
+    dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
+    # save the readids
+    if not exists(dirp):
+        makedirs(dirp,exist_ok=False)
+    with open(f'{dirp}/read_ids.txt','w') as f:
+        f.write('\n'.join(sample2readids[sample]))
+    # save reference
+    sample2primer={}
+    for s in cfg['sample2primersr1r2']:
+        for seqi,seq in enumerate(cfg['sample2primersr1r2'][s]):
+            sample2primer[(f"{s} R{seqi+1}").replace(' ','_')]=seq
+    to_fasta(sample2primer,f'{dirp}/reference.fasta')
+    # trim fasq and align
+    coms=[]
+    for ri in [1,2]:
+        coms.append(f"seqtk subseq {cfg[f'input_r{ri}p']} {dirp}/read_ids.txt | seqtk trimfq -b {cfg['primer start']} -e {cfg['read length']-cfg['primer end']} - > {dirp}/R{ri}.fastq")
+    for com in coms:
+        if test:
+            print(com)
+        else:
+            logging.info(com)
+            runbashcmd(com) 
+    get_aligned(dirp,test=test)
+    get_daligned(dirp)
+                    
 def run_demupliplex(cfg):
     to_yaml(cfg,f"{cfg['prjd']}/input_cfg.yaml")
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['Locus','Position_DMS'])
@@ -101,7 +151,7 @@ def run_demupliplex(cfg):
         cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/Undetermined*_R{i}_*.fastq")[0]
 
     cfg['sample2bcr1r2'],cfg['sample2primersr1r2'],cfg['sample2fragsr1r2'],_,cfg['linkerr1r2']=get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq)
-    to_yaml(cfg,f"{cfg['prjd']}/cfg.yaml")
+    to_yaml(cfg,f"{cfg['prjd']}/cfg.yml")
 
     #step1 get the barcode alignment score max cut off 
     if not 'alignment_score_coff' in cfg:
@@ -114,5 +164,11 @@ def run_demupliplex(cfg):
                     cfg['linker_seq'],cfg['sample2bcr1r2'],
                     cfg['alignment_score_coff'])    
     yaml.dump(sample2readids,open(f'{dirp}/sample2readids.yml','w'))
-    # collect and align the undetermined to be sure
-    
+    # output
+    for sample in sample2readids:
+        if not sample.startswith('undetermined '):
+            # save the demultiplexed to separate directories
+            align_demultiplexed(cfg,sample2readids,sample,test=cfg['test'])            
+        else:
+            # align the undetermined to be sure
+            check_undetermined(cfg,sample2readids,sample,test=cfg['test'])

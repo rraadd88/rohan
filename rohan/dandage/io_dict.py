@@ -12,7 +12,7 @@ def sort_dict(d,by_pos_in_list,out_list=False):
         return dict(l)
                 
 def read_yaml(p): 
-    yaml.load(open(p,'r'),yaml.FullLoader)
+    return yaml.load(open(p,'r'),yaml.FullLoader)
 def to_yaml(d,p): 
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
