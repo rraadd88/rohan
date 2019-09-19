@@ -3,7 +3,6 @@ from pprint import pprint
 # data
 import pandas as pd
 import numpy as np
-import yaml
 # stats    
 import scipy as sc
 from rohan.dandage.plot.annot import *
@@ -16,6 +15,7 @@ ordereddict=OrderedDict
 import itertools
 # recepies
 from rohan.dandage.io_dfs import *
+from rohan.dandage.io_dict import *
 from rohan.dandage.io_strs import get_bracket
 from rohan.dandage.io_sets import *
 from rohan.dandage.io_files import *
