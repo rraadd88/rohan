@@ -48,7 +48,7 @@ def get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq):
     return sample2bcr1r2,sample2primersr1r2,sample2fragsr1r2,sample2regsr1r2,linkerr1r2
 
 def demultiplex_readids(fastqr1_reads,fastqr2_reads,
-                    linker_seq,sample2bcr1r2,
+                    linkerr1r2,sample2bcr1r2,barcode_poss,
                     alignment_score_coff,test=False):
     """
     trim the fastq, take only barcodes and only linkers
@@ -142,6 +142,11 @@ def check_undetermined(cfg,sample2readids,sample,test=False):
     get_daligned(dirp)
                     
 def run_demupliplex(cfg):
+    if isinstance(cfg,str):
+        if cfg.endswith('.yml'):
+            cfg=read_yaml(cfg)      
+        else:
+            logging.error(f'should be a path to yml file: {cfg}')
     to_yaml(cfg,f"{cfg['prjd']}/input_cfg.yaml")
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['Locus','Position_DMS'])
     bc2seq=read_fasta('data/references/indexes.fa')
@@ -160,9 +165,10 @@ def run_demupliplex(cfg):
     # demultiplex
     fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
     fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
-    sample2readids=demultiplex_readids(fastqr1_reads,fastqr2_reads,
-                    cfg['linker_seq'],cfg['sample2bcr1r2'],
-                    cfg['alignment_score_coff'])    
+    sample2readids=demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
+                    linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
+                    alignment_score_coff=cfg['alignment_score_coff'],
+                                       test=False)            
     yaml.dump(sample2readids,open(f'{dirp}/sample2readids.yml','w'))
     # output
     for sample in sample2readids:
