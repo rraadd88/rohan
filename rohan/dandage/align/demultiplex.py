@@ -141,6 +141,33 @@ def check_undetermined(cfg,sample2readids,sample,test=False):
     get_aligned(dirp,test=test)
     get_daligned(dirp)
                     
+def plot_qc(cfg):
+    # get data
+    ps=[p for p in iglob(f"{cfg['prjd']}/*/dcoverage_*.tsv") if not '/undetermined' in p]
+    dcoverage=read_manytables(ps,axis=1,params_read_csv={'sep':'\t','index_col':'refi'},params_concat={'ignore_index':False},
+                             labels=[basename(dirname(p)) for p in ps ])
+    dcoverage.columns=[c[0] for c in dcoverage.columns]
+    to_table(dcoverage,f"{cfg['prjd']}/data_demultiplex_qc/dcoverage.tsv")                    
+    # coverage by sample
+    dplot=dcoverage.sort_index(1).set_index('refi')
+    plt.figure(figsize=[4+int(len(dplot)/40),8])
+    ax=plt.subplot()
+    ax=dplot.plot(cmap='hsv',alpha=0.5,
+                 ax=ax)
+    ax.legend(frameon=False, bbox_to_anchor=[1,1], ncol=int(len(dplot)/40))
+    ax.set_xlabel('position')
+    ax.set_ylabel('read depth')
+    savefig(f"{cfg['prjd']}/plot/plot qc demupliplexed coverage.png")                    
+    # coverage by sample ranked
+    dplot=pd.DataFrame(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True)).reset_index().rename(columns={'index':'sample',0:'read depth (mean)'}).reset_index()
+    plt.figure(figsize=[4,3+len(dplot)/6])
+    ax=plt.subplot()
+    ax=dplot.plot(x='read depth (mean)',y='index',yticks=dplot['index'],style='.-',
+                 ax=ax,legend=False)
+    ax.set_yticklabels(dplot['sample'])
+    plt.tight_layout()
+    savefig(f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png")   
+            
 def run_demupliplex(cfg,test=False):
     if isinstance(cfg,str):
         if cfg.endswith('.yml'):
@@ -183,3 +210,5 @@ def run_demupliplex(cfg,test=False):
         else:
             # align the undetermined to be sure
             check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
+    # qc output 
+    plot_qc(cfg)
