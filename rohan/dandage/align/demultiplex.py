@@ -63,8 +63,9 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
     sample2reads={sample:[] for sample in list(sample2bcr1r2.keys())+["undetermined barcode","undetermined linker"]}
     readid2linkeralignment={}
     for ri,(r1,r2) in enumerate(zip(fastqr1_reads,fastqr2_reads)):
-        if np.remainder(ri,10000)==0:
+        if np.remainder(ri,1000)==0:
             print(ri,end=' ')
+            logging.info(ri)
         if r1.id != r2.id:
             logging.error(f'{r2.id}')
         else:
@@ -186,6 +187,20 @@ def run_demupliplex(cfg,test=False):
     cfg['sample2bcr1r2'],cfg['sample2primersr1r2'],cfg['sample2fragsr1r2'],_,cfg['linkerr1r2']=get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq)
     to_yaml(cfg,f"{cfg['prjd']}/cfg.yml")
 
+    # get the logger running
+    from rohan.dandage.io_strs import get_logger,get_datetime
+    if cfg['test']:
+        level=logging.INFO
+    else: 
+        level=logging.ERROR
+    logp=get_logger(program='demultiplex',
+               argv=[cfg['prjd']],
+               level=level,
+               dp=None)
+    time_ini=get_datetime()
+    logging.info(f"start. log file: {logp}")
+    print(f"start. log file: {logp}")
+            
     #step1 get the barcode alignment score max cut off 
     if not 'alignment_score_coff' in cfg:
         cfg['alignment_score_coff']=get_alignment_score_coff(cfg['sample2bcr1r2'])
@@ -213,3 +228,5 @@ def run_demupliplex(cfg,test=False):
             check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
     # qc output 
     plot_qc(cfg)
+    # log time taken        
+    logging.info(f'end. time taken={str(get_datetime()-time_ini)}')            
