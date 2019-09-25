@@ -195,6 +195,7 @@ def run_demupliplex(cfg,test=False):
     if not exists(sample2readidsp):
         fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
         fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
+        logging.info('read the fastq files')
         sample2readids=demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
                         linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
                         alignment_score_coff=cfg['alignment_score_coff'],
