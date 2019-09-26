@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings(action='ignore')
+
 from rohan.global_imports import * 
 from rohan.dandage.io_sys import runbashcmd
 import logging
@@ -153,30 +156,39 @@ def check_undetermined(cfg,sample2readids,sample,test=False):
                     
 def plot_qc(cfg):
     # get data
-    ps=[p for p in iglob(f"{cfg['prjd']}/*/dcoverage_*.tsv") if not '/undetermined' in p]
-    dcoverage=read_manytables(ps,axis=1,params_read_csv={'sep':'\t','index_col':'refi'},params_concat={'ignore_index':False},
-                             labels=[basename(dirname(p)) for p in ps ])
-    dcoverage.columns=[c[0] for c in dcoverage.columns]
-    to_table(dcoverage,f"{cfg['prjd']}/data_demultiplex_qc/dcoverage.tsv")                    
+    doutp=f"{cfg['prjd']}/data_demultiplex_qc/dcoverage.tsv"
+    if not exists(doutp):
+        ps=[p for p in iglob(f"{cfg['prjd']}/*/dcoverage_*.tsv") if not '/undetermined' in p]
+        dcoverage=read_manytables(ps,axis=1,params_read_csv={'sep':'\t','index_col':'refi'},params_concat={'ignore_index':False},
+                                 labels=[basename(dirname(p)) for p in ps ])
+        dcoverage.columns=[c[0] for c in dcoverage.columns]
+        to_table(doutp)                 
+    else:
+        dcoverage=read_table(doutp)
     # coverage by sample
-    dplot=dcoverage.sort_index(1).set_index('refi')
-    plt.figure(figsize=[4+int(len(dplot)/40),8])
-    ax=plt.subplot()
-    ax=dplot.plot(cmap='hsv',alpha=0.5,
-                 ax=ax)
-    ax.legend(frameon=False, bbox_to_anchor=[1,1], ncol=int(len(dplot)/40))
-    ax.set_xlabel('position')
-    ax.set_ylabel('read depth')
-    savefig(f"{cfg['prjd']}/plot/plot qc demupliplexed coverage.png")                    
+    plotp=f"{cfg['prjd']}/plot/plot qc demupliplexed coverage.png"
+    if not exists(plotp):
+        dplot=dcoverage.sort_index(1).set_index('refi')
+        plt.figure(figsize=[4+int(len(dplot)/40),8])
+        ax=plt.subplot()
+        ax=dplot.plot(cmap='hsv',alpha=0.5,
+                     ax=ax)
+        ax.legend(frameon=False, bbox_to_anchor=[1,1], ncol=int(len(dplot)/40))
+        ax.set_xlabel('position')
+        ax.set_ylabel('read depth')
+        savefig(plotp)                    
+   
     # coverage by sample ranked
-    dplot=pd.DataFrame(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True)).reset_index().rename(columns={'index':'sample',0:'read depth (mean)'}).reset_index()
-    plt.figure(figsize=[4,3+len(dplot)/6])
-    ax=plt.subplot()
-    ax=dplot.plot(x='read depth (mean)',y='index',yticks=dplot['index'],style='.-',
-                 ax=ax,legend=False)
-    ax.set_yticklabels(dplot['sample'])
-    plt.tight_layout()
-    savefig(f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png")   
+    plot=f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png"
+    if not exists(plotp):
+        dplot=pd.DataFrame(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True)).reset_index().rename(columns={'index':'sample',0:'read depth (mean)'}).reset_index()
+        plt.figure(figsize=[4,3+len(dplot)/6])
+        ax=plt.subplot()
+        ax=dplot.plot(x='read depth (mean)',y='index',yticks=dplot['index'],style='.-',
+                     ax=ax,legend=False)
+        ax.set_yticklabels(dplot['sample'])
+        plt.tight_layout()
+        savefig(plotp)   
 
 def make_chunks(cfg_chunk):
     cfg_=cfg_chunk
@@ -233,8 +245,10 @@ def run_demupliplex(cfg,test=False):
         cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/Undetermined*_R{i}_*.fastq")[0]
 
     cfg['sample2bcr1r2'],cfg['sample2primersr1r2'],cfg['sample2fragsr1r2'],_,cfg['linkerr1r2']=get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq)
-    cfg['sample2readidsp']=f"{cfg['prjd']}/sample2readids.yml"            
-    to_yaml(cfg,f"{cfg['prjd']}/cfg.yml")
+    cfg['sample2readidsp']=f"{cfg['prjd']}/sample2readids.yml"
+    cfgp_=f"{cfg['prjd']}/cfg.yml"
+    cfg['cfgp']=cfgp_
+    to_yaml(cfg,cfgp_)
 
     # get the logger running
     from rohan.dandage.io_strs import get_logger,get_datetime
@@ -258,18 +272,21 @@ def run_demupliplex(cfg,test=False):
     if not exists(cfg['sample2readidsp']):
         print(cfg['prjd'])
         chunk_cfgps=make_chunks(cfg)
-        cfg['prjd']=cfg['prjd'].replace('/chunks','')
+        cfg=read_yaml(cfgp_)
         print(cfg['prjd'])
         # multi process
         pool=Pool(processes=cfg['cores'])
         pool.map(run_chunk_demultiplex_readids, chunk_cfgps)
         pool.close(); pool.join()           
         sample2readids=collect_chunk_demultiplex_readids(cfg)
+        print('saving sample2readids at ',cfg['sample2readidsp'])
         to_yaml(sample2readids,cfg['sample2readidsp'])
+        print('done')
     else:
         sample2readids=read_yaml(cfg['sample2readidsp'])        
     # output
     for sample in sample2readids:
+        logging.info(f'processing demultiplexed sample: {sample}')
         if not sample.startswith('undetermined '):
             # save the demultiplexed to separate directories
             align_demultiplexed(cfg,sample2readids,sample,test=cfg['test'])            
@@ -277,6 +294,7 @@ def run_demupliplex(cfg,test=False):
             # align the undetermined to be sure
             check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
     # qc output 
+    logging.info('plotting the qc')
     plot_qc(cfg)
     # log time taken        
     logging.info(f'end. time taken={str(get_datetime()-time_ini)}')            

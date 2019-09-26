@@ -21,9 +21,11 @@ def merge_dict_values(l,test=False):
             print(','.join([str(len(d[k])) for k in d]))
     return d    
 
-def read_yaml(p): 
-    return yaml.load(open(p,'r'),yaml.FullLoader)
+def read_yaml(p):
+    with open(p,'r') as f:
+        return yaml.load(f,yaml.FullLoader)
 def to_yaml(d,p): 
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
-    yaml.dump(d,open(p,'w'))
+    with open(p,'w') as f:
+        yaml.dump(d,f)
