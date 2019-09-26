@@ -47,10 +47,14 @@ def tuple2str(tup,sep=' '):
 import logging
 import os.path
 
-def get_datetime():
+def get_datetime(outstr=True):
     import datetime
-    return make_pathable_string(str(datetime.datetime.now())).replace('-','_')
-
+    time=datetime.datetime.now()
+    if outstr:
+        return make_pathable_string(str(time)).replace('-','_')
+    else:
+        return time
+    
 def get_logger(program='program',argv=None,level=None,dp=None):
 # def initialize_logger(output_dir):
     cmd='_'.join([str(s) for s in argv]).replace('/','_')

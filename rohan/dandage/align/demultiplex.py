@@ -162,7 +162,7 @@ def plot_qc(cfg):
         dcoverage=read_manytables(ps,axis=1,params_read_csv={'sep':'\t','index_col':'refi'},params_concat={'ignore_index':False},
                                  labels=[basename(dirname(p)) for p in ps ])
         dcoverage.columns=[c[0] for c in dcoverage.columns]
-        to_table(doutp)                 
+        to_table(dcoverage,doutp)                 
     else:
         dcoverage=read_table(doutp)
     # coverage by sample
@@ -179,7 +179,7 @@ def plot_qc(cfg):
         savefig(plotp)                    
    
     # coverage by sample ranked
-    plot=f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png"
+    plotp=f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png"
     if not exists(plotp):
         dplot=pd.DataFrame(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True)).reset_index().rename(columns={'index':'sample',0:'read depth (mean)'}).reset_index()
         plt.figure(figsize=[4,3+len(dplot)/6])
@@ -260,7 +260,7 @@ def run_demupliplex(cfg,test=False):
                argv=[cfg['prjd']],
                level=level,
                dp=None)
-    time_ini=get_datetime()
+    times=[get_datetime(outstr=False)]
     logging.info(f"start. log file: {logp}")
     print(f"start. log file: {logp}")
             
@@ -286,15 +286,18 @@ def run_demupliplex(cfg,test=False):
         sample2readids=read_yaml(cfg['sample2readidsp'])        
     # output
     for sample in sample2readids:
-        logging.info(f'processing demultiplexed sample: {sample}')
-        if not sample.startswith('undetermined '):
-            # save the demultiplexed to separate directories
-            align_demultiplexed(cfg,sample2readids,sample,test=cfg['test'])            
-        else:
-            # align the undetermined to be sure
-            check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
+        dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
+        if not exists(dirp):                                 
+            [f(f'processing demultiplexed sample: {sample}') for f in [logging.info,print]]
+            if not sample.startswith('undetermined '):
+                # save the demultiplexed to separate directories
+                align_demultiplexed(cfg,sample2readids,sample,test=cfg['test'])            
+            else:
+                # align the undetermined to be sure
+                check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
     # qc output 
     logging.info('plotting the qc')
     plot_qc(cfg)
     # log time taken        
-    logging.info(f'end. time taken={str(get_datetime()-time_ini)}')            
+    times.append(get_datetime(outstr=False))
+    [f(f'end. time taken={str(times[-1]-times[0])}') for f in [logging.info,print]]
