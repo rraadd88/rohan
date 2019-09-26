@@ -49,7 +49,7 @@ def get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq):
 
 def demultiplex_readids(fastqr1_reads,fastqr2_reads,
                     linkerr1r2,sample2bcr1r2,barcode_poss,
-                    alignment_score_coff,test=False):
+                    alignment_score_coff,outp=None,test=False):
     """
     trim the fastq, take only barcodes and only linkers
     global align linkers, relax align *0.6
@@ -59,17 +59,18 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
         get the reads that are captured with two or more barcodes
         assign to the one which has higher score
     """
-    def align_seqs(s1,s2):
+    def get_alignment_score(s1,s2):
         if s1==s2:
-            return (np.nan,1)
+            return len(s1)
+        elif len(s1)==len(s2):
+            return len(s1)-hamming_distance(s1,s2)
         else:
-            return get_align_metrics(align_global(s1,s2))
+            return get_align_metrics(align_global(s1,s2))[1]
         
     from rohan.dandage.io_dict import sort_dict
     sample2reads={sample:[] for sample in list(sample2bcr1r2.keys())+["undetermined barcode","undetermined linker"]}
-    readid2linkeralignment={}
     for ri,(r1,r2) in enumerate(zip(fastqr1_reads,fastqr2_reads)):
-        if np.remainder(ri,10000)==0:
+        if np.remainder(ri,100000)==0:
             print(ri,end=' ')
             logging.info(ri)
         if r1.id != r2.id:
@@ -77,17 +78,16 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
         else:
             read_has_linker=False
             linker_seq=f"{str(r1.seq)[barcode_poss[0][1]:barcode_poss[1][0]]}{str(r1.seq)[barcode_poss[1][1]:barcode_poss[1][1]+20]}{str(r2.seq)[barcode_poss[0][1]:barcode_poss[1][0]]}{str(r2.seq)[barcode_poss[1][1]:barcode_poss[1][1]+20]}"        
-            alignment=align_seqs(linkerr1r2,linker_seq)
-            if alignment[1]>=len(linkerr1r2)*0.7:
-                readid2linkeralignment[r1.id]=[str(r1.seq),str(r2.seq),alignment]
+            alignment_score=get_alignment_score(linkerr1r2,linker_seq)
+            if alignment_score>=len(linkerr1r2)*0.7:
                 read_has_linker=True
             if read_has_linker:
                 bc_seq=f"{str(r1.seq)[barcode_poss[0][0]:barcode_poss[0][1]]}{str(r1.seq)[barcode_poss[1][0]:barcode_poss[1][1]]}{str(r2.seq)[barcode_poss[0][0]:barcode_poss[0][1]]}{str(r2.seq)[barcode_poss[1][0]:barcode_poss[1][1]]}"
                 sample2alignmentscore={}
                 for sample in sample2bcr1r2:
-                    alignment=align_seqs(sample2bcr1r2[sample],bc_seq)
-                    if alignment[1]>alignment_score_coff:
-                        sample2alignmentscore[sample]=alignment
+                    alignment_score=get_alignment_score(sample2bcr1r2[sample],bc_seq)
+                    if alignment_score>alignment_score_coff:
+                        sample2alignmentscore[sample]=[alignment_score]
                 if len(sample2alignmentscore.values())!=0:
                     sample=sort_dict(sample2alignmentscore,1,out_list=True)[-1][0]
                     sample2reads[sample].append(r1.id)
@@ -97,7 +97,10 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
                 sample2reads["undetermined linker"].append(r1.id)
         if test and ri>1000:
             break
-    return sample2reads
+    if outp is None:
+        return sample2reads
+    else:
+        to_yaml(sample2reads,outp)
 
 def align_demultiplexed(cfg,sample2readids,sample,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
@@ -174,7 +177,38 @@ def plot_qc(cfg):
     ax.set_yticklabels(dplot['sample'])
     plt.tight_layout()
     savefig(f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png")   
-            
+
+def make_chunks(cfg):
+    cfg_chunk=cfg
+    cfg_chunk['prjd']=f"{cfg['prjd']}/chunks"
+    makedirs(cfg_chunk['prjd'],exist_ok=True)
+    coms=[]
+    coms+=[f"split -a 8 -l {cfg['chunksize']} --numeric-suffixes=1 --additional-suffix=.fastq {cfg[f'input_r{i}p']} {cfg_chunk['prjd']}/undetermined_chunk_R{i}_" for i in [1,2]]
+    for com in coms:
+        runbashcmd(com)
+    chunk_cfgps=[]
+    for chunk_input_r1p in glob(f"{cfg_chunk['prjd']}/undetermined_chunk_R1_*.fastq"):
+        cfg_chunk_=cfg_chunk
+        cfg_chunk_['input_r1p']=chunk_input_r1p
+        cfg_chunk_['input_r2p']=chunk_input_r1p.replace('R1','R2')
+        cfg_chunk_['sample2readidsp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_sample2readids.yml"
+        cfg_chunk_['cfgp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_cfg.yml"
+        chunk_cfgps.append(cfg_chunk_['cfgp'])
+        to_yaml(cfg_chunk_,cfg_chunk_['cfgp'])
+    return 
+
+def run_chunk_demultiplex_readids(cfgp):
+    cfg=read_yaml(cfgp)
+    fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
+    fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
+    logging.info('read the fastq files')
+    if not exists(cfg['sample2readidsp']):
+        demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
+                        linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
+                        alignment_score_coff=cfg['alignment_score_coff'],
+                        outp=cfg['sample2readidsp'],
+                        test=False)
+           
 def run_demupliplex(cfg,test=False):
     from multiprocessing import Pool
 
@@ -193,6 +227,7 @@ def run_demupliplex(cfg,test=False):
         cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/Undetermined*_R{i}_*.fastq")[0]
 
     cfg['sample2bcr1r2'],cfg['sample2primersr1r2'],cfg['sample2fragsr1r2'],_,cfg['linkerr1r2']=get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq)
+    cfg['sample2readidsp']=f"{cfg['prjd']}/sample2readids.yml"            
     to_yaml(cfg,f"{cfg['prjd']}/cfg.yml")
 
     # get the logger running
@@ -214,19 +249,15 @@ def run_demupliplex(cfg,test=False):
         cfg['alignment_score_coff']=get_alignment_score_coff(cfg['sample2bcr1r2'])
 
     # demultiplex
-    sample2readidsp=f"{cfg['prjd']}/sample2readids.yml"
-    if not exists(sample2readidsp):
+    if not exists(cfg['sample2readidsp']):
+        chunk_cfgps=make_chunks(cfg)
+        
         pool=Pool(processes=cfg['cores'])
-        fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
-        fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
-        logging.info('read the fastq files')
-        sample2readids=demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
-                        linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
-                        alignment_score_coff=cfg['alignment_score_coff'],
-                                           test=False)
-        to_yaml(sample2readids,sample2readidsp)
+        pool.map(run_chunk_demultiplex_readids, chunk_cfgps)
+        pool.close(); pool.join()           
+        collect_demultiplex_cheunks(cfg)
     else:
-        sample2readids=read_yaml(sample2readidsp)        
+        sample2readids=read_yaml(cfg['sample2readidsp'])        
     # output
     for sample in sample2readids:
         if not sample.startswith('undetermined '):
