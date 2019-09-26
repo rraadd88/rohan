@@ -178,12 +178,12 @@ def plot_qc(cfg):
     plt.tight_layout()
     savefig(f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png")   
 
-def make_chunks(cfg):
-    cfg_chunk=cfg
-    cfg_chunk['prjd']=f"{cfg['prjd']}/chunks"
+def make_chunks(cfg_chunk):
+    cfg_=cfg_chunk
+    cfg_chunk['prjd']=f"{cfg_['prjd']}/chunks"
     makedirs(cfg_chunk['prjd'],exist_ok=True)
     coms=[]
-    coms+=[f"split -a 8 -l {cfg['chunksize']} --numeric-suffixes=1 --additional-suffix=.fastq {cfg[f'input_r{i}p']} {cfg_chunk['prjd']}/undetermined_chunk_R{i}_" for i in [1,2]]
+    coms+=[f"split -a 8 -l {cfg_['chunksize']} --numeric-suffixes=1 --additional-suffix=.fastq {cfg_[f'input_r{i}p']} {cfg_chunk['prjd']}/undetermined_chunk_R{i}_" for i in [1,2]]
     for com in coms:
         runbashcmd(com)
     chunk_cfgps=[]
@@ -195,6 +195,7 @@ def make_chunks(cfg):
         cfg_chunk_['cfgp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_cfg.yml"
         chunk_cfgps.append(cfg_chunk_['cfgp'])
         to_yaml(cfg_chunk_,cfg_chunk_['cfgp'])
+    del cfg_,cfg_chunk
     return chunk_cfgps
 
 def run_chunk_demultiplex_readids(cfgp):
@@ -209,8 +210,10 @@ def run_chunk_demultiplex_readids(cfgp):
                         alignment_score_coff=cfg['alignment_score_coff'],
                         outp=cfg['sample2readidsp'],
                         test=False)
-def collect_chunk_demultiplex_readids(chunk_cfgps):
-    return None 
+def collect_chunk_demultiplex_readids(cfg):
+    chunk_sample2readids=[read_yaml(p) for p in glob(f"{cfg['prjd']}/chunks/chunk*sample2readids.yml")]
+    print(f"{cfg['prjd']}/chunks/chunk*sample2readids.yml")
+    return merge_dict_values(chunk_sample2readids)
 
 def run_demupliplex(cfg,test=False):
     from multiprocessing import Pool
@@ -253,7 +256,9 @@ def run_demupliplex(cfg,test=False):
 
     # demultiplex
     if not exists(cfg['sample2readidsp']):
+        print(cfg['prjd'])
         chunk_cfgps=make_chunks(cfg)
+        print(cfg['prjd'])
         # multi process
         pool=Pool(processes=cfg['cores'])
         pool.map(run_chunk_demultiplex_readids, chunk_cfgps)
