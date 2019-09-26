@@ -183,7 +183,7 @@ def make_chunks(cfg_chunk):
     cfg_chunk['prjd']=f"{cfg_['prjd']}/chunks"
     makedirs(cfg_chunk['prjd'],exist_ok=True)
     coms=[]
-    coms+=[f"split -a 8 -l {cfg_['chunksize']} --numeric-suffixes=1 --additional-suffix=.fastq {cfg_[f'input_r{i}p']} {cfg_chunk['prjd']}/undetermined_chunk_R{i}_" for i in [1,2]]
+    coms+=[f"split -a 8 -l {cfg_['chunksize']*4} --numeric-suffixes=1 --additional-suffix=.fastq {cfg_[f'input_r{i}p']} {cfg_chunk['prjd']}/undetermined_chunk_R{i}_" for i in [1,2]]
     for com in coms:
         runbashcmd(com)
     chunk_cfgps=[]
@@ -258,12 +258,14 @@ def run_demupliplex(cfg,test=False):
     if not exists(cfg['sample2readidsp']):
         print(cfg['prjd'])
         chunk_cfgps=make_chunks(cfg)
+        cfg['prjd']=cfg['prjd'].replace('/chunks','')
         print(cfg['prjd'])
         # multi process
         pool=Pool(processes=cfg['cores'])
         pool.map(run_chunk_demultiplex_readids, chunk_cfgps)
         pool.close(); pool.join()           
-        collect_chunk_demultiplex_readids(cfg)
+        sample2readids=collect_chunk_demultiplex_readids(cfg)
+        to_yaml(sample2readids,cfg['sample2readidsp'])
     else:
         sample2readids=read_yaml(cfg['sample2readidsp'])        
     # output
