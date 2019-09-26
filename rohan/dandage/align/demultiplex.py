@@ -59,11 +59,17 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
         get the reads that are captured with two or more barcodes
         assign to the one which has higher score
     """
+    def align_seqs(s1,s2):
+        if s1==s2:
+            return (np.nan,1)
+        else:
+            return get_align_metrics(align_global(s1,s2))
+        
     from rohan.dandage.io_dict import sort_dict
     sample2reads={sample:[] for sample in list(sample2bcr1r2.keys())+["undetermined barcode","undetermined linker"]}
     readid2linkeralignment={}
     for ri,(r1,r2) in enumerate(zip(fastqr1_reads,fastqr2_reads)):
-        if np.remainder(ri,1000)==0:
+        if np.remainder(ri,10000)==0:
             print(ri,end=' ')
             logging.info(ri)
         if r1.id != r2.id:
@@ -71,7 +77,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
         else:
             read_has_linker=False
             linker_seq=f"{str(r1.seq)[barcode_poss[0][1]:barcode_poss[1][0]]}{str(r1.seq)[barcode_poss[1][1]:barcode_poss[1][1]+20]}{str(r2.seq)[barcode_poss[0][1]:barcode_poss[1][0]]}{str(r2.seq)[barcode_poss[1][1]:barcode_poss[1][1]+20]}"        
-            alignment=get_align_metrics(align_global(linkerr1r2,linker_seq))
+            alignment=align_seqs(linkerr1r2,linker_seq)
             if alignment[1]>=len(linkerr1r2)*0.7:
                 readid2linkeralignment[r1.id]=[str(r1.seq),str(r2.seq),alignment]
                 read_has_linker=True
@@ -79,7 +85,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
                 bc_seq=f"{str(r1.seq)[barcode_poss[0][0]:barcode_poss[0][1]]}{str(r1.seq)[barcode_poss[1][0]:barcode_poss[1][1]]}{str(r2.seq)[barcode_poss[0][0]:barcode_poss[0][1]]}{str(r2.seq)[barcode_poss[1][0]:barcode_poss[1][1]]}"
                 sample2alignmentscore={}
                 for sample in sample2bcr1r2:
-                    alignment=get_align_metrics(align_global(sample2bcr1r2[sample],bc_seq))
+                    alignment=align_seqs(sample2bcr1r2[sample],bc_seq)
                     if alignment[1]>alignment_score_coff:
                         sample2alignmentscore[sample]=alignment
                 if len(sample2alignmentscore.values())!=0:
@@ -170,6 +176,8 @@ def plot_qc(cfg):
     savefig(f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png")   
             
 def run_demupliplex(cfg,test=False):
+    from multiprocessing import Pool
+
     if isinstance(cfg,str):
         if cfg.endswith('.yml'):
             cfg=read_yaml(cfg)      
@@ -208,6 +216,7 @@ def run_demupliplex(cfg,test=False):
     # demultiplex
     sample2readidsp=f"{cfg['prjd']}/sample2readids.yml"
     if not exists(sample2readidsp):
+        pool=Pool(processes=cfg['cores'])
         fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
         fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
         logging.info('read the fastq files')
