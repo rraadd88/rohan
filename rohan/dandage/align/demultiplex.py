@@ -70,7 +70,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
     from rohan.dandage.io_dict import sort_dict
     sample2reads={sample:[] for sample in list(sample2bcr1r2.keys())+["undetermined barcode","undetermined linker"]}
     for ri,(r1,r2) in enumerate(zip(fastqr1_reads,fastqr2_reads)):
-        if np.remainder(ri,100000)==0:
+        if test and np.remainder(ri,100000)==0:
             print(ri,end=' ')
             logging.info(ri)
         if r1.id != r2.id:
@@ -195,9 +195,10 @@ def make_chunks(cfg):
         cfg_chunk_['cfgp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_cfg.yml"
         chunk_cfgps.append(cfg_chunk_['cfgp'])
         to_yaml(cfg_chunk_,cfg_chunk_['cfgp'])
-    return 
+    return chunk_cfgps
 
 def run_chunk_demultiplex_readids(cfgp):
+    logging.info(f'running {basenamenoext(cfgp)}')
     cfg=read_yaml(cfgp)
     fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
     fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
@@ -208,7 +209,9 @@ def run_chunk_demultiplex_readids(cfgp):
                         alignment_score_coff=cfg['alignment_score_coff'],
                         outp=cfg['sample2readidsp'],
                         test=False)
-           
+def collect_chunk_demultiplex_readids(chunk_cfgps):
+    return None 
+
 def run_demupliplex(cfg,test=False):
     from multiprocessing import Pool
 
@@ -251,11 +254,11 @@ def run_demupliplex(cfg,test=False):
     # demultiplex
     if not exists(cfg['sample2readidsp']):
         chunk_cfgps=make_chunks(cfg)
-        
+        # multi process
         pool=Pool(processes=cfg['cores'])
         pool.map(run_chunk_demultiplex_readids, chunk_cfgps)
         pool.close(); pool.join()           
-        collect_demultiplex_cheunks(cfg)
+        collect_chunk_demultiplex_readids(cfg)
     else:
         sample2readids=read_yaml(cfg['sample2readidsp'])        
     # output

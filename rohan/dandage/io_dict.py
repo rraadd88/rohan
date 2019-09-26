@@ -10,7 +10,17 @@ def sort_dict(d,by_pos_in_list,out_list=False):
         return l
     else:
         return dict(l)
-                
+                    
+def merge_dict_values(l,test=False):
+    for di,d_ in enumerate(l):
+        if di==0:
+            d=d_
+        else:
+            d={k:d[k]+d_[k] for k in d}
+        if test:
+            print(','.join([str(len(d[k])) for k in d]))
+    return d    
+
 def read_yaml(p): 
     return yaml.load(open(p,'r'),yaml.FullLoader)
 def to_yaml(d,p): 
