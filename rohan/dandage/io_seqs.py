@@ -286,4 +286,13 @@ def process_fasta(infap,outfap,deff,deff_params):
         with open(outfap, "w") as handle:
             SeqIO.write(record, handle, "fasta")    
         return outfap
-    
+
+# indexing seqs
+def aai2nti(i):
+    """
+    # nt index is 0-based
+    # aa index is 1-based
+    # test 
+    # dict(zip(range(1,60),[aai2nti(i) for i in range(1,60)]))
+    """
+    return [(i-1)*3,(i-1)*3+1,(i-1)*3+2]
