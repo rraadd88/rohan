@@ -100,4 +100,4 @@ def get_codon_mutations(cfg):
         del dcdi,dcdinorm
         if cfg['test']:
             break
-    return refn2dn2dss    
+    return refn2dn2dss
