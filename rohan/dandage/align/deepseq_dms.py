@@ -101,3 +101,45 @@ def get_codon_mutations(cfg):
         if cfg['test']:
             break
     return refn2dn2dss
+                       
+def plot_mutmat(dplot):
+    dplot=dplot.sort_index()
+    dplot.index.name='mutated'
+    dplot.columns.name='position reference'
+    dplot=dplot.applymap(np.log10).replace([np.inf, -np.inf], np.nan)
+    from rohan.dandage.plot.annot import annot_heatmap 
+    plt.figure(figsize=[len(dplot.columns)/4.5,len(dplot.index)/5])
+    ax=plt.subplot()
+    ax=sns.heatmap(dplot,xticklabels=dplot.columns,
+               yticklabels=dplot.index,ax=ax,cbar_kws={'label':'(on log10 scale)'},cmap='Reds',)
+    dplot_annot_absent=dplot.applymap(lambda x : 'X' if pd.isnull(x) else '')
+    def cat_(x):return x.index + x.name.split(' ')[1]
+    dplot_annot_syn=dplot.apply(cat_).applymap(lambda x : 'S' if len(set(x))==1 else '')
+    [annot_heatmap(ax,df.T,yoff=0.25,xoff=-0.15) for df in [dplot_annot_absent,dplot_annot_syn]]
+    ax.set_title(f"{refn} (coverage={100-(pd.isnull(dplot).melt()['value'].sum()/(len(dplot.index)*len(dplot.columns)))*100:1.1f}%) S: synonymous, X: not detected",
+    loc='left',ha='left')
+    ax.set_ylim(len(dplot),0)
+    return ax
+def get_mutation_matrices(cfg):
+    refn2dn2dss=get_codon_mutations(cfg)
+    #save tables
+    cfg['tax id']=None#todo use specific tax id 
+    cfg['data_mutationp']=f"{cfg['prjd']}/data_mutation"
+    label2dn={'counts':'dcdis','normalized':'dcdinorms'}
+    for refn in refn2dn2dss:
+        outd=f"{cfg['data_mutationp']}/{refn.replace(' ','_')}"
+        makedirs(outd,exist_ok=True)
+        for label in label2dn: 
+            dmutmatcd_=pd.concat(refn2dn2dss[refn][label2dn[label]],axis=1,join='inner')
+            to_table(dmutmatcd_,f"{outd}/dmutmatcd_{label2dn[label]}.tsv")
+            plot_mutmat(dmutmatcd_)
+            savefig(f"{cfg['prjd']}/plot/heatmap_dmutmatcd_{label} {refn}.png")
+            dmutmatcd_.index=[translate(s,tax_id=cfg['tax id']) for s in dmutmatcd_.index]
+            dmutmatcd_.columns=[f"{s.split(' ')[0]} {translate(s.split(' ')[1],tax_id=cfg['tax id'])}" for s in dmutmatcd_]        
+            dmutmataa_=dmutmatcd_.groupby(dmutmatcd_.index).agg({c:np.sum for c in dmutmatcd_}).replace(0,np.nan)
+            to_table(dmutmataa_,f"{outd}/dmutmataa_{label2dn[label]}.tsv")
+            plot_mutmat(dmutmataa_)
+            savefig(f"{cfg['prjd']}/plot/heatmap_dmutmataa_{label} {refn}.png")
+#         del dmutmatcd_,dmutmataa_
+#         break
+#     break                       
