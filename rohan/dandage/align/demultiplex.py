@@ -107,6 +107,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
 
 def align_demultiplexed(cfg,sample2readids,sample,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
+    print(dirp)
     # save the readids
     if not exists(dirp):
         makedirs(dirp,exist_ok=False)
@@ -240,7 +241,7 @@ def run_demupliplex(cfg,test=False):
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['Locus','Position_DMS'])
     bc2seq=read_fasta('data/references/indexes.fa')
     oligo2seq=read_fasta(cfg['oligo2seqp'])
-
+    
     for i in [1,2]:
         cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/Undetermined*_R{i}_*.fastq")[0]
 

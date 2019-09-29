@@ -3,6 +3,7 @@ from rohan.dandage.io_sets import merge_dict,s2dict,head_dict
 from os.path import dirname
 from os import makedirs
 import yaml
+import json
 
 def sort_dict(d,by_pos_in_list,out_list=False):
     l=sorted(d.items(), key=lambda x: x[by_pos_in_list])
@@ -29,3 +30,7 @@ def to_yaml(d,p):
         makedirs(dirname(p),exist_ok=True)
     with open(p,'w') as f:
         yaml.dump(d,f)
+        
+def read_json(path_to_file):
+    with open(path_to_file) as p:
+        return json.load(p)
