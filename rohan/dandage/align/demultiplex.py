@@ -119,7 +119,7 @@ def align_demultiplexed(cfg,sample2readids,sample,test=False):
     # trim fasq and align
     coms=[]
     for ri in [1,2]:
-        cutlength=cfg['primer end']+(cfg['target spacer 5prime'] if ri==1 else cfg['target spacer 3prime'])
+        cutlength=cfg['primer end']+(0 if not cfg['cut target spacer'] else (cfg['target spacer 5prime'] if ri==1 else cfg['target spacer 3prime']))
         coms.append(f"seqtk subseq {cfg[f'input_r{ri}p']} {dirp}/read_ids.txt | seqtk trimfq -b {cutlength} -e 0 - > {dirp}/R{ri}.fastq")
     for com in coms:
         if test:
@@ -153,8 +153,8 @@ def check_undetermined(cfg,sample2readids,sample,test=False):
         else:
             logging.info(com)
             runbashcmd(com) 
-    get_aligned(dirp,test=test)
-    get_daligned(dirp)
+    get_aligned(dirp,method='global',test=test)
+    get_daligned(dirp,method='global',)
                     
 def plot_qc(cfg):
     # get data

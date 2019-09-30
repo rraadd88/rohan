@@ -24,7 +24,9 @@ def plot_dntmat_mut(dntmat_mut,plotp,title,params_ax_set={},yaxis_fmt='%1.1e'):
     savefig(plotp)
     
     
-def get_codon_mutations(cfg):
+def get_codon_mutations(cfg,test=False):
+    if not 'test' in cfg:
+        cfg['test']=test
     from rohan.dandage.io_strs import replacebyposition
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['Locus','Position_DMS'])
     dbarcodes['sample name']=dbarcodes.apply(lambda x : f"{x['Locus']}_{x['Position_DMS']}",axis=1)
