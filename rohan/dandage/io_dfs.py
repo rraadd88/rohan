@@ -132,6 +132,8 @@ def to_table_pqt(df,p):
 
 def tsv2pqt(p):
     to_table_pqt(pd.read_csv(p,sep='\t',low_memory=False),f"{p}.pqt")
+def pqt2tsv(p):
+    to_table(read_table(p),f"{p}.tsv")
     
 def read_excel(p,sheet_name=None,params_read_excel={},to_dict=False):
     if not to_dict:

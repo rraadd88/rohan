@@ -34,7 +34,7 @@ def to_yaml(d,p):
 def read_json(path_to_file):
     with open(path_to_file) as p:
         return json.load(p)
-def to_json(data,p)
+def to_json(data,p):
     with open(p, 'w') as outfile:
         json.dump(data, outfile)
         

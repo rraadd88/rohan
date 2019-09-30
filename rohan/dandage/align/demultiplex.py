@@ -103,7 +103,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
     if outp is None:
         return sample2reads
     else:
-        to_yaml(sample2reads,outp)
+        to_dict(sample2reads,outp)
 
 def align_demultiplexed(cfg,sample2readids,sample,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
@@ -127,8 +127,8 @@ def align_demultiplexed(cfg,sample2readids,sample,test=False):
         else:
             logging.info(com)
             runbashcmd(com) 
-    get_aligned(dirp,test=test)
-    get_daligned(dirp)
+    get_aligned(dirp,method='global',test=test)
+    get_daligned(dirp,method='global')
                     
 def check_undetermined(cfg,sample2readids,sample,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
@@ -205,16 +205,15 @@ def make_chunks(cfg_chunk):
         cfg_chunk_=cfg_chunk
         cfg_chunk_['input_r1p']=chunk_input_r1p
         cfg_chunk_['input_r2p']=chunk_input_r1p.replace('R1','R2')
-        cfg_chunk_['sample2readidsp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_sample2readids.yml"
+        cfg_chunk_['sample2readidsp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_sample2readids.json"
         cfg_chunk_['cfgp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_cfg.yml"
         chunk_cfgps.append(cfg_chunk_['cfgp'])
-        to_yaml(cfg_chunk_,cfg_chunk_['cfgp'])
+        to_dict(cfg_chunk_,cfg_chunk_['cfgp'])
     del cfg_,cfg_chunk
     return chunk_cfgps
 
-def run_chunk_demultiplex_readids(cfgp):
     logging.info(f'running {basenamenoext(cfgp)}')
-    cfg=read_yaml(cfgp)
+    cfg=read_dict(cfgp)
     fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
     fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
     logging.info('read the fastq files')
@@ -225,8 +224,8 @@ def run_chunk_demultiplex_readids(cfgp):
                         outp=cfg['sample2readidsp'],
                         test=False)
 def collect_chunk_demultiplex_readids(cfg):
-    chunk_sample2readids=[read_yaml(p) for p in glob(f"{cfg['prjd']}/chunks/chunk*sample2readids.yml")]
-    print(f"{cfg['prjd']}/chunks/chunk*sample2readids.yml")
+    chunk_sample2readids=[read_dict(p) for p in glob(f"{cfg['prjd']}/chunks/chunk*sample2readids.json")]
+    print(f"{cfg['prjd']}/chunks/chunk*sample2readids.json")
     return merge_dict_values(chunk_sample2readids)
 
 def run_demupliplex(cfg,test=False):
@@ -234,11 +233,11 @@ def run_demupliplex(cfg,test=False):
 
     if isinstance(cfg,str):
         if cfg.endswith('.yml'):
-            cfg=read_yaml(cfg)      
+            cfg=read_dict(cfg)      
         else:
             logging.error(f'should be a path to yml file: {cfg}')
     cfg['test']=test
-    to_yaml(cfg,f"{cfg['prjd']}/input_cfg.yaml")
+    to_dict(cfg,f"{cfg['prjd']}/input_cfg.yaml")
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['Locus','Position_DMS'])
     bc2seq=read_fasta('data/references/indexes.fa')
     oligo2seq=read_fasta(cfg['oligo2seqp'])
@@ -247,10 +246,10 @@ def run_demupliplex(cfg,test=False):
         cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/Undetermined*_R{i}_*.fastq")[0]
 
     cfg['sample2bcr1r2'],cfg['sample2primersr1r2'],cfg['sample2fragsr1r2'],_,cfg['linkerr1r2']=get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq)
-    cfg['sample2readidsp']=f"{cfg['prjd']}/sample2readids.yml"
+    cfg['sample2readidsp']=f"{cfg['prjd']}/sample2readids.json"
     cfgp_=f"{cfg['prjd']}/cfg.yml"
     cfg['cfgp']=cfgp_
-    to_yaml(cfg,cfgp_)
+    to_dict(cfg,cfgp_)
 
     # get the logger running
     from rohan.dandage.io_strs import get_logger,get_datetime
@@ -274,7 +273,7 @@ def run_demupliplex(cfg,test=False):
     if not exists(cfg['sample2readidsp']):
         print(cfg['prjd'])
         chunk_cfgps=make_chunks(cfg)
-        cfg=read_yaml(cfgp_)
+        cfg=read_dict(cfgp_)
         print(cfg['prjd'])
         # multi process
         pool=Pool(processes=cfg['cores'])
@@ -282,21 +281,26 @@ def run_demupliplex(cfg,test=False):
         pool.close(); pool.join()           
         sample2readids=collect_chunk_demultiplex_readids(cfg)
         print('saving sample2readids at ',cfg['sample2readidsp'])
-        to_yaml(sample2readids,cfg['sample2readidsp'])
+        to_dict(sample2readids,cfg['sample2readidsp'])
         print('done')
     else:
-        sample2readids=read_yaml(cfg['sample2readidsp'])        
+        sample2readids=read_dict(cfg['sample2readidsp'])        
     # output
-    for sample in sample2readids:
+    for sample in sorted(sample2readids.keys()):
         dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
-        if not exists(dirp):                                 
-            [f(f'processing demultiplexed sample: {sample}') for f in [logging.info,print]]
-            if not sample.startswith('undetermined '):
-                # save the demultiplexed to separate directories
-                align_demultiplexed(cfg,sample2readids,sample,test=cfg['test'])            
-            else:
-                # align the undetermined to be sure
-                check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
+#         if not exists(dirp):                                 
+        [f(f'processing demultiplexed sample: {sample}') for f in [logging.info,print]]
+        if not sample.startswith('undetermined '):
+            # save the demultiplexed to separate directories
+            align_demultiplexed(cfg,sample2readids,sample,test=cfg['test'])            
+            if cfg['test']:
+                print('stopping the test')
+                import sys
+                sys.exit()
+                break
+        else:
+            # align the undetermined to be sure
+            check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
     # qc output 
     logging.info('plotting the qc')
     plot_qc(cfg)

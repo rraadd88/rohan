@@ -108,7 +108,7 @@ def get_daligned_target(dirp):
     yaml.dump(cfg,open(f"{dirp}/cfg.yml",'w'))
     return df            
 
-def get_daligned(dirp):
+def get_daligned(dirp,method):
     import pysam
     from rohan.dandage.io_seqs import read_fasta
     from rohan.dandage.io_strs import findall
@@ -126,7 +126,10 @@ def get_daligned(dirp):
                                       start=cfg['target_ini'],stop=cfg['target_end'])
         readid2seq={}
         for read in aligned_reads:
-            if read.is_paired and not read.is_unmapped:
+            if method=='local':
+                if not read.is_paired:
+                    continue # skip
+            if not read.is_unmapped:
                 # no indels in target region
                 location_indel=get_location_first_indel(read)
                 if pd.isnull(location_indel) or location_indel>cfg['target_end']:
