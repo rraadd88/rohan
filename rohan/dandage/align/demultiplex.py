@@ -119,7 +119,8 @@ def align_demultiplexed(cfg,sample2readids,sample,test=False):
     # trim fasq and align
     coms=[]
     for ri in [1,2]:
-        coms.append(f"seqtk subseq {cfg[f'input_r{ri}p']} {dirp}/read_ids.txt | seqtk trimfq -b {cfg['primer end']} -e 0 - > {dirp}/R{ri}.fastq")
+        cutlength=cfg['primer end']+(cfg['target spacer 5prime'] if ri==1 else cfg['target spacer 3prime'])
+        coms.append(f"seqtk subseq {cfg[f'input_r{ri}p']} {dirp}/read_ids.txt | seqtk trimfq -b {cutlength} -e 0 - > {dirp}/R{ri}.fastq")
     for com in coms:
         if test:
             print(com)

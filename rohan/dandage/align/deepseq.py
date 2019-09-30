@@ -54,10 +54,11 @@ def get_aligned(dirp,method=None,test=False):
         elif exists(f"{dirp}/R.fastq"):
             method='global'
     elif method=='global' and exists(f"{dirp}/R1.fastq") and exists(f"{dirp}/R2.fastq"):
-        id2seq=read_fasta(f"{dirp}/reference.fasta")
-        reflen=int(len(id2seq[id2seq.keys()[0]]))
         logging.info(f"merging the reads: {dirp}/R1/2.fastq")
-        com=f"pear -n {reflen} -m {reflen} -f {dirp}/R1.fastq" -r {dirp}/R2.fastq"  -o {dirp}/R.fastq;mv R.fastq.assembled.fastq R.fastq"
+        id2seq=read_fasta(f"{dirp}/reference.fasta")
+        reflen=int(len(id2seq[list(id2seq.keys())[0]]))
+#         -n {reflen} -m {reflen}
+        coms+=[f"pear -f {dirp}/R1.fastq -r {dirp}/R2.fastq  -o {dirp}/R.fastq > {dirp}/log_pear.log;mv {dirp}/R.fastq.assembled.fastq {dirp}/R.fastq"]
     coms+=[f'fastp -i {dirp}/R1.fastq -I {dirp}/R2.fastq -o {dirp}/R1_flt.fastq -O {dirp}/R2_flt.fastq -q 20 -e 20 -j {dirp}/R2_flt.fastq.report.json -h {dirp}/R2_flt.fastq.report.html 2> {dirp}/log_fastp.log' if method=='local' else f'fastp -i {dirp}/R.fastq -o {dirp}/R_flt.fastq -q 20 -e 20 -j {dirp}/R_flt.fastq.report.json -h {dirp}/R_flt.fastq.report.html 2> {dirp}/log_fastp.log',
     f'bowtie2-build --quiet {dirp}/reference.fasta {dirp}/reference',
     f'bowtie2 -p 6 --very-sensitive-local --no-discordant --no-mixed -x {dirp}/reference -1 {dirp}/R1_flt.fastq -2 {dirp}/R2_flt.fastq -S {dirp}/aligned.sam 2> {dirp}/log_bowtie2.log' if method=='local' else f'bowtie2 -p 6 --end-to-end --very-sensitive --no-discordant --no-mixed -x {dirp}/reference -U {dirp}/R_flt.fastq -S {dirp}/aligned.sam 2> {dirp}/log_bowtie2.log',
