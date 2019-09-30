@@ -34,3 +34,21 @@ def to_yaml(d,p):
 def read_json(path_to_file):
     with open(path_to_file) as p:
         return json.load(p)
+def to_json(data,p)
+    with open(p, 'w') as outfile:
+        json.dump(data, outfile)
+        
+def read_dict(p):
+    if p.endswith('.yml') or p.endswith('.yaml'):
+        return read_yaml(p)
+    elif p.endswith('.json'):
+        return read_json(p)
+    else:
+        ValueError(f'supported extensions: .yml .yaml .json')
+def to_dict(d,p):
+    if p.endswith('.yml') or p.endswith('.yaml'):
+        return to_yaml(d,p)
+    elif p.endswith('.json'):
+        return to_json(d,p)
+    else:
+        ValueError(f'supported extensions: .yml .yaml .json')        
