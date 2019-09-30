@@ -127,8 +127,8 @@ def align_demultiplexed(cfg,sample2readids,sample,test=False):
         else:
             logging.info(com)
             runbashcmd(com) 
-    get_aligned(dirp,method='global',test=test)
-    get_daligned(dirp,method='global')
+    get_aligned(dirp,method=cfg['alignment method'],test=test)
+    get_daligned(dirp,method=cfg['alignment method'])
                     
 def check_undetermined(cfg,sample2readids,sample,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
