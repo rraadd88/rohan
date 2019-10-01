@@ -27,7 +27,7 @@ prjs=['00_metaanalysis']
 if not any([prj in pwd for prj in prjs]):
     plt.style.use('ggplot')
     # paper < notebook < talk < poster
-    sns.set('notebook',font='Monaco')
+    sns.set('talk',font='Monaco')
 #     print("nogrids: plt.style.use('seaborn-white');sns.set('notebook',font='Arial')")
     # plt.style.available
     # import matplotlib.font_manager
@@ -42,7 +42,7 @@ else:
 # always save plots 
 from rohan.dandage.figs.figure import *
 # if basename(pwd).split('_')[0].isdigit():
-print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log'\nget_ipython().run_line_magic('logstart',f'{logplotp} over')")
+print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log;get_ipython().run_line_magic('logstart',f'{logplotp} over')")
 
 # debug
 import logging
