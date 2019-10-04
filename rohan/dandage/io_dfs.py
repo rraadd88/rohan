@@ -117,8 +117,9 @@ def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={
 
 ## save table
 def to_table(df,p):
-    from rohan.dandage.io_strs import make_pathable_string
-    p=make_pathable_string(p)
+#     from rohan.dandage.io_strs import make_pathable_string
+#     p=make_pathable_string(p)
+    p=p.replace(' ','_')
     if p.endswith('.tsv') or p.endswith('.tab'):
         if not exists(dirname(p)) and dirname(p)!='':
             makedirs(dirname(p),exist_ok=True)
