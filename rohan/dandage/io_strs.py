@@ -248,8 +248,11 @@ def get_prefix(string,sep):
 def get_suffix(string,sep):
     return ' '.join(string.split(sep)[1:])
 
-## filenames
+## filenames 
 def strlist2one(l,label=''):
+    # find unique prefix
+    from rohan.dandage.io_sets import unique
+    from os.path import splitext
     for si in range(len(l[0]))[::-1]:
         s_i=l[0][:si]
         if all([s_i in s for s in l]):
