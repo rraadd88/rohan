@@ -247,3 +247,12 @@ def get_prefix(string,sep):
     return re.match(f"(.*?){sep}",string).group()[:-1]
 def get_suffix(string,sep):
     return ' '.join(string.split(sep)[1:])
+
+## filenames
+def strlist2one(l,label=''):
+    for si in range(len(l[0]))[::-1]:
+        s_i=l[0][:si]
+        if all([s_i in s for s in l]):
+    #         si=si+1
+            break
+    return f"{l[0][:si]}{''.join(list(unique([s[si] for s in l])))}{label}{splitext(l[0])[1]}"
