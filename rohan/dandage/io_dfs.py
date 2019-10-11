@@ -527,6 +527,17 @@ def get_offdiag_vals(dcorr):
     
     return dcorr.drop(del_indexes)
 
+
+def make_symmetric_across_diagonal(df,fill='lower'):
+    for c1i,c1 in enumerate(df.columns):
+        for c2i,c2 in enumerate(df.columns):
+            if c1i>c2i:
+                if fill=='lower': 
+                    df.loc[c1,c2]=df.loc[c2,c1]
+                elif fill=='upper':
+                    df.loc[c2,c1]=df.loc[c1,c2]                
+    return df
+
 # aggregate dataframes
 
 def dfaggregate_unique(df,colgroupby,colaggs):
