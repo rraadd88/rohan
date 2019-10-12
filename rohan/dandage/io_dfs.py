@@ -120,9 +120,9 @@ def to_table(df,p):
 #     from rohan.dandage.io_strs import make_pathable_string
 #     p=make_pathable_string(p)
     p=p.replace(' ','_')
+    if not exists(dirname(p)) and dirname(p)!='':
+        makedirs(dirname(p),exist_ok=True)
     if p.endswith('.tsv') or p.endswith('.tab'):
-        if not exists(dirname(p)) and dirname(p)!='':
-            makedirs(dirname(p),exist_ok=True)
         df.to_csv(p,sep='\t')
     elif p.endswith('.pqt') or p.endswith('.parquet'):
         to_table_pqt(df,p)

@@ -39,6 +39,9 @@ def to_json(data,p):
         json.dump(data, outfile)
         
 def read_dict(p):
+    p=p.replace(' ','_')
+    if not exists(dirname(p)) and dirname(p)!='':
+        makedirs(dirname(p),exist_ok=True)
     if p.endswith('.yml') or p.endswith('.yaml'):
         return read_yaml(p)
     elif p.endswith('.json'):
