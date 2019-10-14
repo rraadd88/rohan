@@ -11,11 +11,12 @@ from rohan.dandage.io_dfs import *
 #     dints=pd.DataFrame(dints)
 #     return dints
 from rohan.dandage.db.intact import get_degrees
+import logging
 
 def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,dbiogrid_intmapp,
                         logf=None,
                         experimental_system_type='physical',
-                        genefmt='name',
+                        genefmt=None,
                         force=False,test=False,
                         keep_exp_syss=[],del_exp_syss=[],
                         filldiagonal_withna=False):
@@ -24,8 +25,8 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
     del_exp_syss=["Co-purification", "Co-fractionation", "Proximity Label-MS", 
                                   "Affinity Capture-RNA", "Protein-peptide"]
     """    
-    gene_fmt2colns={'biogrid':{'id':'Systematic Name',
-                 'name':'Official Symbol'},}
+    if not genefmt is None:
+        logging.warning('genefmt is deprecated, both gene ids and gene names will be used')
     if (not exists(dbiogrid_intmap_symmp)) or force:
         if not exists(dbiogrid_intmapp) or force:
             if not exists(dbiogrid_intlinp) or force:
@@ -72,9 +73,11 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
                 print(dbiogrid['count'].sum())
             # mean of counts of intearations
             ## higher is more confident interaction captured in multiple assays
+            for inti in ['A','B']:
+                dbiogrid[f'gene id gene name Interactor {inti}']=dbiogrid.apply(lambda x : ' '.join(list([x[f'Systematic Name Interactor {inti}'],x[f'Official Symbol Interactor {inti}']])),axis=1)
             dbiogrid_grid=dbiogrid.pivot_table(values='count',
-                                             index=f"{gene_fmt2colns['biogrid'][genefmt]} Interactor A",
-                                            columns=f"{gene_fmt2colns['biogrid'][genefmt]} Interactor B",
+                                             index="gene id gene name Interactor A",
+                                            columns="gene id gene name Interactor B",
                                             aggfunc='sum',)
 
             # make it symmetric
@@ -84,7 +87,7 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
         else:         
 #             dbiogrid_grid=pd.read_table(dbiogrid_intmapp)
             dbiogrid_grid=read_table_pqt(dbiogrid_intmapp+'.pqt')
-        dbiogrid_grid=set_index(dbiogrid_grid,f"{gene_fmt2colns['biogrid'][genefmt]} Interactor A")
+        dbiogrid_grid=set_index(dbiogrid_grid,"gene id gene name Interactor A")
         geneids=set(dbiogrid_grid.index).union(set(dbiogrid_grid.columns))
         if test:
             print('total number of genes',len(geneids))
