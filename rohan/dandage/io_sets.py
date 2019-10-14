@@ -69,15 +69,19 @@ def dfbool2intervals(df,colbool):
     df[f'{colbool} interval index']=df.index    
     return df
 
-def intersections(dn2list,jaccard=False):
+def intersections(dn2list,jaccard=False,count=True):
     df=pd.DataFrame(index=dn2list.keys(),
                 columns=dn2list.keys())
     for k1 in dn2list:
         for k2 in dn2list:
             if jaccard:
-                df.loc[k1,k2]=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(set(dn2list[k1]).union(dn2list[k2]))     
+                l=list(set(dn2list[k1]).intersection(dn2list[k2]))/len(set(dn2list[k1]).union(dn2list[k2]))
             else:
-                df.loc[k1,k2]=len(set(dn2list[k1]).intersection(dn2list[k2]))
+                l=list(set(dn2list[k1]).intersection(dn2list[k2]))
+            if count:
+                df.loc[k1,k2]=len(l)
+            else:
+                df.loc[k1,k2]=l                
     return df
 
 def jaccard_index(l1,l2):
