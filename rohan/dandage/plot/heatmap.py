@@ -23,8 +23,8 @@ def annot_submap(ax,dplot,colx,coly,cols,
 
 def split_ticklabels(ax,splitby='S'):
     xticklabels=ax.get_xticklabels()
-    xticklabels_major=np.unique([s.get_text().split(splitby)[0] for s in ax.get_yticklabels()])
-    xticklabels_minor=[s.get_text().split(splitby)[1] for s in ax.get_yticklabels()]
+    xticklabels_major=np.unique([s.get_text().split(splitby)[0] for s in ax.get_xticklabels()])
+    xticklabels_minor=[s.get_text().split(splitby)[1] for s in ax.get_xticklabels()]
 
     xticks_minor=ax.get_xticks()
     xticks_major=xticks_minor.reshape(int(len(xticks_minor)/2),2).mean(axis=1)
@@ -34,7 +34,7 @@ def split_ticklabels(ax,splitby='S'):
     ax.set_xticklabels(xticklabels_major,minor=False,rotation=90)
 
     yticklabels=ax.get_yticklabels()
-    yticklabels_major=[s.get_text().split(splitby)[0] for s in ax.get_yticklabels()]
+    yticklabels_major=np.unique([s.get_text().split(splitby)[0] for s in ax.get_yticklabels()])
     yticklabels_minor=[s.get_text().split(splitby)[1] for s in ax.get_yticklabels()]
 
     yticks_minor=ax.get_yticks()
@@ -43,7 +43,7 @@ def split_ticklabels(ax,splitby='S'):
     _=ax.set_yticks( yticks_minor, minor=True )
     ax.set_yticklabels(yticklabels_minor,minor=True,rotation=0)
     ax.set_yticklabels(yticklabels_major,minor=False,rotation=0)
-    
+
     ax.tick_params(axis='both', which='minor', pad=0)
     ax.tick_params(axis='both', which='major', pad=15)
     return ax

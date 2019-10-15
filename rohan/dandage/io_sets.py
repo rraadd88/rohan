@@ -75,7 +75,7 @@ def intersections(dn2list,jaccard=False,count=True):
     for k1 in dn2list:
         for k2 in dn2list:
             if jaccard:
-                l=list(set(dn2list[k1]).intersection(dn2list[k2]))/len(set(dn2list[k1]).union(dn2list[k2]))
+                l=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(set(dn2list[k1]).union(dn2list[k2]))
             else:
                 l=list(set(dn2list[k1]).intersection(dn2list[k2]))
             if count:
