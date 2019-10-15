@@ -1,4 +1,4 @@
-from rohan.global_import import *
+from rohan.global_imports import *
 
 def log_likelihood(y_true, y_pred):
     """
@@ -26,3 +26,8 @@ def f_statistic(y_true, y_pred, n, p):
     f_pval = stats.f.sf(f, p, n - p - 1)
 
     return f, f_pval
+
+def compare_binary(true,test):
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, thresholds = roc_curve(true,test)
+    return auc(fpr, tpr)
