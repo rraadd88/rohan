@@ -27,7 +27,16 @@ def f_statistic(y_true, y_pred, n, p):
 
     return f, f_pval
 
-def compare_binary(true,test):
+def compare_bools_auc(true,test,outmore=False):
     from sklearn.metrics import roc_curve, auc
     fpr, tpr, thresholds = roc_curve(true,test)
-    return auc(fpr, tpr)
+    a=auc(fpr, tpr)
+    if not outmore:
+        return a
+    else:
+        return fpr, tpr, thresholds,a
+    
+def compare_bools_jaccard(x,y):
+    x = np.asarray(x, np.bool) # Not necessary, if you keep your data
+    y = np.asarray(y, np.bool) # in a boolean array already!
+    return np.double(np.bitwise_and(x, y).sum()) / np.double(np.bitwise_or(x, y).sum())        
