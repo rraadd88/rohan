@@ -92,7 +92,7 @@ def plot_ppi(dplot,params,ax=None):
     # nx.draw_networkx_edge_labels(g,pos,
     #                              edge_labels={(s,t):d[params['params_from_pandas_edgelist']['edge_attr'][1]] for s,t,d in g.edges(data=True)},
     #                              ax=ax)
-    print(params_edges['false'])
+#     print(params_edges['false'])
     ax.margins(0.1)
     ax.set_axis_off()
     return ax
