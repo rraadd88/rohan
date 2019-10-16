@@ -37,6 +37,7 @@ def compare_bools_auc(true,test,outmore=False):
         return fpr, tpr, thresholds,a
     
 def compare_bools_jaccard(x,y):
+    #https://stackoverflow.com/a/40589850/3521099
     x = np.asarray(x, np.bool) # Not necessary, if you keep your data
     y = np.asarray(y, np.bool) # in a boolean array already!
     return np.double(np.bitwise_and(x, y).sum()) / np.double(np.bitwise_or(x, y).sum())        

@@ -3,15 +3,16 @@ import numpy as np
 from os.path import basename,dirname,exists
 from rohan.dandage.io_dfs import *
 
-# def get_degrees(dintmap):
-#     dintmap=filldiagonal(dintmap,0)
-#     dintmap_binary=dintmap!=0
-#     dints=dintmap_binary.sum()
-#     dints.name='# of interactions'
-#     dints=pd.DataFrame(dints)
-#     return dints
 from rohan.dandage.db.intact import get_degrees
 import logging
+
+def dintmap2lin(dint_db):
+#     dint_db=read_table('database/biogrid/559292/physical/all/dbiogrid_intmap_symm.pqt')
+    dint_db=dmap2lin(dint_db,idxn='gene id gene name interactor1',coln='gene id gene name interactor2',colvalue_name='interaction score db').replace(0,np.nan).dropna()
+    dint_db['interaction id']=dint_db.apply(lambda x : '--'.join(sorted([x['gene id gene name interactor1'],x['gene id gene name interactor2']])),axis=1)
+    dint_db=dint_db.drop_duplicates(subset=['interaction id'])
+    dint_db['interaction bool db']=True
+    return dint_db
 
 def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,dbiogrid_intmapp,
                         logf=None,
@@ -113,6 +114,8 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
         dbiogrid_intmap_symm_lin=ddegself.copy()
         dbiogrid_intmap_symm_lin.index.name=f'gene {genefmt}'
         to_table(dbiogrid_intmap_symm_lin,f'{dbiogrid_intmap_symmp}.degrees.tsv')
+        dintlin=dintmap2lin(dbiogrid_intmap_symm)
+        to_table(dintlin,f'{dirname(dbiogrid_intmap_symmp)}/dintlin.pqt')
     else:
         dbiogrid_intmap_symm=read_table_pqt(dbiogrid_intmap_symmp)
     return dbiogrid_intmap_symm
