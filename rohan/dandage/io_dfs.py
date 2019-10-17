@@ -336,8 +336,13 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
     idxn,coln of dmap -> 1st and 2nd col
     """
 #     df.columns.name=coln
-    df.index.name=idxn
-    return df.reset_index().melt(id_vars=[df.index.name],
+    if isinstance(df.index,pd.MultiIndex):
+        df.index.names=[f"index level {i}" if pd.isnull(idxn) else idxn for i,idxn in enumerate(df.index.names)]
+        id_vars=df.index.names        
+    else:
+        df.index.name=idxn
+        id_vars=[df.index.name]
+    return df.reset_index().melt(id_vars=id_vars,
                              var_name=coln,value_name=colvalue_name)        
      
     
@@ -500,32 +505,34 @@ def completesubmap(dsubmap,fmt,
             dsubmap.loc[v,:]=np.nan
     return dsubmap.loc[vals,vals]
 
-def get_offdiagonal_values(dcorr,take_diag=False,replace=np.nan):
+def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
     for ii,i in enumerate(dcorr.index):
-        for ci,c in enumerate(dcorr.columns):
-            if ci>ii:
+        for ci,c in enumerate(dcorr.columns):            
+            if side=='lower' and ci>ii:
+                dcorr.loc[i,c]=replace
+            elif side=='upper' and ci<ii:
                 dcorr.loc[i,c]=replace
             if not take_diag:
                 if ci==ii:
                     dcorr.loc[i,c]=replace
     return dcorr
 
-def get_offdiag_vals(dcorr):
-    """
-    for lin dcorr i guess
-    """
-    del_indexes=[]
-    for spc1 in np.unique(dcorr.index.get_level_values(0)):
-        for spc2 in np.unique(dcorr.index.get_level_values(0)):
-            if (not (spc1,spc2) in del_indexes) and (not (spc2,spc1) in del_indexes):
-                del_indexes.append((spc1,spc2))
-    #         break
-    for spc1 in np.unique(dcorr.index.get_level_values(0)):
-        for spc2 in np.unique(dcorr.index.get_level_values(0)):
-            if spc1==spc2:
-                del_indexes.append((spc1,spc2))
+# def get_offdiag_vals(dcorr):
+#     """
+#     for lin dcorr i guess
+#     """
+#     del_indexes=[]
+#     for spc1 in np.unique(dcorr.index.get_level_values(0)):
+#         for spc2 in np.unique(dcorr.index.get_level_values(0)):
+#             if (not (spc1,spc2) in del_indexes) and (not (spc2,spc1) in del_indexes):
+#                 del_indexes.append((spc1,spc2))
+#     #         break
+#     for spc1 in np.unique(dcorr.index.get_level_values(0)):
+#         for spc2 in np.unique(dcorr.index.get_level_values(0)):
+#             if spc1==spc2:
+#                 del_indexes.append((spc1,spc2))
     
-    return dcorr.drop(del_indexes)
+#     return dcorr.drop(del_indexes)
 
 
 def make_symmetric_across_diagonal(df,fill='lower'):

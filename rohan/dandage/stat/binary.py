@@ -40,4 +40,19 @@ def compare_bools_jaccard(x,y):
     #https://stackoverflow.com/a/40589850/3521099
     x = np.asarray(x, np.bool) # Not necessary, if you keep your data
     y = np.asarray(y, np.bool) # in a boolean array already!
-    return np.double(np.bitwise_and(x, y).sum()) / np.double(np.bitwise_or(x, y).sum())        
+    return np.double(np.bitwise_and(x, y).sum()) / np.double(np.bitwise_or(x, y).sum())
+
+def compare_bools_jaccard_df(df):
+    from rohan.dandage.stat.binary import compare_bools_jaccard
+    dmetrics=pd.DataFrame(index=df.columns.tolist(),columns=df.columns.tolist())
+    for c1i,c1 in enumerate(df.columns):
+        for c2i,c2 in enumerate(df.columns):
+            if c1i>c2i:
+                dmetrics.loc[c1,c2]=compare_bools_jaccard(df.dropna(subset=[c1,c2])[c1],df.dropna(subset=[c1,c2])[c2])
+            elif c1i==c2i:
+                dmetrics.loc[c1,c2]=1
+    for c1i,c1 in enumerate(df.columns):
+        for c2i,c2 in enumerate(df.columns):
+            if c1i<c2i:
+                dmetrics.loc[c1,c2]=dmetrics.loc[c2,c1]
+    return dmetrics
