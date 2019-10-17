@@ -610,11 +610,11 @@ def dfliststr2dflist(df,colliststrs,colfmt='list'):
     return df
 
 # multiindex
-def coltuples2str(cols):
+def coltuples2str(cols,sep=' '):
     from rohan.dandage.io_strs import tuple2str
     cols_str=[]
     for col in cols:
-        cols_str.append(tuple2str(col))
+        cols_str.append(tuple2str(col,sep=sep))
     return cols_str
 
 def colobj2str(df,test=False):
