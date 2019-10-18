@@ -79,3 +79,11 @@ def heatmap_corr(dplot, ax=None,params_heatmap={}):
     annot_heatmap(ax,get_offdiagonal_values(dcorr.applymap(lambda x: f'$\\rho$=\n{x:.2g}'),replace=''),
                   kws_text={'color':'k','va':'center'},annothalf='lower',)
     return ax
+
+def plot_heatmap_symmetric_twosides(df,index,columns,values1,values2):
+    dplot=get_offdiagonal_values(df.pivot_table(index=index,columns=columns,values=values1),side='upper',replace=0,take_diag=True)+get_offdiagonal_values(df.pivot_table(index=index,columns=columns,values=values2),side='lower',replace=0)
+    # plot
+    ax=plt.subplot()
+    ax=sns.heatmap(dplot,cmap='Reds',cbar_kws={'label':f'{values1} (upper side of diagonal)\n {values2} (lower side of diagonal)'},
+               ax=ax)
+    return ax

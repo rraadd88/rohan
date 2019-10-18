@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 from scipy import stats
 
@@ -35,8 +36,11 @@ def norm_by_quantile(X):
 
     # index the quantiles for each rank with the ranks matrix
     Xn = quantiles[rank_indices]
-
-    return(Xn)
+    
+    if isinstance(X,pd.DataFrame):
+        return pd.DataFrame(Xn,columns=X.columns,index=X.index)
+    else:
+        return(Xn)
 
 def quantile_norm(X):
     """
