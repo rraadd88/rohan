@@ -259,3 +259,9 @@ def strlist2one(l,label=''):
     #         si=si+1
             break
     return f"{l[0][:si]}{''.join(list(unique([s[si] for s in l])))}{label}{splitext(l[0])[1]}"
+
+def get_common_preffix(ps): 
+    for i in range(len(ps[0])):
+        if not all([p[:i]==ps[0][:i] for p in ps]):
+            break
+    return ps[0][:i-1]

@@ -8,8 +8,8 @@ from os.path import exists,basename,dirname,abspath,realpath
 
 
 from shutil import copyfile
-def copy(src, dst):copyfile(src, dst)
-def cp(src, dst):copy(src, dst)
+# def copy(src, dst):copyfile(src, dst)
+# def cp(src, dst):copy(src, dst)
 
 from os.path import splitext,basename
 def basenamenoext(p): return splitext(basename(p))[0]
