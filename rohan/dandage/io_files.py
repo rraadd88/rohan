@@ -56,3 +56,28 @@ def get_encoding(p):
     with open(p, 'rb') as f:
         result = chardet.detect(f.read())
     return result['encoding']                
+
+import shutil
+def zip_folder(source, destination):
+    #https://stackoverflow.com/a/50381250/3521099
+    base = os.path.basename(destination)
+    name = base.split('.')[0]
+    fmt = base.split('.')[1]
+    archive_from = os.path.dirname(source)
+    archive_to = os.path.basename(source.strip(os.sep))
+    shutil.make_archive(name, fmt, archive_from, archive_to)
+    shutil.move(f'{name}.{fmt}', destination)
+    
+def backup_to_zip(ps,destp):
+    makedirs(destp.split('.')[0],exist_ok=True)
+    for p in ps:
+        if '*' in p:
+            ps_=list(iglob(p))
+        else:
+            ps_=[p]
+        for p_ in ps_:
+            if exists(p_):
+                p_dest=f"{destdp}/{p_.replace(get_common_preffix(ps_),'')}"
+                makedirs(dirname(p_dest),exist_ok=True)
+                copyfile(p_,p_dest)
+    zip_folder(destdp, destp)    
