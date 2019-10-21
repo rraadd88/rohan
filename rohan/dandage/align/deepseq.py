@@ -128,9 +128,11 @@ def get_daligned(dirp,method,target=False):
         else:
             cfg['target_ini']=findall(reference2seq[ref],reference2seq['target'])[0]
             cfg['target_end']=cfg['target_ini']+len(reference2seq['target'])            
-        dcov=get_coverage(aligned,reference2seq,cfg['target_ini'],cfg['target_end'],target=target,ref_name=ref)
+        dcov=get_coverage(aligned,reference2seq,
+                          cfg['target_ini'],cfg['target_end'],
+                          target=target,ref_name=ref)
         aligned_reads = aligned.fetch(contig=ref, 
-                                      start=cfg['target_ini'],stop=cfg['target_end'])
+                          start=cfg['target_ini'],stop=cfg['target_end'])
         readid2seq={}
         for read in aligned_reads:
             if method=='local':
@@ -150,7 +152,7 @@ def get_daligned(dirp,method,target=False):
         if len(readid2seq.keys())!=0:
             df=pd.concat(readid2seq,axis=1).T
             df=df.sort_index(axis=1)
-            df.columns=[f"{i} {s}" for i,s in zip(df.columns.tolist(),list(reference2seq[ref]))]
+            df.columns=[f"{i} {s}" for i,s in zip(df.columns.tolist(),list(reference2seq[ref] if not target else reference2seq['target']))]
             # save
             to_table(dcov,f"{dirp}/dcoverage_{ref}.tsv")
             to_table(df,f"{dirp}/daligned_{ref}.pqt")  
