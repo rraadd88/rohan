@@ -69,7 +69,16 @@ def zip_folder(source, destination):
     shutil.move(f'{name}.{fmt}', destination)
     
 def backup_to_zip(ps,destp):
-    makedirs(destp.split('.')[0],exist_ok=True)
+    if not destp.endswith('.zip'):
+        loggin.error('arg destp should have .zip extension')
+        return 0
+    
+    from rohan.dandage.io_strs import get_common_preffix
+    if '/' in destp: 
+        destdp=destp.split('.')[0]
+        makedirs(destdp,exist_ok=True)
+    else:
+        destdp='./'
     for p in ps:
         if '*' in p:
             ps_=list(iglob(p))
