@@ -19,6 +19,18 @@ def s2re(s,ss2re):
         s=s.replace(ss,ss2re[ss])
     return s
 
+def replacebyposition(s,i,replaceby):
+    l=list(s)
+    l[i]=replaceby
+    return "".join(l)
+
+def replacemany(s,replaces,replacewith=''):
+    if isinstance(replaces,list):
+        replaces={k:replacewith for k in replaces}
+    for k in replaces:
+        s=s.replace(k,replaces[k])
+    return s
+
 def replacelist(l,replaces,replacewith=''):
     lout=[]    
     for s in l:
@@ -26,11 +38,6 @@ def replacelist(l,replaces,replacewith=''):
             s=s.replace(r,replacewith)
         lout.append(s) 
     return lout
-
-def replacebyposition(s,i,replaceby):
-    l=list(s)
-    l[i]=replaceby
-    return "".join(l)
 
 def tuple2str(tup,sep=' '): 
     if isinstance(tup,tuple):
