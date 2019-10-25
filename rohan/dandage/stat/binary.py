@@ -56,3 +56,24 @@ def compare_bools_jaccard_df(df):
             if c1i<c2i:
                 dmetrics.loc[c1,c2]=dmetrics.loc[c2,c1]
     return dmetrics
+
+# set enrichment
+# from rohan.dandage.stat.binary import compare_bools_jaccard
+from scipy.stats import hypergeom,fisher_exact
+def get_intersection_stats(df,coltest,colset):
+    hypergeom_p=hypergeom.sf(sum(df[coltest] & df[colset])-1,len(df),df[colset].sum(),df[coltest].sum(),)
+    _,fisher_exactp=fisher_exact(pd.crosstab(df[coltest], df[colset]),alternative='two-sided')
+    jaccard=compare_bools_jaccard(df[coltest],df[colset])
+    return hypergeom_p,fisher_exactp,jaccard
+def get_set_enrichment_stats(test,background,sets):
+    delement=pd.DataFrame(index=background)
+    delement.loc[test,'test']=True
+    for k in sets:
+        delement.loc[sets[k],k]=True
+    delement=delement.fillna(False)
+    dmetric=pd.DataFrame({colset:get_intersection_stats(delement,'test',colset) for colset in delement if colset!='test'}).T.rename(columns=dict(zip([0,1,2],['hypergeom p-val','fisher_exact p-val','jaccard index'])))
+    from statsmodels.stats.multitest import multipletests
+    for c in dmetric:
+        if c.endswith(' p-val'):
+            dmetric[f"{c} corrected"]=multipletests(dmetric[c], alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)[1]
+    return dmetric
