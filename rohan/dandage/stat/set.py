@@ -11,11 +11,10 @@ def get_intersection_stats(df,coltest,colset,background_size=None):
                              len(df) if background_size is None else background_size,
                              df[colset].sum(),
                              df[coltest].sum(),)
-#     print(df[coltest].value_counts())
-#     print(df[colset].value_counts())
     _,fisher_exactp=fisher_exact(pd.crosstab(df[coltest], df[colset]),alternative='two-sided')
     jaccard=compare_bools_jaccard(df[coltest],df[colset])
     return hypergeom_p,fisher_exactp,jaccard
+
 def get_set_enrichment_stats(test,sets,background):
     """
     test:
@@ -35,7 +34,6 @@ def get_set_enrichment_stats(test,sets,background):
         background_size=background
         if len(background_elements)>background_size:
             logging.error(f"invalid data type of background {type(background)}")
-#         print(background_elements)
     else:
         logging.error(f"invalid data type of background {type(background)}")
     delement=pd.DataFrame(index=background_elements)
