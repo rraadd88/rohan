@@ -41,12 +41,12 @@ def get_codon_mutations(cfg,test=False):
                     'dntmat_mut':None,
                     'dntmat_ref':None,
                     'dntmat_mutaai':None,
-                    'dalignedmutaai':None} for k in dbarcodes.loc[:,'Locus'].unique()}
+                    'dalignedmutaai':None} for k in dbarcodes.loc[:,'reference'].unique()}
     for samplen in dbarcodes.index:
     #     if not samplen=='ABP1_CYK3_25':
     #         continue
         print(samplen,end=': ')
-        refn=dbarcodes.loc[samplen,'Locus']
+        refn=dbarcodes.loc[samplen,'reference']
         aai=int(samplen.split('_')[-1])
         ntis=aai2nti(aai)
         label_samplen=f"{'_'.join(samplen.split('_')[:-1])}_{aai:03d}"

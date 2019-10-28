@@ -26,6 +26,12 @@ def get_alignment_score_coff(sample2bcr1r2):
     return alignment_score_coff
 
 def get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq):
+    """
+    row for:   RC_for_index    
+    col rev:   RC_rev_index
+    plate for: PE1_index
+    plate rev: PE2_index
+    """
     import re
     dbarcodes.index=range(len(dbarcodes))
     sample2bcr1r2={}
@@ -34,15 +40,15 @@ def get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq):
     sample2regsr1r2={}
     for i in dbarcodes.index:
         x=dbarcodes.iloc[i,:]
-        samplen=f"{x['Locus']} {x['Position_DMS']}"
-        sample2bcr1r2[samplen]=f"{bc2seq[str(x['PE1_index'])]}{bc2seq[str(x['RC_for_index'])]}{bc2seq[str(x['PE2_index'])]}{bc2seq[str(x['RC_rev_index'])]}"
+        samplen=x['sample name']
+        sample2bcr1r2[samplen]=f"{bc2seq[str(x['plate for'])]}{bc2seq[str(x['row for'])]}{bc2seq[str(x['plate rev'])]}{bc2seq[str(x['col rev'])]}"
         sample2primersr1r2[samplen]=[
-            f"{bc2seq[str(x['PE1_index'])]}{oligo2seq['plate_fivep_sticky']}{bc2seq[str(x['RC_for_index'])]}{oligo2seq['RC_fivep_sticky']}",
-            f"{bc2seq[str(x['PE2_index'])]}{oligo2seq['plate_threep_sticky']}{bc2seq[str(x['RC_rev_index'])]}{oligo2seq['RC_threep_sticky']}"
+            f"{bc2seq[str(x['plate for'])]}{oligo2seq['plate_fivep_sticky']}{bc2seq[str(x['row for'])]}{oligo2seq['RC_fivep_sticky']}",
+            f"{bc2seq[str(x['plate rev'])]}{oligo2seq['plate_threep_sticky']}{bc2seq[str(x['col rev'])]}{oligo2seq['RC_threep_sticky']}"
         ]
         sample2fragsr1r2[samplen]=[
-            f"<{bc2seq[str(x['PE1_index'])]}><{oligo2seq['plate_fivep_sticky']}><{bc2seq[str(x['RC_for_index'])]}><{oligo2seq['RC_fivep_sticky']}",
-            f"<{bc2seq[str(x['PE2_index'])]}><{oligo2seq['plate_threep_sticky']}><{bc2seq[str(x['RC_rev_index'])]}><{oligo2seq['RC_threep_sticky']}"
+            f"<{bc2seq[str(x['plate for'])]}><{oligo2seq['plate_fivep_sticky']}><{bc2seq[str(x['row for'])]}><{oligo2seq['RC_fivep_sticky']}",
+            f"<{bc2seq[str(x['plate rev'])]}><{oligo2seq['plate_threep_sticky']}><{bc2seq[str(x['col rev'])]}><{oligo2seq['RC_threep_sticky']}"
         ]
         reg_r1 = re.compile("^\w{5}"+f"{sample2primersr1r2[samplen][0]}.*")
         reg_r2 = re.compile("^\w{5}"+f"{sample2primersr1r2[samplen][1]}.*")
@@ -238,7 +244,7 @@ def run_demupliplex(cfg,test=False):
             logging.error(f'should be a path to yml file: {cfg}')
     cfg['test']=test
     to_dict(cfg,f"{cfg['prjd']}/input_cfg.yaml")
-    dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['Locus','Position_DMS'])
+    dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['reference','sample name'])
     bc2seq=read_fasta('data/references/indexes.fa')
     oligo2seq=read_fasta(cfg['oligo2seqp'])
     
