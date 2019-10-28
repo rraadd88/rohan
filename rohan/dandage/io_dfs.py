@@ -129,6 +129,8 @@ def to_table(df,p):
     else: 
         logging.error(f'unknown extension {p}')
 def to_table_pqt(df,p):
+    if len(df.index.names)>1:
+        df=df.reset_index()    
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     df.to_parquet(p,engine='fastparquet',compression='gzip',)
