@@ -15,7 +15,7 @@ def get_intersection_stats(df,coltest,colset,background_size=None):
     jaccard=compare_bools_jaccard(df[coltest],df[colset])
     return hypergeom_p,fisher_exactp,jaccard
 
-def get_set_enrichment_stats(test,sets,background):
+def get_set_enrichment_stats(test,sets,background,fdr_correct=True):
     """
     test:
         get_set_enrichment_stats(background=range(120),
@@ -42,8 +42,9 @@ def get_set_enrichment_stats(test,sets,background):
         delement.loc[np.unique(sets[k]),k]=True
     delement=delement.fillna(False)
     dmetric=pd.DataFrame({colset:get_intersection_stats(delement,'test',colset,background_size=background_size) for colset in delement if colset!='test'}).T.rename(columns=dict(zip([0,1,2],['hypergeom p-val','fisher_exact p-val','jaccard index'])))
-    from statsmodels.stats.multitest import multipletests
-    for c in dmetric:
-        if c.endswith(' p-val'):
-            dmetric[f"{c} corrected"]=multipletests(dmetric[c], alpha=0.05, method='fdr_bh', is_sorted=False, returnsorted=False)[1]
-    return dmetric.sort_values(by=['hypergeom p-val corrected', 'fisher_exact p-val corrected'])
+    if fdr_correct:
+        from statsmodels.stats.multitest import multipletests
+        for c in dmetric:
+            if c.endswith(' p-val'):
+                dmetric[f"{c} corrected"]=multipletests(dmetric[c], alpha=0.05, method='fdr_bh', is_sorted=False,returnsorted=False)[1]
+    return dmetric
