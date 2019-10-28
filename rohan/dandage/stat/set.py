@@ -1,9 +1,9 @@
 from rohan.global_imports import *
 
 # set enrichment
-from rohan.dandage.stat.binary import compare_bools_jaccard
-from scipy.stats import hypergeom,fisher_exact
 def get_intersection_stats(df,coltest,colset,background_size=None):
+    from rohan.dandage.stat.binary import compare_bools_jaccard
+    from scipy.stats import hypergeom,fisher_exact
     """
     :param background: size of the union (int)
     """
@@ -11,9 +11,14 @@ def get_intersection_stats(df,coltest,colset,background_size=None):
                              len(df) if background_size is None else background_size,
                              df[colset].sum(),
                              df[coltest].sum(),)
-    _,fisher_exactp=fisher_exact(pd.crosstab(df[coltest], df[colset]),alternative='two-sided')
+    contigency=[[sum(df[coltest] & df[colset]),sum(df[coltest] & ~df[colset])],[sum(~df[coltest] & df[colset]),sum(~df[coltest] & ~df[colset])],]
+#     try:
+    odds_ratio,fisher_exactp=fisher_exact(contigency,alternative='two-sided')
+#     except:
+#         logging.error(pd.crosstab(df[coltest], df[colset]))
+#         to_table(df,'test.tsv')
     jaccard=compare_bools_jaccard(df[coltest],df[colset])
-    return hypergeom_p,fisher_exactp,jaccard
+    return hypergeom_p,fisher_exactp if jaccard!=0 else 1,odds_ratio,jaccard
 
 def get_set_enrichment_stats(test,sets,background,fdr_correct=True):
     """
@@ -41,7 +46,7 @@ def get_set_enrichment_stats(test,sets,background,fdr_correct=True):
     for k in sets:
         delement.loc[np.unique(sets[k]),k]=True
     delement=delement.fillna(False)
-    dmetric=pd.DataFrame({colset:get_intersection_stats(delement,'test',colset,background_size=background_size) for colset in delement if colset!='test'}).T.rename(columns=dict(zip([0,1,2],['hypergeom p-val','fisher_exact p-val','jaccard index'])))
+    dmetric=pd.DataFrame({colset:get_intersection_stats(delement,'test',colset,background_size=background_size) for colset in delement if colset!='test'}).T.rename(columns=dict(zip([0,1,2,3],['hypergeom p-val','fisher_exact p-val','fisher_exact odds-ratio','jaccard index'])))
     if fdr_correct:
         from statsmodels.stats.multitest import multipletests
         for c in dmetric:

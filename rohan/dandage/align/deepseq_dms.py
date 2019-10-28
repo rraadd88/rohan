@@ -28,9 +28,11 @@ def get_codon_mutations(cfg,test=False):
     if not 'test' in cfg:
         cfg['test']=test
     from rohan.dandage.io_strs import replacebyposition
-    dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['Locus','Position_DMS'])
-    dbarcodes['sample name']=dbarcodes.apply(lambda x : f"{x['Locus']}_{x['Position_DMS']}",axis=1)
-    dbarcodes=dbarcodes.set_index('sample name')
+    dbarcodes=read_table(cfg['dbarcodesp'])
+    if not 'sample name' in dbarcodes: #TODO deprecate; make a template for dbarcode
+        dbarcodes=dbarcodes.sort_values(by=['Locus','Position_DMS'])
+        dbarcodes['sample name']=dbarcodes.apply(lambda x : f"{x['Locus']}_{x['Position_DMS']}",axis=1)
+    dbarcodes=dbarcodes.set_index('sample name').sort_index(axis=0)
 
 #     cfg['readdepth_coff_min']=3
     refn2seq=read_fasta(cfg['referencep'])
