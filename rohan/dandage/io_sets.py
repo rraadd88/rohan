@@ -108,3 +108,5 @@ def s2dict(s,sep=';',sep_key=':',):
 
 def head_dict(d, lines=5):
     return dict(itertools.islice(d.items(), lines))
+
+def group_list_bylen(l,length): return list(zip(*(iter(l),) * length))

@@ -63,17 +63,17 @@ def get_codon_mutations(cfg,test=False):
                     title=f"{label_samplen} ({((len(daligned)-len(refn2dn2dss[refn]['dalignedmut']))/len(daligned))*100:.1f}% wt reads)",
                     params_ax_set={'ylabel':'read depth',})
 
-    #     only take the reads at the codon    
+        # only take the reads at the codon    
         reg=refn2seq[refn]
         for nti in ntis:
             reg=replacebyposition(reg,nti,'.')
         reg=re.compile(f"^{''.join([c if c=='.' else f'[{c}N]' for c in reg])}$")
         df_=dseqs.apply(lambda x : bool(reg.match(x) and x!=refn2seq[refn]))
-    #     df_=dseqs.apply(lambda x : bool(re.compile(r"^...$").match(x[ntis[0]:ntis[-1]+1])) and x[ntis[0]:ntis[-1]+1]!=refn2seq[refn][ntis[0]:ntis[-1]+1])
+        # df_=dseqs.apply(lambda x : bool(re.compile(r"^...$").match(x[ntis[0]:ntis[-1]+1])) and x[ntis[0]:ntis[-1]+1]!=refn2seq[refn][ntis[0]:ntis[-1]+1])
         refn2dn2dss[refn]['dalignedmutaai']=daligned.loc[df_[df_].index,:]
         print(len(daligned),len(refn2dn2dss[refn]['dalignedmutaai']))
         refn2dn2dss[refn]['dntmat_mutaai'],_=get_nucleotide_mutmats(refn2dn2dss[refn]['dalignedmutaai'])
-    #     dntmat_mutaai=dntmat_mut.copy()
+
         # remove background mutations
         refn2dn2dss[refn]['dntmat_mutaai']=refn2dn2dss[refn]['dntmat_mutaai'].applymap(lambda x : x if x>refn2dn2dss[refn]['dntmat_mutaai'].melt()['value'].quantile(0.95) or x>cfg['readdepth_coff_min'] else np.nan)
         # get frequency
@@ -112,7 +112,7 @@ def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X'):
     dplot.columns.name='position reference'
     dplot=dplot.applymap(np.log10).replace([np.inf, -np.inf], np.nan)
     from rohan.dandage.plot.annot import annot_heatmap 
-    plt.figure(figsize=[len(dplot.columns)/4.5,len(dplot.index)/5])
+    plt.figure(figsize=[len(dplot.columns)/2.25,len(dplot.index)/2.5])
     ax=plt.subplot()
     ax=sns.heatmap(dplot,xticklabels=dplot.columns,
                yticklabels=dplot.index,ax=ax,cbar_kws={'label':'(on log10 scale)'},cmap='Reds',)
@@ -146,4 +146,69 @@ def get_mutation_matrices(cfg):
             savefig(f"{cfg['prjd']}/plot/heatmap_dmutmataa_{label} {refn}.png")
 #         del dmutmatcd_,dmutmataa_
 #         break
-#     break                       
+#     break
+# new
+def remove_wildtype_matmut(df): return df.apply(lambda x: pd.DataFrame(x).apply(lambda y: df.loc[x.name,y.name] if x.name!=y.name.split(' ')[1] else np.nan,axis=1),axis=1)
+def get_mutmat_by_sample(cfg,samplen,refn,refn2seq):
+    refn2df={}
+    daligned=read_table(f"{cfg['prjd']}/{samplen}/daligned_{refn}.pqt")
+    dseqs=daligned.replace(np.nan,'N').apply(lambda x : ''.join(x.tolist()),axis=1)
+    df_=(dseqs!=refn2seq[refn])
+    refn2df['dalignedmut']=daligned.loc[df_[df_].index,:]
+    refn2df['dntmat_mut'],refn2df['dntmat_ref']=get_nucleotide_mutmats(daligned)  
+    #plot raw read depth
+    plotp=make_pathable_string(f"{cfg['prjd']}/plot/plot_qc_demupliplexed_readdepth_raw_mutation {samplen}.png")
+    if not exists(plotp):
+        plot_dntmat_mut(refn2df['dntmat_mut'],plotp,
+                title=f"{samplen} ({((len(daligned)-len(refn2df['dalignedmut']))/len(daligned))*100:.1f}% wt reads)",
+                params_ax_set={'ylabel':'read depth',})
+    # remove background mutations
+    refn2df['dntmat_mut']=refn2df['dntmat_mut'].applymap(lambda x : x if x>refn2df['dntmat_mut'].melt()['value'].quantile(0.95) or x>cfg['readdepth_coff_min'] else np.nan)
+    # get frequency
+    refn2df['dntmat_mut']=refn2df['dntmat_mut']/refn2df['dntmat_ref'].sum().mean()
+
+    #plot normalised read depth
+    plotp=make_pathable_string(f"{cfg['prjd']}/plot/plot_qc_demupliplexed_readdepth_norm_mutation {samplen}.png")
+    if not exists(plotp):
+        plot_dntmat_mut(refn2df['dntmat_mut'],plotp,
+                title=f"{samplen} ({100-((len(daligned)-len(refn2df['dalignedmut']))/len(daligned))*100:.1f}% mutant reads,{((len(daligned)-len(refn2df['dalignedmut']))/len(daligned))*100:.1f}% wt reads)",
+                params_ax_set={'ylabel':'read depth\nnormalized',})
+                        
+    # get codon mutmats
+    dn2aai2dcdi={'counts':{},'normalized':{}}
+    for aai,cdicols in enumerate(group_list_bylen(refn2df['dntmat_ref'].columns,3)):
+        dn=f"{aai:03d} {''.join([s.split(' ')[1] for s in cdicols])}"
+        dn2aai2dcdi['counts'][dn]=refn2df['dalignedmut'].loc[:,cdicols].dropna().apply(lambda x : ''.join(x),axis=1).value_counts()
+        dn2aai2dcdi['normalized'][dn]=dn2aai2dcdi['counts'][dn].apply(lambda x : x/refn2df['dntmat_ref'].sum().mean() if x>cfg['readdepth_coff_min'] else np.nan).dropna()
+#     return dn2aai2dcdi                    
+    for dtype in dn2aai2dcdi:
+        refn2df[f'dmutmatcd_{dtype}']=pd.concat(dn2aai2dcdi[dtype],axis=1,sort=False)
+#         print(refn2df[f'dmutmatcd_{dtype}'].sum())
+        for idx in list(set(mol2codes['codons']).difference(refn2df[f'dmutmatcd_{dtype}'].index.tolist())):
+            refn2df[f'dmutmatcd_{dtype}'].loc[idx,:]=np.nan
+#         print(refn2df[f'dmutmatcd_{dtype}'].sum())        
+        outd=f"{cfg['data_mutationp']}/{samplen.replace(' ','_')}"
+        makedirs(outd,exist_ok=True)
+        to_table(refn2df[f'dmutmatcd_{dtype}'],f"{outd}/dmutmatcd_{dtype}_nofltwt.tsv")
+        refn2df[f'dmutmatcd_{dtype}']=remove_wildtype_matmut(refn2df[f'dmutmatcd_{dtype}'])
+        to_table(refn2df[f'dmutmatcd_{dtype}'],f"{outd}/dmutmatcd_{dtype}.tsv")
+        plot_mutmat(refn2df[f'dmutmatcd_{dtype}'],refn,annotation_syn='')
+        savefig(f"{cfg['prjd']}/plot/heatmap_dmutmatcd_{dtype} {samplen}.png")
+                
+        dmutmatcd_=refn2df[f'dmutmatcd_{dtype}'].copy()
+        dmutmatcd_.index=[translate(s,tax_id=cfg['tax id']) for s in dmutmatcd_.index]
+        dmutmatcd_.columns=[f"{s.split(' ')[0]} {translate(s.split(' ')[1],tax_id=cfg['tax id'])}" for s in dmutmatcd_]        
+        dmutmataa_=dmutmatcd_.groupby(dmutmatcd_.index).agg({c:np.sum for c in dmutmatcd_}).replace(0,np.nan)
+        to_table(dmutmataa_,f"{outd}/dmutmataa_{dtype}.tsv")
+        plot_mutmat(dmutmataa_,refn)
+        savefig(f"{cfg['prjd']}/plot/heatmap_dmutmataa_{dtype} {samplen}.png")
+        refn2df[f'dmutmataa_{dtype}']=dmutmataa_.copy()
+#     return refn2df  
+                
+def get_mutmat(cfg):
+    dbarcodes=read_table(cfg['dbarcodesp'])
+    sample2refn=dbarcodes.set_index('sample name')['reference'].to_dict()
+    refn2seq=read_fasta(cfg['referencep'])
+    cfg['data_mutationp']=f"{cfg['prjd']}/data_mutation" 
+    cfg['tax id']=None                      
+    _=dbarcodes['sample name'].apply(lambda samplen: get_mutmat_by_sample(cfg=cfg,samplen=samplen,refn=sample2refn[samplen],refn2seq=refn2seq))

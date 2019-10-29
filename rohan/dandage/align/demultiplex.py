@@ -111,7 +111,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
     else:
         to_dict(sample2reads,outp)
 
-def align_demultiplexed(cfg,sample2readids,sample,test=False):
+def align_demultiplexed(cfg,sample2readids,sample,refn,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
     print(dirp)
     # save the readids
@@ -120,7 +120,7 @@ def align_demultiplexed(cfg,sample2readids,sample,test=False):
     with open(f'{dirp}/read_ids.txt','w') as f:
         f.write('\n'.join(sample2readids[sample]))
     # save reference
-    refn=sample.split(' ')[0]
+#     refn=sample.split(' ')[0]
     to_fasta({refn:read_fasta(cfg['referencep'])[refn]},f'{dirp}/reference.fasta')
     # trim fasq and align
     coms=[]
@@ -229,6 +229,20 @@ def make_chunks(cfg_chunk):
                         alignment_score_coff=cfg['alignment_score_coff'],
                         outp=cfg['sample2readidsp'],
                         test=False)
+                                
+def run_chunk_demultiplex_readids(cfgp):
+    logging.info(f'running {basenamenoext(cfgp)}')
+    cfg=read_yaml(cfgp)
+    fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
+    fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
+    logging.info('read the fastq files')
+    if not exists(cfg['sample2readidsp']):
+        demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
+                        linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
+                        alignment_score_coff=cfg['alignment_score_coff'],
+                        outp=cfg['sample2readidsp'],
+                        test=False)
+                                
 def collect_chunk_demultiplex_readids(cfg):
     chunk_sample2readids=[read_dict(p) for p in glob(f"{cfg['prjd']}/chunks/chunk*sample2readids.json")]
     print(f"{cfg['prjd']}/chunks/chunk*sample2readids.json")
@@ -245,7 +259,8 @@ def run_demupliplex(cfg,test=False):
     cfg['test']=test
     to_dict(cfg,f"{cfg['prjd']}/input_cfg.yaml")
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['reference','sample name'])
-    bc2seq=read_fasta('data/references/indexes.fa')
+    sample2refn=dbarcodes.set_index('sample name')['reference'].to_dict()
+    bc2seq=read_fasta(cfg['bc2seqp'])
     oligo2seq=read_fasta(cfg['oligo2seqp'])
     
     for i in [1,2]:
@@ -297,8 +312,14 @@ def run_demupliplex(cfg,test=False):
 #         if not exists(dirp):                                 
         [f(f'processing demultiplexed sample: {sample}') for f in [logging.info,print]]
         if not sample.startswith('undetermined '):
-            # save the demultiplexed to separate directories
-            align_demultiplexed(cfg,sample2readids,sample,test=cfg['test'])            
+            outp=f"{dirp}/daligned_{sample2refn[sample]}.pqt"
+            if not exists(outp):
+                if len(sample2readids[sample])>0:
+                    # save the demultiplexed to separate directories
+                    align_demultiplexed(cfg,sample2readids,
+                                        sample=sample,
+                                        refn=sample2refn[sample],
+                                        test=cfg['test'])            
             if cfg['test']:
                 print('stopping the test')
                 import sys
