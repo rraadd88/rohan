@@ -42,7 +42,7 @@ else:
 # always save plots 
 from rohan.dandage.figs.figure import *
 # if basename(pwd).split('_')[0].isdigit():
-print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log;get_ipython().run_line_magic('logstart',f'{logplotp} over')")
+print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log';get_ipython().run_line_magic('logstart',f'{logplotp} over')")
 
 # debug
 import logging
