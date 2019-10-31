@@ -245,7 +245,7 @@ def plot_qc(cfg):
     plotp=f"{cfg['prjd']}/plot/plot qc demupliplexed read_counts by step.png"
     if not exists(plotp):                             
         def plot_read_counts_bystep(dplot):
-            fig=plt.figure(figsize=[6,(len(dplot)*0.35)+2])
+            fig=plt.figure(figsize=[10,(len(dplot)*0.35)+2])
             ax=plt.subplot()
             ax=sns.heatmap(dplot.apply(lambda x: (x/x.max())*100,axis=1),cmap='Reds',
                            annot=True,fmt='.1f',
