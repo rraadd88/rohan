@@ -194,7 +194,7 @@ def plot_qc(cfg):
         ax=plt.subplot()
         ax=dplot.plot(x='read depth (mean)',y='index',yticks=dplot['index'],style='.-',
                      ax=ax,legend=False)
-        ax.set_yticklabels(dplot['sample'])
+        _=ax.set_yticklabels(dplot['sample'])
         plt.tight_layout()
         savefig(plotp)   
 

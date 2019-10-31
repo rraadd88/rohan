@@ -42,7 +42,35 @@ def get_location_first_indel(read):
         return np.nan
     else:
         return location
-    
+
+def get_read_counts_from_log(p,step):
+    with open(p,'r') as f:
+        text=f.readlines()
+    if step=='bowtie2':
+        try:
+            return int(text[0].split(' ')[0]),int(text[3].split(' ')[4])
+        except:             
+            print(p)
+            return np.nan,np.nan
+    elif step=='fastp':
+        try:
+            return int(text[1].split(' ')[-1]),int(text[7].split(' ')[-1])
+        except:
+            print(p)              
+            return np.nan,np.nan
+    elif step=='pear':
+        try:
+            return int(text[-7].split(' ')[5].replace(',','')),int(text[-7].split(' ')[3].replace(',',''))
+        except:
+            print(p)              
+            return np.nan,np.nan
+    elif step=='samtools':
+        try:
+            return int(text[0].split(' ')[0]),int(text[4].split(' ')[0])
+        except:
+            print(p)              
+            return np.nan,np.nan    
+
 def get_aligned(dirp,method=None,test=False,quality_coff=30):
     from rohan.dandage.io_sys import runbashcmd
     logging.info(dirp)
