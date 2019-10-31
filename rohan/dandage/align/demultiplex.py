@@ -161,9 +161,42 @@ def check_undetermined(cfg,sample2readids,sample,test=False):
             runbashcmd(com) 
     get_aligned(dirp,method='global',test=test)
     get_daligned(dirp,method='global',)
-                    
+
+def get_read_counts_bystep(cfg):
+    from rohan.dandage.align.deepseq import get_read_counts_from_log
+    doutp=f"{cfg['prjd']}/data_demultiplex_qc/dcoverage.tsv"
+    dcoverage=read_table(doutp)
+    sample2readids=read_dict(cfg['sample2readidsp'])
+    dplot=pd.DataFrame(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True)).reset_index().rename(columns={'index':'sample',0:'read depth (mean)'}).reset_index()
+
+    dfs=[]
+    dn2df={}
+    dn2df['step#0 input demultiplexing read count']=pd.Series({k:len(sample2readids[k]) for k in sample2readids}).T
+    dn2df['step#4 output alignment read depth (pysam)']=pd.Series(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True))
+    dfs.append(pd.concat(dn2df,axis=1,sort=False))
+
+    dlogps=pd.DataFrame([[basename(dirname(p)),basenamenoext(p).split('_')[1],p] for p in iglob(f"{cfg['prjd']}/*/log_*.log")],
+                                                                                        columns=['sample name','step','path to log']).pivot_table(columns='step',index='sample name',values='path to log',aggfunc=lambda x: list(x)[0])
+
+    df=dlogps.apply(lambda x: [get_read_counts_from_log(x[k],step=k) for k in x.index],axis=1).apply(pd.Series)
+    df.columns=dlogps.columns
+    rename={
+    'pear':'step#0.1',
+    'fastp':'step#1',
+    'bowtie2':'step#2',
+    'samtools':'step#3',
+    }
+    for c in df:
+        df_=df[c].apply(pd.Series)
+        df_.columns=[f"{rename[c]} {s} {c} read count" for s in ['input','output']]
+        dfs.append(df_)
+    #     break
+    dread_counts=pd.concat(dfs,axis=1,sort=False).sort_index(axis=1)
+    return dread_counts
+                         
 def plot_qc(cfg):
     # get data
+    ## get coverage
     doutp=f"{cfg['prjd']}/data_demultiplex_qc/dcoverage.tsv"
     if not exists(doutp):
         ps=[p for p in iglob(f"{cfg['prjd']}/*/dcoverage_*.tsv") if not '/undetermined' in p]
@@ -173,7 +206,17 @@ def plot_qc(cfg):
         to_table(dcoverage,doutp)                 
     else:
         dcoverage=read_table(doutp)
-    # coverage by sample
+                             
+    ## get read counts by step#
+    doutp=f"{cfg['prjd']}/data_demultiplex_qc/ddread_counts.tsv"
+    if not exists(doutp):
+        dread_counts=get_read_counts_bystep(cfg)
+        to_table(dread_counts,doutp)                 
+    else:
+        dread_counts=read_table(doutp)
+    
+    # plot stuff
+    ## coverage by sample
     plotp=f"{cfg['prjd']}/plot/plot qc demupliplexed coverage.png"
     if not exists(plotp):
         dplot=dcoverage.sort_index(1).set_index('refi')
@@ -186,7 +229,7 @@ def plot_qc(cfg):
         ax.set_ylabel('read depth')
         savefig(plotp)                    
    
-    # coverage by sample ranked
+    ## coverage by sample ranked
     plotp=f"{cfg['prjd']}/plot/plot qc demupliplexed coverage ranked.png"
     if not exists(plotp):
         dplot=pd.DataFrame(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True)).reset_index().rename(columns={'index':'sample',0:'read depth (mean)'}).reset_index()
@@ -198,6 +241,18 @@ def plot_qc(cfg):
         plt.tight_layout()
         savefig(plotp)   
 
+    ## read counts by steps
+    plotp=f"{cfg['prjd']}/plot/plot qc demupliplexed read_counts by step.png"
+    if not exists(plotp):                             
+        def plot_read_counts_bystep(dplot):
+            fig=plt.figure(figsize=[6,(len(dplot)*0.35)+2])
+            ax=plt.subplot()
+            ax=sns.heatmap(dplot.apply(lambda x: (x/x.max())*100,axis=1),cmap='Reds',
+                           annot=True,fmt='.1f',
+                           ax=ax)
+        plot_read_counts_bystep(dread_counts)
+        savefig(plotp)
+                             
 def make_chunks(cfg_chunk):
     cfg_=cfg_chunk
     cfg_chunk['prjd']=f"{cfg_['prjd']}/chunks"
