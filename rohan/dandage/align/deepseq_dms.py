@@ -107,7 +107,9 @@ def get_codon_mutations(cfg,test=False):
     return refn2dn2dss
                        
 def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X'):
-    dplot=dplot.sort_index()
+    if all(dplot.sum()==0):
+        return None
+    dplot=dplot.sort_index(axis=0)
     dplot.index.name='mutated'
     dplot.columns.name='position reference'
     dplot=dplot.applymap(np.log10).replace([np.inf, -np.inf], np.nan)
@@ -149,9 +151,17 @@ def get_mutation_matrices(cfg):
 #     break
 # new
 def remove_wildtype_matmut(df): return df.apply(lambda x: pd.DataFrame(x).apply(lambda y: df.loc[x.name,y.name] if x.name!=y.name.split(' ')[1] else np.nan,axis=1),axis=1)
-def get_mutmat_by_sample(cfg,samplen,refn,refn2seq):
+def get_mutmat_by_sample(cfg,samplen,refn,refn2seq,force=False):
+    outd=f"{cfg['data_mutationp']}/{samplen.replace(' ','_')}"
+    if (exists(outd) and not force):
+        logging.info(f'skipping {refn} coz force=False')
+        return None
+    dalignedp=f"{cfg['prjd']}/{samplen}/daligned_{refn}.pqt"
+    if not exists(dalignedp):
+        logging.warning(f'skipping {refn} coz dalignedp does not exist ({dalignedp})')
+        return None        
     refn2df={}
-    daligned=read_table(f"{cfg['prjd']}/{samplen}/daligned_{refn}.pqt")
+    daligned=read_table(dalignedp)
     dseqs=daligned.replace(np.nan,'N').apply(lambda x : ''.join(x.tolist()),axis=1)
     df_=(dseqs!=refn2seq[refn])
     refn2df['dalignedmut']=daligned.loc[df_[df_].index,:]
@@ -187,28 +197,29 @@ def get_mutmat_by_sample(cfg,samplen,refn,refn2seq):
         for idx in list(set(mol2codes['codons']).difference(refn2df[f'dmutmatcd_{dtype}'].index.tolist())):
             refn2df[f'dmutmatcd_{dtype}'].loc[idx,:]=np.nan
 #         print(refn2df[f'dmutmatcd_{dtype}'].sum())        
-        outd=f"{cfg['data_mutationp']}/{samplen.replace(' ','_')}"
+        refn2df[f'dmutmatcd_{dtype}'].index.name='reference codon'
         makedirs(outd,exist_ok=True)
         to_table(refn2df[f'dmutmatcd_{dtype}'],f"{outd}/dmutmatcd_{dtype}_nofltwt.tsv")
         refn2df[f'dmutmatcd_{dtype}']=remove_wildtype_matmut(refn2df[f'dmutmatcd_{dtype}'])
         to_table(refn2df[f'dmutmatcd_{dtype}'],f"{outd}/dmutmatcd_{dtype}.tsv")
-        plot_mutmat(refn2df[f'dmutmatcd_{dtype}'],refn,annotation_syn='')
-        savefig(f"{cfg['prjd']}/plot/heatmap_dmutmatcd_{dtype} {samplen}.png")
+        if not plot_mutmat(refn2df[f'dmutmatcd_{dtype}'],refn,annotation_syn='') is None:
+            savefig(f"{cfg['prjd']}/plot/heatmap_dmutmatcd_{dtype} {samplen}.png")
                 
         dmutmatcd_=refn2df[f'dmutmatcd_{dtype}'].copy()
         dmutmatcd_.index=[translate(s,tax_id=cfg['tax id']) for s in dmutmatcd_.index]
         dmutmatcd_.columns=[f"{s.split(' ')[0]} {translate(s.split(' ')[1],tax_id=cfg['tax id'])}" for s in dmutmatcd_]        
         dmutmataa_=dmutmatcd_.groupby(dmutmatcd_.index).agg({c:np.sum for c in dmutmatcd_}).replace(0,np.nan)
+        dmutmataa_.index.name='reference amino acid'
         to_table(dmutmataa_,f"{outd}/dmutmataa_{dtype}.tsv")
-        plot_mutmat(dmutmataa_,refn)
-        savefig(f"{cfg['prjd']}/plot/heatmap_dmutmataa_{dtype} {samplen}.png")
+        if not plot_mutmat(dmutmataa_,refn) is None:
+            savefig(f"{cfg['prjd']}/plot/heatmap_dmutmataa_{dtype} {samplen}.png")
         refn2df[f'dmutmataa_{dtype}']=dmutmataa_.copy()
 #     return refn2df  
                 
-def get_mutmat(cfg):
+def get_mutmat(cfg,force=False):
     dbarcodes=read_table(cfg['dbarcodesp'])
     sample2refn=dbarcodes.set_index('sample name')['reference'].to_dict()
     refn2seq=read_fasta(cfg['referencep'])
     cfg['data_mutationp']=f"{cfg['prjd']}/data_mutation" 
     cfg['tax id']=None                      
-    _=dbarcodes['sample name'].apply(lambda samplen: get_mutmat_by_sample(cfg=cfg,samplen=samplen,refn=sample2refn[samplen],refn2seq=refn2seq))
+    _=dbarcodes['sample name'].apply(lambda samplen: get_mutmat_by_sample(cfg=cfg,samplen=samplen,refn=sample2refn[samplen],refn2seq=refn2seq,force=force))
