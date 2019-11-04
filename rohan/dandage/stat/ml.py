@@ -301,3 +301,107 @@ def get_dmetrics_mlr(df,colxs,coly,
     #         brk
     return dmetrics.reset_index()
 
+## all
+def many_models(df=None,colxs=None,coly=None,colidx=None,
+                    modeltype=None,
+                    cv=5,
+                    demo=False,plot=False,test=False,random_state=88):
+    from sklearn.preprocessing import StandardScaler
+    if not demo:
+        X = df.loc[:,colxs]
+        Y = df.loc[:,coly]        
+    else:
+        # load dataset
+        url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
+        names = ['preg', 'plas', 'pres', 'skin', 'test', 'mass', 'pedi', 'age', 'class']
+        df = pd.read_csv(url, names=names)
+        array = df.values
+        X = array[:,0:8]
+        Y = array[:,8]
+
+    from sklearn import model_selection
+    if modeltype is None:
+        if len(np.unique(Y))==2:
+            modeltype='classify'
+        elif len(np.unique(Y))>10:
+            modeltype='regress'            
+        else:
+            logging.error(f'unique values in y={len(np.unique(Y))}; not sure if its for classification or regression')
+            return None,None
+    if modeltype.startswith('classif'):
+        from sklearn.neural_network import MLPClassifier
+        from sklearn.neighbors import KNeighborsClassifier
+        from sklearn.svm import SVC
+        from sklearn.gaussian_process import GaussianProcessClassifier
+        from sklearn.gaussian_process.kernels import RBF
+        from sklearn.tree import DecisionTreeClassifier
+        from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier,GradientBoostingClassifier
+        from sklearn.naive_bayes import GaussianNB
+        from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+        models=[
+        MLPClassifier(hidden_layer_sizes=(100, ), activation='relu', solver='adam', alpha=0.0001, batch_size='auto', learning_rate='constant', learning_rate_init=0.001, power_t=0.5, max_iter=200, shuffle=True, random_state=None, tol=0.0001, verbose=False, warm_start=False, momentum=0.9, nesterovs_momentum=True, early_stopping=False, validation_fraction=0.1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, n_iter_no_change=10),
+        KNeighborsClassifier(n_neighbors=5, weights='uniform', algorithm='auto', leaf_size=30, p=2, metric='minkowski', metric_params=None, n_jobs=None),#, **kwargs)
+        SVC(C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated', coef0=0.0, shrinking=True, probability=False, tol=0.001, cache_size=200, class_weight=None, verbose=False, max_iter=-1, decision_function_shape='ovr', random_state=None),
+        GaussianProcessClassifier(kernel=None, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, max_iter_predict=100, warm_start=False, copy_X_train=True, random_state=None, multi_class='one_vs_rest', n_jobs=None),
+#         RBF(length_scale=1.0, length_scale_bounds=(1e-05, 100000.0)),
+        DecisionTreeClassifier(criterion='gini', splitter='best', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features=None, random_state=None, max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, class_weight=None, presort=False),
+        RandomForestClassifier(n_estimators='warn', criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features='auto', max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, bootstrap=True, oob_score=False, n_jobs=None, random_state=None, verbose=0, warm_start=False, class_weight=None),
+        AdaBoostClassifier(base_estimator=None, n_estimators=50, learning_rate=1.0, algorithm='SAMME.R', random_state=None),
+        GradientBoostingClassifier(loss='deviance', learning_rate=0.1, n_estimators=100, subsample=1.0, criterion='friedman_mse', min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_depth=3, min_impurity_decrease=0.0, min_impurity_split=None, init=None, random_state=None, max_features=None, verbose=0, max_leaf_nodes=None, warm_start=False, presort='auto', validation_fraction=0.1, n_iter_no_change=None, tol=0.0001),            
+        GaussianNB(priors=None, var_smoothing=1e-09),
+        QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0, store_covariance=False, tol=0.0001),
+        ]
+        scoring = 'roc_auc'
+        
+    elif modeltype.startswith('regress'):
+        # prepare models
+        from sklearn.linear_model import Lasso,ElasticNet,LinearRegression
+        from sklearn.svm import SVR,NuSVR,LinearSVR
+        from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor#,VotingRegressor
+        models=[
+            Lasso(alpha=1.0, fit_intercept=True, normalize=False, precompute=False, copy_X=True, max_iter=1000, tol=0.0001, warm_start=False, positive=False, random_state=None, selection='cyclic'),
+            ElasticNet(alpha=1.0, l1_ratio=0.5, fit_intercept=True, normalize=False, precompute=False, max_iter=1000, copy_X=True, tol=0.0001, warm_start=False, positive=False, random_state=None, selection='cyclic'),
+            SVR(kernel='rbf', degree=3, gamma='auto_deprecated', coef0=0.0, tol=0.001, C=1.0, epsilon=0.1, shrinking=True, cache_size=200, verbose=False, max_iter=-1),
+            NuSVR(nu=0.5, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated', coef0=0.0, shrinking=True, tol=0.001, cache_size=200, verbose=False, max_iter=-1),
+            LinearSVR(epsilon=0.0, tol=0.0001, C=1.0, loss='epsilon_insensitive', fit_intercept=True, intercept_scaling=1.0, dual=True, verbose=0, random_state=None, max_iter=1000),
+            GradientBoostingRegressor(loss='ls', learning_rate=0.1, n_estimators=100, subsample=1.0, criterion='friedman_mse', min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_depth=3, min_impurity_decrease=0.0, min_impurity_split=None, init=None, random_state=None, max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None, warm_start=False, presort='auto', validation_fraction=0.1, n_iter_no_change=None, tol=0.0001),
+            RandomForestRegressor(n_estimators='warn', criterion='mse', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_weight_fraction_leaf=0.0, max_features='auto', max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None, bootstrap=True, oob_score=False, n_jobs=None, random_state=None, verbose=0, warm_start=False),
+            LinearRegression(fit_intercept=True, normalize=False, copy_X=True, n_jobs=None),
+        #     VotingRegressor(estimators, weights=None, n_jobs=None)
+            ]
+        scoring = 'r2'
+        if len(df)>100000:
+            from sklearn.linear_model import SGDRegressor
+            models.append(SGDRegressor(loss='squared_loss', penalty='l2', alpha=0.0001, l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=0.001, shuffle=True, verbose=0, epsilon=0.1, random_state=None, learning_rate='invscaling', eta0=0.01, power_t=0.25, early_stopping=False, validation_fraction=0.1, n_iter_no_change=5, warm_start=False, average=False))
+    else:
+        logging.error(f"modeltype can be classify or regress; found {modeltype}")
+    
+
+    modeln2model = {m.__str__().replace('\n',' ').replace('       ',' '):m for m in models}
+
+    # evaluate each model in turn}
+    modeln2metric = {}
+    modeln2prediction = {}
+    for modeln in modeln2model:
+        kfold = model_selection.KFold(n_splits=cv, random_state=random_state)
+        modeln2metric[modeln] = model_selection.cross_val_score(modeln2model[modeln], StandardScaler().fit_transform(X), Y, cv=kfold, scoring=scoring)
+        modeln2prediction[modeln] = model_selection.cross_val_predict(modeln2model[modeln], X, Y, cv=kfold)
+        print("%s: %f (%f)" % (modeln, modeln2metric[modeln].mean(), modeln2metric[modeln].std()))
+    dmetrics=pd.DataFrame(modeln2metric)
+    dpredictions=pd.DataFrame({'Y':Y}).join(pd.DataFrame(modeln2prediction))
+    if plot or test or demo:    
+        dplot=dmetrics.rename(columns={c:c.split('(')[0] for c in dmetrics})
+        dplot=dplot.loc[:,dplot.mean().sort_values(ascending=False).index]
+        # compare algorithms metrics
+        dplot=dmap2lin(dplot,colvalue_name=scoring,idxn='CV#',coln='algorithm')
+        plt.figure()
+        ax=plt.subplot()
+        sns.swarmplot(data=dplot,y='algorithm',x=scoring,color='red',ax=ax)
+        sns.violinplot(data=dplot,y='algorithm',x=scoring,color='white',ax=ax)
+        # compare algorithms prediction
+        plt.figure()
+        dplot=dpredictions.rename(columns={c:c.split('(')[0] for c in dmetrics}).corr(method='pearson').sort_values(by='Y',ascending=False)
+        sns.heatmap(dplot,annot=True,fmt='.2f')
+#         ax.set_xticklabels(modeln2model.keys())
+        # plt.show()
+    return dmetrics, dpredictions
