@@ -18,10 +18,11 @@ def make_kfold2df(df,colxs,coly,colidx):
         dn2df['01 fitered']=dn2df['00 input']
 
     ### assign true false to classes
-    cls2binary={cls:int(True if not 'not' in cls else False) for cls in dn2df['01 fitered'].loc[:,coly].unique()}
-    dn2df['01 fitered'].loc[:,f"{coly} original"]=dn2df['01 fitered'].loc[:,coly]
-    dn2df['01 fitered'].loc[:,coly]=dn2df['01 fitered'].loc[:,coly].apply(lambda x : cls2binary[x])
-    df2info(dn2df['01 fitered'])
+    if dn2df['01 fitered'][coly].dtype!=bool:
+        cls2binary={cls:int(True if not 'not' in cls else False) for cls in dn2df['01 fitered'].loc[:,coly].unique()}
+        dn2df['01 fitered'].loc[:,f"{coly} original"]=dn2df['01 fitered'].loc[:,coly]
+        dn2df['01 fitered'].loc[:,coly]=dn2df['01 fitered'].loc[:,coly].apply(lambda x : cls2binary[x])
+        df2info(dn2df['01 fitered'])
 
     ### find the major cls
     cls2n=ordereddict(dn2df['01 fitered'][coly].value_counts().to_dict())
@@ -50,6 +51,8 @@ def make_kfold2df(df,colxs,coly,colidx):
         print(df_['k-fold #'].value_counts())
 
         ### put it back in the table
+#         print(dn2df['02 shuffle'].columns)
+#         print(df_.columns)
         dn2df['02 k-folded major class']=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]!=list(cls2n.keys())[0],:].append(df_,sort=True)
         dn2df['02 k-folded major class'].index=range(len(dn2df['02 k-folded major class']))
 

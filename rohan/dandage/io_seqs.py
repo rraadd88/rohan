@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from Bio import SeqIO,SeqRecord,Seq,Alphabet
+from rohan.dandage.io_dfs import *
 import logging
 
 ##vars
@@ -296,3 +297,412 @@ def aai2nti(i):
     # dict(zip(range(1,60),[aai2nti(i) for i in range(1,60)]))
     """
     return [(i-1)*3,(i-1)*3+1,(i-1)*3+2]
+
+## modified from https://github.com/mrzResearchArena/PyFeat/blob/master/Codes/generateFeatures.py
+import itertools
+import numpy as np
+
+def kmers(seq, k):
+    v = []
+    for i in range(len(seq) - k + 1):
+        v.append(seq[i:i + k])
+    return v
+
+def pseudoKNC(x, kTuple,elements):
+    ### k-mer ###
+    ### A, AA, AAA
+    out={}
+    for i in range(1, kTuple + 1, 1):
+        v = list(itertools.product(elements, repeat=i))
+        # seqLength = len(x) - i + 1
+        for j in v:
+            # print(x.count(''.join(i)), end=',')
+#             t.append(x.count(''.join(i)))
+            out[f'{i} {j}']=x.count(''.join(j))
+    return out
+    ### --- ###
+
+def zCurve(x, seqtype):
+    ### Z-Curve ### total = 3
+
+    if seqtype == 'DNA' or seqtype == 'RNA':
+
+        if seqtype == 'DNA':
+            TU = x.count('T')
+        else:
+            if seqtype == 'RNA':
+                TU = x.count('U')
+            else:
+                None
+
+        A = x.count('A'); C = x.count('C'); G = x.count('G');
+
+        x_ = (A + G) - (C + TU)
+        y_ = (A + C) - (G + TU)
+        z_ = (A + TU) - (C + G)
+#         return x_,y_,z_
+        return {'x':x_,'y':y_,'z':z_}
+        # print(x_, end=','); print(y_, end=','); print(z_, end=',')
+#         t.append(x_); t.append(y_); t.append(z_)
+        ### print('{},{},{}'.format(x_, y_, z_), end=',')
+        ### --- ###
+        # trackingFeatures.append('x_axis'); trackingFeatures.append('y_axis'); trackingFeatures.append('z_axis')
+
+def gcContent(x, seqtype):
+
+    if seqtype == 'DNA' or seqtype == 'RNA':
+
+        if seqtype == 'DNA':
+            TU = x.count('T')
+        else:
+            if seqtype == 'RNA':
+                TU = x.count('U')
+            else:
+                None
+
+        A = x.count('A');
+        C = x.count('C');
+        G = x.count('G');
+
+        return {'%': (G + C) / (A + C + G + TU)  * 100.0}
+#         t.append( (G + C) / (A + C + G + TU)  * 100.0 )
+
+
+def cumulativeSkew(x, seqtype):
+
+    if seqtype == 'DNA' or seqtype == 'RNA':
+
+        if seqtype == 'DNA':
+            TU = x.count('T')
+        else:
+            if seqtype == 'RNA':
+                TU = x.count('U')
+            else:
+                None
+
+        A = x.count('A');
+        C = x.count('C');
+        G = x.count('G');
+
+        GCSkew = (G-C)/(G+C)
+        ATSkew = (A-TU)/(A+TU)
+
+#         t.append(GCSkew)
+#         t.append(ATSkew)
+        return {'GC skew': GCSkew,'AT skew':ATSkew}
+
+
+def atgcRatio(x, seqtype):
+
+    if seqtype == 'DNA' or seqtype == 'RNA':
+
+        if seqtype == 'DNA':
+            TU = x.count('T')
+        else:
+            if seqtype == 'RNA':
+                TU = x.count('U')
+            else:
+                None
+
+        A = x.count('A');
+        C = x.count('C');
+        G = x.count('G');
+
+#         t.append( (A+TU)/(G+C) )
+        return  {'ratio': (A+TU)/(G+C)}
+
+
+def monoMonoKGap(x, g,m2):  # 1___1
+    ### g-gap
+    '''
+    AA      0-gap (2-mer)
+    A_A     1-gap
+    A__A    2-gap
+    A___A   3-gap
+    A____A  4-gap
+    '''
+    out={}
+    m = m2
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 2)
+        # seqLength = len(x) - (i+2) + 1
+        #
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print('-'*i, end='')
+            # print(gGap[1])
+            # trackingFeatures.append(gGap[0] + '-' * i + gGap[1])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[-1] == gGap[1]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+    ### --- ###
+
+def monoDiKGap(x, g,m3):  # 1___2
+    out={}
+    m = m3
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 3)
+        # seqLength = len(x) - (i+2) + 1
+        # print(V)
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print('-' * i, end='')
+            # print(gGap[1], end='')
+            # print(gGap[2], end=' ')
+            # trackingFeatures.append(gGap[0] + '-' * i + gGap[1] + gGap[2])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[-2] == gGap[1] and v[-1] == gGap[2]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+
+    ### --- ###
+
+def diMonoKGap(x, g,m3):  # 2___1
+    out={}
+    m = m3
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 3)
+        # seqLength = len(x) - (i+2) + 1
+
+        # print(V)
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print(gGap[1], end='')
+            # print('-'*i, end='')
+            # print(gGap[2], end=' ')
+            # trackingFeatures.append(gGap[0] + gGap[1] + '-' * i + gGap[2])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[1] == gGap[1] and v[-1] == gGap[2]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+
+    ### --- ###
+
+def monoTriKGap(x, g,m4):  # 1___3
+
+    # A_AAA       1-gap
+    # A__AAA      2-gap
+    # A___AAA     3-gap
+    # A____AAA    4-gap
+    # A_____AAA   5-gap upto g
+    out={}
+    m = m4
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 4)
+        # seqLength = len(x) - (i+2) + 1
+
+        # print(V)
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print('-' * i, end='')
+            # print(gGap[1], end='')
+            # print(gGap[2], end=' ')
+            # print(gGap[3], end=' ')
+            # trackingFeatures.append(gGap[0] + '-' * i + gGap[1] + gGap[2] + gGap[3])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[-3] == gGap[1] and v[-2] == gGap[2] and v[-1] == gGap[3]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+
+    ### --- ###
+
+def triMonoKGap(x, g,m4):  # 3___1
+
+    # AAA_A       1-gap
+    # AAA__A      2-gap
+    # AAA___A     3-gap
+    # AAA____A    4-gap
+    # AAA_____A   5-gap upto g
+
+    out={}
+    m = m4
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 4)
+        # seqLength = len(x) - (i+2) + 1
+
+        # print(V)
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print(gGap[1], end='')
+            # print(gGap[2], end='')
+            # print('-'*i, end='')
+            # print(gGap[3], end=' ')
+            # trackingFeatures.append(gGap[0] + gGap[1] + gGap[2] + '-' * i + gGap[3])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[1] == gGap[1] and v[2] == gGap[2] and v[-1] == gGap[3]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+
+    ### --- ###
+
+def diDiKGap(x, g,m4):
+
+    ### gapping ### total = [(64xg)] = 2,304 [g=9]
+    # AA_AA       1-gap
+    # AA__AA      2-gap
+    # AA___AA     3-gap
+    # AA____AA    4-gap
+    # AA_____AA   5-gap upto g
+    out={}
+    m = m4
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 4)
+        # seqLength = len(x) - (i+2) + 1
+        # print(V)
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print(gGap[1], end='')
+            # print('-'*i, end='')
+            # print(gGap[2], end='')
+            # print(gGap[3], end='')
+            # trackingFeatures.append(gGap[0] + gGap[1] + '-' * i + gGap[2] + gGap[3])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[1] == gGap[1] and v[-2] == gGap[2] and v[-1] == gGap[3]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+
+    ### --- ###
+
+def diTriKGap(x, g,m5):  # 2___3
+
+    ### gapping ### total = [(64xg)] = 2,304 [g=9]
+    # AA_AAA       1-gap
+    # AA__AAA      2-gap
+    # AA___AAA     3-gap
+    # AA____AAA    4-gap
+    # AA_____AAA   5-gap upto g
+    out={}
+    m = m5
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 5)
+        # seqLength = len(x) - (i+2) + 1
+        # print(V)
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print(gGap[1], end='')
+            # print('-' * i, end='')
+            # print(gGap[2], end='')
+            # print(gGap[3], end='')
+            # print(gGap[4], end='')
+            # trackingFeatures.append(gGap[0] + gGap[1] + '-' * i + gGap[2]  + gGap[3] + gGap[4])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[1] == gGap[1] and v[-3] == gGap[2] and v[-2] == gGap[3] and v[-1] == gGap[4]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+
+    ### --- ###
+
+def triDiKGap(x, g,m5):  # 3___2
+
+    ### gapping ### total = [(64xg)] = 2,304 [g=9]
+    # AAA_AA       1-gap
+    # AAA__AA      2-gap
+    # AAA___AA     3-gap
+    # AAA____AA    4-gap
+    # AAA_____AA   5-gap upto g
+    out={}
+    m = m5
+    for i in range(1, g + 1, 1):
+        V = kmers(x, i + 5)
+        # seqLength = len(x) - (i+2) + 1
+        # print(V)
+        for gGap in m:
+            # print(gGap[0], end='')
+            # print(gGap[1], end='')
+            # print(gGap[2], end='')
+            # print('-'*i, end='')
+            # print(gGap[3], end='')
+            # print(gGap[4], end='')
+            # trackingFeatures.append(gGap[0] + gGap[1] + gGap[2] + '-' * i + gGap[3] + gGap[4])
+
+            C = 0
+            for v in V:
+                if v[0] == gGap[0] and v[1] == gGap[1] and v[2] == gGap[2] and v[-2] == gGap[3] and v[-1] == gGap[4]:
+                    C += 1
+            # print(C, end=',')
+#             t.append(C)
+            out[f"{i} {gGap}"]=C
+    return out
+            
+    ### --- ###
+    
+## wrapper generated annotated df
+#     %run features.py
+def get_seq_feats(X,cfg):
+    """
+    cfg={'seqtype':'DNA',
+    'kTuple':3,
+     'g':5,} # kGap
+    """
+
+    seqtype2elements={'DNA' : 'ACGT',
+                    'RNA' : 'ACGU',
+                    'protein' : 'ACDEFGHIKLMNPQRSTVWY',
+                    }
+    fun2params={
+        'zCurve':['seqtype'],              #3
+        'gcContent':['seqtype'],           #1
+        'cumulativeSkew':['seqtype'],      #2
+        'atgcRatio':['seqtype'],         #1
+        'pseudoKNC':['kTuple','elements'],            #k=2|(16), k=3|(64), k=4|(256), k=5|(1024);
+        'monoMonoKGap':['g','m2'],      #4*(k)*4 = 240
+        'monoDiKGap':['g','m3'],        #4*k*(4^2) = 960
+        'monoTriKGap':['g','m4'],       #4*k*(4^3) = 3,840
+        'diMonoKGap':['g','m3'],        #(4^2)*k*(4)    = 960
+        'diDiKGap':['g','m4'],          #(4^2)*k*(4^2)  = 3,840
+        'diTriKGap':['g','m5'],         #(4^2)*k*(4^3)  = 15,360
+        'triMonoKGap':['g','m4'],       #(4^3)*k*(4)    = 3,840
+        'triDiKGap':['g','m5'],}
+
+#     X=list(read_fasta('PyFeat/Datasets/DNA/FASTA.txt').values())
+    # params
+    cfg['elements']=seqtype2elements[cfg['seqtype']]
+    for i in list(range(2,6)):
+        cfg[f'm{i}']=list(itertools.product(cfg['elements'], repeat=i))
+
+    dfeat_=pd.DataFrame({'x':X})
+    fun2df={}
+    for fun in fun2params:
+        fun2df[fun]=dfeat_['x'].apply(lambda x: globals()[fun](x, **{k:cfg[k] for k in fun2params[fun]})).apply(pd.Series)
+    #     break
+    dfeat=pd.concat(fun2df,axis=1)
+    dfeat.columns=coltuples2str(dfeat)
+    dfeat.index=X
+    dfeat.index.name='x'
+    return dfeat
