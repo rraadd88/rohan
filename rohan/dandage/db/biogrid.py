@@ -7,14 +7,16 @@ from rohan.dandage.db.intact import get_degrees
 import logging
 
 def dintmap2lin(dint_db):
-#     dint_db=read_table('database/biogrid/559292/physical/all/dbiogrid_intmap_symm.pqt')
+#     dint_db=read_table('database/biogrid/559292/physical/all/dintmap_symm.pqt')
     dint_db=dmap2lin(dint_db,idxn='gene id gene name interactor1',coln='gene id gene name interactor2',colvalue_name='interaction score db').replace(0,np.nan).dropna()
     dint_db['interaction id']=dint_db.apply(lambda x : '--'.join(sorted([x['gene id gene name interactor1'],x['gene id gene name interactor2']])),axis=1)
     dint_db=dint_db.drop_duplicates(subset=['interaction id'])
     dint_db['interaction bool db']=True
     return dint_db
 
-def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,dbiogrid_intmapp,
+def get_dintmap(taxid,dbiogridp,
+                        outd=None,
+                        dintmap_symmp=None,dintlinp=None,dintmapp=None,
                         logf=None,
                         experimental_system_type='physical',
                         genefmt=None,
@@ -28,9 +30,14 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
     """    
     if not genefmt is None:
         logging.warning('genefmt is deprecated, both gene ids and gene names will be used')
-    if (not exists(dbiogrid_intmap_symmp)) or force:
-        if not exists(dbiogrid_intmapp) or force:
-            if not exists(dbiogrid_intlinp) or force:
+    if not outd is None:
+        dintlinp=f'{outd}/dintlin.pqt'
+        dintmap_symmp=f'{outd}/dintmap_symm.pqt'
+        dintmapp=f'{outd}/dintmap.pqt'
+        logf=f'{outd}/log.tsv'
+    if (not exists(dintmap_symmp)) or force:
+        if not exists(dintmapp) or force:
+            if not exists(dintlinp) or force:
                 if dbiogridp.endswith('tab2.txt'):
                     print(f"converting to parquet")
                     dbiogrid=pd.read_csv(dbiogridp,
@@ -65,9 +72,9 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
                     if not logf is None:
                         to_table(dlog,f'{logf}.kept_int.tsv')
                     print(dlog)
-                to_table_pqt(dbiogrid,dbiogrid_intlinp)
+                to_table_pqt(dbiogrid,dintlinp)
             else:
-                dbiogrid=read_table_pqt(dbiogrid_intlinp)
+                dbiogrid=read_table_pqt(dintlinp)
             # this cell makes a symmetric interaction map
             dbiogrid['count']=1
             if test:
@@ -84,38 +91,38 @@ def get_dbiogrid_intmap(taxid,dbiogridp,dbiogrid_intmap_symmp,dbiogrid_intlinp,d
             # make it symmetric
             if test:
                 print('shape of non-symm intmap: ',dbiogrid_grid.shape)
-            to_table_pqt(dbiogrid_grid,dbiogrid_intmapp)
+            to_table_pqt(dbiogrid_grid,dintmapp)
         else:         
-#             dbiogrid_grid=pd.read_table(dbiogrid_intmapp)
-            dbiogrid_grid=read_table_pqt(dbiogrid_intmapp+'.pqt')
+#             dbiogrid_grid=pd.read_table(dintmapp)
+            dbiogrid_grid=read_table_pqt(dintmapp+'.pqt')
         dbiogrid_grid=set_index(dbiogrid_grid,"gene id gene name Interactor A")
         geneids=set(dbiogrid_grid.index).union(set(dbiogrid_grid.columns))
         if test:
             print('total number of genes',len(geneids))
         # missing rows to nan
-        dbiogrid_intmap_symm=pd.DataFrame(columns=geneids,index=geneids)
+        dintmap_symm=pd.DataFrame(columns=geneids,index=geneids)
 
-        dbiogrid_intmap_symm.loc[dbiogrid_grid.index,:]=dbiogrid_grid.loc[dbiogrid_grid.index,:]
-        dbiogrid_intmap_symm.loc[:,dbiogrid_grid.columns]=dbiogrid_grid.loc[:,dbiogrid_grid.columns]
+        dintmap_symm.loc[dbiogrid_grid.index,:]=dbiogrid_grid.loc[dbiogrid_grid.index,:]
+        dintmap_symm.loc[:,dbiogrid_grid.columns]=dbiogrid_grid.loc[:,dbiogrid_grid.columns]
         if test:
-            print(dbiogrid_intmap_symm.shape)
-        dbiogrid_intmap_symm=dbiogrid_intmap_symm.fillna(0)
-        dbiogrid_intmap_symm=(dbiogrid_intmap_symm+dbiogrid_intmap_symm.T)/2
-        dbiogrid_intmap_symm.index.name='Interactor A'
-        dbiogrid_intmap_symm.columns.name='Interactor B'
+            print(dintmap_symm.shape)
+        dintmap_symm=dintmap_symm.fillna(0)
+        dintmap_symm=(dintmap_symm+dintmap_symm.T)/2
+        dintmap_symm.index.name='Interactor A'
+        dintmap_symm.columns.name='Interactor B'
 #         if test:
-#             dbiogrid_intmap_symm=dbiogrid_intmap_symm.iloc[:5,:5]
+#             dintmap_symm=dintmap_symm.iloc[:5,:5]
         if filldiagonal_withna:
-            dbiogrid_intmap_symm=filldiagonal(dbiogrid_intmap_symm)
-        to_table_pqt(dbiogrid_intmap_symm,dbiogrid_intmap_symmp)
-        print('file saved at: ',dbiogrid_intmap_symmp)
-        ddegnonself,ddegself=get_degrees(dbiogrid_intmap_symm)
+            dintmap_symm=filldiagonal(dintmap_symm)
+        to_table_pqt(dintmap_symm,dintmap_symmp)
+        print('file saved at: ',dintmap_symmp)
+        ddegnonself,ddegself=get_degrees(dintmap_symm)
         print(ddegself.head())
-        dbiogrid_intmap_symm_lin=ddegself.copy()
-        dbiogrid_intmap_symm_lin.index.name=f'gene {genefmt}'
-        to_table(dbiogrid_intmap_symm_lin,f'{dbiogrid_intmap_symmp}.degrees.tsv')
-        dintlin=dintmap2lin(dbiogrid_intmap_symm)
-        to_table(dintlin,f'{dirname(dbiogrid_intmap_symmp)}/dintlin.pqt')
+        dintmap_symm_lin=ddegself.copy()
+        dintmap_symm_lin.index.name=f'gene {genefmt}'
+        to_table(dintmap_symm_lin,f'{dintmap_symmp}.degrees.tsv')
+        dintlin=dintmap2lin(dintmap_symm)
+        to_table(dintlin,f'{dirname(dintmap_symmp)}/dintlin.pqt')
     else:
-        dbiogrid_intmap_symm=read_table_pqt(dbiogrid_intmap_symmp)
-    return dbiogrid_intmap_symm
+        dintmap_symm=read_table_pqt(dintmap_symmp)
+    return dintmap_symm
