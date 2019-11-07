@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-def get_dint(dint_rawp,dgene_annotp):
+def get_dint(dint_rawp,dgene_annotp,force=False):
     dint_aggscorep=f'{dirname(dint_rawp)}/dint_aggscore.pqt'
     if not exists(dint_aggscorep) or force:
         dint=pd.read_csv(dint_rawp,compression='gzip', sep=' ')
