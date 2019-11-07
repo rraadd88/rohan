@@ -59,10 +59,12 @@ def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
     speciesid=speciesids_[0]
                       
     # get the species id for filtering by species
-    dintact_aggscorep=f'{dirname(dintact_rawp)}/dintact_flt_{speciesid}_aggscore.pqt'
+    dintact_aggscorep=f"{dirname(dintact_rawp)}/dintact_flt_{speciesid.replace(' ','_')}_aggscore.pqt"
     if exists(dintact_aggscorep) and not force:
         return read_table(dintact_aggscorep)
-    
+#     print(exists(dintact_aggscorep), force)
+#     print(dintact_aggscorep)
+#     brk
     # filter the raw data file 
     dintact_fltbyspeciesp=f'{dirname(dintact_rawp)}/dintact_flt_{speciesid}.pqt'
     if not exists(dintact_fltbyspeciesp):
@@ -153,5 +155,6 @@ def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
         for q in list(np.arange(0,1,0.25)):
             dintact_aggmap.loc[:,f'interaction bool intact {col} (score>q{q:.2f})']=dintact_aggmap[col]>(dintact_aggmap[col].quantile(q) if q!=0 else q)
     print(dintact_aggmap.sum())
+    dintact_aggmap=dintact_aggmap.reset_index()
     to_table(dintact_aggmap,dintact_aggscorep)
     return dintact_aggmap                      
