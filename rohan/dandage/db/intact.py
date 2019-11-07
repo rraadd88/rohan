@@ -42,6 +42,7 @@ def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
     
     dintact_speciesidsp=f"{dirname(dintact_rawp)}/intact_speciesids.tsv"
     if not exists(dintact_speciesidsp):
+        dintact=read_table(dintact_rawp)
         speciesids=unique_dropna(dintact['Taxid interactor A'].unique().tolist()+dintact['Taxid interactor B'].unique().tolist())
         to_table(pd.DataFrame({'species id':speciesids}),
                 dintact_speciesidsp)
@@ -68,7 +69,8 @@ def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
     # filter the raw data file 
     dintact_fltbyspeciesp=f'{dirname(dintact_rawp)}/dintact_flt_{speciesid}.pqt'
     if not exists(dintact_fltbyspeciesp):
-        dintact=read_table(dintact_rawp)
+        if not 'dintact' in globals():
+            dintact=read_table(dintact_rawp)
 
         ### filterby organism of proteins
         print(dintact.shape,end=' ')
