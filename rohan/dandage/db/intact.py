@@ -21,12 +21,12 @@ def get_degrees(dintmapbinary,coln='# of interactions'):
                       
 # from rohan.dandage.db.intact import *
 
-def get_dintact_flt(speciesn,dgene_annotp,dintact_rawp=None,force=False):
-   """
-   contains huri 
-       
+def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
+    """
+    contains huri 
+
        dintact.loc[(dintact['Publication 1st author(s)']=='Huri, et al. (2017)'),'Update date'].unique()
-       
+
        array(['2018/04/29', '2018/04/30', '2018/09/18', '2019/01/23',
        '2018/10/12', '2018/10/11', '2018/07/23', '2018/09/21',
        '2019/01/24', '2018/07/05', '2019/02/20', '2019/02/21',
@@ -35,8 +35,7 @@ def get_dintact_flt(speciesn,dgene_annotp,dintact_rawp=None,force=False):
     intact ftp: ftp://ftp.ebi.ac.uk/pub/databases/intact/current/psimitab/
 
     file format https://github.com/HUPO-PSI/miTab/blob/master/PSI-MITAB27Format.md
-   """
-
+    """
     from rohan.dandage.io_strs import replacemany,get_bracket
     if dintact_rawp is None:
         dintact_rawp='database/intact/pub/databases/intact/current/psimitab/intact.pqt'
@@ -100,8 +99,8 @@ def get_dintact_flt(speciesn,dgene_annotp,dintact_rawp=None,force=False):
     print(dintact.shape)
 
     #### only
-        physical association
-        direct interaction
+#         physical association
+#         direct interaction
 
     print(dintact['Interaction type(s)'].apply(lambda x: x.count('(')).value_counts()==len(dintact))
     dintact['Interaction type(s): type']=dintact['Interaction type(s)'].apply(lambda x: get_bracket(x))
