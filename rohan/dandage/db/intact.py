@@ -39,6 +39,20 @@ def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
     from rohan.dandage.io_strs import replacemany,get_bracket
     if dintact_rawp is None:
         dintact_rawp='database/intact/pub/databases/intact/current/psimitab/intact.pqt'
+
+    # get the species id for filtering by species
+    df_=dintact.loc[(dintact['Taxid interactor A'].isin([s for s in dintact['Taxid interactor A'].unique().tolist() if speciesn in s])),'Taxid interactor A'].value_counts()
+    
+    if len(df_)==0:
+        logging.error('species not found')
+        logging.erorr(f"please choose between {','.join(dintact['Taxid interactor A'].unique().tolist())}")
+        return None
+    elif len(df_)>1:
+        logging.error('multiple species not found')
+        print(df_)
+        return None 
+    speciesid=df_.index.tolist()[0]   
+
     dintact_aggscorep=f'{dirname(dintact_rawp)}/dintact_flt_{speciesid}_aggscore.pqt'
     if exists(dintact_aggscorep) and not force:
         return read_table(dintact_aggscorep)
