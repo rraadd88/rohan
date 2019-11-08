@@ -155,7 +155,7 @@ def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
 
     for col in dintact_aggmap:
         for q in list(np.arange(0,1,0.25)):
-            dintact_aggmap.loc[:,f'interaction bool intact {col} (score>q{q:.2f})']=dintact_aggmap[col]>(dintact_aggmap[col].quantile(q) if q!=0 else q)
+            dintact_aggmap.loc[:,f'interaction bool intact {col} (score>q{q:.2f})']=dintact_aggmap[col]>=(dintact_aggmap[col].quantile(q) if q!=0 else q)
     print(dintact_aggmap.sum())
     dintact_aggmap=dintact_aggmap.reset_index()
     to_table(dintact_aggmap,dintact_aggscorep)
