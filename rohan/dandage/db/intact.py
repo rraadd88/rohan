@@ -152,9 +152,11 @@ def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
     dintact_agg=dintact.groupby(['Interaction type(s): type']).apply(lambda df : agg_scores(df)).reset_index()
 
     dintact_aggmap=dintact_agg.pivot_table(columns='Interaction type(s): type',index='interaction id',values='Confidence value(s) intact-miscore')
-
-    for col in dintact_aggmap:
-        for q in list(np.arange(0,1,0.25)):
+                      
+    cols=dintact_aggmap.columns.tolist()
+    for col in cols:
+        dintact_aggmap.loc[:,f'interaction bool intact {col}']=~dintact_aggmap[col].isnull()
+        for q in list(np.arange(0.25,1,0.25)):
             dintact_aggmap.loc[:,f'interaction bool intact {col} (score>q{q:.2f})']=dintact_aggmap[col]>=(dintact_aggmap[col].quantile(q) if q!=0 else q)
     print(dintact_aggmap.sum())
     dintact_aggmap=dintact_aggmap.reset_index()

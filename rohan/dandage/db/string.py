@@ -30,7 +30,8 @@ def get_dint(dint_rawp,dgene_annotp,force=False):
     else:
         dint=read_table(dint_intidp)
     if not exists(dint_aggscorep) or force:    
-        for q in list(np.arange(0,0.8,0.2))+[0.8,0.9,0.95,0.975,0.99]:
+        dint.loc[:,f'interaction bool string']=~dint['combined_score'].isnull()
+        for q in list(np.arange(0.2,0.8,0.2))+[0.8,0.9,0.95,0.975,0.99]:
             dint.loc[:,f'interaction bool string (score>q{q:.2f})']=dint['combined_score']>=(dint['combined_score'].quantile(q) if q!=0 else 0)
         print(dint.filter(like='interaction bool',axis=1).sum())
         to_table(dint,dint_aggscorep)
