@@ -143,15 +143,16 @@ class hitpredict():
                 df0=df0.dropna(subset=df0.filter(regex='^gene',axis=1).columns.tolist())
                 print(df0.shape)
                 df0['interaction id']=df0.apply(lambda x: '--'.join(sorted([' '.join([x[f'gene{i} id'],x[f'gene{i} name']]) for i in [1,2]])),axis=1)
+                df0=df0.rename(columns={'Confidence score':'interaction score hitpredict'})
                 to_table(df0,dint_intidp)
             else:
                 df0=read_table(dint_intidp)
 
-            df1=df0.drop_duplicates(subset=['interaction id','Confidence score']).loc[:,['interaction id','Confidence score']]
+            df1=df0.drop_duplicates(subset=['interaction id','interaction score hitpredict']).loc[:,['interaction id','interaction score hitpredict']]
             print(len(df1)==len(df0))
-            df1.loc[:,f'interaction bool hitpredict']=~df1['Confidence score'].isnull()
+            df1.loc[:,'interaction bool hitpredict']=~df1['interaction score hitpredict'].isnull()
             for q in list(np.arange(0.25,1,0.25)):
-                df1.loc[:,f'interaction bool hitpredict (score>q{q:.2f})']=df1['Confidence score']>=(df1['Confidence score'].quantile(q) if q!=0 else 0)
+                df1.loc[:,f'interaction bool hitpredict (score>q{q:.2f})']=df1['interaction score hitpredict']>=(df1['interaction score hitpredict'].quantile(q) if q!=0 else 0)
             print(df1.filter(like='interaction bool',axis=1).sum())
             to_table(df1,dint_scorep)
         else:
@@ -180,8 +181,9 @@ class string():
             print(dint.shape)
 
             dint['interaction id']=dint.apply(lambda x: '--'.join(sorted([' '.join([x[f'gene{i} id'],x[f'gene{i} name']]) for i in [1,2]])),axis=1)
+            dint=dint.rename(columns={'combined_score':'interaction score string'})
             print(dint.shape,end='')
-            dint=dint.drop_duplicates(subset=['interaction id','combined_score'])
+            dint=dint.drop_duplicates(subset=['interaction id','interaction score string'])
             print(dint.shape)
 
             print(dint['interaction id'].unique().shape[0]==dint.shape[0])
@@ -190,9 +192,9 @@ class string():
         else:
             dint=read_table(dint_intidp)
         if not exists(dint_aggscorep) or force:    
-            dint.loc[:,f'interaction bool string']=~dint['combined_score'].isnull()
+            dint.loc[:,f'interaction bool string']=~dint['interaction score string'].isnull()
             for q in list(np.arange(0.2,0.8,0.2))+[0.8,0.9,0.95,0.975,0.99]:
-                dint.loc[:,f'interaction bool string (score>q{q:.2f})']=dint['combined_score']>=(dint['combined_score'].quantile(q) if q!=0 else 0)
+                dint.loc[:,f'interaction bool string (score>q{q:.2f})']=dint['interaction score string']>=(dint['interaction score string'].quantile(q) if q!=0 else 0)
             print(dint.filter(like='interaction bool',axis=1).sum())
             to_table(dint,dint_aggscorep)
         else:
@@ -342,4 +344,50 @@ class intact():
         print(dintact_aggmap.sum())
         dintact_aggmap=dintact_aggmap.reset_index()
         to_table(dintact_aggmap,dintact_aggscorep)
-        return dintact_aggmap                          
+        return dintact_aggmap                     
+                          
+
+def get_dint_combo(force=False):
+    dintp='database/interactions_protein/559292/dint.pqt'
+    if not exists(dintp) or force:
+        dn2df={}
+        dn2df['biogrid']=biogrid.get_dint(taxid=559292, dint_rawp='database/biogrid/BIOGRID-ORGANISM-3.5.167.tab2/BIOGRID-ORGANISM-Saccharomyces_cerevisiae_S288c-3.5.167.tab2.txt.pqt',
+                    outd=None, experimental_system_type='physical', 
+                    force=force, test=False).filter(regex='^interaction ',axis=1).set_index('interaction id')
+
+        dn2df['intact']=intact.get_dint(speciesn='559292',
+                    dintact_rawp='database/intact/pub/databases/intact/current/psimitab/intact.pqt',
+                    dgene_annotp='data_hybridator/data_annot/dgene_annot.tsv',
+                    force=force).filter(regex='^interaction ',axis=1).set_index('interaction id')
+
+        dn2df['string']=string.get_dint(dint_rawp='database/string/4932/4932.protein.links.v11.0.txt.gz',
+                    dgene_annotp='data_hybridator/data_annot/dgene_annot.tsv',
+                    force=force).filter(regex='^interaction ',axis=1).set_index('interaction id')
+        dn2df['hitpredict']=hitpredict.get_int(dint_rawp='database/hitpredict/S_cerevisiae_interactions_MITAB-2.5.tgz',
+                    dgene_annotp='data_hybridator/data_annot/dgene_annot.tsv',
+                    force=force).filter(regex='^interaction ',axis=1).set_index('interaction id')
+
+        dint=pd.concat(dn2df,join='outer',axis=1,sort=True).filter(like='interaction ',axis=1)
+        print(intersections({k:unique(dn2df[k].index.tolist()) for k in dn2df}))
+        dint.columns=dint.columns.droplevel(0)
+        dint.index.name='interaction id'
+        ## combine bool
+        for col in dint.filter(like='interaction bool',axis=1):
+            dint[col]=dint[col].fillna(False).apply(bool)
+        dint.loc[:,'interaction bool db direct interaction']=dint.loc[:,['interaction bool biogrid direct interaction',
+                                                                         'interaction bool intact direct interaction',
+                                                                        ]].T.any()
+        dint.loc[:,'interaction bool db physical association']=dint.loc[:,['interaction bool biogrid physical association',
+                                                                           'interaction bool intact physical association',
+                                                                          ]].T.any()
+        print(dint.filter(like='interaction bool',axis=1).sum())
+        ## combine scores
+        print(dint.filter(like='interaction score',axis=1).columns.tolist())
+        for c in ["interaction score hitpredict",'interaction score string']:
+            dint[f"{c} rescaled"]=(dint[c]-dint[c].min())/(dint[c].max()-dint[c].min())
+        dint['interaction score db']=dint.filter(regex=r'^interaction score .*rescaled$',axis=1).T.mean()
+        ## save 
+        to_table(dint,dintp)
+    else:
+        dint=read_table(dintp)
+    return dint
