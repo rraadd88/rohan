@@ -123,7 +123,7 @@ class biogrid():
 
                       
 class hitpredict():
-    def get_int(dint_rawp,dgene_annotp,
+    def get_int(dint_rawp,dgene_annotp,qcut=0.5,
                 force=False):
 
         dint_intidp=f"{dirname(dint_rawp)}/{basenamenoext(dint_rawp)}/dint_intid.pqt"
@@ -150,9 +150,13 @@ class hitpredict():
 
             df1=df0.drop_duplicates(subset=['interaction id','interaction score hitpredict']).loc[:,['interaction id','interaction score hitpredict']]
             print(len(df1)==len(df0))
-            df1.loc[:,'interaction bool hitpredict']=~df1['interaction score hitpredict'].isnull()
-            for q in list(np.arange(0.25,1,0.25)):
-                df1.loc[:,f'interaction bool hitpredict (score>q{q:.2f})']=df1['interaction score hitpredict']>=(df1['interaction score hitpredict'].quantile(q) if q!=0 else 0)
+            
+            df1.loc[:,f'interaction score hitpredict (score>q{qcut:.2f})']=df1['interaction score hitpredict'].apply(lambda x: x if x>df1['interaction score hitpredict'].quantile(qcut) else np.nan)
+            df1.loc[:,f'interaction bool hitpredict (score>q{qcut:.2f})']=df1['interaction score hitpredict']>=(df1['interaction score hitpredict'].quantile(qcut) if qcut!=0 else 0)
+            
+#             df1.loc[:,'interaction bool hitpredict']=~df1['interaction score hitpredict'].isnull()
+#             for q in list(np.arange(0.25,1,0.25)):
+#                 df1.loc[:,f'interaction bool hitpredict (score>q{q:.2f})']=df1['interaction score hitpredict']>=(df1['interaction score hitpredict'].quantile(q) if q!=0 else 0)
             print(df1.filter(like='interaction bool',axis=1).sum())
             to_table(df1,dint_scorep)
         else:
@@ -160,7 +164,7 @@ class hitpredict():
         return df1
     
 class string():
-    def get_dint(dint_rawp,dgene_annotp,force=False):
+    def get_dint(dint_rawp,dgene_annotp,force=False,qcut=0.9):
         dint_aggscorep=f'{dirname(dint_rawp)}/dint_aggscore.pqt'
         dint_intidp=f'{dirname(dint_rawp)}/dint_intid.pqt'
         if not exists(dint_intidp) or force:
@@ -191,10 +195,15 @@ class string():
             to_table(dint,dint_intidp)
         else:
             dint=read_table(dint_intidp)
-        if not exists(dint_aggscorep) or force:    
-            dint.loc[:,f'interaction bool string']=~dint['interaction score string'].isnull()
-            for q in list(np.arange(0.2,0.8,0.2))+[0.8,0.9,0.95,0.975,0.99]:
-                dint.loc[:,f'interaction bool string (score>q{q:.2f})']=dint['interaction score string']>=(dint['interaction score string'].quantile(q) if q!=0 else 0)
+        if not exists(dint_aggscorep) or force: 
+            print(dint.shape)
+            dint.loc[:,f'interaction score string (score>q{qcut:.2f})']=dint['interaction score string']
+            dint.loc[(dint['interaction score string']<dint['interaction score string'].quantile(0.5)),f'interaction score string (score>q{qcut:.2f})']=np.nan
+            dint.loc[:,f'interaction bool string (score>q{qcut:.2f})']=dint['interaction score string']>=(dint['interaction score string'].quantile(qcut) if qcut!=0 else 0)
+                      
+#             dint.loc[:,f'interaction bool string']=~dint['interaction score string'].isnull()
+#             for q in list(np.arange(0.2,0.8,0.2))+[0.8,0.9,0.95,0.975,0.99]:
+#                 dint.loc[:,f'interaction bool string (score>q{q:.2f})']=dint['interaction score string']>=(dint['interaction score string'].quantile(q) if q!=0 else 0)
             print(dint.filter(like='interaction bool',axis=1).sum())
             to_table(dint,dint_aggscorep)
         else:
@@ -383,7 +392,7 @@ def get_dint_combo(force=False):
         print(dint.filter(like='interaction bool',axis=1).sum())
         ## combine scores
         print(dint.filter(like='interaction score',axis=1).columns.tolist())
-        for c in ["interaction score hitpredict",'interaction score string']:
+        for c in ["interaction score hitpredict (score>q0.50)",'interaction score string (score>q0.90)']:
             dint[f"{c} rescaled"]=(dint[c]-dint[c].min())/(dint[c].max()-dint[c].min())
         dint['interaction score db']=dint.filter(regex=r'^interaction score .*rescaled$',axis=1).T.mean()
         ## save 

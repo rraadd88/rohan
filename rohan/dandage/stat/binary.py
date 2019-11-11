@@ -27,7 +27,7 @@ def f_statistic(y_true, y_pred, n, p):
 
     return f, f_pval
 
-def compare_bools_auc(true,test,outmore=False):
+def get_roc_auc(true,test,outmore=False):
     from sklearn.metrics import roc_curve, auc
     fpr, tpr, thresholds = roc_curve(true,test)
     a=auc(fpr, tpr)
