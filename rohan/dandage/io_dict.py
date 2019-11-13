@@ -55,3 +55,9 @@ def to_dict(d,p):
         return to_json(d,p)
     else:
         ValueError(f'supported extensions: .yml .yaml .json')        
+        
+def groupby_value(d):
+    d_={k:[] for k in unique(d.values())}
+    for k in d:
+        d_[d[k]].append(k)
+    return d_        

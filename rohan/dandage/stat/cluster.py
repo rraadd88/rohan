@@ -13,15 +13,14 @@ def get_ddist_dtw(df,window):
 def get_ddist(df,corr=False):
 #     df=df.T
     print(df.shape)
-    method2ddists={}
     print(f"window=",end='')
+    method2ddists={}
     for window in range(1,10,1):
         print(window,end=' ')
         method2ddists[f'DTW (window={window:02d})']=get_ddist_dtw(df,window)
     if corr:
         method2ddists['1-spearman']=dmap2lin((1-df.T.corr(method='spearman')),colvalue_name='distance').set_index(['index','column'])
         method2ddists['1-pearson']=dmap2lin((1-df.T.corr(method='pearson')),colvalue_name='distance').set_index(['index','column'])
-
     method2ddists={k:dmap2lin(method2ddists[k],colvalue_name='distance').set_index(['index','column']) for k in method2ddists}
     ddist=pd.concat(method2ddists,axis=1,)
     ddist.columns=coltuples2str(ddist.columns)
