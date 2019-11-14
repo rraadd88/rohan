@@ -110,3 +110,4 @@ def head_dict(d, lines=5):
     return dict(itertools.islice(d.items(), lines))
 
 def group_list_bylen(l,length): return list(zip(*(iter(l),) * length))
+def sort_list_by_list(l,byl): return [x for x,_ in sorted(zip(l,byl))]
