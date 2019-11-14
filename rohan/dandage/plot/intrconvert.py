@@ -1,14 +1,5 @@
 from rohan.global_imports import *
-
-def f2params(f,test=False):    
-    import inspect
-    sign=inspect.signature(f)
-    params={}
-    for arg in sign.parameters:
-        argo=sign.parameters[arg]
-        params[argo.name]=argo.default
-    #     break
-    return params
+from rohan.dandage.io_fun import f2params
 
 def f2df(f):
     dplot=read_table(f"{f2params(f)['plotp']}.tsv")

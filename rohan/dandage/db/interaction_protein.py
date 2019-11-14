@@ -356,24 +356,32 @@ class intact():
         return dintact_aggmap                     
                           
 
-def get_dint_combo(force=False):
-    dintp='database/interactions_protein/559292/dint.pqt'
+def get_dint_combo(taxid=559292,
+            db2drawp={'biogrid':'database/biogrid/BIOGRID-ORGANISM-3.5.167.tab2/BIOGRID-ORGANISM-Saccharomyces_cerevisiae_S288c-3.5.167.tab2.txt.pqt',
+                     'intact':'database/intact/pub/databases/intact/current/psimitab/intact.pqt',
+                     'string':'database/string/4932/4932.protein.links.v11.0.txt.gz',
+                     'hitpredict':'database/hitpredict/S_cerevisiae_interactions_MITAB-2.5.tgz',
+                     },
+                   dgene_annotp='data_hybridator/data_annot/dgene_annot.tsv',
+                   force=False):
+                          
+    dintp=f'database/interactions_protein/{taxid}/dint.pqt'
     if not exists(dintp) or force:
         dn2df={}
-        dn2df['biogrid']=biogrid.get_dint(taxid=559292, dint_rawp='database/biogrid/BIOGRID-ORGANISM-3.5.167.tab2/BIOGRID-ORGANISM-Saccharomyces_cerevisiae_S288c-3.5.167.tab2.txt.pqt',
+        dn2df['biogrid']=biogrid.get_dint(taxid=559292, dint_rawp=db2drawp['biogrid'],
                     outd=None, experimental_system_type='physical', 
                     force=force, test=False).filter(regex='^interaction ',axis=1).set_index('interaction id')
 
         dn2df['intact']=intact.get_dint(speciesn='559292',
-                    dintact_rawp='database/intact/pub/databases/intact/current/psimitab/intact.pqt',
-                    dgene_annotp='data_hybridator/data_annot/dgene_annot.tsv',
+                    dintact_rawp=db2drawp['intact'],
+                    dgene_annotp=dgene_annotp,
                     force=force).filter(regex='^interaction ',axis=1).set_index('interaction id')
 
-        dn2df['string']=string.get_dint(dint_rawp='database/string/4932/4932.protein.links.v11.0.txt.gz',
-                    dgene_annotp='data_hybridator/data_annot/dgene_annot.tsv',
+        dn2df['string']=string.get_dint(dint_rawp=db2drawp['string'],
+                    dgene_annotp=dgene_annotp,
                     force=force).filter(regex='^interaction ',axis=1).set_index('interaction id')
-        dn2df['hitpredict']=hitpredict.get_int(dint_rawp='database/hitpredict/S_cerevisiae_interactions_MITAB-2.5.tgz',
-                    dgene_annotp='data_hybridator/data_annot/dgene_annot.tsv',
+        dn2df['hitpredict']=hitpredict.get_int(dint_rawp=db2drawp['hitpredict'],
+                    dgene_annotp=dgene_annotp,
                     force=force).filter(regex='^interaction ',axis=1).set_index('interaction id')
 
         dint=pd.concat(dn2df,join='outer',axis=1,sort=True).filter(like='interaction ',axis=1)

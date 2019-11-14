@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-from rohan.dandage.io_sets import merge_dict,s2dict,head_dict
+from rohan.dandage.io_sets import *
 from os.path import dirname
 from os import makedirs
 import yaml
@@ -57,7 +57,8 @@ def to_dict(d,p):
         ValueError(f'supported extensions: .yml .yaml .json')        
         
 def groupby_value(d):
-    d_={k:[] for k in unique(d.values())}
+    d_={k:[] for k in unique_dropna(d.values())}
     for k in d:
-        d_[d[k]].append(k)
+        if d[k] in d_:
+            d_[d[k]].append(k)
     return d_        
