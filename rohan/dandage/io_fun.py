@@ -1,6 +1,6 @@
 import inspect
 from glob import glob
-from os.path import dirname,exists
+from os.path import dirname,exists,splitext,abspath
 from rohan.dandage.io_files import basenamenoext
 from rohan.dandage.io_sets import sort_list_by_list
 import logging
@@ -42,9 +42,11 @@ def get_modulen2funn2params_for_run(modulen2funn2params,cfg,
                                     force=False,
                                     paramns_binary=['force','test','debug','plot']):
     from rohan.dandage.io_strs import replacemany
+    logging.info('steps in the workflow')
     for modulen in modulen2funn2params:
 #         print(sort_stepns(list(modulen2funn2params[modulen].keys())))
         for funn in sort_stepns(list(modulen2funn2params[modulen].keys())):
+            logging.info(f"{modulen}.{funn}")
             paramns=[s for s in modulen2funn2params[modulen][funn].keys() if not s in paramns_binary]
             if len(paramns)<2:
                 logging.error(f'at least two params/arguments are needed. {modulen}.{funn}')
@@ -86,8 +88,30 @@ def get_modulen2funn2params_for_run(modulen2funn2params,cfg,
     return modulen2funn2params,cfg
 
 def run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run):
-    for modulen in modulen2funn2params_for_run:
-        for funn in modulen2funn2params_for_run[modulen]:
+    for modulen in sort_stepns(list(modulen2funn2params_for_run.keys())):
+        for funn in sort_stepns(list(modulen2funn2params_for_run[modulen].keys())):
             if not modulen2funn2params_for_run[modulen][funn] is None:
+                logging.debug(f"running {modulen}.{funn}")
                 __import__(f'{package.__name__}.{modulen}')
                 getattr(getattr(package,modulen),funn)(**modulen2funn2params_for_run[modulen][funn])
+#                 return
+
+def run_package(cfgp,packagen,test=False,force=False,cores=4):
+    from rohan.dandage.io_dict import read_dict,to_dict
+    cfg=read_dict(cfgp)
+    cfg['prjd']=splitext(abspath(cfgp))[0]
+    for k in ['databasep','databasep','dgene_annotp']:
+        cfg[k]=abspath(cfg[k])    
+    from rohan import global_imports
+    cfg=read_dict('prjd/cfg.yml')
+    package=__import__(packagen)
+    modulen2funn2params=get_modulen2funn2params_by_package(package=package,
+                                                           module_exclude=global_imports,
+#                                                                modulen_prefix='curate',
+                                                          )
+    modulen2funn2params_for_run,cfg=get_modulen2funn2params_for_run(modulen2funn2params,cfg,force=force)
+    # to_dict(cfg,'test_cfg.yml')
+    to_dict(modulen2funn2params_for_run,f"{cfg['prjd']}/cfg_modulen2funn2params_for_run.yml")
+    run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run)
+    to_dict(cfg,f"{cfg['prjd']}/cfg.yml")
+    return cfg
