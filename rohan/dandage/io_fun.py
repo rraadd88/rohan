@@ -80,6 +80,10 @@ def get_modulen2funn2params_for_run(modulen2funn2params,cfg,
                         modulen2funn2params[modulen][funn][paramn]=False                        
                 else:
                     logging.error(f"paramn: {paramn} not found for {modulen}.{funn}:{paramn}")
+                    from rohan.dandage.io_dict import to_dict
+                    to_dict(modulen2funn2params,'test/modulen2funn2params.yml')
+                    to_dict(cfg,'test/cfg.yml')
+                    logging.error(f"check test/modulen2funn2params,cfg for debug")
                     return 
                 if paramn.endswith('p') and not exists(modulen2funn2params[modulen][funn][paramn]):
                     logging.warning(f"path {modulen2funn2params[modulen][funn][paramn]} not found for {modulen}.{funn}:{paramn}")
@@ -112,6 +116,6 @@ def run_package(cfgp,packagen,test=False,force=False,cores=4):
     modulen2funn2params_for_run,cfg=get_modulen2funn2params_for_run(modulen2funn2params,cfg,force=force)
     # to_dict(cfg,'test_cfg.yml')
     to_dict(modulen2funn2params_for_run,f"{cfg['prjd']}/cfg_modulen2funn2params_for_run.yml")
-    run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run)
     to_dict(cfg,f"{cfg['prjd']}/cfg.yml")
+    run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run)
     return cfg

@@ -68,3 +68,56 @@ def set_sizelegend(fig,ax,ax_pc,sizes,label,scatter_size_scale,xoff=0.05,bbox_to
     axins.text(axins.get_xlim()[1]+xoff,np.mean(np.arange(0,3,1)),label,rotation=90,ha='left',va='center')
     axins.set_axis_off() 
     return fig
+
+def get_subplot_dimentions(ax=None):
+    ## thanks to https://github.com/matplotlib/matplotlib/issues/8013#issuecomment-285472404
+    """Calculate the aspect ratio of an axes boundary/frame"""
+    if ax is None:
+        ax = plt.gca()
+    fig = ax.figure
+
+    ll, ur = ax.get_position() * fig.get_size_inches()
+    width, height = ur - ll
+    return width, height,height / width
+def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False):
+    """
+    %run ../../../rohan/rohan/dandage/plot/ax_.py
+    # fig, ax = plt.subplots()
+    for figsize in [
+    #                     [4,3],[3,4],
+                    [4,3],[6,4],[8,6]
+                    ]:
+        fig=plt.figure(figsize=figsize)
+        ax=plt.subplot()
+        ax.yaxis.tick_left()
+        ax.tick_params(axis='y', colors='black', labelsize=15)
+        ax.tick_params(axis='x', colors='black', labelsize=15)
+        ax.grid(b=True, which='major', color='#D3D3D3', linestyle='-')
+        ax.scatter([1,2,3,4,5],[8,4,3,2,1], alpha=1.0)
+        elen2params={}
+        elen2params['xlim']=ax.get_xlim()
+        elen2params['ylim']=ax.get_ylim()
+        set_logo(imp='logos/Scer.svg.png',ax=ax,test=False,
+        #          bbox_to_anchor=[1,1,0,0.13],
+        #          size=0.5
+                )    
+        plt.tight_layout()
+    """
+    import matplotlib.image as image
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+    im = image.imread(imp)
+    width, height,aspect_ratio=get_subplot_dimentions(ax)
+    axins = inset_axes(ax, 
+                       width=size, height=size,
+                       bbox_to_anchor=[1,1,0,size/(height)] if bbox_to_anchor is None else bbox_to_anchor,
+                       bbox_transform=ax.transAxes, 
+                       loc=loc, 
+                       borderpad=0)
+    axins.imshow(im, aspect='auto',alpha=1,zorder=-2)
+    if not test:
+        axins.set_axis_off()
+    else:
+        print(width, height,aspect_ratio,size/(height*2))
+    return axins
+
+
