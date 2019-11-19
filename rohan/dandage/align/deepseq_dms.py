@@ -106,7 +106,7 @@ def get_codon_mutations(cfg,test=False):
             break
     return refn2dn2dss
                        
-def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X'):
+def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X',label='(log10 scale)'):
     if all(dplot.sum()==0):
         return None
     dplot=dplot.sort_index(axis=0)
@@ -117,7 +117,7 @@ def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X'):
     plt.figure(figsize=[len(dplot.columns)/2.25,len(dplot.index)/2.5])
     ax=plt.subplot()
     ax=sns.heatmap(dplot,xticklabels=dplot.columns,
-               yticklabels=dplot.index,ax=ax,cbar_kws={'label':'(on log10 scale)'},cmap='Reds',)
+               yticklabels=dplot.index,ax=ax,cbar_kws={'label':label},cmap='Reds',)
     dplot_annot_absent=dplot.applymap(lambda x : annotation_null if pd.isnull(x) else '')
     def cat_(x):return x.index + x.name.split(' ')[1]
     dplot_annot_syn=dplot.apply(cat_).applymap(lambda x : annotation_syn if len(set(x))==1 else '')
@@ -126,6 +126,7 @@ def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X'):
     loc='left',ha='left')
     ax.set_ylim(len(dplot),0)
     return ax
+
 def get_mutation_matrices(cfg):
     refn2dn2dss=get_codon_mutations(cfg)
     #save tables

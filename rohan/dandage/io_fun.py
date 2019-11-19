@@ -107,7 +107,6 @@ def run_package(cfgp,packagen,test=False,force=False,cores=4):
     for k in ['databasep','databasep','dgene_annotp']:
         cfg[k]=abspath(cfg[k])    
     from rohan import global_imports
-    cfg=read_dict('prjd/cfg.yml')
     package=__import__(packagen)
     modulen2funn2params=get_modulen2funn2params_by_package(package=package,
                                                            module_exclude=global_imports,
