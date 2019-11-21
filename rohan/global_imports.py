@@ -1,8 +1,5 @@
 # base
 from pprint import pprint
-# data
-import pandas as pd
-import numpy as np
 # stats    
 import scipy as sc
 from rohan.dandage.plot.annot import *
@@ -18,7 +15,6 @@ from rohan.dandage.io_dfs import *
 from rohan.dandage.io_dict import *
 from rohan.dandage.io_strs import get_bracket
 from rohan.dandage.io_sets import *
-from rohan.dandage.io_files import *
 # plots
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -46,3 +42,5 @@ print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log';get_ipython().run_li
 
 # debug
 import logging
+from tqdm import tqdm
+tqdm.pandas()

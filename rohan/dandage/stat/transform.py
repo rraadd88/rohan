@@ -17,15 +17,17 @@ def df2zscore(df,cols=None):
         cols=df.columns
     return (df[cols] - df[cols].mean())/df[cols].std()
 
-def plog(x,p = 0.5):
+def plog(x,p = 0.5,base=None):
     """
     psudo-log
 
     :param x: number
     :param p: number added befor logarithm 
     """
-
-    return np.log2(x+p)
+    if base is None:
+        return np.log(x+p)
+    else:
+        return np.log2(x+p)/np.log(base)
 
 def glog(x,l = 2):
     """

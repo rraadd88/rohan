@@ -777,3 +777,16 @@ def get_colsubset2stats(dannot,colssubset=None):
     colsubset2classns=dannot_stats[dannot_stats.apply(lambda x: ~pd.isnull(x),axis=0)].apply(lambda x: dropna(x),axis=0).to_dict()
     colsubset2classns={k:[int(i) for i in colsubset2classns[k]] for k in colsubset2classns}
     return dannot_stats,colsubset2classes,colsubset2classns
+
+def append_similar_cols(df,suffixes=None,prefixes=None,ffixes=None,test=False):
+    import re
+    if prefixes is None and suffixes is None and ffixes is None:
+        logging.error('provide either prefixes or suffixes or ffixes')
+    dn2df={}
+    for f in (suffixes if not suffixes is None else prefixes if not prefixes is None else ffixes): 
+        reg=f"{'$' if suffixes is None else '.*'}{f}{'$' if prefixes is None else '.*'}"
+        df_=df.filter(regex=reg,axis=1)
+        dn2df[f]=df_.rename(columns={c:c.replace(f,'') if not c==f else 'ffix' for c in df_})
+    if test:
+        print({k:dn2df[k].columns.tolist() for k in dn2df})
+    return pd.concat(dn2df,axis=0)
