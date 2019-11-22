@@ -1,5 +1,6 @@
 from rohan.global_imports import *
 from rohan.dandage.plot.annot import add_corner_labels
+from rohan.dandage.io_sys import is_interactive_notebook
 
 def scatter_overlap(ax,funs):
     axs_corr=np.repeat(ax,len(funs)) 
@@ -44,6 +45,8 @@ def savefig(plotp,tight_layout=True,fmts=[],savepdf=False,normalise_path=True):
             for fmt in fmts:
                 plt.savefig(f"{plotp}.{fmt}",format=fmt)
     plt.clf();plt.close()
+    if is_interactive_notebook():
+        print(plotp)
     return plotp
 
 def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,params_savefig={}):

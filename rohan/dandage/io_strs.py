@@ -11,7 +11,7 @@
 import re
 import logging
 import numpy as np
-from rohan.dandage.io_nums import str2num
+from rohan.dandage.io_nums import str2num,format_number_human
 
 # convert
 def s2re(s,ss2re):
@@ -272,3 +272,4 @@ def get_common_preffix(ps):
         if not all([p[:i]==ps[0][:i] for p in ps]):
             break
     return ps[0][:i-1]
+

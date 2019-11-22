@@ -23,6 +23,7 @@ dtypes
 
 
 from rohan.dandage.io_files import *
+from rohan.dandage.io_sys import is_interactive_notebook
 import pandas as pd
 import numpy as np
 
@@ -124,8 +125,12 @@ def to_table(df,p):
         makedirs(dirname(p),exist_ok=True)
     if p.endswith('.tsv') or p.endswith('.tab'):
         df.to_csv(p,sep='\t')
+        if is_interactive_notebook():
+            print(p)
     elif p.endswith('.pqt') or p.endswith('.parquet'):
         to_table_pqt(df,p)
+        if is_interactive_notebook():
+            print(p)
     else: 
         logging.error(f'unknown extension {p}')
 def to_table_pqt(df,p):
@@ -460,6 +465,29 @@ def dflin2dfbinarymap(dflin,col1,col2,params_df2submap={'aggfunc':'sum','binary'
     if test:           
         logging.debug(df_map_symm.unstack().unique())
     return df_map_symm
+
+def symmetric_dflin(df,col1,col2,colval,sort=False,dropna=False):
+    """
+    col1 becomes columns
+    col2 becomes index    
+    """
+    ds=df.set_index([col1,col2])[colval].unstack()
+    for i in set(ds.index.tolist()).difference(ds.columns.tolist()):
+        ds.loc[:,i]=np.nan
+    for i in set(ds.columns.tolist()).difference(ds.index.tolist()):
+        ds.loc[i,:]=np.nan
+    arr=ds.values
+    arr2=np.triu(arr) + np.triu(arr,1).T
+    dmap=pd.DataFrame(arr2,columns=ds.columns,index=ds.columns)
+    if sort:
+        index=dmap.mean().sort_values().index
+        dmap=dmap.loc[index,index]
+    if dropna:
+        print(dmap.shape,end='')
+        dmap=dmap.dropna(axis=1,how='all').dropna(axis=0,how='all')
+        print(dmap.shape)        
+    return dmap
+
 
 def filldiagonal(df,filler=None):
     if df.shape[0]!=df.shape[1]:

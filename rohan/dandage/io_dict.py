@@ -44,7 +44,7 @@ def read_dict(p):
     elif p.endswith('.json'):
         return read_json(p)
     else:
-        ValueError(f'supported extensions: .yml .yaml .json')
+        logging.error(f'supported extensions: .yml .yaml .json')
 def to_dict(d,p):
     p=p.replace(' ','_')
     if not exists(dirname(p)) and dirname(p)!='':
@@ -61,4 +61,10 @@ def groupby_value(d):
     for k in d:
         if d[k] in d_:
             d_[d[k]].append(k)
-    return d_        
+    return d_       
+
+def dictwithtuplekeys2nested(d):
+    #https://stackoverflow.com/a/40130494/3521099
+    from itertools import groupby
+    return {g: {k[1]: v for k, v in items} 
+           for g, items in groupby(sorted(d.items()), key=lambda kv: kv[0][0])}
