@@ -1,11 +1,8 @@
 from rohan.global_imports import *
 from rohan.dandage.figs.figure import *
-
+    
 def fun2dplot(fun,test=False,colsindex=[],ret_params=False):
-    args=fun2args(fun)
-    print(args) if test else None
-    paramsp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.yml"
-    dplotp=f"{dirname(args['plotp'])}/{basenamenoext(args['plotp'])}.tsv"
+    paramsp,dplotp=plotfun2ps(fun,test=False)
     dplot=read_table(dplotp)
     ## filter dplot columns
     if exists(paramsp) and len(dplot)>3:

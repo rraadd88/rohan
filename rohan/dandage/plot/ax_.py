@@ -113,7 +113,8 @@ def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False):
                        bbox_transform=ax.transAxes, 
                        loc=loc, 
                        borderpad=0)
-    axins.imshow(im, aspect='auto',alpha=1,zorder=-2)
+    axins.imshow(im, aspect='auto',alpha=1,zorder=-2,
+                 interpolation='catrom')
     if not test:
         axins.set_axis_off()
     else:
