@@ -14,24 +14,17 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     if ax is None:
         ax=plt.subplot(111)
     if scafmt=='hexbin':
-        ax=d.plot.hexbin(x=xcol,y=ycol,ax=ax,vmax=vmax,gridsize=25,cmap=cmap)
-    elif scafmt=='sca':
-        ax=d.plot.scatter(x=xcol,y=ycol,ax=ax,color='b',alpha=0.1)
-    from rohan.dandage.stat.corr import get_corr_str
-    textstr=get_corr_str()
-    props = dict(facecolor='w', alpha=0.3)
-    ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,
-            ha='left',va='top',bbox=props)
-    if scafmt=='hexbin':
         if cbar_label is None and d.index.name is None:
             cbar_label='# of points'
         else:
             cbar_label=f"# of {d.index.name}s"
-        ax.text(ax.get_xlim()[1],ax.get_ylim()[0],cbar_label,
-                rotation=90,
-#                 ha='right',
-                va='bottom'
-               )
+        hb = ax.hexbin(d[xcol], d[ycol], gridsize=25, cmap=cmap)
+        cb = plt.colorbar(hb, ax=ax)
+        cb.set_label(cbar_label)            
+        
+#         ax=d.plot.hexbin(x=xcol,y=ycol,ax=ax,vmax=vmax,gridsize=25,cmap=cmap)
+    elif scafmt=='sca':
+        ax=d.plot.scatter(x=xcol,y=ycol,ax=ax,color='b',alpha=0.1)    
     if axscale_log:
         ax.set_xscale("log", nonposx='clip')
         ax.set_yscale("log", nonposy='clip')
@@ -39,8 +32,15 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
 #     ax.set_yscale("log")
 #     ax.set_xlim(0,1)
 #     ax.set_ylim(0,1)
-    if not d.columns.name is None:
-        ax.set_title(d.columns.name)
+    from rohan.dandage.stat.corr import get_corr_str
+    textstr=get_corr_str(d[xcol],d[ycol],method=method).replace('\n',', ')
+#     props = dict(facecolor='w', alpha=0.3)
+#     ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,
+#             ha='left',va='top',bbox=props)
+#     print(d.columns.name)
+    ax.set_title(f"{'' if d.columns.name is None else d.columns.name+' '}{textstr}",loc='left',
+                 ha='left')
+    
     plt.tight_layout()
     if plotsave:
         if plotp is None:
