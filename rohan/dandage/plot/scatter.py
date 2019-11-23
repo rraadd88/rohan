@@ -1,12 +1,11 @@
 from rohan.global_imports import *
 from rohan.dandage.io_strs import make_pathable_string
-from scipy import stats
 #rasterized=True
 # sns scatter_kws={'s':5, 'alpha':0.3, 'rasterized':True}
 
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
-             scafmt='hexbin',
-            rp=True,rs=True,vmax=10,cbar_label=None,
+             scafmt='hexbin',method="spearman",pval=True,
+             cmap='Reds',vmax=10,cbar_label=None,
              axscale_log=False,
             ax=None,
             plotp=None,plotsave=False):
@@ -15,17 +14,11 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     if ax is None:
         ax=plt.subplot(111)
     if scafmt=='hexbin':
-        ax=d.plot.hexbin(x=xcol,y=ycol,ax=ax,vmax=vmax,gridsize=25,cmap='Blues')
+        ax=d.plot.hexbin(x=xcol,y=ycol,ax=ax,vmax=vmax,gridsize=25,cmap=cmap)
     elif scafmt=='sca':
         ax=d.plot.scatter(x=xcol,y=ycol,ax=ax,color='b',alpha=0.1)
-    rpear=stats.pearsonr(d[xcol], d[ycol])[0]
-    rspea=stats.spearmanr(d[xcol], d[ycol])[0]
-    if rp and rs:
-        textstr=f'$r$={rpear:.2f}\n$\\rho$={rspea:.2f}'
-    elif rp and not rs:
-        textstr=f'$r$={rpear:.2f}'
-    elif not rp and rs:
-        textstr=f'$\\rho$={rspea:.2f}'
+    from rohan.dandage.stat.corr import get_corr_str
+    textstr=get_corr_str()
     props = dict(facecolor='w', alpha=0.3)
     ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,
             ha='left',va='top',bbox=props)

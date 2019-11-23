@@ -28,8 +28,10 @@ def is_interactive_notebook():
     # thanks to https://stackoverflow.com/a/22424821/3521099
     try:
         from IPython import get_ipython
+        if not hasattr(get_ipython(),'config'):
+            return False        
         if 'IPKernelApp' not in get_ipython().config:  # pragma: no cover
-            return False
+            return False        
     except ImportError:
         return False
     return True
