@@ -44,9 +44,8 @@ def savefig(plotp,tight_layout=True,fmts=[],savepdf=False,normalise_path=True):
         if len(fmts)!=0:
             for fmt in fmts:
                 plt.savefig(f"{plotp}.{fmt}",format=fmt)
-    plt.clf();plt.close()
-    if is_interactive_notebook():
-        print(plotp)
+    if not is_interactive_notebook():
+        plt.clf();plt.close()
     return plotp
 
 def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,params_savefig={}):
