@@ -784,6 +784,13 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids,params_qc
                 ids_subset=df.loc[(df[col_subset]==subset),col_ids].dropna().unique()
                 df.loc[(df[col_subset]==subset),f'P {col_fracby} {col_subset}']=len(set(ids_subset).intersection(ids))/len(ids_subset)
     return df
+#filter df
+def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
+    qry = f' {logic} '.join([f"`{k}` {sign} '{v}'" for k,v in d.items()])
+    df1=df.query(qry)
+    if test:
+        print(df1.loc[:,list(d.keys())].drop_duplicates())
+    return df1
 
 # import from stat
 from rohan.dandage.stat.transform import dflogcol
