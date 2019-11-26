@@ -35,7 +35,8 @@ def get_colors(shade='light',
     if bright:            
         for l in list(itertools.combinations(dcolors.loc[:,'bright'], 2)):
             plotc(cs)
-
+def rgbfloat2int(rgb_float):return [round(i*255) for i in rgb_float]
+def rgb2hex(rgb): return f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
 def saturate_color(color, amount=0.5):
     """
     Lightens the given color by multiplying (1-luminosity) by the given amount.
