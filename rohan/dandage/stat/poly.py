@@ -26,3 +26,17 @@ def check_fit(d,xcol,ycol,degmax=5):
 #     metrics.plot.barh('standard error')
     plt.tight_layout()
     return metrics
+
+def mlr_2(df,coly,colxs):
+    from sklearn.preprocessing import PolynomialFeatures
+    from sklearn.linear_model import LinearRegression
+    poly = PolynomialFeatures(interaction_only=True,include_bias = False)
+    X=poly.fit_transform(df.loc[:,colxs])
+    # pd.DataFrame()
+    y=df.loc[:,coly].tolist()
+    reg = LinearRegression().fit(X, y)
+    label_score=f"$r^2$={reg.score(X, y):.2g}"
+    label_eqn="$y$="+''.join([f"{l[0]:+.2g}*{l[1]}" for l in zip(reg.coef_,['$x_1$','$x_2$','$x_1$*$x_2$'])])[1:]
+    dplot=pd.DataFrame({f'{coly}': y,
+    f'{coly} predicted': reg.predict(X),})
+    return label_score,label_eqn,dplot

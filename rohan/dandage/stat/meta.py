@@ -1,4 +1,4 @@
-from rohan.global_import import *
+from rohan.global_imports import *
 
 def compare_bools_scores(df0,colbool,colscore,colpivotindex,colpivotcolumns):
     from rohan.dandage.stat.binary import compare_bools_jaccard_df

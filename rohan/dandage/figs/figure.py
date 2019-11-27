@@ -2,6 +2,13 @@ from rohan.global_imports import *
 from rohan.dandage.plot.annot import add_corner_labels
 from rohan.dandage.io_sys import is_interactive_notebook
 
+def get_subplots(nrows,ncols,total=None):
+    idxs=list(itertools.product(range(nrows),range(ncols)))
+    if not total is None:
+        idxs=idxs[:total]
+    print(idxs)
+    return [plt.subplot2grid([nrows,ncols],idx,1,1) for idx in idxs]
+
 def scatter_overlap(ax,funs):
     axs_corr=np.repeat(ax,len(funs)) 
     for fi,(f,ax) in enumerate(zip(funs,axs_corr)):
