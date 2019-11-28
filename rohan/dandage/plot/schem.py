@@ -55,5 +55,7 @@ def plot_schem(imp,ax=None,force=False):
         pngp=imp
     im=plt.imread(pngp)
     ax.imshow(im,interpolation='catrom')
-    ax.axis('off')
+    ax.set(**{'xticks':[],'yticks':[],'xlabel':'','ylabel':''})
+    ax.margins(0)    
+    ax.axis('off')    
     return ax    

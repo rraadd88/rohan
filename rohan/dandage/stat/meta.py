@@ -16,3 +16,12 @@ def compare_bools_scores(df0,colbool,colscore,colpivotindex,colpivotcolumns):
     dmap.columns.name='$r_p$'
     dmap.index.name='Jaccard index'
     return dmap
+
+def compare_by_zscore(df,col1,col2,coldn='comparison'):
+    from rohan.dandage.stat.transform import plog
+    df[f'{coldn} ratio {col1}/{col2} (log2 scale)']=(df[col1].apply(lambda x: plog(x,p=0.5,base=2))-df[col2].apply(lambda x: plog(x,p=0.5,base=2)))
+    from scipy.stats import zscore
+    df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore']=zscore(df[f'{coldn} ratio {col1}/{col2} (log2 scale)'])
+    df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore significantly high']=df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore']>=2
+    df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore significantly low']=df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore']<=-2
+    return df
