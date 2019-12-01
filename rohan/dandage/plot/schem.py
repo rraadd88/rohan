@@ -48,11 +48,11 @@ def plot_fitland(xys,ns=None,widths=None,
 
 def plot_schem(imp,ax=None,force=False):
     from rohan.dandage.figs.convert import vector2raster
-    ax=plt.subplot() if ax is None else ax
     if splitext(imp)[1]=='.svg':
         pngp=vector2raster(imp,force=force)
     else:
         pngp=imp
+    ax=plt.subplot() if ax is None else ax
     im=plt.imread(pngp)
     ax.imshow(im,interpolation='catrom')
     ax.set(**{'xticks':[],'yticks':[],'xlabel':'','ylabel':''})

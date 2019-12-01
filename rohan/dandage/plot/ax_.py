@@ -1,6 +1,4 @@
-import numpy as np
-import matplotlib.pyplot as plt 
-import logging
+from rohan.global_imports import * 
 
 def set_equallim(ax,diagonal=False):
     min_,max_=np.min([ax.get_xlim()[0],ax.get_ylim()[0]]),np.max([ax.get_xlim()[1],ax.get_ylim()[1]])
@@ -103,9 +101,13 @@ def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False):
                 )    
         plt.tight_layout()
     """
-    import matplotlib.image as image
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-    im = image.imread(imp)
+    from rohan.dandage.figs.convert import vector2raster
+    if splitext(imp)[1]=='.svg':
+        pngp=vector2raster(imp,force=force)
+    else:
+        pngp=imp
+    im = plt.imread(pngp)
     width, height,aspect_ratio=get_subplot_dimentions(ax)
     axins = inset_axes(ax, 
                        width=size, height=size,
@@ -116,6 +118,9 @@ def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False):
     axins.imshow(im, aspect='auto',alpha=1,zorder=-2,
                  interpolation='catrom')
     if not test:
+        axins.set(**{'xticks':[],'yticks':[],'xlabel':'','ylabel':''})
+        axins.margins(0)    
+        axins.axis('off')    
         axins.set_axis_off()
     else:
         print(width, height,aspect_ratio,size/(height*2))

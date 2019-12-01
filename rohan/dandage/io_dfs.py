@@ -825,3 +825,7 @@ def append_similar_cols(df,suffixes=None,prefixes=None,ffixes=None,test=False):
     if test:
         print({k:dn2df[k].columns.tolist() for k in dn2df})
     return pd.concat(dn2df,axis=0)
+
+
+def dict2df(d):
+    return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index()

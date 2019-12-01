@@ -27,16 +27,10 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     if axscale_log:
         ax.set_xscale("log", nonposx='clip')
         ax.set_yscale("log", nonposy='clip')
-#     ax.set_xscale("log")
-#     ax.set_yscale("log")
-#     ax.set_xlim(0,1)
-#     ax.set_ylim(0,1)
     from rohan.dandage.stat.corr import get_corr_str
     textstr=get_corr_str(d[xcol],d[ycol],method=method)#.replace('\n',', ')
-#     props = dict(facecolor='w', alpha=0.3,frameon=False)
     ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,
             ha='left',va='top',
-#             bbox=props
            )
     ax.set_title(f"{'' if d.columns.name is None else d.columns.name+' '}",loc='left',
                  ha='left')    
