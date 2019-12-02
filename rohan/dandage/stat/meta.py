@@ -28,3 +28,14 @@ def compare_by_zscore(df,col1,col2,coldn='comparison',log=True):
     df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore significantly high']=df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore']>=2
     df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore significantly low']=df[f'{coldn} ratio {col1}/{col2} (log2 scale) zscore']<=-2
     return df
+
+def get_stats_by_bins(df,colx,coly,fun,bins=4):
+    print(df.shape,end=' ')
+    df=df.dropna(subset=[colx,coly])
+    print(df.shape)
+    dn2df={}
+    dn2df['all']=pd.Series({'all':fun(df[colx],df[coly])})
+    for col in [colx,coly]:
+        df[f"{col} bins"]=pd.qcut(df[col],bins,duplicates='drop').apply(lambda x: x.mid)
+        dn2df[f"{col} bins"]=df.groupby([f"{col} bins"]).apply(lambda df : fun(df[colx],df[coly]))
+    return pd.DataFrame(pd.concat(dn2df))
