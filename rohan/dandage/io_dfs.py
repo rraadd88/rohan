@@ -828,4 +828,4 @@ def append_similar_cols(df,suffixes=None,prefixes=None,ffixes=None,test=False):
 
 
 def dict2df(d):
-    return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index()
+    return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':'key',0:'value'})
