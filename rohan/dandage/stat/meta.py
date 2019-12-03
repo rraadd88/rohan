@@ -30,6 +30,7 @@ def compare_by_zscore(df,col1,col2,coldn='comparison',log=True):
     return df
 
 def get_stats_by_bins(df,colx,coly,fun,bins=4):
+    from rohan.dandage.stat.variance import confidence_interval_95
     print(df.shape,end=' ')
     df=df.dropna(subset=[colx,coly])
     print(df.shape)
@@ -38,4 +39,5 @@ def get_stats_by_bins(df,colx,coly,fun,bins=4):
     for col in [colx,coly]:
         df[f"{col} bins"]=pd.qcut(df[col],bins,duplicates='drop').apply(lambda x: x.mid)
         dn2df[f"{col} bins"]=df.groupby([f"{col} bins"]).apply(lambda df : fun(df[colx],df[coly]))
+        
     return pd.DataFrame(pd.concat(dn2df))
