@@ -81,3 +81,12 @@ def reset_legend_colors(ax):
         lh.set_alpha(1)
 #         lh._legmarker.set_alpha(1)
     return ax
+              
+def get_val2color(ds,vmin=None,vmax=None,cmap='Reds'):
+    if vmin is None:
+        vmin=ds.min()
+    if vmax is None:
+        vmax=ds.max()
+    ds_norm=(ds-vmin)/(vmax-vmin)
+    colors = [plt.get_cmap(cmap)(i) for i in ds_norm]
+    return colors              
