@@ -87,6 +87,6 @@ def get_val2color(ds,vmin=None,vmax=None,cmap='Reds'):
         vmin=ds.min()
     if vmax is None:
         vmax=ds.max()
-    ds_norm=(ds-vmin)/(vmax-vmin)
-    colors = [plt.get_cmap(cmap)(i) for i in ds_norm]
-    return colors              
+    colors = [(plt.get_cmap(cmap) if isinstance(cmap,str) else cmap)((i-vmin)/(vmax-vmin)) for i in ds]
+    legend2color = {i:(plt.get_cmap(cmap) if isinstance(cmap,str) else cmap)((i-vmin)/(vmax-vmin)) for i in [vmin,np.mean([vmin,vmax]),vmax]}
+    return colors,legend2color
