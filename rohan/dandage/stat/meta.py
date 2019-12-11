@@ -1,5 +1,7 @@
 from rohan.global_imports import *
 
+from rohan.dandage.plot.annot import get_dmetrics
+
 def compare_bools_scores(df0,colbool,colscore,colpivotindex,colpivotcolumns):
     from rohan.dandage.stat.binary import compare_bools_jaccard_df
     df1=pd.concat({'correlation':dmap2lin(df0.pivot_table(columns=colpivotcolumns,index=colpivotindex,values=colscore).corr(method='pearson')),
