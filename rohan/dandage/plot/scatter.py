@@ -7,6 +7,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
              scafmt='hexbin',method="spearman",pval=True,
              cmap='Reds',vmax=10,cbar_label=None,
              axscale_log=False,
+             params_scatter={},
             ax=None,
             plotp=None,plotsave=False):
     d=d.dropna(subset=[xcol,ycol],how='any')
@@ -23,7 +24,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         cb.set_label(cbar_label)            
         ax.set(**{'xlabel':xcol,'ylabel':ycol})
     elif scafmt=='sca':
-        ax=d.plot.scatter(x=xcol,y=ycol,ax=ax,color='b',alpha=0.1)    
+        ax=d.plot.scatter(x=xcol,y=ycol,ax=ax,**params_scatter)    
     if axscale_log:
         ax.set_xscale("log", nonposx='clip')
         ax.set_yscale("log", nonposy='clip')

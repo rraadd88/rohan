@@ -87,3 +87,16 @@ def get_dnds(x,pal2nald,clustalop,codemlp,dndsd,fastad,test=False):
             runbashcmd(com,test=test)
     codemltxtp2nums(codemltxtp)
     #     runbashcmd(com)
+
+    
+def align_blast(subjectfap,queryfaps,test=False,outdp='.'):
+    com=f"diamond makedb --in {subjectfap} -d {basenamenoext(subjectfap)}"
+    print(com) if test else runbashcmd(com,test=True)
+    for queryfap in queryfaps:
+        com=f"diamond blastp --more-sensitive --threads 5 -d {basenamenoext(subjectfap)} -q {queryfap} -o {outdp}/{basenamenoext(queryfap)}.m8"
+        print(com) if test else runbashcmd(com,test=True,logf=open(f"{logp}.{basenamenoext(queryfap)}.log",'a'))
+    return [abspath(f"{outdp}/{basenamenoext(queryfap)}.m8") for queryfap in queryfaps]        
+def read_m8(m8p):
+    m8_cols=['query', 'subject', '% identity', 'alignment length', '# of mistmatches', 'gap openings', 'query start', 'query end', 'subject start', 'subject end', 'E-value', 'bit score']
+    dblast=pd.read_table(m8p,names=m8_cols)
+    return dblast

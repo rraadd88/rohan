@@ -273,3 +273,7 @@ def get_common_preffix(ps):
             break
     return ps[0][:i-1]
 
+def str_split(strng, sep, pos):
+    """https://stackoverflow.com/a/52008134/3521099"""
+    strng = strng.split(sep)
+    return sep.join(strng[:pos]), sep.join(strng[pos:])
