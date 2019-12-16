@@ -38,10 +38,10 @@ def to_json(data,p):
     with open(p, 'w') as outfile:
         json.dump(data, outfile)
         
-def read_dict(p):
-    if p.endswith('.yml') or p.endswith('.yaml'):
+def read_dict(p,fmt=''):
+    if p.endswith('.yml') or p.endswith('.yaml') or fmt=='yml' or fmt=='yaml':
         return read_yaml(p)
-    elif p.endswith('.json'):
+    elif p.endswith('.json') or fmt=='json':
         return read_json(p)
     else:
         logging.error(f'supported extensions: .yml .yaml .json')
