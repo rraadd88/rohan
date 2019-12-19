@@ -118,6 +118,28 @@ def plot_dist_comparison(df,colx,colhue,coly,
         plt.savefig(plotp)    
     return ax
 
+def plot_dist_comparison_pair(dplot,colx,coly,
+                              order,
+                              palette=['r','k'],
+                             ax=None):
+    from rohan.dandage.plot.colors import saturate_color
+    sns.boxplot(data=dplot,x=colx,y=coly,
+                 ax=ax,order=order,palette=[saturate_color(s,0.05) for s in palette],
+                width=0.2,showcaps=False,showfliers=False)
+    ax=sns.swarmplot(data=dplot,y=coly,x=colx,
+                     ax=ax,order=order,palette=palette,
+                    )
+    from rohan.dandage.plot.annot import get_dmetrics
+    dmetrics=get_dmetrics(df=dplot,#.dropna(subset=[colx]), 
+                          metricsby='xs', colx=coly,coly=colx, 
+                 colhue='', xs=dplot[coly].unique(), hues=[], 
+                 alternative='two-sided', 
+                 test=False
+                )
+    ax.text(np.mean(ax.get_xlim()),np.mean(ax.get_ylim()),pval2annot(dmetrics.loc['a',order[0]],fmt='<'),
+           ha='center')
+    ax.set_ylabel('')
+
 def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
                          violin=True,box=True,swarm=False,
                          alternative='two-sided',

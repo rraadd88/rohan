@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import logging
+
 def dflogcol(df,col,base=10,pcount=0):
     if base==10:
         log =np.log10 
@@ -25,6 +27,7 @@ def plog(x,p = 0.5,base=None):
     :param p: number added befor logarithm 
     """
     if base is None:
+        logging.warning(f"base is {base}")
         return np.log(x+p)
     else:
         return np.log2(x+p)/np.log(base)
