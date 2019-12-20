@@ -319,7 +319,7 @@ def run_demupliplex(cfg,test=False):
     oligo2seq=read_fasta(cfg['oligo2seqp'])
     
     for i in [1,2]:
-        cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/Undetermined*_R{i}_*.fastq")[0]
+        cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/*_R{i}_*.fastq")[0]
 
     cfg['sample2bcr1r2'],cfg['sample2primersr1r2'],cfg['sample2fragsr1r2'],_,cfg['linkerr1r2']=get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq)
     cfg['sample2readidsp']=f"{cfg['prjd']}/sample2readids.json"
@@ -348,6 +348,7 @@ def run_demupliplex(cfg,test=False):
     # demultiplex
     if not exists(cfg['sample2readidsp']):
         print(cfg['prjd'])
+        logging.info('running make_chunks')
         chunk_cfgps=make_chunks(cfg)
         cfg=read_dict(cfgp_)
         print(cfg['prjd'])

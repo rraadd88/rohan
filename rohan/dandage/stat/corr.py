@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import scipy as sc
+import logging
 
 def df2corrmean(df):
     return df.corr(method='spearman').replace(1,np.nan).mean().mean()
@@ -11,6 +12,12 @@ def corrdfs(df1,df2,method):
     df1 in columns
     df2 in rows    
     """
+    if len(df1)!=len(df2):
+        from rohan.dandage.io_sets import list2intersection
+        index_common=list2intersection([df1.index.tolist(),df2.index.tolist()])
+        df1=df1.loc[index_common,:]
+        df2=df2.loc[index_common,:]
+        logging.warning('intersection of index is used for correlations')
     dcorr=pd.DataFrame(columns=df1.columns,index=df2.columns)
     dpval=pd.DataFrame(columns=df1.columns,index=df2.columns)
     for c1 in df1:
