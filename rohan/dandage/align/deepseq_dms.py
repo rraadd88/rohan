@@ -23,7 +23,6 @@ def plot_dntmat_mut(dntmat_mut,plotp,title,params_ax_set={},yaxis_fmt='%1.1e'):
     plt.tight_layout()
     savefig(plotp)
     
-    
 def get_codon_mutations(cfg,test=False):
     if not 'test' in cfg:
         cfg['test']=test

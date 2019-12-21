@@ -77,7 +77,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
             return get_align_metrics(align_global(s1,s2))[1]
         
     from rohan.dandage.io_dict import sort_dict
-    sample2reads={sample:[] for sample in list(sample2bcr1r2.keys())+["undetermined barcode","undetermined linker"]}
+    sample2reads={sample:[] for sample in list(sample2bcr1r2.keys())+["undetermined_barcode","undetermined_linker"]}
     for ri,(r1,r2) in enumerate(zip(fastqr1_reads,fastqr2_reads)):
         if test and np.remainder(ri,100000)==0:
             print(ri,end=' ')
@@ -101,9 +101,9 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
                     sample=sort_dict(sample2alignmentscore,1,out_list=True)[-1][0]
                     sample2reads[sample].append(r1.id)
                 else:
-                    sample2reads["undetermined barcode"].append(r1.id)
+                    sample2reads["undetermined_barcode"].append(r1.id)
             else:
-                sample2reads["undetermined linker"].append(r1.id)
+                sample2reads["undetermined_linker"].append(r1.id)
         if test and ri>1000:
             break
     if outp is None:
@@ -192,6 +192,7 @@ def get_read_counts_bystep(cfg):
         dfs.append(df_)
     #     break
     dread_counts=pd.concat(dfs,axis=1,sort=False).sort_index(axis=1)
+    dread_counts.index='sample name'
     return dread_counts
                          
 def plot_qc(cfg):
@@ -273,17 +274,17 @@ def make_chunks(cfg_chunk):
     del cfg_,cfg_chunk
     return chunk_cfgps
 
-    logging.info(f'running {basenamenoext(cfgp)}')
-    cfg=read_dict(cfgp)
-    fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
-    fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
-    logging.info('read the fastq files')
-    if not exists(cfg['sample2readidsp']):
-        demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
-                        linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
-                        alignment_score_coff=cfg['alignment_score_coff'],
-                        outp=cfg['sample2readidsp'],
-                        test=False)
+#     logging.info(f'running {basenamenoext(cfgp)}')
+#     cfg=read_dict(cfgp)
+#     fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
+#     fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
+#     logging.info('read the fastq files')
+#     if not exists(cfg['sample2readidsp']):
+#         demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
+#                         linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
+#                         alignment_score_coff=cfg['alignment_score_coff'],
+#                         outp=cfg['sample2readidsp'],
+#                         test=False)
                                 
 def run_chunk_demultiplex_readids(cfgp):
     logging.info(f'running {basenamenoext(cfgp)}')
@@ -314,6 +315,12 @@ def run_demupliplex(cfg,test=False):
     cfg['test']=test
     to_dict(cfg,f"{cfg['prjd']}/input_cfg.yaml")
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['reference','sample name'])
+    cfg['barcode2samplep']=f"{cfg['prjd']}/barcode2sample.yml"
+    if not exists(cfg['barcode2samplep']):
+        dbarcodes['barcodes']=dbarcodes.loc[:,['row for','col rev','plate for','plate rev']].apply(lambda x: '; '.join([f"{k}:{x.to_dict()[k]}" for k in x.to_dict()]),axis=1)
+        barcode2sample=dbarcodes.groupby('barcodes').agg({'sample name':list}).to_dict()['sample name']
+        to_dict(barcode2sample,f"{cfg['prjd']}/barcode2sample.yml")            
+    
     sample2refn=dbarcodes.set_index('sample name')['reference'].to_dict()
     bc2seq=read_fasta(cfg['bc2seqp'])
     oligo2seq=read_fasta(cfg['oligo2seqp'])
@@ -367,7 +374,7 @@ def run_demupliplex(cfg,test=False):
         dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
 #         if not exists(dirp):                                 
         [f(f'processing demultiplexed sample: {sample}') for f in [logging.info,print]]
-        if not sample.startswith('undetermined '):
+        if not sample.startswith('undetermined_'):
             outp=f"{dirp}/daligned_{sample2refn[sample]}.pqt"
             if not exists(outp):
                 if len(sample2readids[sample])>0:
