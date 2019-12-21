@@ -9,23 +9,23 @@ from Bio import SeqIO
 from rohan.dandage.io_seqs import *
 from rohan.dandage.align.deepseq import get_aligned,get_daligned
 
-def get_alignment_score_coff(sample2bcr1r2):
+def get_alignment_score_coff(barcode2bcr1r2):
     """
-    :param sample2bcr1r2: sample->barcode dict
+    :param barcode2bcr1r2: sample->barcode dict
     """
     alignment_scores=[]
     si1_=0
-    for si1,s1 in enumerate(sample2bcr1r2): 
-        for si2,s2 in enumerate(sample2bcr1r2):
+    for si1,s1 in enumerate(barcode2bcr1r2): 
+        for si2,s2 in enumerate(barcode2bcr1r2):
             if si1>si2:
                 if si1>si1_:
                     print(si1,end=' ')
                 si1_=si1
-                alignment_scores.append(get_align_metrics(align_global(sample2bcr1r2[s1],sample2bcr1r2[s2]))[1])
+                alignment_scores.append(get_align_metrics(align_global(barcode2bcr1r2[s1],barcode2bcr1r2[s2]))[1])
     alignment_score_coff=np.max(alignment_scores)
     return alignment_score_coff
 
-def get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq):
+def get_barcode2bcr1r2(dbarcodes,bc2seq,oligo2seq):
     """
     row for:   RC_for_index    
     col rev:   RC_rev_index
@@ -34,30 +34,41 @@ def get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq):
     """
     import re
     dbarcodes.index=range(len(dbarcodes))
-    sample2bcr1r2={}
-    sample2primersr1r2={}
-    sample2fragsr1r2={}
-    sample2regsr1r2={}
-    for i in dbarcodes.index:
+    barcode2bcr1r2={}
+    barcode2primersr1r2={}
+    barcode2fragsr1r2={}
+    barcode2regsr1r2={}
+    for i in dbarcodes.drop_duplicates(subset=['barcode']).index:
         x=dbarcodes.iloc[i,:]
-        samplen=x['sample name']
-        sample2bcr1r2[samplen]=f"{bc2seq[str(x['plate for'])]}{bc2seq[str(x['row for'])]}{bc2seq[str(x['plate rev'])]}{bc2seq[str(x['col rev'])]}"
-        sample2primersr1r2[samplen]=[
+        barcode=x['barcode']
+        barcode2bcr1r2[barcode]=f"{bc2seq[str(x['plate for'])]}{bc2seq[str(x['row for'])]}{bc2seq[str(x['plate rev'])]}{bc2seq[str(x['col rev'])]}"
+        barcode2primersr1r2[barcode]=[
             f"{bc2seq[str(x['plate for'])]}{oligo2seq['plate_fivep_sticky']}{bc2seq[str(x['row for'])]}{oligo2seq['RC_fivep_sticky']}",
             f"{bc2seq[str(x['plate rev'])]}{oligo2seq['plate_threep_sticky']}{bc2seq[str(x['col rev'])]}{oligo2seq['RC_threep_sticky']}"
         ]
-        sample2fragsr1r2[samplen]=[
+        barcode2fragsr1r2[barcode]=[
             f"<{bc2seq[str(x['plate for'])]}><{oligo2seq['plate_fivep_sticky']}><{bc2seq[str(x['row for'])]}><{oligo2seq['RC_fivep_sticky']}",
             f"<{bc2seq[str(x['plate rev'])]}><{oligo2seq['plate_threep_sticky']}><{bc2seq[str(x['col rev'])]}><{oligo2seq['RC_threep_sticky']}"
         ]
-        reg_r1 = re.compile("^\w{5}"+f"{sample2primersr1r2[samplen][0]}.*")
-        reg_r2 = re.compile("^\w{5}"+f"{sample2primersr1r2[samplen][1]}.*")
-        sample2regsr1r2[samplen]=[reg_r1,reg_r2] 
+        reg_r1 = re.compile("^\w{5}"+f"{barcode2primersr1r2[barcode][0]}.*")
+        reg_r2 = re.compile("^\w{5}"+f"{barcode2primersr1r2[barcode][1]}.*")
+        barcode2regsr1r2[barcode]=[reg_r1,reg_r2] 
     linkerr1r2=f"{oligo2seq['plate_fivep_sticky']}{oligo2seq['RC_fivep_sticky']}{oligo2seq['plate_threep_sticky']}{oligo2seq['RC_threep_sticky']}"
-    return sample2bcr1r2,sample2primersr1r2,sample2fragsr1r2,sample2regsr1r2,linkerr1r2
+    
+    barcode2bcr1r2={'barcode2bcr1r2':barcode2bcr1r2,
+    'barcode2primersr1r2':barcode2primersr1r2,
+    'barcode2fragsr1r2':barcode2fragsr1r2,
+    'barcode2regsr1r2':barcode2regsr1r2,
+    'linkerr1r2':linkerr1r2}
+    
+    for k in barcode2bcr1r2:
+        if k.startswith('barcode2'):
+            dbarcodes[k.replace('barcode2','')]=dbarcodes['barcode'].map(barcode2bcr1r2[k])
+    return barcode2bcr1r2
+#     return barcode2bcr1r2,barcode2primersr1r2,barcode2fragsr1r2,barcode2regsr1r2,linkerr1r2
 
 def demultiplex_readids(fastqr1_reads,fastqr2_reads,
-                    linkerr1r2,sample2bcr1r2,barcode_poss,
+                    linkerr1r2,barcode2bcr1r2,barcode_poss,
                     alignment_score_coff,outp=None,test=False):
     """
     trim the fastq, take only barcodes and only linkers
@@ -77,7 +88,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
             return get_align_metrics(align_global(s1,s2))[1]
         
     from rohan.dandage.io_dict import sort_dict
-    sample2reads={sample:[] for sample in list(sample2bcr1r2.keys())+["undetermined_barcode","undetermined_linker"]}
+    barcode2reads={sample:[] for sample in list(barcode2bcr1r2.keys())+["undetermined_barcode","undetermined_linker"]}
     for ri,(r1,r2) in enumerate(zip(fastqr1_reads,fastqr2_reads)):
         if test and np.remainder(ri,100000)==0:
             print(ri,end=' ')
@@ -92,33 +103,33 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
                 read_has_linker=True
             if read_has_linker:
                 bc_seq=f"{str(r1.seq)[barcode_poss[0][0]:barcode_poss[0][1]]}{str(r1.seq)[barcode_poss[1][0]:barcode_poss[1][1]]}{str(r2.seq)[barcode_poss[0][0]:barcode_poss[0][1]]}{str(r2.seq)[barcode_poss[1][0]:barcode_poss[1][1]]}"
-                sample2alignmentscore={}
-                for sample in sample2bcr1r2:
-                    alignment_score=get_alignment_score(sample2bcr1r2[sample],bc_seq)
+                barcode2alignmentscore={}
+                for sample in barcode2bcr1r2:
+                    alignment_score=get_alignment_score(barcode2bcr1r2[sample],bc_seq)
                     if alignment_score>alignment_score_coff:
-                        sample2alignmentscore[sample]=[alignment_score]
-                if len(sample2alignmentscore.values())!=0:
-                    sample=sort_dict(sample2alignmentscore,1,out_list=True)[-1][0]
-                    sample2reads[sample].append(r1.id)
+                        barcode2alignmentscore[sample]=[alignment_score]
+                if len(barcode2alignmentscore.values())!=0:
+                    sample=sort_dict(barcode2alignmentscore,1,out_list=True)[-1][0]
+                    barcode2reads[sample].append(r1.id)
                 else:
-                    sample2reads["undetermined_barcode"].append(r1.id)
+                    barcode2reads["undetermined_barcode"].append(r1.id)
             else:
-                sample2reads["undetermined_linker"].append(r1.id)
+                barcode2reads["undetermined_linker"].append(r1.id)
         if test and ri>1000:
             break
     if outp is None:
-        return sample2reads
+        return barcode2reads
     else:
-        to_dict(sample2reads,outp)
+        to_dict(barcode2reads,outp)
 
-def align_demultiplexed(cfg,sample2readids,sample,refn,test=False):
+def align_demultiplexed(cfg,readids,sample,refn,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
     print(dirp)
     # save the readids
     if not exists(dirp):
         makedirs(dirp,exist_ok=False)
     with open(f'{dirp}/read_ids.txt','w') as f:
-        f.write('\n'.join(sample2readids[sample]))
+        f.write('\n'.join(readids))
     # save reference
 #     refn=sample.split(' ')[0]
     to_fasta({refn:read_fasta(cfg['referencep'])[refn]},f'{dirp}/reference.fasta')
@@ -136,19 +147,19 @@ def align_demultiplexed(cfg,sample2readids,sample,refn,test=False):
     get_aligned(dirp,method=cfg['alignment method'],test=test)
     get_daligned(dirp,method=cfg['alignment method'])
                     
-def check_undetermined(cfg,sample2readids,sample,test=False):
+def check_undetermined(cfg,readids,sample,test=False):
     dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
     # save the readids
     if not exists(dirp):
         makedirs(dirp,exist_ok=False)
     with open(f'{dirp}/read_ids.txt','w') as f:
-        f.write('\n'.join(sample2readids[sample]))
+        f.write('\n'.join(readids[sample]))
     # save reference
-    sample2primer={}
-    for s in cfg['sample2primersr1r2']:
-        for seqi,seq in enumerate(cfg['sample2primersr1r2'][s]):
-            sample2primer[(f"{s} R{seqi+1}").replace(' ','_')]=seq
-    to_fasta(sample2primer,f'{dirp}/reference.fasta')
+    barcode2primer={}
+    for s in cfg['barcode2primersr1r2']:
+        for seqi,seq in enumerate(cfg['barcode2primersr1r2'][s]):
+            barcode2primer[(f"{s} R{seqi+1}").replace(' ','_')]=seq
+    to_fasta(barcode2primer,f'{dirp}/reference.fasta')
     # trim fasq and align
     coms=[]
     for ri in [1,2]:
@@ -166,12 +177,13 @@ def get_read_counts_bystep(cfg):
     from rohan.dandage.align.deepseq import get_read_counts_from_log
     doutp=f"{cfg['prjd']}/data_demultiplex_qc/dcoverage.tsv"
     dcoverage=read_table(doutp)
-    sample2readids=read_dict(cfg['sample2readidsp'])
+    barcode2readids=read_dict(cfg['barcode2readidsp'])
     dplot=pd.DataFrame(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True)).reset_index().rename(columns={'index':'sample',0:'read depth (mean)'}).reset_index()
 
     dfs=[]
     dn2df={}
-    dn2df['step#0 input demultiplexing read count']=pd.Series({k:len(sample2readids[k]) for k in sample2readids}).T
+    dn2df['step#0 input demultiplexing read count']=dict2df(cfg['barcode2sample']).merge(pd.DataFrame(pd.Series({k:len(barcode2readids[k]) for k in barcode2readids}).T),
+                                    left_on='key',right_index=True,how='left').set_index('value')[0]
     dn2df['step#4 output alignment read depth (pysam)']=pd.Series(dcoverage.sort_index(1).set_index('refi').mean().sort_values(ascending=True))
     dfs.append(pd.concat(dn2df,axis=1,sort=False))
 
@@ -267,7 +279,7 @@ def make_chunks(cfg_chunk):
         cfg_chunk_=cfg_chunk
         cfg_chunk_['input_r1p']=chunk_input_r1p
         cfg_chunk_['input_r2p']=chunk_input_r1p.replace('R1','R2')
-        cfg_chunk_['sample2readidsp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_sample2readids.json"
+        cfg_chunk_['barcode2readidsp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_barcode2readids.json"
         cfg_chunk_['cfgp']=f"{cfg_chunk_['prjd']}/chunk{basenamenoext(chunk_input_r1p).split('_')[-1]}_cfg.yml"
         chunk_cfgps.append(cfg_chunk_['cfgp'])
         to_dict(cfg_chunk_,cfg_chunk_['cfgp'])
@@ -279,11 +291,11 @@ def make_chunks(cfg_chunk):
 #     fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
 #     fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
 #     logging.info('read the fastq files')
-#     if not exists(cfg['sample2readidsp']):
+#     if not exists(cfg['barcode2readidsp']):
 #         demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
-#                         linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
+#                         linkerr1r2=cfg['linkerr1r2'],barcode2bcr1r2=cfg['barcode2bcr1r2'],barcode_poss=cfg['barcode_poss'],
 #                         alignment_score_coff=cfg['alignment_score_coff'],
-#                         outp=cfg['sample2readidsp'],
+#                         outp=cfg['barcode2readidsp'],
 #                         test=False)
                                 
 def run_chunk_demultiplex_readids(cfgp):
@@ -292,17 +304,17 @@ def run_chunk_demultiplex_readids(cfgp):
     fastqr1_reads=SeqIO.parse(cfg['input_r1p'],'fastq')
     fastqr2_reads=SeqIO.parse(cfg['input_r2p'],"fastq")
     logging.info('read the fastq files')
-    if not exists(cfg['sample2readidsp']):
+    if not exists(cfg['barcode2readidsp']):
         demultiplex_readids(fastqr1_reads=fastqr1_reads,fastqr2_reads=fastqr2_reads,
-                        linkerr1r2=cfg['linkerr1r2'],sample2bcr1r2=cfg['sample2bcr1r2'],barcode_poss=cfg['barcode_poss'],
+                        linkerr1r2=cfg['linkerr1r2'],barcode2bcr1r2=cfg['barcode2bcr1r2'],barcode_poss=cfg['barcode_poss'],
                         alignment_score_coff=cfg['alignment_score_coff'],
-                        outp=cfg['sample2readidsp'],
+                        outp=cfg['barcode2readidsp'],
                         test=False)
                                 
 def collect_chunk_demultiplex_readids(cfg):
-    chunk_sample2readids=[read_dict(p) for p in glob(f"{cfg['prjd']}/chunks/chunk*sample2readids.json")]
-    print(f"{cfg['prjd']}/chunks/chunk*sample2readids.json")
-    return merge_dict_values(chunk_sample2readids)
+    chunk_barcode2readids=[read_dict(p) for p in glob(f"{cfg['prjd']}/chunks/chunk*barcode2readids.json")]
+    print(f"{cfg['prjd']}/chunks/chunk*barcode2readids.json")
+    return merge_dict_values(chunk_barcode2readids)
 
 def run_demupliplex(cfg,test=False):
     from multiprocessing import Pool
@@ -316,11 +328,9 @@ def run_demupliplex(cfg,test=False):
     to_dict(cfg,f"{cfg['prjd']}/input_cfg.yaml")
     dbarcodes=read_table(cfg['dbarcodesp']).sort_values(by=['reference','sample name'])
     cfg['barcode2samplep']=f"{cfg['prjd']}/barcode2sample.yml"
-    if not exists(cfg['barcode2samplep']):
-        dbarcodes['barcodes']=dbarcodes.loc[:,['row for','col rev','plate for','plate rev']].apply(lambda x: '; '.join([f"{k}:{x.to_dict()[k]}" for k in x.to_dict()]),axis=1)
-        barcode2sample=dbarcodes.groupby('barcodes').agg({'sample name':list}).to_dict()['sample name']
-        to_dict(barcode2sample,f"{cfg['prjd']}/barcode2sample.yml")            
-    
+    dbarcodes['barcode']=dbarcodes.loc[:,['row for','col rev','plate for','plate rev']].apply(lambda x: '; '.join([f"{k}:{x.to_dict()[k]}" for k in x.to_dict()]),axis=1)
+    barcode2sample=dbarcodes.groupby('barcode').agg({'sample name':list}).to_dict()['sample name']
+    cfg['barcode2sample']=barcode2sample
     sample2refn=dbarcodes.set_index('sample name')['reference'].to_dict()
     bc2seq=read_fasta(cfg['bc2seqp'])
     oligo2seq=read_fasta(cfg['oligo2seqp'])
@@ -328,8 +338,11 @@ def run_demupliplex(cfg,test=False):
     for i in [1,2]:
         cfg[f'input_r{i}p']=glob(f"{cfg['prjd']}/*_R{i}_*.fastq")[0]
 
-    cfg['sample2bcr1r2'],cfg['sample2primersr1r2'],cfg['sample2fragsr1r2'],_,cfg['linkerr1r2']=get_sample2bcr1r2(dbarcodes,bc2seq,oligo2seq)
-    cfg['sample2readidsp']=f"{cfg['prjd']}/sample2readids.json"
+    barcode2bcr1r2=get_barcode2bcr1r2(dbarcodes,bc2seq,oligo2seq)
+    for k in barcode2bcr1r2:
+        if not k=='barcode2regsr1r2':
+            cfg[k]=barcode2bcr1r2[k]
+    cfg['barcode2readidsp']=f"{cfg['prjd']}/barcode2readids.json"
     cfgp_=f"{cfg['prjd']}/cfg.yml"
     cfg['cfgp']=cfgp_
     to_dict(cfg,cfgp_)
@@ -350,10 +363,10 @@ def run_demupliplex(cfg,test=False):
             
     #step1 get the barcode alignment score max cut off 
     if not 'alignment_score_coff' in cfg:
-        cfg['alignment_score_coff']=get_alignment_score_coff(cfg['sample2bcr1r2'])
+        cfg['alignment_score_coff']=get_alignment_score_coff(cfg['barcode2bcr1r2'])
 
     # demultiplex
-    if not exists(cfg['sample2readidsp']):
+    if not exists(cfg['barcode2readidsp']):
         print(cfg['prjd'])
         logging.info('running make_chunks')
         chunk_cfgps=make_chunks(cfg)
@@ -363,34 +376,36 @@ def run_demupliplex(cfg,test=False):
         pool=Pool(processes=cfg['cores'])
         pool.map(run_chunk_demultiplex_readids, chunk_cfgps)
         pool.close(); pool.join()           
-        sample2readids=collect_chunk_demultiplex_readids(cfg)
-        print('saving sample2readids at ',cfg['sample2readidsp'])
-        to_dict(sample2readids,cfg['sample2readidsp'])
+        barcode2readids=collect_chunk_demultiplex_readids(cfg)
+        print('saving barcode2readids at ',cfg['barcode2readidsp'])
+        to_dict(barcode2readids,cfg['barcode2readidsp'])
         print('done')
     else:
-        sample2readids=read_dict(cfg['sample2readidsp'])        
+        barcode2readids=read_dict(cfg['barcode2readidsp'])        
     # output
-    for sample in sorted(sample2readids.keys()):
-        dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
-#         if not exists(dirp):                                 
-        [f(f'processing demultiplexed sample: {sample}') for f in [logging.info,print]]
-        if not sample.startswith('undetermined_'):
-            outp=f"{dirp}/daligned_{sample2refn[sample]}.pqt"
-            if not exists(outp):
-                if len(sample2readids[sample])>0:
-                    # save the demultiplexed to separate directories
-                    align_demultiplexed(cfg,sample2readids,
-                                        sample=sample,
-                                        refn=sample2refn[sample],
-                                        test=cfg['test'])            
-            if cfg['test']:
-                print('stopping the test')
-                import sys
-                sys.exit()
-                break
-        else:
-            # align the undetermined to be sure
-            check_undetermined(cfg,sample2readids,sample,test=cfg['test'])
+    for barcode in sorted(barcode2readids.keys()):
+        for sample in cfg['barcode2sample'][barcode]:
+            dirp=f"{cfg['prjd']}/{sample.replace(' ','_')}"
+    #         if not exists(dirp):                                 
+            [f(f'processing demultiplexed sample: {sample}') for f in [logging.info,print]]
+            if not barcode.startswith('undetermined_'):
+                outp=f"{dirp}/daligned_{sample2refn[sample]}.pqt"
+                if not exists(outp):
+                    if len(barcode2readids[barcode])>0:
+                        # save the demultiplexed to separate directories
+                        align_demultiplexed(cfg,readids=barcode2readids[barcode],
+                                            sample=sample,
+                                            refn=sample2refn[sample],
+                                            test=cfg['test'])            
+                if cfg['test']:
+                    print('stopping the test')
+                    import sys
+                    sys.exit()
+                    break
+            else:
+                # align the undetermined to be sure
+                check_undetermined(cfg,readids=barcode2readids[barcode],
+                                   sample=sample,test=cfg['test'])
     # qc output 
     logging.info('plotting the qc')
     plot_qc(cfg)
