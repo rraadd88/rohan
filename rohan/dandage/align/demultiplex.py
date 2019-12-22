@@ -204,7 +204,7 @@ def get_read_counts_bystep(cfg):
         dfs.append(df_)
     #     break
     dread_counts=pd.concat(dfs,axis=1,sort=False).sort_index(axis=1)
-    dread_counts.index='sample name'
+    dread_counts.index.name='sample name'
     return dread_counts
                          
 def plot_qc(cfg):
