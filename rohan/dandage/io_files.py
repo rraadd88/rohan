@@ -68,7 +68,7 @@ def zip_folder(source, destination):
     shutil.make_archive(name, fmt, archive_from, archive_to)
     shutil.move(f'{name}.{fmt}', destination)
     
-def backup_to_zip(ps,destp):
+def backup_to_zip(ps,destp,test=False):
     if not destp.endswith('.zip'):
         loggin.error('arg destp should have .zip extension')
         return 0
@@ -84,9 +84,11 @@ def backup_to_zip(ps,destp):
             ps_=list(iglob(p))
         else:
             ps_=[p]
+        print(ps_)
         for p_ in ps_:
             if exists(p_):
                 p_dest=f"{destdp}/{p_.replace(get_common_preffix(ps_),'')}"
                 makedirs(dirname(p_dest),exist_ok=True)
+                print(f"cp {p_} {p_dest}")
                 copyfile(p_,p_dest)
     zip_folder(destdp, destp)    

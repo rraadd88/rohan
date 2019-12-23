@@ -142,7 +142,7 @@ def get_mutation_matrices(cfg):
             savefig(f"{cfg['prjd']}/plot/heatmap_dmutmatcd_{label} {refn}.png")
             dmutmatcd_.index=[translate(s,tax_id=cfg['tax id']) for s in dmutmatcd_.index]
             dmutmatcd_.columns=[f"{s.split(' ')[0]} {translate(s.split(' ')[1],tax_id=cfg['tax id'])}" for s in dmutmatcd_]        
-            dmutmataa_=dmutmatcd_.groupby(dmutmatcd_.index).agg({c:np.sum for c in dmutmatcd_}).replace(0,np.nan)
+            dmutmataa_=dmutmatcd_.groupby(dmutmatcd_.index).agg({c:np.sum for c in dmutmatcd_})#.replace(0,np.nan)
             to_table(dmutmataa_,f"{outd}/dmutmataa_{label2dn[label]}.tsv")
             plot_mutmat(dmutmataa_,refn)
             savefig(f"{cfg['prjd']}/plot/heatmap_dmutmataa_{label} {refn}.png")

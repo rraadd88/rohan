@@ -41,3 +41,8 @@ def glog(x,l = 2):
 
     """
     return np.log((x+np.sqrt(x**2+l**2))/2)/np.log(l)
+
+def rescale(a, range1, range2):
+    delta1 = range1[1] - range1[0]
+    delta2 = range2[1] - range2[0]
+    return (delta2 * (a - range1[0]) / delta1) + range2[0]

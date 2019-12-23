@@ -790,6 +790,9 @@ def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
     df1=df.query(qry)
     if test:
         print(df1.loc[:,list(d.keys())].drop_duplicates())
+    if len(df1)==0:
+        logging.warning('may be some column names are wrong..')
+        logging.warning([k for k in d if not k in df])
     return df1
 
 # import from stat

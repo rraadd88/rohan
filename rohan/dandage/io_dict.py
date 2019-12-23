@@ -68,3 +68,11 @@ def dictwithtuplekeys2nested(d):
     from itertools import groupby
     return {g: {k[1]: v for k, v in items} 
            for g, items in groupby(sorted(d.items()), key=lambda kv: kv[0][0])}
+def dict_flip(d):
+    if not get_offdiagonal_values(intersections(d)).sum().sum()==0:
+        ValueError('dict values should be mutually exclusive') 
+    d_={}
+    for k in d:
+        for v in d[k]:
+            d_[v]=k
+    return d_
