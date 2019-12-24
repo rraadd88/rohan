@@ -120,7 +120,9 @@ def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={
 def to_table(df,p):
 #     from rohan.dandage.io_strs import make_pathable_string
 #     p=make_pathable_string(p)
-    p=p.replace(' ','_')
+    if not 'My Drive' in p:
+        p=p.replace(' ','_')
+        logging.warning('probably working on google drive; space/s left in the path.')
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     if p.endswith('.tsv') or p.endswith('.tab'):
