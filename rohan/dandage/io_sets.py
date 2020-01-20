@@ -69,20 +69,27 @@ def dfbool2intervals(df,colbool):
     df[f'{colbool} interval index']=df.index    
     return df
 
-def intersections(dn2list,jaccard=False,count=True):
+def intersections(dn2list,jaccard=False,count=True,fast=False):
     df=pd.DataFrame(index=dn2list.keys(),
                 columns=dn2list.keys())
-    for k1 in dn2list:
-        for k2 in dn2list:
+    if jaccard:
+        dn2list={k:set(dn2list[k]) for k in dn2list}
+    for k1i,k1 in enumerate(dn2list.keys()):
+        print(f"{(k1i/len(dn2list.keys()))*100:.02f}")
+        for k2i,k2 in enumerate(dn2list.keys()):
+            if fast and k1i>=k2i:
+                continue
             if jaccard:
-                l=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(set(dn2list[k1]).union(dn2list[k2]))
+                l=len(dn2list[k1].intersection(dn2list[k2]))/len(dn2list[k1].union(dn2list[k2]))
             else:
-                l=list(set(dn2list[k1]).intersection(dn2list[k2]))
+                l=list(dn2list[k1].intersection(dn2list[k2]))
             if count:
                 df.loc[k1,k2]=len(l)
             else:
-                df.loc[k1,k2]=l                
+                df.loc[k1,k2]=l
     return df
+jaccard_index_dict=intersections
+compare_lists_jaccard=intersections
 
 def jaccard_index(l1,l2):
     l1,l2=unique_dropna(l1),unique_dropna(l2)

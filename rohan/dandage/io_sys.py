@@ -1,6 +1,7 @@
 import subprocess
 import sys
 from os.path import dirname,basename,abspath
+import logging
 
 def runbashcmd(cmd,test=False,logf=None,dirs2ps=None):
     if not dirs2ps is None:
@@ -25,13 +26,6 @@ def is_interactive():
     return not hasattr(main, '__file__')
 
 def is_interactive_notebook():
-    # thanks to https://stackoverflow.com/a/22424821/3521099
-    try:
-        from IPython import get_ipython
-        if not hasattr(get_ipython(),'config'):
-            return False        
-        if 'IPKernelApp' not in get_ipython().config:  # pragma: no cover
-            return False        
-    except ImportError:
-        return False
-    return True
+    info.warning("unreliable function")
+    # thanks to https://stackoverflow.com/a/22424821
+    return 'ipykernel' in sys.modules

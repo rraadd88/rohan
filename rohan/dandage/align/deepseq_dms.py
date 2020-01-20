@@ -105,13 +105,14 @@ def get_codon_mutations(cfg,test=False):
             break
     return refn2dn2dss
                        
-def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X',label='(log10 scale)'):
+def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X',label='(log10 scale)',log=True):
     if all(dplot.sum()==0):
         return None
     dplot=dplot.sort_index(axis=0)
     dplot.index.name='mutated'
     dplot.columns.name='position reference'
-    dplot=dplot.applymap(np.log10).replace([np.inf, -np.inf], np.nan)
+    if log:
+        dplot=dplot.applymap(np.log10).replace([np.inf, -np.inf], np.nan)
     from rohan.dandage.plot.annot import annot_heatmap 
     plt.figure(figsize=[len(dplot.columns)/2.25,len(dplot.index)/2.5])
     ax=plt.subplot()

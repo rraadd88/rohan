@@ -17,14 +17,15 @@ def is_numeric(obj):
 
     :param obj: object to be tested.
     """
-    try:
-        obj+obj, obj-obj, obj*obj, obj**obj, obj/obj
-    except ZeroDivisionError:
-        return True
-    except Exception:
-        return False
-    else:
-        return True
+    return isinstance(obj,(np.int0,int,np.float,float))
+#     try:
+#         obj+obj, obj-obj, obj*obj, obj**obj, obj/obj
+#     except ZeroDivisionError:
+#         return True
+#     except Exception:
+#         return False
+#     else:
+#         return True
     
 def str2num(x):
     """
