@@ -12,11 +12,7 @@ def get_intersection_stats(df,coltest,colset,background_size=None):
                              df[colset].sum(),
                              df[coltest].sum(),)
     contigency=[[sum(df[coltest] & df[colset]),sum(df[coltest] & ~df[colset])],[sum(~df[coltest] & df[colset]),sum(~df[coltest] & ~df[colset])],]
-#     try:
     odds_ratio,fisher_exactp=fisher_exact(contigency,alternative='two-sided')
-#     except:
-#         logging.error(pd.crosstab(df[coltest], df[colset]))
-#         to_table(df,'test.tsv')
     jaccard=compare_bools_jaccard(df[coltest],df[colset])
     return hypergeom_p,fisher_exactp if jaccard!=0 else 1,odds_ratio,jaccard
 
@@ -60,16 +56,11 @@ def test_set_enrichment(tests_set2elements,test2_set2elements,background_size):
     dn2df={}
     for test1n in tqdm(tests_set2elements):
         for test2n in test2_set2elements:
-#             print(test1n,test2n)
-            dn2df[(test1n,test2n)]=get_set_enrichment_stats(test=tests_set2elements[test1n],
-                                     sets={test2n:test2_set2elements[test2n]},
-                                     background=background_size,
-                                    fdr_correct=True,
-                                    )
+            if len(tests_set2elements[test1n])!=0:
+                dn2df[(test1n,test2n)]=get_set_enrichment_stats(test=tests_set2elements[test1n],
+                                         sets={test2n:test2_set2elements[test2n]},
+                                         background=background_size,
+                                        fdr_correct=True,
+                                        )
     denrich=pd.concat(dn2df,axis=0,names=['difference','test2 set'])
-#     from statsmodels.stats.multitest import multipletests
-#     for c in denrich:
-#         if c.endswith(' p-val'):
-#             denrich[f"{c} corrected"]=multipletests(denrich[c], alpha=0.05, method='fdr_bh', is_sorted=False,returnsorted=False)[1]
     return denrich
-

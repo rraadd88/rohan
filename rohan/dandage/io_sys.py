@@ -26,6 +26,6 @@ def is_interactive():
     return not hasattr(main, '__file__')
 
 def is_interactive_notebook():
-    logging.warning("unreliable function")
+    logging.warning("is_interactive_notebook function could misbehave")
     # thanks to https://stackoverflow.com/a/22424821
     return 'ipykernel' in sys.modules
