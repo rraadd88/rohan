@@ -47,7 +47,8 @@ def get_set_enrichment_stats(test,sets,background,fdr_correct=True):
         from statsmodels.stats.multitest import multipletests
         for c in dmetric:
             if c.endswith(' p-val'):
-                dmetric[f"{c} corrected"]=multipletests(dmetric[c], alpha=0.05, method='fdr_bh', is_sorted=False,returnsorted=False)[1]
+                dmetric[f"{c} corrected"]=multipletests(dmetric[c], alpha=0.05, method='fdr_bh',
+                                                        is_sorted=False,returnsorted=False)[1]
     return dmetric
 
 def test_set_enrichment(tests_set2elements,test2_set2elements,background_size):
