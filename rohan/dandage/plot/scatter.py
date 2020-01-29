@@ -35,7 +35,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
            )
     ax.set_title(f"{'' if d.columns.name is None else d.columns.name+' '}",loc='left',
                  ha='left')    
-    plt.tight_layout()
+#     plt.tight_layout()
     if plotsave:
         if plotp is None:
             plotp=f"plot/{scafmt}_{make_pathable_string(xcol)}_vs_{make_pathable_string(ycol)}.svg"
