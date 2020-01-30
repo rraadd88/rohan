@@ -5,6 +5,8 @@ from rohan.dandage.io_strs import make_pathable_string
 
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
              scafmt='hexbin',method="spearman",pval=True,
+             trendline=False,
+             trendline_lowess=False,
              cmap='Reds',vmax=10,cbar_label=None,
              axscale_log=False,
              params_scatter={},
@@ -28,6 +30,18 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     if axscale_log:
         ax.set_xscale("log", nonposx='clip')
         ax.set_yscale("log", nonposy='clip')
+    if trendline:
+        coef = np.polyfit(d[xcol], d[ycol],1)
+        poly1d_fn = np.poly1d(coef) 
+        # poly1d_fn is now a function which takes in x and returns an estimate for y
+        ax.plot(d[xcol], poly1d_fn(d[xcol]), linestyle='--',lw=1,
+               color=params_scatter['color'] if 'color' in params_scatter else None)
+        
+    if trendline_lowess:
+        from statsmodels.nonparametric.smoothers_lowess import lowess
+        xys_lowess=lowess(d[ycol], d[xcol])
+        ax.plot(xys_lowess[:,0],xys_lowess[:,1], linestyle='--',
+                color=params_scatter['color'] if 'color' in params_scatter else None)
     from rohan.dandage.stat.corr import get_corr_str
     textstr=get_corr_str(d[xcol],d[ycol],method=method)#.replace('\n',', ')
     ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,

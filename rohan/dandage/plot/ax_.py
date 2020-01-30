@@ -77,7 +77,7 @@ def get_subplot_dimentions(ax=None):
     ll, ur = ax.get_position() * fig.get_size_inches()
     width, height = ur - ll
     return width, height,height / width
-def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False):
+def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False,force=False):
     """
     %run ../../../rohan/rohan/dandage/plot/ax_.py
     # fig, ax = plt.subplots()
