@@ -63,11 +63,11 @@ def groupby_value(d):
             d_[d[k]].append(k)
     return d_       
 
-def dictwithtuplekeys2nested(d):
-    #https://stackoverflow.com/a/40130494/3521099
-    from itertools import groupby
-    return {g: {k[1]: v for k, v in items} 
-           for g, items in groupby(sorted(d.items()), key=lambda kv: kv[0][0])}
+# def dictwithtuplekeys2nested(d):
+#     #https://stackoverflow.com/a/40130494/3521099
+#     from itertools import groupby
+#     return {g: {k[1]: v for k, v in items} 
+#            for g, items in groupby(sorted(d.items()), key=lambda kv: kv[0][0])}
 def convert_tuplekeys2nested(d1): return {k1:{k[1]:d1[k] for k in d1 if k1 in k} for k1 in np.unique([k[0] for k in d1])}
 
 def dict_flip(d):
