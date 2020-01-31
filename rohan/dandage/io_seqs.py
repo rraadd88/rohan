@@ -10,6 +10,14 @@ mol2codes={'amino acid':["A","C","D","E","F","G","H","I","K","L","M","N","P","Q"
 'amino acid 3letter':['ALA','ARG','ASN','ASP','CYS','GLN','GLU','GLY','HIS','ILE','LEU','LYS','MET','PHE','PRO','SER','THR','TRP','TYR','VAL'],
 'codons':["TTT",    "TTC",    "TTA",  "TTG",  "TCT",  "TCC",  "TCA",  "TCG",  "TAT",  "TAC",  "TAA",  "TAG",  "TGT",  "TGC",  "TGA",  "TGG",  "CTT",  "CTC",  "CTA",  "CTG",  "CCT",  "CCC",  "CCA",  "CCG",  "CAT",  "CAC",  "CAA",  "CAG",  "CGT",  "CGC",  "CGA",  "CGG",  "ATT",  "ATC",  "ATA",  "ATG",  "ACT",  "ACC",  "ACA",  "ACG",  "AAT",  "AAC",  "AAA",  "AAG",  "AGT",  "AGC",  "AGA",  "AGG",  "GTT",  "GTC",  "GTA",  "GTG",  "GCT",  "GCC",  "GCA",  "GCG",  "GAT",  "GAC",  "GAA",  "GAG",  "GGT",  "GGC",  "GGA",  "GGG"],}
 
+def aathreeletters2one(s):
+    from Bio.SeqUtils import IUPACData
+    if s!='Ter':
+        return IUPACData.protein_letters_3to1[s]
+    else:
+        return '*'
+
+
 ##defs
 
 def reverse_complement(s): return str((str2seq(s) if isinstance(s,str) else s).reverse_complement())
