@@ -79,3 +79,9 @@ def dict_flip(d):
             d_[v]=k
     return d_
 def flip_dict(d): return dict_flip(d) 
+
+def str2dict(s,sep=';',sep_equal='='):
+    """
+    thanks to https://stackoverflow.com/a/186873/3521099
+    """
+    return dict(item.split(sep_equal) for item in s.split(sep))

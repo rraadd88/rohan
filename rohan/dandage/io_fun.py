@@ -104,7 +104,7 @@ def run_package(cfgp,packagen,test=False,force=False,cores=4):
     from rohan.dandage.io_dict import read_dict,to_dict
     cfg=read_dict(cfgp)
     cfg['prjd']=splitext(abspath(cfgp))[0]
-    for k in ['databasep','databasep','dgene_annotp']:
+    for k in ['databasep',]:
         cfg[k]=abspath(cfg[k])    
     from rohan import global_imports
     package=__import__(packagen)
