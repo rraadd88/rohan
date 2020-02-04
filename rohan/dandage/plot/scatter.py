@@ -118,6 +118,49 @@ def plot_scatter(dplot,params,equallim=True,
     ax.grid(True)
     return ax
 
+
+def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,subset2color=None,bins=10,cmap='Reds_r'):
+    """
+    :param colx: continuous variable to be binned by quantiles
+    :param coly: continuous variable
+    :param colgroupby: classes for overlaying    
+    """
+    df[f"{colx} qbin"]=pd.qcut(df[colx],bins)
+    if colgroupby is None:
+        colgroupby='del'
+        df[colgroupby]='del'
+    from rohan.dandage.stat.variance import confidence_interval_95
+    dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
+    dplot.columns=coltuples2str(dplot.columns)
+    dplot=dplot.reset_index()
+    dplot[f"{colx} qbin"]=dplot[f"{colx} qbin"].apply(lambda x:x.mid).astype(float)
+    # dplot[f"{colx} qbin"]=dplot[f"{colx} qbin"].apply(float)
+
+    if subset2color is None:
+        from rohan.dandage.plot.colors import get_ncolors
+        subsets=df[colgroupby].unique()
+        subset2color=dict(zip(subsets,get_ncolors(len(subsets),cmap)))
+    params={'subset2color':subset2color,
+           'colgroupby':colgroupby,
+           'colx':colx,'coly':coly}
+    plt.figure(figsize=[3,3])
+    # plot
+    ax=plt.subplot()
+    dplot.groupby([params['colgroupby']]).apply(lambda df: df.plot(kind='scatter',x=f"{params['colx']} qbin",
+                                                                y=f"{params['coly']} mean",
+                                                                yerr=f"{params['coly']} confidence_interval_95",
+                                                                style='.o',
+                                                               ax=ax,label=df.name if colgroupby!='del' else None,
+                                                               color=params['subset2color'][df.name]))
+    if colgroupby!='del':
+        ax.legend(bbox_to_anchor=[1,1],title=params['colgroupby']) if len(ax.get_legend_handles_labels()[0])!=1 else ax.get_legend().remove()
+    df_=dplot.groupby([params['colgroupby']]).agg({f"{params['coly']} mean":[np.min,np.max]})
+    xmin,xmax=df_[(f"{params['coly']} mean",'amin')].min(),df_[(f"{params['coly']} mean",'amax')].max()
+    ax.set_ylim(xmin-(xmax-xmin)*0.2,xmax+(xmax-xmin)*0.2)
+    ax.set_xlabel(f"{params['colx']}\n(mid-ponts of equal-sized intervals)")
+    ax.set_ylabel(params['coly'])
+    return ax
+
 def plot_circlify(dplot,circvar2col,ax=None):
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     import circlify as circ
