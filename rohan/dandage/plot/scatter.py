@@ -119,7 +119,9 @@ def plot_scatter(dplot,params,equallim=True,
     return ax
 
 
-def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,subset2color=None,bins=10,cmap='Reds_r'):
+def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,bins=10,
+                          subset2color=None,cmap='Reds_r',
+                          ax=None):
     """
     :param colx: continuous variable to be binned by quantiles
     :param coly: continuous variable
@@ -143,9 +145,8 @@ def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,subset2color=None,bins=10
     params={'subset2color':subset2color,
            'colgroupby':colgroupby,
            'colx':colx,'coly':coly}
-    plt.figure(figsize=[3,3])
-    # plot
-    ax=plt.subplot()
+#     plt.figure(figsize=[3,3])
+    ax=plt.subplot() if ax is None else ax
     dplot.groupby([params['colgroupby']]).apply(lambda df: df.plot(kind='scatter',x=f"{params['colx']} qbin",
                                                                 y=f"{params['coly']} mean",
                                                                 yerr=f"{params['coly']} confidence_interval_95",
