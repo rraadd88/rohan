@@ -46,3 +46,20 @@ def rescale(a, range1, range2):
     delta1 = range1[1] - range1[0]
     delta2 = range2[1] - range2[0]
     return (delta2 * (a - range1[0]) / delta1) + range2[0]
+
+
+def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
+    df[f"{colx} qbin"]=pd.qcut(df[colx],bins,duplicates='drop')    
+    if colgroupby is None:
+        colgroupby='del'
+        df[colgroupby]='del'
+    from rohan.dandage.stat.variance import confidence_interval_95
+    dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
+    from rohan.dandage.io_dfs import coltuples2str
+    dplot.columns=coltuples2str(dplot.columns)
+    dplot=dplot.reset_index()
+    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin"].apply(lambda x:x.mid).astype(float)
+    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin midpoint"].apply(float)
+    if 'del' in dplot:
+        dplot=dplot.drop(['del'],axis=1)
+    return dplot

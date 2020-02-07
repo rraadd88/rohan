@@ -127,17 +127,16 @@ def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,bins=10,
     :param coly: continuous variable
     :param colgroupby: classes for overlaying    
     """
-    df[f"{colx} qbin"]=pd.qcut(df[colx],bins)
-    if colgroupby is None:
-        colgroupby='del'
-        df[colgroupby]='del'
-    from rohan.dandage.stat.variance import confidence_interval_95
-    dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
-    dplot.columns=coltuples2str(dplot.columns)
-    dplot=dplot.reset_index()
-    dplot[f"{colx} qbin"]=dplot[f"{colx} qbin"].apply(lambda x:x.mid).astype(float)
-    # dplot[f"{colx} qbin"]=dplot[f"{colx} qbin"].apply(float)
-
+#     df[f"{colx} qbin"]=pd.qcut(df[colx],bins)
+#     if colgroupby is None:
+#         colgroupby='del'
+#         df[colgroupby]='del'
+#     from rohan.dandage.stat.variance import confidence_interval_95
+#     dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
+#     dplot.columns=coltuples2str(dplot.columns)
+#     dplot=dplot.reset_index()
+    from rohan.dandage.stat.transform import aggcol_by_qbins
+    dplot=aggcol_by_qbins(df, colx, coly, colgroupby=colgroupby, bins=bins)
     if subset2color is None:
         from rohan.dandage.plot.colors import get_ncolors
         subsets=df[colgroupby].unique()
@@ -147,14 +146,15 @@ def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,bins=10,
            'colx':colx,'coly':coly}
 #     plt.figure(figsize=[3,3])
     ax=plt.subplot() if ax is None else ax
-    dplot.groupby([params['colgroupby']]).apply(lambda df: df.plot(kind='scatter',x=f"{params['colx']} qbin",
+    dplot.groupby([params['colgroupby']]).apply(lambda df: df.plot(kind='scatter',x=f"{params['colx']} qbin midpoint",
                                                                 y=f"{params['coly']} mean",
                                                                 yerr=f"{params['coly']} confidence_interval_95",
                                                                 style='.o',
                                                                ax=ax,label=df.name if colgroupby!='del' else None,
                                                                color=params['subset2color'][df.name]))
     if colgroupby!='del':
-        ax.legend(bbox_to_anchor=[1,1],title=params['colgroupby']) if len(ax.get_legend_handles_labels()[0])!=1 else ax.get_legend().remove()
+        ax.legend(bbox_to_anchor=[1,1],
+                  title=params['colgroupby']) if len(ax.get_legend_handles_labels()[0])!=1 else ax.get_legend().remove()
     df_=dplot.groupby([params['colgroupby']]).agg({f"{params['coly']} mean":[np.min,np.max]})
     xmin,xmax=df_[(f"{params['coly']} mean",'amin')].min(),df_[(f"{params['coly']} mean",'amax')].max()
     ax.set_ylim(xmin-(xmax-xmin)*0.2,xmax+(xmax-xmin)*0.2)
