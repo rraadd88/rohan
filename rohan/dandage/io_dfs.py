@@ -375,7 +375,7 @@ def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
 def merge_dfpairwithdf(dfpair,df,
                         left_ons=['gene1 name','gene2 name'],
                         right_on='gene name',right_ons_common=[],
-                        suffixes=[' gene1',' gene2'],how='left',test=False):
+                        suffixes=[' gene1',' gene2'],how='left',dryrun=False, test=False):
     """
     :param right_ons_common: columns to merge the right ones. eg. cell line
     """
@@ -384,15 +384,36 @@ def merge_dfpairwithdf(dfpair,df,
     df1.columns=df1.columns+suffixes[0]
     df2=df.copy()
     df2.columns=df2.columns+suffixes[1]
-#     if test:
-#         print([f'{c}{suffixes[0]}' for c in right_on])
-    dfpair=dfpair.merge(df1,
-                    left_on=left_ons[0],right_on=f'{right_on}{suffixes[0]}',
-                    how=how).merge(df2,
-                    left_on=left_ons[1] if len(right_ons_common)==0 else [left_ons[1]]+[f'{c}{suffixes[0]}' for c in right_ons_common],
-                    right_on=f'{right_on}{suffixes[1]}' if len(right_ons_common)==0 else [f'{right_on}{suffixes[1]}']+[f'{c}{suffixes[1]}' for c in right_ons_common],
+    
+    merge1_left_on=left_ons[0]
+    merge1_right_on=(f'{right_on}{suffixes[0]}' if isinstance(right_on,str) else [f'{c}{suffixes[0]}' for c in right_on])
+    merge2_left_on=left_ons[1] if len(right_ons_common)==0 else [left_ons[1]]+[f'{c}{suffixes[0]}' for c in right_ons_common]
+    merge2_right_on=(f'{right_on}{suffixes[1]}' if isinstance(right_on,str) else [f'{c}{suffixes[1]}' for c in right_on]) if len(right_ons_common)==0 else [f'{right_on}{suffixes[1]}']+[f'{c}{suffixes[1]}' for c in right_ons_common]
+    
+    if dryrun or test:
+#         from pprint import pprint
+        print('> merge1_left_on');print(merge1_left_on)
+        print('> merge1_right_on');print(merge1_right_on)
+        print('> merge2_left_on');print(merge2_left_on)
+        print('> merge2_right_on');print(merge2_right_on)
+        print('> dfpair');print(dfpair.columns.tolist())
+        print('> df1');print(df1.columns.tolist())
+        print('> df2');print(df2.columns.tolist())
+                    
+    if not dryrun:
+        dfpair_merge1=dfpair.merge(df1,
+                        left_on=merge1_left_on,
+                        right_on=merge1_right_on,
+                        how=how)
+        if test:
+            print('> dfpair_merge1 columns'); print(dfpair_merge1.columns.tolist())
+        dfpair_merge2=dfpair_merge1.merge(df2,
+                    left_on=merge2_left_on,
+                    right_on=merge2_right_on,
                     how=how)
-    return dfpair
+        if test:
+            print('> dfpair_merge2 columns');print(dfpair_merge2.columns.tolist())
+        return dfpair_merge2
 
 def lambda2cols(df,lambdaf,in_coln,to_colns):
     df_=df.apply(lambda x: lambdaf(x[in_coln]),
@@ -474,6 +495,7 @@ def symmetric_dflin(df,col1,col2,colval,sort=False,dropna=False):
     col1 becomes columns
     col2 becomes index    
     """
+    
     ds=df.set_index([col1,col2])[colval].unstack()
     for i in set(ds.index.tolist()).difference(ds.columns.tolist()):
         ds.loc[:,i]=np.nan
@@ -483,7 +505,7 @@ def symmetric_dflin(df,col1,col2,colval,sort=False,dropna=False):
     arr2=np.triu(arr) + np.triu(arr,1).T
     dmap=pd.DataFrame(arr2,columns=ds.columns,index=ds.columns)
     if sort:
-        index=dmap.mean().sort_values().index
+        index=dmap.mean().sort_values(ascending=False).index
         dmap=dmap.loc[index,index]
     if dropna:
         print(dmap.shape,end='')
@@ -833,5 +855,5 @@ def append_similar_cols(df,suffixes=None,prefixes=None,ffixes=None,test=False):
     return pd.concat(dn2df,axis=0)
 
 
-def dict2df(d):
-    return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':'key',0:'value'})
+def dict2df(d,colkey='key',colvalue='value'):
+    return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
