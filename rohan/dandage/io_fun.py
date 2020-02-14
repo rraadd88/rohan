@@ -121,9 +121,11 @@ def run_package(cfgp,packagen,test=False,force=False,cores=4):
     return cfg
             
 def get_dparams(modulen2funn2params):
+    import pandas as pd
     dn2df={}
     for k1 in modulen2funn2params:
     #     print({k2:k2.split('_')[0][-1:] for k2 in modulen2funn2params[k1] if re.search('\d\d_','curate0d0_dms')})
+        from rohan.dandage.io_dfs import dict2df
         dfs_={k2:dict2df(modulen2funn2params[k1][k2]) for k2 in modulen2funn2params[k1] if re.search('\d\d_',k2)}
         if len(dfs_)!=0:
             dn2df[k1]=pd.concat(dfs_,axis=0)
@@ -151,6 +153,7 @@ def get_dparams(modulen2funn2params):
 
 def plot_workflow_log(dplot):
     parameters_count_max=dplot.groupby(['function name']).agg({'parameter name':len}).max().values[0]
+    import matplotlib.pyplot as plt
     plt.figure(figsize=[parameters_count_max*1.5,#*0.3,
                         len(dplot)*0.4+2,])
     ax=plt.subplot(1,5,2)

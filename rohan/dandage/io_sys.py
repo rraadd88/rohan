@@ -26,6 +26,42 @@ def is_interactive():
     return not hasattr(main, '__file__')
 
 def is_interactive_notebook():
-    logging.warning("is_interactive_notebook function could misbehave")
+    """
+    difference in sys.module of notebook and shell
+    'IPython.core.completerlib',
+     'IPython.core.payloadpage',
+     'IPython.utils.tokenutil',
+     '_sysconfigdata_m_linux_x86_64-linux-gnu',
+     'faulthandler',
+     'imp',
+     'ipykernel.codeutil',
+     'ipykernel.datapub',
+     'ipykernel.displayhook',
+     'ipykernel.heartbeat',
+     'ipykernel.iostream',
+     'ipykernel.ipkernel',
+     'ipykernel.kernelapp',
+     'ipykernel.parentpoller',
+     'ipykernel.pickleutil',
+     'ipykernel.pylab',
+     'ipykernel.pylab.backend_inline',
+     'ipykernel.pylab.config',
+     'ipykernel.serialize',
+     'ipykernel.zmqshell',
+     'storemagic'
+    
+    # code
+    from rohan.global_imports import *
+    import sys
+    with open('notebook.txt','w') as f:
+        f.write('\n'.join(sys.modules))
+
+    from rohan.global_imports import *
+    import sys
+    with open('shell.txt','w') as f:
+        f.write('\n'.join(sys.modules))
+    set(open('notebook.txt','r').read().split('\n')).difference(open('shell.txt','r').read().split('\n'))    
+    """
+#     logging.warning("is_interactive_notebook function could misbehave")
     # thanks to https://stackoverflow.com/a/22424821
-    return 'ipykernel' in sys.modules
+    return 'ipykernel.kernelapp' in sys.modules

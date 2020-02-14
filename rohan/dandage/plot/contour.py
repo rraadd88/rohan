@@ -112,6 +112,7 @@ def plot_contourf(x,y,z,test=False,ax=None,fig=None,
                  grid_n=50,
                   labelx='x',labely='y',labelz='z',
                  params_contourf={},
+                  cbar=True,
                   figsize=[4,4],
                  ):
     from scipy.interpolate import griddata
@@ -126,7 +127,8 @@ def plot_contourf(x,y,z,test=False,ax=None,fig=None,
     if test:
         ax.scatter(X,Y)        
     ax.set_xlabel(labelx),ax.set_ylabel(labely)    
-    fig=set_colorbar(fig,ax,ax_pc,label=labelz,bbox_to_anchor=(1.01, 0.2, 0.5, 0.8))
+    if cbar:
+        fig=set_colorbar(fig,ax,ax_pc,label=labelz,bbox_to_anchor=(1.01, 0.2, 0.5, 0.8))
     ax=grid(ax,axis='both')
     return fig,ax
 def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
