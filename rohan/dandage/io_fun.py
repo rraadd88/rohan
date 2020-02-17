@@ -181,4 +181,15 @@ def plot_workflow_log(dplot):
     ax.set_ylim(len(dplot),0)
 #     ax.set_xlim(0,parameters_count_max)
     ax.set_axis_off()
-    return ax            
+    return ax 
+            
+            
+# TODO
+# run_class(classn,cfg)
+# get fun2params
+# sort the steps
+# run in tandem
+# populate the params from cfg
+# store already read files (tables, dicts) in temporary cfg within the module
+#     so no need to re-read -> faster
+# detect remaining step in force=False case like in get_modulen2funn2params_for_run
