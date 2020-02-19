@@ -7,7 +7,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
              scafmt='hexbin',method="spearman",pval=True,
              trendline=False,
              trendline_lowess=False,
-             cmap='Reds',vmax=10,cbar_label=None,
+             cmap='Reds',vmax=10,cbar_label=None,title_stat=False,
              axscale_log=False,
              params_scatter={},
             ax=None,
@@ -31,11 +31,12 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         ax.set_xscale("log", nonposx='clip')
         ax.set_yscale("log", nonposy='clip')
     if trendline:
+        from rohan.dandage.plot.colors import saturate_color
         coef = np.polyfit(d[xcol], d[ycol],1)
         poly1d_fn = np.poly1d(coef) 
         # poly1d_fn is now a function which takes in x and returns an estimate for y
-        ax.plot(d[xcol], poly1d_fn(d[xcol]), linestyle='--',lw=1,
-               color=params_scatter['color'] if 'color' in params_scatter else None)
+        ax.plot(d[xcol], poly1d_fn(d[xcol]), linestyle='solid',lw=2,
+               color=saturate_color(params_scatter['color']) if 'color' in params_scatter else None)
         
     if trendline_lowess:
         from statsmodels.nonparametric.smoothers_lowess import lowess
@@ -44,11 +45,14 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
                 color=params_scatter['color'] if 'color' in params_scatter else None)
     from rohan.dandage.stat.corr import get_corr_str
     textstr=get_corr_str(d[xcol],d[ycol],method=method)#.replace('\n',', ')
-    ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,
-            ha='left',va='top',
-           )
-    ax.set_title(f"{'' if d.columns.name is None else d.columns.name+' '}",loc='left',
-                 ha='left')    
+    if title_stat:
+        ax.set_title(textstr)            
+    else:
+        ax.text(ax.get_xlim()[0],ax.get_ylim()[1],textstr,
+                ha='left',va='top',
+               )
+        ax.set_title(f"{'' if d.columns.name is None else d.columns.name+' '}",loc='left',
+                     ha='left')    
 #     plt.tight_layout()
     if plotsave:
         if plotp is None:
@@ -162,7 +166,7 @@ def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,bins=10,
     ax.set_ylabel(params['coly'])
     return ax
 
-def plot_circlify(dplot,circvar2col,ax=None):
+def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary',cmap_child='Reds'):
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     import circlify as circ
     
@@ -174,27 +178,28 @@ def plot_circlify(dplot,circvar2col,ax=None):
                                                               'children':list(df.loc[:,['child id','child datum']].rename(columns={c:c.split(' ')[1] for c in ['child id','child datum']}).T.to_dict().values())}).tolist()
     from rohan.dandage.plot.colors import get_val2color,get_cmap_subset
     type2params_legend={k:{'title':circvar2col[f"{k} color"]} for k in ['child','parent']}
-    dplot['child color'],type2params_legend['child']['data']=get_val2color(dplot['child color'],cmap=get_cmap_subset('Reds', vmin=0.1, vmax=0.4, n=100))
-    dplot['parent color'],type2params_legend['parent']['data']=get_val2color(dplot['parent color'],cmap=get_cmap_subset('binary', vmin=0.1, vmax=0.4, n=100))
-    id2color={**dplot.set_index('child id')['child color'].to_dict(), **dplot.set_index('parent id')['parent color'].to_dict()}
+    dplot['child color'],type2params_legend['child']['data']=get_val2color(dplot['child color'],cmap=cmap_child)
+    if not cmap_parent is None:
+        dplot['parent color'],type2params_legend['parent']['data']=get_val2color(dplot['parent color'],cmap=cmap_parent) 
+    id2color={**dplot.set_index('child id')['child color'].to_dict(), **(dplot.set_index('parent id')['parent color'].to_dict() if not cmap_parent is None else {})}
 
-    l = circ.circlify(data, show_enclosure=False)
+    l = circ.circlify(data, show_enclosure=True)
     if ax is None:
         fig, ax = plt.subplots(figsize=(8,8))
     lineside2params={k:{} for k in ['-','+']}
     for circlei,circle in enumerate(l):
         c=plt.Circle((circle.circle[0],circle.circle[1]),circle.circle[2],
                      alpha=1,
-                     fc=None if circle.ex is None else id2color[circle.ex['id']],
-                     ec=None if circle.ex is None else '#dc9f4e' if circle.ex['id'].startswith('Scer') else '#6cacc5' if circle.ex['id'].startswith('Suva') else None,
-                    lw='2',
+                     fc='w' if circle.ex is None else id2color[circle.ex['id']] if circle.ex['id'] in id2color else 'w',
+                     ec='darkgray' if circle.ex is None else '#dc9f4e' if circle.ex['id'].startswith('Scer') else '#6cacc5' if circle.ex['id'].startswith('Suva') else 'lightgray',
+                    lw='1' if circle.ex is None else '4' if circle.ex['id'] in id2color else '1',
                     )
         ax.add_patch(c)
         if not circle.ex is None:
             if 'children' in circle.ex:
-                lineside2params['-' if circle.circle[0]<0 else '+'][circle.ex['id']]={
-                    'x':[circle.circle[0]-circle.circle[2] if circle.circle[0]<0 else circle.circle[0]+circle.circle[2],
-                         -1 if circle.circle[0]<0 else 1],
+                lineside2params['-' if circle.circle[0]<threshold_side else '+'][circle.ex['id']]={
+                    'x':[circle.circle[0]-circle.circle[2] if circle.circle[0]<threshold_side else circle.circle[0]+circle.circle[2],
+                         -1 if circle.circle[0]<threshold_side else 1],
                     'y':[circle.circle[1],circle.circle[1]],
                 }
 #                 ax.plot()
@@ -207,25 +212,26 @@ def plot_circlify(dplot,circvar2col,ax=None):
     for side in lineside2params:
         df=pd.DataFrame({k:np.ravel(list(lineside2params[side][k].values())) for k in lineside2params[side]}).T.sort_values(by=[3,0],ascending=[True,True])
         df[3]=np.linspace(-0.8,0.8,len(df))
-        df.apply(lambda x: ax.plot([x[0],x[1]+(0.2 if side=='-' else -0.2),x[1]],[x[2],x[2],x[3]],color='b',lw=0.25),axis=1)
-        df.apply(lambda x: ax.text(x[1],x[3],linebreaker(x.name,break_pt=25),color='b',ha='right' if side=='-' else 'left',va='center'),axis=1)
+        df.apply(lambda x: ax.plot([x[0],x[1]+(0.2 if side=='-' else -0.2),x[1]],[x[2],x[2],x[3]],color='darkgray',lw=0.25),axis=1)
+        df.apply(lambda x: ax.text(x[1],x[3],linebreaker(x.name,break_pt=60),color='k',ha='right' if side=='-' else 'left',va='center'),axis=1)
 #     return lineside2params
     ax.set_axis_off()
     
     for ki,k in enumerate(type2params_legend.keys()):
-        axin = inset_axes(ax, width="100%", height="100%",
-                       bbox_to_anchor=(0.8+ki*0.2, -0.1, 0.2, 0.1),
-                       bbox_transform=ax.transAxes, 
-#                           loc=2, 
-                          borderpad=0
-                                )
-        for x,y,c,s in zip(np.repeat(0.3,3),np.linspace(0.2,0.8,3),
-                           type2params_legend[k]['data'].values(),
-                           type2params_legend[k]['data'].keys()):
-            axin.scatter(x,y,color=c,s=250)
-            axin.text(x+0.2,y,s=f"{s:.2f}",ha='left',va='center')
-        axin.set_xlim(0,1)
-        axin.set_ylim(0,1)
-        axin.set_title(type2params_legend[k]['title'])
-        axin.set_axis_off()
+        if 'data' in type2params_legend[k]:
+            axin = inset_axes(ax, width="100%", height="100%",
+                           bbox_to_anchor=(1.2+ki*0.2, 0.1, 0.2, 0.1),
+                           bbox_transform=ax.transAxes, 
+#                               loc=2, 
+                              borderpad=0
+                                    )
+            for x,y,c,s in zip(np.repeat(0.3,3),np.linspace(0.2,0.8,3),
+                               type2params_legend[k]['data'].values(),
+                               type2params_legend[k]['data'].keys()):
+                axin.scatter(x,y,color=c,s=250)
+                axin.text(x+0.2,y,s=f"{s:.2f}",ha='left',va='center')
+            axin.set_xlim(0,1)
+            axin.set_ylim(0,1)
+            axin.set_title(type2params_legend[k]['title'])
+            axin.set_axis_off()
     return ax
