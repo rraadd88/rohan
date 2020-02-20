@@ -46,7 +46,7 @@ def plot_fitland(xys,ns=None,widths=None,
     else:
         return df
 
-def plot_schem(imp,ax=None,force=False):
+def plot_schem(imp,ax=None,force=False,margin=0,test=True):
     from rohan.dandage.figs.convert import vector2raster
     if splitext(imp)[1]=='.svg':
         pngp=vector2raster(imp,force=force)
@@ -56,6 +56,7 @@ def plot_schem(imp,ax=None,force=False):
     im=plt.imread(pngp)
     ax.imshow(im,interpolation='catrom')
     ax.set(**{'xticks':[],'yticks':[],'xlabel':'','ylabel':''})
-    ax.margins(0)    
-    ax.axis('off')    
+    ax.margins(margin)   
+    if not test:
+        ax.axis('off')    
     return ax    

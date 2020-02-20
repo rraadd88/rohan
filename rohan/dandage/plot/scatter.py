@@ -220,7 +220,7 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
     for ki,k in enumerate(type2params_legend.keys()):
         if 'data' in type2params_legend[k]:
             axin = inset_axes(ax, width="100%", height="100%",
-                           bbox_to_anchor=(1.2+ki*0.2, 0.1, 0.2, 0.1),
+                           bbox_to_anchor=(1.1+ki*0.2, 0.1, 0.2, 0.1),
                            bbox_transform=ax.transAxes, 
 #                               loc=2, 
                               borderpad=0
@@ -234,4 +234,5 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
             axin.set_ylim(0,1)
             axin.set_title(type2params_legend[k]['title'])
             axin.set_axis_off()
+            ax.axis('equal')
     return ax

@@ -78,7 +78,13 @@ def get_subplot_dimentions(ax=None):
     ll, ur = ax.get_position() * fig.get_size_inches()
     width, height = ur - ll
     return width, height,height / width
-def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False,force=False):
+def set_logo(imp,ax,
+             size=0.5,bbox_to_anchor=None,loc=1,
+             axes_kwargs={'zorder':-1},
+             params_imshow={'aspect':'auto','alpha':1,
+#                             'zorder':1,
+                 'interpolation':'catrom'},
+             test=False,force=False):
     """
     %run ../../../rohan/rohan/dandage/plot/ax_.py
     # fig, ax = plt.subplots()
@@ -115,9 +121,9 @@ def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False,force=False):
                        bbox_to_anchor=[1,1,0,size/(height)] if bbox_to_anchor is None else bbox_to_anchor,
                        bbox_transform=ax.transAxes, 
                        loc=loc, 
-                       borderpad=0)
-    axins.imshow(im, aspect='auto',alpha=1,zorder=-2,
-                 interpolation='catrom')
+                       borderpad=0,
+                      axes_kwargs=axes_kwargs)
+    axins.imshow(im, **params_imshow)
     if not test:
         axins.set(**{'xticks':[],'yticks':[],'xlabel':'','ylabel':''})
         axins.margins(0)    
@@ -128,3 +134,4 @@ def set_logo(imp,ax,size=0.5,bbox_to_anchor=None,loc=1,test=False,force=False):
     return axins
 
 
+from rohan.dandage.plot.colors import color_ticklabels
