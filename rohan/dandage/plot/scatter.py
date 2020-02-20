@@ -248,9 +248,10 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
   'within Suva Suva': '#53a9cb'},
                 colenrichtype='enrichment type',
                 enrichtype2color={'high':'#d24043','low': (0.9294117647058824, 0.7003921568627451, 0.7050980392156864)},
-                label=None):
-    label=dplot.name if label is None and hasattr(dplot,'name') else None
-    plt.figure()
+                label=None,
+                fig=None,ax=None):
+    fig=plt.figure() if fig is None
+    ax=plt.subplot() if ax is None                  
     ax=dplot.plot.scatter(x=colx,
                       y=coly,color='gray')
     ax.set_xlim(-5,5)
@@ -281,4 +282,5 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
                                     ),axis=1)
         ax.axvspan(2, 4, color=enrichmenttype2color['high'], alpha=0.2,label='significantly high')
         ax.axvspan(-4, -2, color=enrichmenttype2color['low'], alpha=0.2,label='significantly low')
-    ax.set_title(label)
+    if not label is None:
+        ax.set_title(label)
