@@ -46,10 +46,10 @@ def plot_fitland(xys,ns=None,widths=None,
     else:
         return df
 
-def plot_schem(imp,ax=None,force=False,margin=0,test=True):
+def plot_schem(imp,ax=None,force=False,margin=0,test=False,params_vector2raster={'trim':False,'alpha':False}):
     from rohan.dandage.figs.convert import vector2raster
-    if splitext(imp)[1]=='.svg':
-        pngp=vector2raster(imp,force=force)
+    if splitext(imp)[1]=='.svg' or force:
+        pngp=vector2raster(imp,force=force,**params_vector2raster)
     else:
         pngp=imp
     ax=plt.subplot() if ax is None else ax
