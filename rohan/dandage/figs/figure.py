@@ -31,26 +31,23 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 f"{label}   ",**kw_text)
         
 # from rohan.dandage.io_strs import replacebyposition
-def savefig(plotp,tight_layout=True,fmts=[],savepdf=False,normalise_path=True):
+def savefig(plotp,tight_layout=True,fmts=[],savepdf=False,normalise_path=True,dpi=500):
     if normalise_path:
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
-#     print(plotp)
-#     if basenamenoext(plotp).count('.')>0:
-#         plotp=f"{dirname(plotp)}/{replacebyposition(basenamenoext(plotp),basenamenoext(plotp).find('.'),'_')}{splitext(plotp)[1]}"    
     makedirs(dirname(plotp),exist_ok=True)
     if tight_layout:
         plt.tight_layout()
     if (not 'pdf' in fmts) and len(fmts)==0:
         fmts.append('pdf')
     if '.' in plotp:
-        plt.savefig(plotp)
+        plt.savefig(plotp,dpi=dpi)
     else:
-        plt.savefig(f"{plotp}.png",format='png',dpi=300)        
-        plt.savefig(f"{plotp}.svg",format='svg')       
+        plt.savefig(f"{plotp}.png",format='png',dpi=dpi)        
+        plt.savefig(f"{plotp}.svg",format='svg',dpi=dpi)       
         if len(fmts)!=0:
             for fmt in fmts:
-                plt.savefig(f"{plotp}.{fmt}",format=fmt)
+                plt.savefig(f"{plotp}.{fmt}",format=fmt,dpi=dpi)
     if not is_interactive_notebook():
         plt.clf();plt.close()
     return plotp

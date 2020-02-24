@@ -27,6 +27,9 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                          xoff=0,yoff=0,
                      rectangle={'width':0.2,'height':0.32},
                      params_text={'ha':'center','va':'center'},
+                     params_legend={'bbox_to_anchor':(1.1, 0.5),
+                                  'ncol':1,
+                                  'frameon':False},
                      ax=None):
     import matplotlib.patches as mpatches
     from matplotlib.collections import PatchCollection
@@ -67,10 +70,8 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
     from matplotlib.lines import Line2D
     legend_elements=[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, alpha=0.65,
                             label=f' {colval}={i:1.1f}') for i in [1.0,0.8,0.6]]
-    ax.legend(handles=legend_elements, loc='right center',
-#               bbox_to_anchor=(1.1, 1.1),
-              ncol=1,
-              frameon=False,title=legend_title)
+    ax.legend(handles=legend_elements,
+              title=legend_title,**params_legend)
     # label(grid[1], "Rectangle")
 #     collection = PatchCollection(patches,match_original=True)
     # collection.set_array(np.array(colors))
