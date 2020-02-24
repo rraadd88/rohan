@@ -67,10 +67,14 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
     from matplotlib.lines import Line2D
     legend_elements=[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, alpha=0.65,
                             label=f' {colval}={i:1.1f}') for i in [1.0,0.8,0.6]]
-    ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(0.95, 1.1),ncol=3,frameon=False,title=legend_title)
+    ax.legend(handles=legend_elements, loc='right center',
+#               bbox_to_anchor=(1.1, 1.1),
+              ncol=1,
+              frameon=False,title=legend_title)
     # label(grid[1], "Rectangle")
 #     collection = PatchCollection(patches,match_original=True)
     # collection.set_array(np.array(colors))
 #     ax.add_collection(collection)
     ax.set(**{'xlim':[0,1],'ylim':[0,1]})
     ax.set_axis_off()      
+    return ax
