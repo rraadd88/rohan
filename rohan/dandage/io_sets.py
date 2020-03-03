@@ -80,9 +80,9 @@ def intersections(dn2list,jaccard=False,count=True,fast=False):
             if fast and k1i>=k2i:
                 continue
             if jaccard:
-                l=len(dn2list[k1].intersection(dn2list[k2]))/len(dn2list[k1].union(dn2list[k2]))
+                l=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(dn2list[k1].union(dn2list[k2]))
             else:
-                l=list(dn2list[k1].intersection(dn2list[k2]))
+                l=list(set(dn2list[k1]).intersection(dn2list[k2]))
             if count:
                 df.loc[k1,k2]=len(l)
             else:
