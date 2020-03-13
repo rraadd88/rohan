@@ -30,6 +30,7 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                      params_legend={'bbox_to_anchor':(1.1, 0.5),
                                   'ncol':1,
                                   'frameon':False},
+                     params_line={'alpha':1},
                      ax=None):
     import matplotlib.patches as mpatches
     from matplotlib.collections import PatchCollection
@@ -46,15 +47,6 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
         rect = mpatches.Rectangle(xy, **rectangle, fill=False,fc="none",lw=2,
                                   ec=element2color[label] if not element2color is None else 'k',
                                  zorder=0)
-#         img_logop=f"logos/{label.replace(' ','_')}.svg"
-#         axins=set_logo(imp=img_logop,size=1,
-#                  bbox_to_anchor=rect.get_bbox(),
-#                  axes_kwargs={'zorder':0},
-#                  ax=ax)
-#         axins.text(np.mean(axins.get_xlim()),np.mean(axins.get_ylim()),
-#             label2rename[label] if not label2rename is None else label,
-#                    **params_text,
-#                    zorder=1)
 
         line_xys=[np.transpose(np.array(rect.get_bbox()))[0],np.transpose(np.array(rect.get_bbox()))[1][::-1]]
         ax.text(np.mean(line_xys[0]),np.mean(line_xys[1]),
@@ -65,17 +57,15 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
         patches.append(rect)
     dplot.apply(lambda x: ax.plot(*[[label2xys_rectangle_centers[x[k]][0] for k in ['index','column']],
                                   [label2xys_rectangle_centers[x[k]][1] for k in ['index','column']]],
-                                lw=(x[colval]-0.49)*line_scale,color='k',zorder=-1,alpha=0.65,
+                                lw=(x[colval]-0.49)*line_scale,color='k',zorder=-1,
+                                  alpha=params_line['alpha'],
                                 ),axis=1)            
     from matplotlib.lines import Line2D
-    legend_elements=[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, alpha=0.65,
-                            label=f' {colval}={i:1.1f}') for i in [1.0,0.8,0.6]]
+    legend_elements=[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, 
+                                alpha=params_line['alpha'],
+                                label=f' {colval}={i:1.1f}') for i in [1.0,0.8,0.6]]
     ax.legend(handles=legend_elements,
               title=legend_title,**params_legend)
-    # label(grid[1], "Rectangle")
-#     collection = PatchCollection(patches,match_original=True)
-    # collection.set_array(np.array(colors))
-#     ax.add_collection(collection)
     ax.set(**{'xlim':[0,1],'ylim':[0,1]})
     ax.set_axis_off()      
     return ax

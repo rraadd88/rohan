@@ -40,7 +40,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         
     if trendline_lowess:
         from statsmodels.nonparametric.smoothers_lowess import lowess
-        xys_lowess=lowess(d[ycol], d[xcol])
+        xys_lowess=lowess(d[ycol], d[xcol],frac=0.9,it=20)
         ax.plot(xys_lowess[:,0],xys_lowess[:,1], linestyle='--',
                 color=params_scatter['color'] if 'color' in params_scatter else None)
     from rohan.dandage.stat.corr import get_corr_str
@@ -181,8 +181,8 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
     dplot['child color'],type2params_legend['child']['data']=get_val2color(dplot['child color'],cmap=cmap_child)
     if not cmap_parent is None:
         dplot['parent color'],type2params_legend['parent']['data']=get_val2color(dplot['parent color'],cmap=cmap_parent) 
-    id2color={**dplot.set_index('child id')['child color'].to_dict(), **(dplot.set_index('parent id')['parent color'].to_dict() if not cmap_parent is None else {})}
-
+    id2color={**dplot.set_index('child id')['child color'].to_dict(),
+              **(dplot.set_index('parent id')['parent color'].to_dict() if not cmap_parent is None else {})}
     l = circ.circlify(data, show_enclosure=True)
     if ax is None:
         fig, ax = plt.subplots(figsize=(8,8))
