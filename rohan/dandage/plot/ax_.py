@@ -1,15 +1,20 @@
 from rohan.global_imports import * 
 
-def set_equallim(ax,diagonal=False):
+def format_ticklabels(ax,axes=['x','y'],n=4,fmt='%.2f'):
+    for axis in axes:
+        getattr(ax,axis+'axis').set_major_locator(plt.MaxNLocator(n))
+        getattr(ax,axis+'axis').set_major_formatter(plt.FormatStrFormatter(fmt))
+    return ax
+
+def set_equallim(ax,diagonal=False,
+                 params_format_ticklabels=dict(axes=['x','y'],n=4,fmt='%.2f')):
     min_,max_=np.min([ax.get_xlim()[0],ax.get_ylim()[0]]),np.max([ax.get_xlim()[1],ax.get_ylim()[1]])
-    ax.plot([min_,max_],[min_,max_],'--',color='gray')
+    if diagonal:
+        ax.plot([min_,max_],[min_,max_],':',color='gray')
     ax.set_xticks(ax.get_yticks())
     ax.set_xlim(min_,max_)
     ax.set_ylim(min_,max_)
-#     import matplotlib.ticker as plticker
-#     loc = plticker.MultipleLocator(base=(max_-min_)/5) # this locator puts ticks at regular intervals
-#     ax.xaxis.set_major_locator(loc)
-#     ax.yaxis.set_major_locator(loc)    
+    ax=format_ticklabels(ax,**params_format_ticklabels)
     return ax
 
 def grid(ax,axis=None):
