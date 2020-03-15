@@ -105,7 +105,11 @@ def get_codon_mutations(cfg,test=False):
             break
     return refn2dn2dss
                        
-def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X',label='(log10 scale)',log=True):
+def plot_mutmat(dplot,refn,
+                annotation_syn='S',annotation_null='X',
+                label='(log10 scale)',
+                log=True,
+               scale_figsize=1):
     if all(dplot.sum()==0):
         return None
     dplot=dplot.sort_index(axis=0)
@@ -114,17 +118,23 @@ def plot_mutmat(dplot,refn,annotation_syn='S',annotation_null='X',label='(log10 
     if log:
         dplot=dplot.applymap(np.log10).replace([np.inf, -np.inf], np.nan)
     from rohan.dandage.plot.annot import annot_heatmap 
-    plt.figure(figsize=[len(dplot.columns)/2.25,len(dplot.index)/2.5])
+    plt.figure(figsize=[(len(dplot.columns)/2.25)*scale_figsize,
+                        (len(dplot.index)/2.5)*scale_figsize])
     ax=plt.subplot()
     ax=sns.heatmap(dplot,xticklabels=dplot.columns,
-               yticklabels=dplot.index,ax=ax,cbar_kws={'label':label},cmap='Reds',)
+               yticklabels=dplot.index,ax=ax,
+                   cbar_kws={'label':label,"shrink": 1 if len(dplot)<30 else .35},
+                   cmap='Reds',)
     dplot_annot_absent=dplot.applymap(lambda x : annotation_null if pd.isnull(x) else '')
     def cat_(x):return x.index + x.name.split(' ')[1]
     dplot_annot_syn=dplot.apply(cat_).applymap(lambda x : annotation_syn if len(set(x))==1 else '')
-    [annot_heatmap(ax,df.T,yoff=0.25,xoff=-0.15) for df in [dplot_annot_absent,dplot_annot_syn]]
-    ax.set_title(f"{refn} (coverage={100-(pd.isnull(dplot).melt()['value'].sum()/(len(dplot.index)*len(dplot.columns)))*100:1.1f}%) {annotation_syn}: synonymous, {annotation_null}: not detected",
+    [annot_heatmap(ax,df.T,yoff=0.25,xoff=-0.10) for df in [dplot_annot_absent,dplot_annot_syn]]
+    ax.set_title(f"{refn} ("+(f"{annotation_syn}: synonymous, " if len(dplot)<30 else '')+f"{annotation_null}: not detected, coverage={100-(pd.isnull(dplot).melt()['value'].sum()/(len(dplot.index)*len(dplot.columns)))*100:1.1f}%)",
     loc='left',ha='left')
     ax.set_ylim(len(dplot),0)
+    ax.set_xticklabels([t.get_text().split(' ')[1] for t in ax.get_xticklabels()],
+                      rotation=0 if len(dplot)<30 else 90)
+    ax.set_xlabel('reference')
     return ax
 
 def get_mutation_matrices(cfg):

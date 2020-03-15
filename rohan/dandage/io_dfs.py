@@ -602,7 +602,7 @@ def make_symmetric_across_diagonal(df,fill='lower'):
 
 # aggregate dataframes
 
-def get_group(groups):return groups.get_group(list(groups.groups.keys())[0])
+def get_group(groups,i=0):return groups.get_group(list(groups.groups.keys())[i])
 
 def dfaggregate_unique(df,colgroupby,colaggs):
     for colaggi,colagg in enumerate(colaggs):  
