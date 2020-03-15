@@ -602,6 +602,8 @@ def make_symmetric_across_diagonal(df,fill='lower'):
 
 # aggregate dataframes
 
+def get_group(groups):return groups.get_group(list(groups.groups.keys())[0])
+
 def dfaggregate_unique(df,colgroupby,colaggs):
     for colaggi,colagg in enumerate(colaggs):  
         ds=df.groupby(colgroupby)[colagg].apply(list).apply(pd.Series).apply(lambda x: x.dropna().unique(),axis=1)
