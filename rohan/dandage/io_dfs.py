@@ -355,7 +355,8 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
     return df.reset_index().melt(id_vars=id_vars,
                              var_name=coln,value_name=colvalue_name)        
      
-    
+def split_lists(ds):return dmap2lin(ds.apply(pd.Series),colvalue_name=ds.name).drop(['column'],axis=1).set_index(ds.index.names).dropna()
+
 def df2unstack(df,coln='columns',idxn='index',col='value'):
     """
     will be deprecated
