@@ -22,7 +22,7 @@ def fun2params(f,test=False):
 def f2params(f,test=False): return fun2params(f,test=False)
 
 def get_funn2params_by_module(module,module_exclude,prefix=''):
-    funns=list(set(dir(module)).difference(dir(module_exclude)))
+    funns=list(set(dir(module)).difference(dir(module_exclude)+['read_dict','to_dict']))
     if not prefix is None:
         funns=[s for s in funns if s.startswith(prefix)]
     return {funn:fun2params(getattr(module,funn)) for funn in funns}
@@ -233,5 +233,8 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
     to_dict(modulen2funn2params_for_run,cfg['cfg_modulen2funn2params_for_runp'])
     to_dict(cfg,cfg['cfgp'])
     run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run)
+    if len(reruns)!=0 :
+        ax=plot_workflow_log(dparam)
+        plt.subplots_adjust(left=0.2, right=0.9, top=0.9, bottom=0.1)
+        savefig('plot_workflow_log.svg',tight_layout=False)
     return cfg
-                                          
