@@ -100,25 +100,6 @@ def run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run):
                 getattr(getattr(package,modulen),funn)(**modulen2funn2params_for_run[modulen][funn])
 #                 return
 
-def run_package(cfgp,packagen,test=False,force=False,cores=4):
-    from rohan.dandage.io_dict import read_dict,to_dict
-    cfg=read_dict(cfgp)
-    cfg['prjd']=splitext(abspath(cfgp))[0]
-    for k in ['databasep',]:
-        cfg[k]=abspath(cfg[k])    
-    from rohan import global_imports
-    package=__import__(packagen)
-    modulen2funn2params=get_modulen2funn2params_by_package(package=package,
-                                                           module_exclude=global_imports,
-#                                                                modulen_prefix='curate',
-                                                          )
-    to_dict(modulen2funn2params,f"{cfg['prjd']}/cfg_modulen2funn2params.yml")
-    modulen2funn2params_for_run,cfg=get_modulen2funn2params_for_run(modulen2funn2params,
-                                                                cfg,force=force)
-    to_dict(modulen2funn2params_for_run,f"{cfg['prjd']}/cfg_modulen2funn2params_for_run.yml")
-    to_dict(cfg,f"{cfg['prjd']}/cfg.yml")
-    run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run)
-    return cfg
             
 def get_dparams(modulen2funn2params):
     import pandas as pd
@@ -221,3 +202,36 @@ def get_output_parameter_names(k,dparam):
     G = nx.DiGraph(directed=True)
     G.add_edges_from(dparam.sort_values(['parameter name input']).apply(lambda x:(x['parameter name input'],x['parameter name output'],{'label':x['script name\nfunction name']}),axis=1).tolist())
     return list(nx.descendants(G,k))
+                                          
+def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
+    """
+    :params reruns: list of file names
+    """
+    from rohan.dandage.io_dict import read_dict,to_dict
+    cfg=read_dict(cfgp)
+    cfg['cfg_inp']=cfgp
+    cfg['cfgp']=f"{cfg['prjd']}/cfg.yml"
+    cfg['cfg_modulen2funn2paramsp']=f"{cfg['prjd']}/cfg_modulen2funn2params.yml"
+    cfg['cfg_modulen2funn2params_for_runp']=f"{cfg['prjd']}/cfg_modulen2funn2params_for_run.yml"
+    cfg['prjd']=splitext(abspath(cfgp))[0]
+    for k in ['databasep',]:
+        cfg[k]=abspath(cfg[k])
+    from rohan import global_imports
+    package=__import__(packagen)
+    modulen2funn2params=get_modulen2funn2params_by_package(package=package,
+                            module_exclude=global_imports,
+                            #modulen_prefix='curate',)
+    to_dict(modulen2funn2params,cfg['cfg_modulen2funn2paramsp'])
+    if len(reruns)!=0:                                          
+        dparam=get_dparams(modulen2funn2params)
+        paramn2moves={k:[cfg[k],cfg[k].replace('/data','/_data')] for s in ruruns for k in get_output_parameter_names(s,dparam) }
+        from shutil import move
+        _=[makedirs(dirname(paramn2moves[k][1]),exist_ok=True) for k in paramn2moves]
+        _=[move(*paramn2moves[k]) for k in paramn2moves]
+    modulen2funn2params_for_run,cfg=get_modulen2funn2params_for_run(modulen2funn2params,
+                                                                cfg,force=force)
+    to_dict(modulen2funn2params_for_run,cfg['cfg_modulen2funn2params_for_runp'])
+    to_dict(cfg,cfg['cfgp'])
+    run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run)
+    return cfg
+                                          
