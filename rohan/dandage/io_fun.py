@@ -234,7 +234,7 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
         cfg_=read_dict(cfg['cfgp'])
         dparam=get_dparams(modulen2funn2params)
         paramn2moves={k:[cfg_[k],f"{dirname(dirname(cfg_[k]))}/_{basename(dirname(cfg_[k]))}/{basename(cfg_[k])}"] for s in reruns for k in get_output_parameter_names(s,dparam) }
-        print(paramn2moves)
+#         print(paramn2moves)
         from os import makedirs
         from shutil import move
         _=[makedirs(dirname(paramn2moves[k][1]),exist_ok=True) for k in paramn2moves]
