@@ -122,6 +122,7 @@ def run_package(cfgp,packagen,test=False,force=False,cores=4):
             
 def get_dparams(modulen2funn2params):
     import pandas as pd
+    from rohan.dandage.io_dfs import coltuples2str,merge_dfpairwithdf,split_lists
     dn2df={}
     for k1 in modulen2funn2params:
     #     print({k2:k2.split('_')[0][-1:] for k2 in modulen2funn2params[k1] if re.search('\d\d_','curate0d0_dms')})
@@ -149,38 +150,59 @@ def get_dparams(modulen2funn2params):
     df2=df2.groupby('script name').apply(lambda df:   set_text_params(df,element='script',xoff=-2,yoff=-0.75,))
     df2=df2.groupby('function name').apply(lambda df: set_text_params(df,element='function',xoff=-1,yoff=-0.355))
     df2=df2.groupby('index').apply(lambda df:         set_text_params(df,element='parameter',xoff=0,))
-    return df2
+    df3=df2.sort_values(['script position','function position','parameter position']).pivot_table(columns='parameter type',index=['script name','function name'],values=['parameter name'],aggfunc=list)
+    df3.columns=coltuples2str(df3.columns)
+    logging.info('output column ok:', (df3['parameter name output'].apply(len)==1).all())
+    df3['parameter name output']=df3['parameter name output'].apply(lambda x: x[0])
+    # dmap2lin(df3['parameter name input'].apply(pd.Series),colvalue_name='parameter name input').drop(['column'],axis=1).set_index(df3.index.names).dropna()
+    df4=df3.merge(split_lists(df3['parameter name input']),
+             left_index=True,right_index=True,how='left',suffixes=[' list','']).reset_index()
+    df4['script name\nfunction name']=df4.apply(lambda x: f"{x['script name']}\n{x['function name']}",axis=1)
+
+    df5=df4.merge(df2.loc[:,['script name','function name','script x','script y','function x','function y']].drop_duplicates(),
+              on=['script name','function name'],
+             how='left')
+
+    df6=merge_dfpairwithdf(df5,df2.loc[:,['parameter name','parameter x','parameter y']].drop_duplicates(),
+                      left_ons=['parameter name input','parameter name output'],
+                      right_on='parameter name',
+                      right_ons_common=[],
+                      suffixes=[' input',' output'],how='left').dropna().drop_duplicates(subset=['parameter name output',
+                                'parameter name input',
+                                'script name\nfunction name'])
+    return df6
 
 def plot_workflow_log(dplot):
-    parameters_count_max=dplot.groupby(['function name']).agg({'parameter name':len}).max().values[0]
+    """
+    dplot=dparam
+    """
+    parameters_count_max=dplot.groupby(['function name']).agg({'parameter name input list':lambda x: len(x)+1}).max().values[0]
     import matplotlib.pyplot as plt
     plt.figure(figsize=[parameters_count_max*1.5,#*0.3,
-                        len(dplot)*0.4+2,])
+                        len(dplot)*0.5+2,])
     ax=plt.subplot(1,5,2)
-#     ax=plt.subplot()
+    #     ax=plt.subplot()
     from rohan.dandage.plot.colors import saturate_color
     elements=[
-                'script','function',
-              'parameter'
+                'script',
+                'function',
     ]
     for elementi,element in enumerate(elements):
-        _=dplot.apply(lambda x: ax.text(x[f'{element} x'],x[f'{element} y'],x[f'{element} name']),axis=1)
-    #input
-    dfin=dplot.groupby(['script name','function name']).apply(lambda df: df.iloc[:-1,:]).reset_index(drop=True)
-    #output
-    dfout=dplot.groupby(['script name','function name']).apply(lambda df: df.iloc[-1,:]).reset_index(drop=True)
-
-    df3=dfin.merge(dfout,on=['parameter name'],how='left',suffixes=[' out',' in']).dropna()
-    _=df3.apply(lambda x: ax.annotate("",
-                xy=(x['parameter x in'], x['parameter y in']), xycoords='data',
-                xytext=(x['parameter x out'], x['parameter y out']), textcoords='data',
-                size=20, va="center", ha="center",
+        _=dplot.apply(lambda x: ax.text(x[f"{element} x{''  if element!='parameter' else ' input'}"],
+                                        x[f"{element} y{''  if element!='parameter' else ' input'}"],
+                                        x[f"{element} name{''  if element!='parameter' else ' input'}"]),axis=1)
+    _=dplot.apply(lambda x: ax.annotate(x["parameter name output"],
+                xy=(x['parameter x input'], x['parameter y input']), xycoords='data',
+                xytext=(x['parameter x output'], x['parameter y output']), 
+                textcoords='data',
+    #             size=20, 
+                va="center", ha="center",
                 arrowprops=dict(arrowstyle='<|-',alpha=0.5,color='lime',lw=4,
                                 connectionstyle="arc3,rad=0.4"),
                 ),axis=1)    
     ax.set_ylim(len(dplot),0)
-#     ax.set_xlim(0,parameters_count_max)
-    ax.set_axis_off()
+    #     ax.set_xlim(0,parameters_count_max)
+    ax.set_axis_off()                                                
     return ax 
             
             
@@ -192,4 +214,10 @@ def plot_workflow_log(dplot):
 # populate the params from cfg
 # store already read files (tables, dicts) in temporary cfg within the module
 #     so no need to re-read -> faster
+                                                
 # detect remaining step in force=False case like in get_modulen2funn2params_for_run
+def get_output_parameter_names(k,dparam):
+    import networkx as nx
+    G = nx.DiGraph(directed=True)
+    G.add_edges_from(dparam.sort_values(['parameter name input']).apply(lambda x:(x['parameter name input'],x['parameter name output'],{'label':x['script name\nfunction name']}),axis=1).tolist())
+    return list(nx.descendants(G,k))
