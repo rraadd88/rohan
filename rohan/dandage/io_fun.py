@@ -1,6 +1,6 @@
 import inspect
 from glob import glob
-from os.path import dirname,exists,splitext,abspath
+from os.path import basename,dirname,exists,splitext,abspath
 from rohan.dandage.io_files import basenamenoext
 from rohan.dandage.io_sets import sort_list_by_list
 import logging
@@ -133,7 +133,7 @@ def get_dparams(modulen2funn2params):
     df2=df2.groupby('index').apply(lambda df:         set_text_params(df,element='parameter',xoff=0,))
     df3=df2.sort_values(['script position','function position','parameter position']).pivot_table(columns='parameter type',index=['script name','function name'],values=['parameter name'],aggfunc=list)
     df3.columns=coltuples2str(df3.columns)
-    logging.info('output column ok:', (df3['parameter name output'].apply(len)==1).all())
+#     logging.info('output column ok:', (df3['parameter name output'].apply(len)==1).all())
     df3['parameter name output']=df3['parameter name output'].apply(lambda x: x[0])
     # dmap2lin(df3['parameter name input'].apply(pd.Series),colvalue_name='parameter name input').drop(['column'],axis=1).set_index(df3.index.names).dropna()
     df4=df3.merge(split_lists(df3['parameter name input']),
@@ -209,22 +209,33 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
     """
     from rohan.dandage.io_dict import read_dict,to_dict
     cfg=read_dict(cfgp)
+    if isinstance(reruns,str):
+        reruns=reruns.split(',') 
+        if len(reruns)==1: 
+            if reruns[0]=='':
+                reruns=[]
     cfg['cfg_inp']=cfgp
+    cfg['prjd']=splitext(abspath(cfgp))[0]
     cfg['cfgp']=f"{cfg['prjd']}/cfg.yml"
     cfg['cfg_modulen2funn2paramsp']=f"{cfg['prjd']}/cfg_modulen2funn2params.yml"
     cfg['cfg_modulen2funn2params_for_runp']=f"{cfg['prjd']}/cfg_modulen2funn2params_for_run.yml"
-    cfg['prjd']=splitext(abspath(cfgp))[0]
-    for k in ['databasep',]:
-        cfg[k]=abspath(cfg[k])
+    for k in cfg:
+        if isinstance(cfg[k],str):
+            if exists(cfg[k]):
+                cfg[k]=abspath(cfg[k])
     from rohan import global_imports
     package=__import__(packagen)
     modulen2funn2params=get_modulen2funn2params_by_package(package=package,
                             module_exclude=global_imports,
-                            #modulen_prefix='curate',)
+                            #modulen_prefix='curate',
+                            )
     to_dict(modulen2funn2params,cfg['cfg_modulen2funn2paramsp'])
-    if len(reruns)!=0:                                          
+    if len(reruns)!=0 and exists(cfg['cfgp']):
+        cfg_=read_dict(cfg['cfgp'])
         dparam=get_dparams(modulen2funn2params)
-        paramn2moves={k:[cfg[k],cfg[k].replace('/data','/_data')] for s in ruruns for k in get_output_parameter_names(s,dparam) }
+        paramn2moves={k:[cfg_[k],f"{dirname(dirname(cfg_[k]))}/_{basename(dirname(cfg_[k]))}/{basename(cfg_[k])}"] for s in reruns for k in get_output_parameter_names(s,dparam) }
+        print(paramn2moves)
+        from os import makedirs
         from shutil import move
         _=[makedirs(dirname(paramn2moves[k][1]),exist_ok=True) for k in paramn2moves]
         _=[move(*paramn2moves[k]) for k in paramn2moves]
@@ -233,8 +244,10 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
     to_dict(modulen2funn2params_for_run,cfg['cfg_modulen2funn2params_for_runp'])
     to_dict(cfg,cfg['cfgp'])
     run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run)
-    if len(reruns)!=0 :
+    if len(reruns)!=0 and not all([modulen2funn2params[k][k_] is None for k in modulen2funn2params for k_ in modulen2funn2params[k]]):
         ax=plot_workflow_log(dparam)
+        import matplotlib.pyplot as plt
+        from rohan.dandage.figs.figure import savefig
         plt.subplots_adjust(left=0.2, right=0.9, top=0.9, bottom=0.1)
-        savefig('plot_workflow_log.svg',tight_layout=False)
+        savefig(f"{cfg['prjd']}/plot_workflow_log.svg",tight_layout=False)
     return cfg
