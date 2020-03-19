@@ -201,7 +201,7 @@ def get_output_parameter_names(k,dparam):
     import networkx as nx
     G = nx.DiGraph(directed=True)
     G.add_edges_from(dparam.sort_values(['parameter name input']).apply(lambda x:(x['parameter name input'],x['parameter name output'],{'label':x['script name\nfunction name']}),axis=1).tolist())
-    return list(nx.descendants(G,k))
+    return [k]+list(nx.descendants(G,k))
                                           
 def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
     """
@@ -238,7 +238,7 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
         from os import makedirs
         from shutil import move
         _=[makedirs(dirname(paramn2moves[k][1]),exist_ok=True) for k in paramn2moves]
-        _=[move(*paramn2moves[k]) for k in paramn2moves]
+        _=[move(*paramn2moves[k]) for k in paramn2moves if exists(paramn2moves[k][0])]
     modulen2funn2params_for_run,cfg=get_modulen2funn2params_for_run(modulen2funn2params,
                                                                 cfg,force=force)
     to_dict(modulen2funn2params_for_run,cfg['cfg_modulen2funn2params_for_runp'])

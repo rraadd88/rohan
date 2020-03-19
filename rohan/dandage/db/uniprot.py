@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 from Bio import SeqIO,SeqRecord
+from rohan.dandage.io_dfs import *
 
 def get_sequence(queries,fap=None,fmt='fasta',
             organism_taxid=9606,
@@ -140,3 +141,46 @@ def normalise_uniprot_fasta(fap,test=True):
         id2seq[record_id]=str(record.seq)
     ids2seqs2fasta(id2seq,faoutp)
     return faoutp
+
+# from rohan.global_imports import *
+# from rohan.dandage.io_dict import to_dict,read_dict
+
+def uniprotid2features(uniprotid):
+    import requests, sys
+    urls=[f'https://www.ebi.ac.uk/proteins/api/features/{uniprotid}?types=ACT_SITE,DOMAIN,HELIX,TURN,STRAND,REGION,MOTIF,VARIANT,INIT_MET,SIGNAL,PROPEP,TRANSIT,CHAIN,PEPTIDE,TOPO_DOM,TRANSMEM,REPEAT,CA_BIND,ZN_FING,DNA_BIND',
+'https://www.ebi.ac.uk/proteins/api/features/P12931?types=NP_BIND,COILED,COMPBIAS,METAL,BINDING,SITE,NON_STD,MOD_RES,LIPID,CARBOHYD,DISULFID,CROSSLNK,VAR_SEQ,MUTAGEN,UNSURE,CONFLICT,NON_CONS,NON_TER,INTRAMEM']
+    uniprotid2features={}
+    for requestURL in urls:
+        r = requests.get(requestURL, headers={ "Accept" : "application/json"})
+        if not r.ok:
+            r.raise_for_status()
+            sys.exit()
+        responseBody = r.text
+        import ast
+        uniprotid2features.update(ast.literal_eval(responseBody))
+
+    dfs=[]
+    for requestURL in urls: 
+        r = requests.get(requestURL, headers={ "Accept" : "text/x-gff"})
+        if not r.ok:
+            r.raise_for_status()
+            sys.exit()
+        responseBody = r.text
+        from io import StringIO
+        df1=delunnamedcol(pd.read_table(StringIO(responseBody),comment='#',
+                      names=[
+                             'end','Unnamed1','Unnamed2','Unnamed3','feature description']))
+        df1.index.names=['uniprot id','db','feature type','start']
+        df1=df1.reset_index()
+        dfs.append(df1)
+    df1=pd.concat(dfs,axis=0)
+    def get_feature_name(s):
+        from rohan.dandage.io_dict import str2dict
+        d=str2dict(s['feature description'])
+        return d['Note'] if 'Note' in d else d['ID'] if 'ID' in d else s['feature type']
+    df1['feature name']=df1.apply(lambda x: get_feature_name(x),axis=1)
+    df1.loc[df1['feature type'].isin(['HELIX','STRAND','TURN']),'feature type']='secondary structure'
+    return uniprotid2features,df1.drop(['feature description'],axis=1)
+#     to_dict(uniprotid2features,uniprotid2featuresp)
+#     to_table(df1.drop(['feature description'],axis=1),dseqfeaturesp)
+    
