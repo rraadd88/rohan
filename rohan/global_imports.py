@@ -26,13 +26,15 @@ plt.rcParams['axes.formatter.use_mathtext'] = True
 plt.rcParams['axes.formatter.limits'] = -3, 3
 plt.rcParams['axes.formatter.min_exponent'] = 3
 plt.rcParams['legend.frameon']=False
+from cycler import cycler
+plt.rcParams['axes.prop_cycle']= cycler('color',["#f55f5f", "#D3DDDC","#046C9A", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6", "#ECCBAE", "#D69C4E", "#ABDDDE", "#000000"])
 # plt.rcParams['xtick.color']=[0.95,0.95,0.95]
-plt.rc('grid', lw=0.2,linestyle="-", color=[0.99,0.99,0.99])
+plt.rc('grid', lw=0.2,linestyle="-", color=[0.98,0.98,0.98])
 plt.rc('axes', axisbelow=True)
 if not any([prj in pwd for prj in prjs]):
-    plt.rcParams["font.family"] = "Monospace"
+    plt.rcParams["font.family"] = "Monospace", "Monaco"
 else:
-    plt.rcParams["font.family"] = "Arial", "Monospace"
+    plt.rcParams["font.family"] = "Arial", "Monospace", "Monaco"
 sns.set_context('talk') # paper < notebook < talk < poster
 # always save plots 
 from rohan.dandage.figs.figure import *
