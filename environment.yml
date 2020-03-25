@@ -19,3 +19,4 @@ dependencies:
     - fastparquet
     - fastcluster
     - xlrd
+    - pingouin
