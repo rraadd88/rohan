@@ -7,6 +7,7 @@
 import numpy as np
 import pandas as pd
 import logging
+import requests, sys
 
 #pyensembl faster
 def ensg2genename(id,ensembl):
@@ -109,3 +110,27 @@ def ensembl_lookup(id_,headers={'target_taxon':'9606',
     https://rest.ensembl.org/lookup/id/ENSP00000351933?target_taxon=9606;release=95;content-type=application/json    
     """
     return ensembl_rest(id_,function='lookup',headers=headers,test=test)
+
+def taxid2name(k):
+    server = "https://rest.ensembl.org"
+    ext = f"/taxonomy/id/{k}?"
+    r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+    if not r.ok:
+        r.raise_for_status()
+        sys.exit()
+    decoded = r.json()
+    return decoded['scientific_name']
+
+def taxname2id(k):
+    server = "https://rest.ensembl.org"
+    ext = f"/taxonomy/name/{k}?"
+    r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+    if not r.ok or r.status_code==400:
+        logging.warning(f'no tax id found for {k}')
+        return 
+    decoded = r.json()
+    if len(decoded)!=0:
+        return decoded[0]['id']
+    else:
+        logging.warning(f'no tax id found for {k}')
+        return
