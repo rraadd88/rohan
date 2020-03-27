@@ -115,11 +115,18 @@ def set_logo(imp,ax,
     """
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     from rohan.dandage.figs.convert import vector2raster
-    if splitext(imp)[1]=='.svg':
-        pngp=vector2raster(imp,force=force)
+    if isinstance(imp,str):
+        if splitext(imp)[1]=='.svg':
+            pngp=vector2raster(imp,force=force)
+        else:
+            pngp=imp
+        im = plt.imread(pngp)
+    elif isinstance(imp,np.ndarray):
+        im = imp
     else:
-        pngp=imp
-    im = plt.imread(pngp)
+        loggin.warning('imp should be path or image')
+        return
+        
     width, height,aspect_ratio=get_subplot_dimentions(ax)
     axins = inset_axes(ax, 
                        width=size, height=size,
