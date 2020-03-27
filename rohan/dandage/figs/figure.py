@@ -53,6 +53,18 @@ def savefig(plotp,tight_layout=True,fmts=[],savepdf=False,normalise_path=True,dp
     return plotp
 
 def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,params_savefig={}):
+    """
+    saveplot(
+    dplot=pd.DataFrame(),
+    logp='log_00_metaanalysis.log',
+    plotp='plot/schem_organism_phylogeny.svg',
+    sep='# plot',
+    params=params,
+    force=False,
+    test=False,
+    params_savefig={'tight_layout':True},
+    )
+    """
     #save plot
     plotp=savefig(plotp,**params_savefig)
     dplotp=f"{splitext(plotp)[0]}.tsv"
