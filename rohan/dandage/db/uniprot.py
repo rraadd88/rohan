@@ -48,6 +48,20 @@ def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
             organism_taxid=9606,test=False):
     """
     https://www.uniprot.org/help/api_idmapping
+    Category: Genome annotation databases
+    Ensembl	ENSEMBL_ID	both
+    Ensembl Protein	ENSEMBL_PRO_ID	both
+    Ensembl Transcript	ENSEMBL_TRS_ID	both
+    Ensembl Genomes	ENSEMBLGENOME_ID	both
+    Ensembl Genomes Protein	ENSEMBLGENOME_PRO_ID	both
+    Ensembl Genomes Transcript	ENSEMBLGENOME_TRS_ID	both
+    Category: 3D structure databases
+    PDB	PDB_ID	both
+    Category: Protein-protein interaction databases
+    BioGrid	BIOGRID_ID	both
+    ComplexPortal	COMPLEXPORTAL_ID	both
+    DIP	DIP_ID	both
+    STRING	STRING_ID	both
     """
     url = 'https://www.uniprot.org/uploadlists/'
     params = {
@@ -77,8 +91,10 @@ def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMB
         print(ini,end)
         dgeneids=map_ids(queries=queries[ini:end],**params_map_ids)
         range2df[ini]=dgeneids
-    return pd.concat(range2df,axis=0).drop_duplicates()
-
+    if len(range2df.keys())!=0:
+        return pd.concat(range2df,axis=0).drop_duplicates()
+    else:
+        return pd.DataFrame(columns=[params_map_ids['frm'],params_map_ids['to']])
 from rohan.dandage.io_sys import runbashcmd
 def uniproitid2seq(id,fap='tmp.fasta'):
     runbashcmd(f"wget https://www.uniprot.org/uniprot/{id}.fasta -O {fap}")

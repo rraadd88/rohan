@@ -48,7 +48,9 @@ def plot_ppi(dplot,params,ax=None):
     ax.set_axis_off()
     return ax
 
-def plot_phylogeny(tree,organismname2id,fig=None,ax=None):
+def plot_phylogeny(tree,organismname2id,
+                   params_set_logo={'x_bbox':1.8,'size':1},
+                   fig=None,ax=None):
     import matplotlib.pyplot as plt
     from Bio import Phylo
     if isinstance(tree,str):
@@ -72,7 +74,6 @@ def plot_phylogeny(tree,organismname2id,fig=None,ax=None):
     # vertebrata = tree.common_ancestor("Apaf-1_HUMAN", "15_TETNG")
     # vertebrata.color = "fuchsia"
     # vertebrata.width = 3
-
     ax=plt.subplot() if ax is None else ax
     Phylo.draw(tree,
                label_func=lambda x: get_name(x.name,organismname2id) if not x.name is None else None,
@@ -83,14 +84,16 @@ def plot_phylogeny(tree,organismname2id,fig=None,ax=None):
     dplot=pd.DataFrame(s2xy).T.reset_index().rename(columns={0:'x',1:'y'})
     dplot['organism id']=dplot['index'].map({get_name(k,organismname2id):organismname2id[k] for k in organismname2id})
     dplot=dplot.sort_values('y')
-    def plot_img(x,ax,y_bbox):
+    def plot_img(x,ax,y_bbox,x_bbox,size):
         from rohan.dandage.plot.ax_ import set_logo
         p=f"database/embl_itol/itol.embl.de/img/species/{x}.jpg"
         if exists(p):
-            axin=set_logo(p,ax,size=1,
-                          bbox_to_anchor=[3.25,y_bbox,0,0],
+            axin=set_logo(p,ax,size=size,
+                          bbox_to_anchor=[x_bbox,y_bbox,0,0],
                          axes_kwargs={'zorder': 1})
-    ax.set_ylim(dplot['y'].max(),dplot['y'].min())
-    dplot['y bbox']=1-((dplot['y']-0.5-dplot['y'].min())/(dplot['y'].max()-dplot['y'].min()))    
-    _=dplot.apply(lambda x: plot_img(x['organism id'],ax,x['y bbox']),axis=1)
+    ax.set_ylim(dplot['y'].max()+0.5,dplot['y'].min()-0.5)
+    dplot['y bbox']=1-((dplot['y']-dplot['y'].min())/(1+dplot['y'].max()-dplot['y'].min()))    
+    _=dplot.apply(lambda x: plot_img(x['organism id'],ax,x['y bbox'],
+                                     **params_set_logo),axis=1)
+    print(dplot['organism id'].tolist())
     return ax
