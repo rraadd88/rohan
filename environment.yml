@@ -18,5 +18,5 @@ dependencies:
     - pandas>=0.23
     - fastparquet
     - fastcluster
-    - xlrd
+#     - xlrd
     - pingouin
