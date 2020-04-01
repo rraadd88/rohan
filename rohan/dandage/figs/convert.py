@@ -10,7 +10,10 @@ def vector2raster(plotp,dpi=500,alpha=True,trim=True,force=False,test=False):
     plotoutp=f"{plotp}.png"
     if not exists(plotoutp) or force: 
         com=f'convert -density 500 '+('-background none ' if alpha else '')+'-interpolate Catrom -resize "2000" '+('-trim ' if trim else '')+f"{plotp} {plotoutp}"
-        runbashcmd(com,test=test)
+        try:
+            runbashcmd(com,test=test)
+        except:
+            logging.error('make sure imagemagick is installed. conda install imagemagick')
     return plotoutp
     
 def vectors2rasters(plotd,ext='svg'):
