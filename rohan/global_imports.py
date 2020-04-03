@@ -3,7 +3,6 @@ import scipy as sc
 from rohan.dandage.plot.annot import *
 # strings
 import re
-from rohan.dandage.io_strs import make_pathable_string
 # dict
 from collections import OrderedDict
 ordereddict=OrderedDict
@@ -11,7 +10,7 @@ import itertools
 # recepies
 from rohan.dandage.io_dfs import *
 from rohan.dandage.io_dict import *
-from rohan.dandage.io_strs import get_bracket
+from rohan.dandage.io_strs import get_bracket, replacemany, make_pathable_string
 from rohan.dandage.io_sets import *
 # paths
 pwd=abspath('.')
