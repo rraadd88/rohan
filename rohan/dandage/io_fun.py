@@ -5,6 +5,70 @@ from rohan.dandage.io_files import basenamenoext
 from rohan.dandage.io_sets import sort_list_by_list
 import logging
 
+# auto scripts
+def notebook2script(notebookp):
+    from rohan.dandage.io_sets import unique
+    from rohan.dandage.io_dict import read_dict
+    import pandas as pd
+    d1=read_dict(notebookp,fmt='json')
+
+    funs=[]
+    fun=''
+    for d in d1['cells']:
+        if d['cell_type']=='markdown' and d['source'][0].startswith('## step'):
+            funs.append(fun)
+            fun=''
+        if d['cell_type']=='code': 
+    #         print(d['source'])
+            fun+=('\n'.join(d['source']) if len(d['source'])>1 else f"\n{d['source'][0]}\n" if len(d['source'])==1 else '')
+
+    funs=[s for s in funs if '\nto_' in s]
+
+    df1=pd.DataFrame(pd.Series(funs,name='code raw'))
+
+    def get_path_output(s):
+        for f in ['to_table','to_dict']:
+            if f in s:
+                return s.split(f)[1].split(',')[1].split(')')[0].replace("'",'')
+    df1['path output']=df1['code raw'].apply(get_path_output)
+
+    df1['parameter output']=df1['path output'].apply(lambda x: basenamenoext(x)+'p')
+
+    def get_paths_input(s):
+        paths=[]
+        for f in ['read_table(','read_dict(']:
+            if f in s:
+                paths.append(s.split(f)[1].split(',')[0].split(')')[0].replace("'",''))
+        return paths
+    df1['paths input']=df1['code raw'].apply(get_paths_input)
+
+    df1['parameters input']=df1['paths input'].apply(lambda x: [basenamenoext(s)+'p' for s in x])
+    df1['parameters']=df1.apply(lambda x: ['cfg']+x['parameters input']+[x['parameter output']],axis=1)
+    if any(df1['parameters'].apply(lambda x: len(unique(x))!=len(x))):
+        logging.error('duplicate parametter/s')
+
+    if df1['path output'].apply(lambda x: basename(dirname(x))).unique().shape[0]!=1:
+        logging.error('should be a single output directory')  
+    else:
+        if df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')!=basename(dirname(notebookp)):
+            logging.error('output directory should match notebook directory')
+
+    df1['function name']=df1.apply(lambda x: f"get{x.name:02d}_{x['parameter output']}",axis=1)
+    df1['function line']=df1.apply(lambda x: f"def {x['function name']}({','.join(x['parameters'])}):",axis=1)
+
+    def get_code(x):
+        from rohan.dandage.io_strs import replacemany
+        code=replacemany(x['code raw'],{f"'{x['path output']}'":x['parameter output'],
+        f"\"{x['path output']}\"":x['parameter output']})
+        code=replacemany(code,dict(zip([f"'{s}'" for s in x['paths input']],x['parameters input'])))
+        code=x['function line']+'\n'+'    '+code.replace('\n','\n    ')
+        return code.replace('\n    \n    ','\n    ')
+    df1['code']=df1.apply(get_code,axis=1)
+
+    code='from rohan.global_imports import *\n'+'\n\n'.join(df1['code'].tolist())
+    return code
+
+
 import re
 def sort_stepns(l):
     l=[s for s in l if bool(re.search('\d\d_',s))]    
