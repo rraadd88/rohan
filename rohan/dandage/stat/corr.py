@@ -53,3 +53,17 @@ def get_spearmanr_str(x,y):
 def get_corr_str(x,y,method='spearman'):
     r,p=getattr(sc.stats,f"{method}r")(x, y,nan_policy='omit')
     return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
+
+def get_partial_corrs(df,xs,ys):
+    """
+    xs=['protein expression balance','coexpression']
+    ys=[
+    'coexpression',
+    'combined_score',['combined_score','coexpression'],]
+
+    """
+    import pingouin as pg
+    chunks=np.array_split(df.sample(frac=1,random_state=88),5)
+    df1=pd.concat({chunki:pd.concat({"$r_{s}$"+f" {x} versus "+(y if isinstance(y,str) else f"{y[0]} (corrected for {' '.join(y[1:])})"):pg.partial_corr(data=chunk, x=x, y=(y if isinstance(y,str) else y[0]),y_covar=(None if isinstance(y,str) else y[1:]), tail='two-sided', method='spearman') for x,y in list(itertools.product(xs,ys)) if x!=(y if isinstance(y,str) else y[1])},axis=0) for chunki,chunk in enumerate(chunks)},axis=0)
+    df1.index.names=['chunk #','correlation name','correlation method']
+    return df1.reset_index()
