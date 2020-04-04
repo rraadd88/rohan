@@ -22,7 +22,7 @@ def notebook2script(notebookp):
     #         print(d['source'])
             fun+=('\n'.join(d['source']) if len(d['source'])>1 else f"\n{d['source'][0]}\n" if len(d['source'])==1 else '')
 
-    funs=[s for s in funs if '\nto_' in s]
+    funs=[s.split('## trash')[0] for s in funs if '\nto_' in s]
 
     df1=pd.DataFrame(pd.Series(funs,name='code raw'))
 
@@ -50,7 +50,7 @@ def notebook2script(notebookp):
     if df1['path output'].apply(lambda x: basename(dirname(x))).unique().shape[0]!=1:
         logging.error('should be a single output directory')  
     else:
-        if df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')!=basename(dirname(notebookp)):
+        if df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')!=basename(notebookp).split('_v')[0]:
             logging.error('output directory should match notebook directory')
 
     df1['function name']=df1.apply(lambda x: f"get{x.name:02d}_{x['parameter output']}",axis=1)

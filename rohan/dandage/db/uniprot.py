@@ -200,3 +200,23 @@ def uniprotid2features(uniprotid):
 #     to_dict(uniprotid2features,uniprotid2featuresp)
 #     to_table(df1.drop(['feature description'],axis=1),dseqfeaturesp)
     
+
+def geneid2proteinid(df,frm='ENSEMBLGENOME_ID',to='ENSEMBLGENOME_PRO_ID',interval=400):
+    rename={frm:'gene id',to:'protein id'}
+    organism_id=str(df['organism id'].unique()[0])
+    df_1=map_ids_batch(
+        queries=df['gene id'].tolist(),
+        interval=interval,
+        params_map_ids={'frm': frm, 'to': 'ACC',
+                        'organism_taxid':organism_id,'test':True,},
+    )
+    if len(df_1)==0:
+        print(organism_id)
+        return #df_1.rename(columns=rename)
+    df_2=map_ids_batch(
+        queries=df_1['ACC'].unique().tolist(),
+        interval=interval,
+        params_map_ids={'frm': 'ACC', 'to': to,
+                        'organism_taxid':organism_id,'test':True},
+    )
+    return df_1.merge(df_2,on='ACC',how='left').drop_duplicates(subset=[frm,to]).rename(columns=rename)    
