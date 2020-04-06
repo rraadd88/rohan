@@ -42,9 +42,9 @@ print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log';get_ipython().run_li
 
 # debug
 import logging
-from tqdm import tqdm,notebook
-tqdm.pandas
-notebook.tqdm().pandas()
+from tqdm import tqdm#,notebook
+tqdm.pandas()
+#notebook.tqdm().pandas()
 
 from pandarallel import pandarallel
 pandarallel.initialize(nb_workers=6,progress_bar=True)
