@@ -6,52 +6,57 @@ from rohan.dandage.io_sets import sort_list_by_list
 import logging
 
 # auto scripts
-def notebook2script(notebookp):
+def notebook2script(notebookp,test=False):
     from rohan.dandage.io_sets import unique
     from rohan.dandage.io_dict import read_dict
     import pandas as pd
     d1=read_dict(notebookp,fmt='json')
-
     funs=[]
     fun=''
-    for d in d1['cells']:
-        if d['cell_type']=='markdown' and d['source'][0].startswith('## step'):
-            funs.append(fun)
-            fun=''
+    for di,d in enumerate(d1['cells']):
+        if d['cell_type']=='markdown' and len(d['source'])!=0: 
+            if d['source'][0].startswith('## step'):
+                funs.append(fun)
+                fun=''
         if d['cell_type']=='code': 
-    #         print(d['source'])
+#             print(d['source'])
             fun+=('\n'.join(d['source']) if len(d['source'])>1 else f"\n{d['source'][0]}\n" if len(d['source'])==1 else '')
-
+#             print(fun)
+    if di==len(d1['cells'])-1:
+        funs.append(fun)
     funs=[s.split('## trash')[0] for s in funs if '\nto_' in s]
-
+    
+    if len(funs)==0:
+        logging.error(f'{notebookp}: no functions found')
+        if not test:
+            return ''
+        else:
+            return '',pd.DataFrame()
     df1=pd.DataFrame(pd.Series(funs,name='code raw'))
-
     def get_path_output(s):
+        s='\n'.join([line for line in s.split('\n') if not line.startswith('#')])
         for f in ['to_table','to_dict']:
             if f in s:
                 return s.split(f)[1].split(',')[1].split(')')[0].replace("'",'')
     df1['path output']=df1['code raw'].apply(get_path_output)
-
     df1['parameter output']=df1['path output'].apply(lambda x: basenamenoext(x)+'p')
-
     def get_paths_input(s):
+        s='\n'.join([line for line in s.split('\n') if not line.startswith('#')])
         paths=[]
         for f in ['read_table(','read_dict(']:
             if f in s:
                 paths.append(s.split(f)[1].split(',')[0].split(')')[0].replace("'",''))
         return paths
     df1['paths input']=df1['code raw'].apply(get_paths_input)
-
     df1['parameters input']=df1['paths input'].apply(lambda x: [basenamenoext(s)+'p' for s in x])
     df1['parameters']=df1.apply(lambda x: ['cfg']+x['parameters input']+[x['parameter output']],axis=1)
     if any(df1['parameters'].apply(lambda x: len(unique(x))!=len(x))):
-        logging.error('duplicate parametter/s')
-
+        logging.error(f'{notebookp}: duplicate parametter/s')
     if df1['path output'].apply(lambda x: basename(dirname(x))).unique().shape[0]!=1:
-        logging.error('should be a single output directory')  
+        logging.error(f"{notebookp}: should be a single output directory. {','.join(df1['path output'].apply(lambda x: basename(dirname(x))).unique().tolist())}")  
     else:
         if df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')!=basename(notebookp).split('_v')[0]:
-            logging.error('output directory should match notebook directory')
+            logging.error(f"{notebookp}: output directory should match notebook directory. {df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')}!={basename(notebookp).split('_v')[0]}")
 
     df1['function name']=df1.apply(lambda x: f"get{x.name:02d}_{x['parameter output']}",axis=1)
     df1['function line']=df1.apply(lambda x: f"def {x['function name']}({','.join(x['parameters'])}):",axis=1)
@@ -66,7 +71,10 @@ def notebook2script(notebookp):
     df1['code']=df1.apply(get_code,axis=1)
 
     code='from rohan.global_imports import *\n'+'\n\n'.join(df1['code'].tolist())
-    return code
+    if not test:
+        return code
+    else:
+        return code,df1
 
 
 import re
