@@ -1,10 +1,8 @@
 def test_install():
     try:
-        import rohan
-        # cfg=get_deps(cfg)
-        # cfg=get_genomes(cfg)
-        print(f">>> SUCCESS")
+        from rohan import global_imports
+        print(f">>> TEST SUCCESSFUL")
     except:
-        print(f">>> TEST NOT SUCCESSFUL. Something's wrong with installation.")
+        print(f">>> TEST NOT SUCCESSFUL. Most probabaly missing dependencies.")
 
 test_install()
