@@ -134,3 +134,20 @@ def taxname2id(k):
     else:
         logging.warning(f'no tax id found for {k}')
         return
+
+def convert_coords_human_assemblies(chrom,start,end,frm=38,to=37):
+    import requests, sys 
+    server = "http://rest.ensembl.org"
+    ext = f"/map/human/GRCh{frm}/{chrom}:{start}..{end}:1/GRCh{to}?"
+    r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
+    if not r.ok:
+        r.raise_for_status()
+        sys.exit()
+    decoded = r.json()
+    d=eval(repr(decoded))
+    if 'mappings' in d:
+        for d_ in d['mappings']:
+            if 'mapped' in d_:
+#                 return d_['mapped']['seq_region_name'],d_['mapped']['start'],d_['mapped']['end']
+                return pd.Series(d_['mapped'])#['seq_region_name'],d_['mapped']['start'],d_['mapped']['end']
+    

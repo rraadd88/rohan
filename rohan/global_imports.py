@@ -43,8 +43,13 @@ print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log';get_ipython().run_li
 # debug
 import logging
 from tqdm import tqdm#,notebook
-tqdm.pandas()
-#notebook.tqdm().pandas()
-
+from rohan.dandage.io_sys import is_interactive_notebook
+if not is_interactive_notebook:
+    tqdm.pandas()
+else:
+    from tqdm import notebook
+    notebook.tqdm().pandas()
+#     print("")
 from pandarallel import pandarallel
 pandarallel.initialize(nb_workers=6,progress_bar=True)
+print("pandarallel.initialize(nb_workers=6,progress_bar=True)")
