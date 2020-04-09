@@ -30,10 +30,11 @@ plt.rcParams['axes.prop_cycle']= cycler('color',["#f55f5f", "#D3DDDC","#046C9A",
 # plt.rcParams['xtick.color']=[0.95,0.95,0.95]
 plt.rc('grid', lw=0.2,linestyle="-", color=[0.98,0.98,0.98])
 plt.rc('axes', axisbelow=True)
-if not any([prj in pwd for prj in prjs]):
-    plt.rcParams["font.family"] = "Monospace", "Monaco"
-else:
-    plt.rcParams["font.family"] = "Arial", "Monospace", "Monaco"
+plt.rcParams['axes.labelcolor'] = 'k'
+# if not any([prj in pwd for prj in prjs]):
+#     plt.rcParams["font.family"] = "Monospace", "Monaco"
+# else:
+# plt.rcParams["font.family"] = "Arial", "arial", "Monospace", "Monaco"
 sns.set_context('talk') # paper < notebook < talk < poster
 # always save plots 
 from rohan.dandage.figs.figure import *

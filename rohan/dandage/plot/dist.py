@@ -107,7 +107,7 @@ def plot_dist_comparison(df,colx,colhue,coly,
         if test:
             print(dmetrics)
         if len(xs)==1 and len(hues)==2:
-            ax.set_title(dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)).loc[hues[1],xs[0]],
+            ax.set_title(dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative,linebreak=False)).loc[hues[1],xs[0]],
                         size=[tick.label.get_fontsize() for tick in ax.yaxis.get_major_ticks()][0])
         else:
             ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)),
