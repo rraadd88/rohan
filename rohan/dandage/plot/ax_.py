@@ -1,9 +1,16 @@
 from rohan.global_imports import * 
 
-def format_ticklabels(ax,axes=['x','y'],n=4,fmt='%.2f'):
+def format_ticklabels(ax,axes=['x','y'],n=4,fmt=None):
+    if isinstance(n,int):
+        n={'x':n,
+           'y':n}
+    if isinstance(fmt,str):
+        fmt={'x':fmt,
+           'y':fmt}
     for axis in axes:
-        getattr(ax,axis+'axis').set_major_locator(plt.MaxNLocator(n))
-        getattr(ax,axis+'axis').set_major_formatter(plt.FormatStrFormatter(fmt))
+        getattr(ax,axis+'axis').set_major_locator(plt.MaxNLocator(n[axis]))
+        if not fmt is None:
+            getattr(ax,axis+'axis').set_major_formatter(plt.FormatStrFormatter(fmt[axis]))
     return ax
 
 def set_equallim(ax,diagonal=False,
@@ -147,3 +154,40 @@ def set_logo(imp,ax,
 
 
 from rohan.dandage.plot.colors import color_ticklabels
+
+def set_logo_circle(ax=None,facecolor='white',edgecolor='gray'):
+    ax=plt.subplot() if ax is None else ax
+    circle= plt.Circle((0,0), radius= 1,facecolor=facecolor,edgecolor=edgecolor,lw=2)    
+    _=[ax.add_patch(patch) for patch in [circle]]
+    ax.axis('off');_=ax.axis('scaled')
+    return ax
+def set_logo_yeast(ax=None,color='orange'):
+    ax=plt.subplot() if ax is None else ax
+    circle1= plt.Circle((0,0), radius= 1,color=color)
+    circle2= plt.Circle((0.6,0.6), radius= 0.6,color=color)
+    _=[ax.add_patch(patch) for patch in [circle1,circle2]]
+    ax.axis('off');_=ax.axis('scaled')
+    return ax
+def set_logo_interaction(ax=None,colors=['b','b','b'],lw=5,linestyle='-'):
+    ax.plot([-0.45,0.45],[0.25,0.25],color=colors[1],linestyle=linestyle,lw=lw-1)
+    interactor1= plt.Circle((-0.7,0.25), radius= 0.25,ec=colors[0],fc='none',lw=lw)
+    interactor2= plt.Circle((0.7,0.25), radius= 0.25,ec=colors[2],fc='none',lw=lw)
+    _=[ax.add_patch(patch) for patch in [interactor1,interactor2]]
+    return ax
+def set_logos(label,element2color,ax=None):
+    interactor1=label.split(' ')[2]
+    interactor2=label.split(' ')[3]
+    ax=plt.subplot() if ax is None else ax
+    fun2params={}
+    if label.startswith('between parent'):
+        fun2params['set_logo_circle']={}
+    else:
+        fun2params['set_logo_yeast']={'color':element2color[f"hybrid alt"] if interactor1!=interactor2 else element2color[f"{interactor1} alt"]}
+    fun2params['set_logo_interaction']=dict(colors=[element2color[interactor1],
+                        element2color['hybrid'] if interactor1!=interactor2 else element2color[interactor1],
+                        element2color[interactor1]],
+                         linestyle=':' if interactor1!=interactor2 else '-')
+#     from rohan.dandage.plot import ax_ as ax_funs
+#     [getattr(ax_funs,fun)(ax=ax,**fun2params[fun]) for fun in fun2params]
+    _=[globals()[fun](ax=ax,**fun2params[fun]) for fun in fun2params]
+    return ax

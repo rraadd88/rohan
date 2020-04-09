@@ -31,7 +31,8 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                                   'ncol':1,
                                   'frameon':False},
                      params_line={'alpha':1},
-                     ax=None):
+                     ax=None,
+                    test=False):
     import matplotlib.patches as mpatches
     from matplotlib.collections import PatchCollection
     label2xy={k:[label2xy[k][0]+xoff,label2xy[k][1]+yoff] for k in label2xy}
@@ -39,7 +40,7 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
     dplot['column xy']=dplot['column'].map(label2xy)
     
     ax=plt.subplot() if ax is None else ax
-    from rohan.dandage.plot.ax_ import set_logo
+    from rohan.dandage.plot.ax_ import set_logos
     patches=[]
     label2xys_rectangle_centers={}
     for label in label2xy:
@@ -48,13 +49,21 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                                   ec=element2color[label] if not element2color is None else 'k',
                                  zorder=0)
 
-        line_xys=[np.transpose(np.array(rect.get_bbox()))[0],np.transpose(np.array(rect.get_bbox()))[1][::-1]]
-        ax.text(np.mean(line_xys[0]),np.mean(line_xys[1]),
-            label2rename[label] if not label2rename is None else label,
-#                 label2rename[label] if not label2rename is None else label,
-                ha='center',va='center',zorder=5)
-        label2xys_rectangle_centers[label]=[np.mean(line_xys[0]),np.mean(line_xys[1])]        
         patches.append(rect)
+        line_xys=[np.transpose(np.array(rect.get_bbox()))[0],np.transpose(np.array(rect.get_bbox()))[1][::-1]]
+        label2xys_rectangle_centers[label]=[np.mean(line_xys[0]),np.mean(line_xys[1])]
+        inset_width=0.3
+        axin=ax.inset_axes([*[i-(inset_width*0.5) for i in label2xys_rectangle_centers[label]],inset_width,inset_width])
+        axin=set_logos(label=label,element2color=element2color,ax=axin)
+        axin.text(np.mean(axin.get_xlim()),np.mean(axin.get_ylim()),
+                 label2rename[label] if not label2rename is None else label,
+                  **params_text,
+#                  ha='center',va='center',zorder=5
+                 )
+#         ax.text(np.mean(line_xys[0]),np.mean(line_xys[1]),
+#             label2rename[label] if not label2rename is None else label,
+# #                 label2rename[label] if not label2rename is None else label,
+#                 ha='center',va='center',zorder=5)
     dplot.apply(lambda x: ax.plot(*[[label2xys_rectangle_centers[x[k]][0] for k in ['index','column']],
                                   [label2xys_rectangle_centers[x[k]][1] for k in ['index','column']]],
                                 lw=(x[colval]-0.49)*line_scale,color='k',zorder=-1,
@@ -67,5 +76,6 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
     ax.legend(handles=legend_elements,
               title=legend_title,**params_legend)
     ax.set(**{'xlim':[0,1],'ylim':[0,1]})
-    ax.set_axis_off()      
+    if not test:
+        ax.set_axis_off()      
     return ax

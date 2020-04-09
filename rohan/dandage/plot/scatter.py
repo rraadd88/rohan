@@ -17,10 +17,11 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
     if ax is None:
         ax=plt.subplot(111)
     if scafmt=='hexbin':
-        if cbar_label is None and d.index.name is None:
-            cbar_label='# of points'
-        else:
-            cbar_label=f"# of {d.index.name}s"
+#         if cbar_label is None and d.index.name is None:
+#             cbar_label='# of points'
+#         else:
+#             cbar_label=f"# of {d.index.name}s"
+        cbar_label='count'
         hb = ax.hexbin(d[xcol], d[ycol], gridsize=25, cmap=cmap)
         cb = plt.colorbar(hb, ax=ax)
         cb.set_label(cbar_label)            

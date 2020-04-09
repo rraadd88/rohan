@@ -26,6 +26,7 @@ from rohan.dandage.io_files import *
 from rohan.dandage.io_sys import is_interactive_notebook
 import pandas as pd
 import numpy as np
+import sys
 
 import logging
 
@@ -149,8 +150,8 @@ def pqt2tsv(p):
     to_table(read_table(p),f"{p}.tsv")
     
 def read_excel(p,sheet_name=None,params_read_excel={},to_dict=False):
-    if not 'xlrd' in sys.modules:
-        logging.error('need xlrd to work with excel; pip install xlrd')
+#     if not 'xlrd' in sys.modules:
+#         logging.error('need xlrd to work with excel; pip install xlrd')
     if not to_dict:
         if sheet_name is None:
             xl = pd.ExcelFile(p)
@@ -169,8 +170,8 @@ def read_excel(p,sheet_name=None,params_read_excel={},to_dict=False):
         return sheetname2df
         
 def to_excel(sheetname2df,datap,):
-    if not 'xlrd' in sys.modules:
-        logging.error('need xlrd to work with excel; pip install xlrd')
+#     if not 'xlrd' in sys.modules:
+#         logging.error('need xlrd to work with excel; pip install xlrd')
     writer = pd.ExcelWriter(datap)
     for sn in sheetname2df:
         sheetname2df[sn].to_excel(writer,sn)

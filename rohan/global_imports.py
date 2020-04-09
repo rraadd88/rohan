@@ -35,7 +35,7 @@ plt.rcParams['axes.labelcolor'] = 'k'
 #     plt.rcParams["font.family"] = "Monospace", "Monaco"
 # else:
 # plt.rcParams["font.family"] = "Arial", "arial", "Monospace", "Monaco"
-sns.set_context('talk') # paper < notebook < talk < poster
+sns.set_context('notebook') # paper < notebook < talk < poster
 # always save plots 
 from rohan.dandage.figs.figure import *
 # if basename(pwd).split('_')[0].isdigit():
