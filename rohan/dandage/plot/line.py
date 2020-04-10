@@ -69,7 +69,7 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                                   alpha=params_line['alpha'],
                                 ),axis=1)            
     from matplotlib.lines import Line2D
-    legend_elements+=[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, 
+    legend_elements=legend_elements+[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, 
                                 alpha=params_line['alpha'],
                                 label=f' {colval}={i:1.1f}') for i in [1.0,0.8,0.6]]
     ax.legend(handles=legend_elements,

@@ -13,8 +13,8 @@ def plot_dist_comparison(df,colx,colhue,coly,
                         alternative='two-sided',
                         show_metrics=False,metricsby='hues',
                         palette=None,palette_front=None,
-                        kws_annot_boxplot={'xoffwithin':0,'xoff':0,'yoff':0.025,'test':False},
-                        legend_labels=None,
+                        kws_annot_boxplot={'yoff':0.025},
+                         legend_labels=None,
                          legend2xticklabels=True,
                         params_ax={},
                         ax=None,plotp=None,
@@ -113,7 +113,7 @@ def plot_dist_comparison(df,colx,colhue,coly,
             ax=annot_boxplot(ax, dmetrics.applymap(lambda x : pval2annot(x,fmt='<',alternative=alternative)),
                              xoffwithin=1 if len(hues)==3 else 0.85,
                              xoff=-1 if len(hues)==3 else -0.5,
-                             yoff=0.025,test=test)
+                             yoff=kws_annot_boxplot['yoff'],test=test)
     if not plotp is None:
         plt.savefig(plotp)    
     return ax
