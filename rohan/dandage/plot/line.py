@@ -30,6 +30,7 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                      params_legend={'bbox_to_anchor':(1.1, 0.5),
                                   'ncol':1,
                                   'frameon':False},
+                     legend_elements=[],
                      params_line={'alpha':1},
                      ax=None,
                     test=False):
@@ -40,7 +41,7 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
     dplot['column xy']=dplot['column'].map(label2xy)
     
     ax=plt.subplot() if ax is None else ax
-    from rohan.dandage.plot.ax_ import set_logos
+    from rohan.dandage.plot.ax_ import set_logos,get_subplot_dimentions
     patches=[]
     label2xys_rectangle_centers={}
     for label in label2xy:
@@ -52,25 +53,23 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
         patches.append(rect)
         line_xys=[np.transpose(np.array(rect.get_bbox()))[0],np.transpose(np.array(rect.get_bbox()))[1][::-1]]
         label2xys_rectangle_centers[label]=[np.mean(line_xys[0]),np.mean(line_xys[1])]
-        inset_width=0.3
-        axin=ax.inset_axes([*[i-(inset_width*0.5) for i in label2xys_rectangle_centers[label]],inset_width,inset_width])
-        axin=set_logos(label=label,element2color=element2color,ax=axin)
+        inset_width=0.2
+        inset_height=inset_width/get_subplot_dimentions(ax)[2]
+        axin=ax.inset_axes([*[l-(off*0.5) for l,off in zip(label2xys_rectangle_centers[label],[inset_width,inset_height])],
+                            inset_width,inset_height])
+        if not test:
+            axin=set_logos(label=label,element2color=element2color,ax=axin,test=test)
         axin.text(np.mean(axin.get_xlim()),np.mean(axin.get_ylim()),
                  label2rename[label] if not label2rename is None else label,
                   **params_text,
-#                  ha='center',va='center',zorder=5
                  )
-#         ax.text(np.mean(line_xys[0]),np.mean(line_xys[1]),
-#             label2rename[label] if not label2rename is None else label,
-# #                 label2rename[label] if not label2rename is None else label,
-#                 ha='center',va='center',zorder=5)
     dplot.apply(lambda x: ax.plot(*[[label2xys_rectangle_centers[x[k]][0] for k in ['index','column']],
                                   [label2xys_rectangle_centers[x[k]][1] for k in ['index','column']]],
                                 lw=(x[colval]-0.49)*line_scale,color='k',zorder=-1,
                                   alpha=params_line['alpha'],
                                 ),axis=1)            
     from matplotlib.lines import Line2D
-    legend_elements=[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, 
+    legend_elements+=[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, 
                                 alpha=params_line['alpha'],
                                 label=f' {colval}={i:1.1f}') for i in [1.0,0.8,0.6]]
     ax.legend(handles=legend_elements,

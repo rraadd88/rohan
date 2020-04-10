@@ -90,6 +90,18 @@ def get_subplot_dimentions(ax=None):
     ll, ur = ax.get_position() * fig.get_size_inches()
     width, height = ur - ll
     return width, height,height / width
+def get_logo_ax(ax,size=0.5,bbox_to_anchor=None,loc=1,
+             axes_kwargs={'zorder':-1},):
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+    width, height,aspect_ratio=get_subplot_dimentions(ax)
+    axins = inset_axes(ax, 
+                       width=size, height=size,
+                       bbox_to_anchor=[1,1,0,size/(height)] if bbox_to_anchor is None else bbox_to_anchor,
+                       bbox_transform=ax.transAxes, 
+                       loc=loc, 
+                       borderpad=0,
+                      axes_kwargs=axes_kwargs)
+
 def set_logo(imp,ax,
              size=0.5,bbox_to_anchor=None,loc=1,
              axes_kwargs={'zorder':-1},
@@ -120,7 +132,6 @@ def set_logo(imp,ax,
                 )    
         plt.tight_layout()
     """
-    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     from rohan.dandage.figs.convert import vector2raster
     if isinstance(imp,str):
         if splitext(imp)[1]=='.svg':
@@ -133,15 +144,8 @@ def set_logo(imp,ax,
     else:
         loggin.warning('imp should be path or image')
         return
-        
-    width, height,aspect_ratio=get_subplot_dimentions(ax)
-    axins = inset_axes(ax, 
-                       width=size, height=size,
-                       bbox_to_anchor=[1,1,0,size/(height)] if bbox_to_anchor is None else bbox_to_anchor,
-                       bbox_transform=ax.transAxes, 
-                       loc=loc, 
-                       borderpad=0,
-                      axes_kwargs=axes_kwargs)
+    axins=get_logo_ax(ax,size=size,bbox_to_anchor=bbox_to_anchor,loc=loc,
+             axes_kwargs=axes_kwargs,)
     axins.imshow(im, **params_imshow)
     if not test:
         axins.set(**{'xticks':[],'yticks':[],'xlabel':'','ylabel':''})
@@ -155,18 +159,20 @@ def set_logo(imp,ax,
 
 from rohan.dandage.plot.colors import color_ticklabels
 
-def set_logo_circle(ax=None,facecolor='white',edgecolor='gray'):
+def set_logo_circle(ax=None,facecolor='white',edgecolor='gray',test=False):
     ax=plt.subplot() if ax is None else ax
     circle= plt.Circle((0,0), radius= 1,facecolor=facecolor,edgecolor=edgecolor,lw=2)    
     _=[ax.add_patch(patch) for patch in [circle]]
-    ax.axis('off');_=ax.axis('scaled')
+    if not test:
+        ax.axis('off');#_=ax.axis('scaled')
     return ax
-def set_logo_yeast(ax=None,color='orange'):
+def set_logo_yeast(ax=None,color='orange',test=False):
     ax=plt.subplot() if ax is None else ax
     circle1= plt.Circle((0,0), radius= 1,color=color)
     circle2= plt.Circle((0.6,0.6), radius= 0.6,color=color)
     _=[ax.add_patch(patch) for patch in [circle1,circle2]]
-    ax.axis('off');_=ax.axis('scaled')
+    if not test:
+        ax.axis('off');#_=ax.axis('scaled')
     return ax
 def set_logo_interaction(ax=None,colors=['b','b','b'],lw=5,linestyle='-'):
     ax.plot([-0.45,0.45],[0.25,0.25],color=colors[1],linestyle=linestyle,lw=lw-1)
@@ -174,7 +180,7 @@ def set_logo_interaction(ax=None,colors=['b','b','b'],lw=5,linestyle='-'):
     interactor2= plt.Circle((0.7,0.25), radius= 0.25,ec=colors[2],fc='none',lw=lw)
     _=[ax.add_patch(patch) for patch in [interactor1,interactor2]]
     return ax
-def set_logos(label,element2color,ax=None):
+def set_logos(label,element2color,ax=None,test=False):
     interactor1=label.split(' ')[2]
     interactor2=label.split(' ')[3]
     ax=plt.subplot() if ax is None else ax
@@ -182,10 +188,10 @@ def set_logos(label,element2color,ax=None):
     if label.startswith('between parent'):
         fun2params['set_logo_circle']={}
     else:
-        fun2params['set_logo_yeast']={'color':element2color[f"hybrid alt"] if interactor1!=interactor2 else element2color[f"{interactor1} alt"]}
+        fun2params['set_logo_yeast']={'color':element2color[f"hybrid alt"] if 'hybrid' in label else element2color[f"{interactor1} alt"],'test':test}
     fun2params['set_logo_interaction']=dict(colors=[element2color[interactor1],
                         element2color['hybrid'] if interactor1!=interactor2 else element2color[interactor1],
-                        element2color[interactor1]],
+                        element2color[interactor2]],
                          linestyle=':' if interactor1!=interactor2 else '-')
 #     from rohan.dandage.plot import ax_ as ax_funs
 #     [getattr(ax_funs,fun)(ax=ax,**fun2params[fun]) for fun in fun2params]
