@@ -76,10 +76,12 @@ def notebook2packagescript(notebookp,test=False):
     else:
         return code,df1
     
-def notebook2script(notebookp, scriptp):
+def notebook2script(notebookp, scriptp=None):
     """
     blind convert
     """
+    if scriptp is None:
+        scriptp=notebookp.replace('.ipynb','.py')
     import nbformat
     from nbconvert import PythonExporter
     nb = nbformat.read(notebookp, nbformat.NO_CONVERT)
@@ -88,7 +90,6 @@ def notebook2script(notebookp, scriptp):
     with open(scriptp, 'w+') as fh:
         fh.writelines(source)
     return scriptp
-
 
 import re
 def sort_stepns(l):
@@ -336,3 +337,8 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
         plt.subplots_adjust(left=0.2, right=0.9, top=0.9, bottom=0.1)
         savefig(f"{cfg['prjd']}/plot_workflow_log.svg",tight_layout=False)
     return cfg
+
+## used elsewhere
+def scriptp2modules(pyp):
+    lines=open(pyp,'r').readlines()
+    return [s.split('def ')[1].split('(')[0] for s in lines if s.startswith('def ')]

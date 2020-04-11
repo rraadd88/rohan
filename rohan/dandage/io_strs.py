@@ -203,13 +203,17 @@ def byte2str(b):
         
 
 # find
-
-def findall(s,substring,outends=False):
+def findall(s,substring,outends=False,outstrs=False):
     import re
-    if outends:
-        return [(a.start(), a.end()) for a in list(re.finditer(substring, s))]
+    finds=list(re.finditer(substring, s))
+    if outends or outstrs:
+        locs=[(a.start(), a.end()) for a in finds]
+        if not outstrs:
+            return locs
+        else:
+            return [s[l[0]:l[1]] for l in locs]
     else:
-        return [a.start() for a in list(re.finditer(substring, s))]
+        return [a.start() for a in finds]
     
 def getall_fillers(s,leftmarker='{',rightmarker='}',
                   leftoff=0,rightoff=0):

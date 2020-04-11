@@ -31,41 +31,7 @@ def fun2dplot(fun,test=False,colsindex=[],ret_params=False):
     if not ret_params:
         return dplot
     else:
-        return dplot,params        
-
-def figure_scriptp2figuren2paneln2plots(figure_scriptp):
-    figure_script_lines=open(figure_scriptp,'r').read().split('\n')
-    import string
-    figuren2lines={}
-    figuren=None
-    for line in figure_script_lines:
-        if '# ## figure ' in line.lower():
-            figuren=line.replace('# ## ','')
-            figuren2lines[figuren]=[]
-        elif not figuren is None:    
-            figuren2lines[figuren].append(line)
-    #     break
-
-    keep_supplementary=False
-    if not keep_supplementary:
-        figuren2lines={k:figuren2lines[k] for k in figuren2lines if not ' s' in k.lower()}
-
-    print(list(figuren2lines.keys()))
-
-    figuren2paneln2plots={}
-    for figuren in figuren2lines:
-        paneli=0
-        paneln=None
-        paneln2plots={}
-        for line in figuren2lines[figuren]:
-            if '## panel' in line.lower() and not line.startswith('# '):
-                paneln=string.ascii_uppercase[paneli]
-                paneln2plots[paneln]=[]
-                paneli+=1
-            elif not paneln is None:
-                paneln2plots[paneln].append(line2plotstr(line))            
-        figuren2paneln2plots[figuren]={k:dropna(paneln2plots[k]) for k in paneln2plots}
-    return figuren2paneln2plots
+        return dplot,params
 
 def get_figure_source_data(figure_scriptp,plotn2fun,figures=[]):
     figuren2paneln2plots=figure_scriptp2figuren2paneln2plots(figure_scriptp)
