@@ -41,7 +41,7 @@ def make_plot_src(figure_scriptp,logplotsp,plot_srcp,plotn2fun,replace_fullpath=
     from rohan.dandage.io_sys import runbashcmd
     runbashcmd(f"zip -r {dirname(plot_srcp)}/plot.zip {outd}")
 
-def clean_figure_nb(figure_nbp,figure_nboutp):    
+def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=False):    
     from IPython import nbformat
     nb=nbformat.read(figure_nbp,as_version=nbformat.NO_CONVERT)
 
@@ -53,26 +53,35 @@ def clean_figure_nb(figure_nbp,figure_nboutp):
                 nb['cells'][celli]['outputs'][0]['text']=''
         except:
             pass
-        try: 
-            if 'text/plain' in nb['cells'][celli]['outputs'][0]['data']:
-                nb['cells'][celli]['outputs'][0]['data']['text/plain']=''
-        except:
-            pass        
-        try: 
-            if 'text/plain' in nb['cells'][celli]['outputs'][1]['data']:
-                nb['cells'][celli]['outputs'][1]['data']['text/plain']=''
-        except:
-            pass        
-        try:
-            if 'execution_count' in nb['cells'][celli]['outputs'][0]:
-                nb['cells'][celli]['outputs'][0]['execution_count']=0
-        except:
-            pass        
-        try:
-            if 'execution_count' in nb['cells'][celli]['outputs'][1]:
-                nb['cells'][celli]['outputs'][1]['execution_count']=0
-        except:
-            pass        
+        # no abs paths
+        for i in range(3):
+            try: 
+                if 'text/plain' in nb['cells'][celli]['outputs'][i]['data']:
+                    nb['cells'][celli]['outputs'][i]['data']['text/plain']=''
+            except:
+                pass   
+        # clear output
+        if clear_outputs:
+            for i in range(3):
+                try: 
+                    if 'outputs' in nb['cells'][celli]:
+                        nb['cells'][celli]['outputs']=[]
+                except:
+                    pass        
+        # clear images
+        if clear_images:
+            for i in range(3):
+                try: 
+                    if 'image/png' in nb['cells'][celli]['outputs'][i]['data']:
+                        nb['cells'][celli]['outputs'][i]['data']['image/png']=''
+                except:
+                    pass
+        for i in range(3):
+            try:
+                if 'execution_count' in nb['cells'][celli]['outputs'][i]:
+                    nb['cells'][celli]['outputs'][i]['execution_count']=0
+            except:
+                pass        
         try: 
             if 'execution_count' in nb['cells'][celli]:
                 nb['cells'][celli]['execution_count']=0
