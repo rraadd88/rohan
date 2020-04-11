@@ -24,12 +24,12 @@ def merge_dict_values(l,test=False):
 
 def read_yaml(p):
     with open(p,'r') as f:
-        return yaml.load(f,yaml.FullLoader)
+        return yaml.safe_load(f)
 def to_yaml(d,p): 
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     with open(p,'w') as f:
-        yaml.dump(d,f)
+        yaml.safe_dump(d,f)
         
 def read_json(path_to_file):
     with open(path_to_file) as p:

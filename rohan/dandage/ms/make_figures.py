@@ -94,7 +94,10 @@ def make_figure_src(
     # write plots.py
     with open(plots_outp,'w') as f:
         f.write(plots_imports+'\n\n'+'\n\n'.join([f"## Figure{fign}:panel{ploti}\n{plotn2text[fign2ploti2plotn[fign][ploti]]}"  for fign in fign2ploti2plotn for ploti in fign2ploti2plotn[fign]]))
-    to_dict(fign2ploti2plotn,f"{dirname(abspath(figure_nbp))}/cg.yml")
+    cfg={'figns_rename':figns_rename,
+        'fign2ploti2plotn':fign2ploti2plotn,
+    }
+    to_dict(cfg,f"{dirname(abspath(figure_nbp))}/cfg.yml")
     return fign2ploti2plotn
 
 def make_plot_src(figure_scriptp,logplotsp,plotn2fun,plot_srcp,replace_fullpath=''):
