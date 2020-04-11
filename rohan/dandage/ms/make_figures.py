@@ -87,7 +87,7 @@ def make_figure_src(
 
     # fign2text
     lines_remove=['','# In[ ]:',]
-    fign2text={fign:f"def Figure{fign}():\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig' in s)])+f"\n    savefig(f'{{dirname(__file__)}}/figures/Figure{fign}',tight_layout=False,fmts=)" for fign in fign2text}
+    fign2text={fign:f"def Figure{fign}():\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{dirname(__file__)}}/figures/Figure{fign}',tight_layout=False,fmts=)" for fign in fign2text}
     # write figures.py
     with open(figures_outp,'w') as f:
         f.write(figures_imports+'\n\n'+'\n\n'.join(list(fign2text.values())))
