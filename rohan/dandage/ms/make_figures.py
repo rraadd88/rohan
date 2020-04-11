@@ -36,18 +36,18 @@ def figure_scriptp2figuren2paneln2plots(figure_scriptp):
 
 def make_figure_src(
     outd,
-    figure_nbp=None,
+    ind,
     plots_imports='from rohan.global_imports import *',
-    figures_imports='from rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\nfrom rohan.dandage.plot.schem import *\nfrom plots import *',
-    plots_logp='log_00_metaanalysis.log.py',
-    replace_fullpath=None,
+    figures_imports='from rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\nfrom rohan.dandage.plot.schem import *\nfrom .plots import *\nimport warnings\nwarnings.filterwarnings("ignore")',
+    test=False,
     ):
-    if figure_nbp is None:
-        figure_nbp=sorted(glob('figures_v*.ipynb'))[-1]
-    if replace_fullpath is None:
-        replace_fullpath=abspath('.')+'/'        
+    plots_logp=f"{ind}/log_00_metaanalysis.log.py"   
+    figure_nbp=sorted(glob(f"{ind}/figures*.ipynb"))[-1]
+    replace_fullpath=abspath(ind)+'/'        
     plots_outp=f'{outd}/plots.py'
     figures_outp=f'{outd}/figures.py'
+    if test:
+        print(plots_logp,figure_nbp,replace_fullpath,plots_outp,figures_outp)
     from rohan.dandage.io_fun import scriptp2modules
     plotns=scriptp2modules(plots_logp)
     plotns=[s for s in plotns if not s.startswith('_')]
@@ -55,8 +55,6 @@ def make_figure_src(
     start,end='def ','\nreturn ax'
     plotn2text={s.split('(')[0]:start+s for s in text.split(start) if s.startswith('plot')}
     plotn2text={k:plotn2text[k].replace(replace_fullpath,'') for k in plotn2text}
-    from rohan.dandage.ms.make_figure_src import clean_figure_nb
-
     figure_clean_nbp=f'{dirname(abspath(figure_nbp))}/figures_cleaned.ipynb'
     clean_figure_nb(figure_nbp,
                    figure_clean_nbp,
@@ -190,16 +188,12 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
     nbformat.write(nb,figure_nboutp)
     
     
-def make_figures(packagen):
-    if not hasattr(importlib.import_module(f"{packagen}"),'figures'):
-        logging.warning(f"{packagen} do not have figures attribute")
-        return 
+def make_figures(packagen,force=False):
     import importlib
     script = importlib.import_module(f"{packagen}.figures")
-    df1=pd.DataFrame({'module name':[s for s in dir(script) if s.startswith('figure')]})
+    df1=pd.DataFrame({'module name':[s for s in dir(script) if s.startswith('Figure')]})
     df1['figure path']=df1['module name'].apply(lambda x: f"figures/{x}")
-    force=True
     def apply_figure(x,script,force=False):
         if len(glob(f"{x['figure path']}*"))==0 or force:
             getattr(script,x['module name'])()
-    df1.parallel_apply(lambda x: apply_figure(x,script,force),axis=1)    
+    df1.parallel_apply(lambda x: apply_figure(x,script,force),axis=1)

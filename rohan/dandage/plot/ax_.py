@@ -101,6 +101,7 @@ def get_logo_ax(ax,size=0.5,bbox_to_anchor=None,loc=1,
                        loc=loc, 
                        borderpad=0,
                       axes_kwargs=axes_kwargs)
+    return axins
 
 def set_logo(imp,ax,
              size=0.5,bbox_to_anchor=None,loc=1,
