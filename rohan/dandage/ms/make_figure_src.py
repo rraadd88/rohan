@@ -42,7 +42,7 @@ def make_plot_src(figure_scriptp,logplotsp,plot_srcp,plotn2fun,replace_fullpath=
     runbashcmd(f"zip -r {dirname(plot_srcp)}/plot.zip {outd}")
 
 def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=False):    
-    from IPython import nbformat
+    import nbformat
     nb=nbformat.read(figure_nbp,as_version=nbformat.NO_CONVERT)
 
     nb['cells'][0]['source']="# import\nfrom rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\n%run plots.py"

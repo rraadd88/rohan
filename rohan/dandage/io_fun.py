@@ -6,7 +6,7 @@ from rohan.dandage.io_sets import sort_list_by_list
 import logging
 
 # auto scripts
-def notebook2script(notebookp,test=False):
+def notebook2packagescript(notebookp,test=False):
     from rohan.dandage.io_sets import unique
     from rohan.dandage.io_dict import read_dict
     import pandas as pd
@@ -75,6 +75,19 @@ def notebook2script(notebookp,test=False):
         return code
     else:
         return code,df1
+    
+def notebook2script(notebookp, scriptp):
+    """
+    blind convert
+    """
+    import nbformat
+    from nbconvert import PythonExporter
+    nb = nbformat.read(notebookp, nbformat.NO_CONVERT)
+    exporter = PythonExporter()
+    source, meta = exporter.from_notebook_node(nb)
+    with open(scriptp, 'w+') as fh:
+        fh.writelines(source)
+    return scriptp
 
 
 import re
