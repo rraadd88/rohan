@@ -38,7 +38,7 @@ def make_figure_src(
     outd,
     figure_nbp=None,
     plots_imports='from rohan.global_imports import *',
-    figures_imports='from rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\nfrom plots import *',
+    figures_imports='from rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\nfrom rohan.dandage.plot.schem import *\nfrom plots import *',
     plots_logp='log_00_metaanalysis.log.py',
     replace_fullpath=None,
     ):
@@ -61,15 +61,11 @@ def make_figure_src(
     clean_figure_nb(figure_nbp,
                    figure_clean_nbp,
                    clear_outputs=True)
-
-    # %run ../../../rohan/rohan/dandage/io_fun.py
     from rohan.dandage.io_fun import notebook2script
-    # figure_clean_pyp=figure_clean_nbp.replace('.ipynb','.py')
     figure_clean_pyp=notebook2script(notebookp=figure_clean_nbp)
 
     figtext= open(figure_clean_pyp,'r').read()
     fign2text={s.split('ure')[1].split('\n')[0]:'# ## fig'+s for s in figtext.split('# ## fig') if s.startswith('ure')}
-    # %run ../../../rohan/rohan/dandage/io_strs.py
     from rohan.dandage.io_strs import findall
     fign2plotns={k:findall(fign2text[k],'plot_*([a-zA-Z0-9_]+)',outends=True,outstrs=True) for k in fign2text}
     fign2plotns={k:[s for s in unique(fign2plotns[k]) if s in plotns] for k in fign2plotns}
@@ -85,17 +81,15 @@ def make_figure_src(
     plotn2text={k:plotn2text[k] for k in plotn2text if k in plotns_used}
 
     ## order the figures
-
     figns_rename={s:f"S{si+1:02d}" for si,s in enumerate(sorted([k for k in fign2ploti2plotn if 's' in k]))}
 
     # index supp figures
     fign2ploti2plotn={figns_rename[k] if k in figns_rename else k:fign2ploti2plotn[k] for k in fign2ploti2plotn}
     fign2text={figns_rename[k] if k in figns_rename else k:fign2text[k] for k in fign2text}
-    # .replace(f'# ## figure{k}',f"# ## Figure{figns_rename[k] if k in figns_rename else k}")
 
     # fign2text
     lines_remove=['','# In[ ]:',]
-    fign2text={fign:f"def figure{fign}():\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if not s in lines_remove])+f"\n    savefig('figures/Figure{fign}')" for fign in fign2text}
+    fign2text={fign:f"def Figure{fign}():\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if not s in lines_remove])+f"\n    savefig(f'{{dirname(__file__)}}/figures/Figure{fign}')" for fign in fign2text}
     # write figures.py
     with open(figures_outp,'w') as f:
         f.write(figures_imports+'\n\n'+'\n\n'.join(list(fign2text.values())))
@@ -194,3 +188,18 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
         except:
             pass        
     nbformat.write(nb,figure_nboutp)
+    
+    
+def make_figures(packagen):
+    if not hasattr(importlib.import_module(f"{packagen}"),'figures'):
+        logging.warning(f"{packagen} do not have figures attribute")
+        return 
+    import importlib
+    script = importlib.import_module(f"{packagen}.figures")
+    df1=pd.DataFrame({'module name':[s for s in dir(script) if s.startswith('figure')]})
+    df1['figure path']=df1['module name'].apply(lambda x: f"figures/{x}")
+    force=True
+    def apply_figure(x,script,force=False):
+        if len(glob(f"{x['figure path']}*"))==0 or force:
+            getattr(script,x['module name'])()
+    df1.parallel_apply(lambda x: apply_figure(x,script,force),axis=1)    
