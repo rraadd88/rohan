@@ -52,20 +52,21 @@ def download_file(service,fileid,filetypes,outp,test=False):
     """
     from googleapiclient.http import MediaIoBaseDownload
     from os import makedirs
+    from os.path import dirname
     import io
     # download
     for mimeType in filetypes:
         request = service.files().export_media(fileId=fileid,
                                                      mimeType=mimeType)
-        outp=outp if '.' in outp else f"{outp}.{mimeType.split('/')[1].split('+')[0]}"
+        outp_=outp if '.' in outp else f"{outp}.{mimeType.split('/')[1].split('+')[0]}"
         makedirs(dirname(outp),exist_ok=True)
-        fh = io.FileIO(file=outp,mode='w')
+        fh = io.FileIO(file=outp_,mode='w')
         downloader = MediaIoBaseDownload(fh, request)
         done = False
         while done is False:
             status, done = downloader.next_chunk()
             if test:
-                print( f"Download {int(status.progress() * 100)}")
+                print( f"Downloading {outp_}: {int(status.progress() * 100)}")
                 
                 
 def download_drawings(folderid,outd,service=None,test=False):
