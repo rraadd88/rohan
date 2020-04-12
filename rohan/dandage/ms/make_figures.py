@@ -87,7 +87,7 @@ def make_figure_src(
 
     # fign2text
     lines_remove=['','# In[ ]:',]
-    fign2text={fign:f"def Figure{fign}():\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{dirname(__file__)}}/figures/Figure{fign}',tight_layout=False,fmts=)" for fign in fign2text}
+    fign2text={fign:f"def Figure{fign}():\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{dirname(__file__)}}/figures/Figure{fign}',tight_layout=False,fmts=[])" for fign in fign2text}
     # write figures.py
     with open(figures_outp,'w') as f:
         f.write(figures_imports+'\n\n'+'\n\n'.join(list(fign2text.values())))
@@ -97,7 +97,7 @@ def make_figure_src(
     cfg={'figns_rename':figns_rename,
         'fign2ploti2plotn':fign2ploti2plotn,
     }
-    to_dict(cfg,f"{dirname(abspath(figure_nbp))}/cfg.yml")
+    to_dict(cfg,f"{dirname(abspath(figure_nbp))}/cfg.json")
     return fign2ploti2plotn
 
 def make_plot_src(figure_scriptp,logplotsp,plotn2fun,plot_srcp,replace_fullpath=''):
@@ -191,7 +191,7 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
     nbformat.write(nb,figure_nboutp)
     
     
-def make_figures(packagen,force=False):
+def make_figures(packagen,force=False,parallel=False):
     import importlib
     script = importlib.import_module(f"{packagen}.figures")
     df1=pd.DataFrame({'module name':[s for s in dir(script) if s.startswith('Figure')]})
@@ -199,4 +199,4 @@ def make_figures(packagen,force=False):
     def apply_figure(x,script,force=False):
         if len(glob(f"{x['figure path']}*"))==0 or force:
             getattr(script,x['module name'])()
-    df1.parallel_apply(lambda x: apply_figure(x,script,force),axis=1)
+    getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,force),axis=1)
