@@ -42,9 +42,6 @@ def search_filetype_in_folder(folderid,filetype,service,test=False):
         if test:
             print(name2id)
     return name2id
-"""
-pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-"""
 
 def download_file(service,fileid,filetypes,outp,test=False):
     """
@@ -77,5 +74,8 @@ def download_drawings(folderid,outd,service=None,test=False):
                               folderid=folderid,
                               test=test,)           
     for n in filename2id:
-        download_file(service,filename2id[n],['image/png','image/svg+xml'],f"{outd}/{n}",test=test)
+        download_file(service,filename2id[n],[
+#                                                 'image/png',
+                                              'image/svg+xml'],
+                      f"{outd}/{n}",test=test)
                 

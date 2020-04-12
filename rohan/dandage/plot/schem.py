@@ -46,12 +46,19 @@ def plot_fitland(xys,ns=None,widths=None,
     else:
         return df
 
-def plot_schem(imp,ax=None,force=False,margin=0,test=False,params_vector2raster={'trim':False,'alpha':False}):
-    from rohan.dandage.figs.convert import vector2raster
-    if splitext(imp)[1]=='.svg' or force:
-        pngp=vector2raster(imp,force=force,**params_vector2raster)
-    else:
+def plot_schem(imp,ax=None,force=False,margin=0,test=False,params_vector2raster={}):
+    """
+    :param params_vector2raster: cairosvg: {'dpi':500,'scale':2}; imagemagick: {'trim':False,'alpha':False}
+    """
+    if splitext(imp)[1]=='.png':
         pngp=imp
+    else:
+#         if splitext(imp)[1]=='.svg' or force:
+#             from rohan.dandage.figs.convert import svg2png
+#             pngp=svg2png(imp,force=force,**params_vector2raster)
+#         else:
+        from rohan.dandage.figs.convert import vector2raster
+        pngp=vector2raster(imp,force=force,**params_vector2raster)
     ax=plt.subplot() if ax is None else ax
     im=plt.imread(pngp)
     ax.imshow(im,interpolation='catrom')
