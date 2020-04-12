@@ -87,7 +87,8 @@ def make_figure_src(
 
     # fign2text
     lines_remove=['','# In[ ]:',]
-    fign2text={fign:f"def Figure{fign}():\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{dirname(__file__)}}/figures/Figure{fign}',tight_layout=False,fmts=[])" for fign in fign2text}
+    fign2text={fign:f"def Figure{fign}(ind,outd):\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{outd}}/figures/Figure{fign}',tight_layout=False,fmts=[])" for fign in fign2text}
+    fign2text={k:fign2text[k].replace('plot_schem("plot/','plot_schem(f"{ind}/plot/').replace("plot_schem('plot/","plot_schem(f'{{ind}}/plot/") for k in fign2text}
     # write figures.py
     with open(figures_outp,'w') as f:
         f.write(figures_imports+'\n\n'+'\n\n'.join(list(fign2text.values())))
@@ -194,9 +195,12 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
 def make_figures(packagen,force=False,parallel=False):
     import importlib
     script = importlib.import_module(f"{packagen}.figures")
+    outd=dirname(script.__file__)
+    ind=f"{outd}/{../../notebooks}"
     df1=pd.DataFrame({'module name':[s for s in dir(script) if s.startswith('Figure')]})
-    df1['figure path']=df1['module name'].apply(lambda x: f"figures/{x}")
-    def apply_figure(x,script,force=False):
+    df1['figure path']=df1['module name'].apply(lambda x: f"{outd}/figures/{x}")
+    def apply_figure(x,script,ind,outd,force=False):
         if len(glob(f"{x['figure path']}*"))==0 or force:
-            getattr(script,x['module name'])()
-    getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,force),axis=1)
+            getattr(script,x['module name'])(ind=ind,outd=outd)
+    getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,ind=ind,outd=outd,force=force),axis=1)
+    f"for p in {outd}/figures/Figure*.svg;do convert $p $p.pdf;done;pdfunite {outd}/figures/Figure*.pdf {outd}/Figures.pdf"

@@ -63,7 +63,7 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,para
     #save plot
     plotp=savefig(plotp,**params_savefig)
     dplotp=f"{splitext(plotp)[0]}.tsv"
-    paramp=f"{splitext(plotp)[0]}.yml"    
+    paramp=f"{splitext(plotp)[0]}.json"    
     #save data
     to_table(dplot,dplotp)
     to_dict(params,paramp)
@@ -103,7 +103,7 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,para
     lines=[f"    {l}" for l in lines]
     lines=''.join(lines)
 
-    lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,fig=None,params=None):\n    if dplot is None:dplot=read_table(f"{splitext(plotp)[0]}.tsv");\n    params_saved=read_dict(f"{splitext(plotp)[0]}.yml");params=params_saved if params is None else '+'{'+'k:params[k] if k in params else params_saved[k] for k in params_saved'+'}'+';\n'+lines+'    return ax\n'
+    lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,fig=None,params=None):\n    if dplot is None:dplot=read_table(f"{splitext(plotp)[0]}.tsv");\n    params_saved=read_dict(f"{splitext(plotp)[0]}.json");params=params_saved if params is None else '+'{'+'k:params[k] if k in params else params_saved[k] for k in params_saved'+'}'+';\n'+lines+'    return ax\n'
 
     #save def
     with open(srcp,'a') as f:
