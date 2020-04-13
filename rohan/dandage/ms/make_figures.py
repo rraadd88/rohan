@@ -39,8 +39,19 @@ def make_figure_src(
     ind,
     plots_imports='from rohan.global_imports import *',
     figures_imports='from rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\nfrom rohan.dandage.plot.schem import *\nfrom .plots import *\nimport warnings\nwarnings.filterwarnings("ignore")',
+    replaces={'plot_schem("plot/':'plot_schem(f"{ind}/plot/',
+              "plot_schem('plot/":"plot_schem(f'{ind}/plot/",
+              '"logos/':'f"{dirname(__file__)}/var/logos/',
+              "'logos/":"f'{dirname(__file__)}/var/logos/",
+              '=ff"':'=f"',
+              "=ff'":"=f'",              
+             },
     test=False,
     ):
+    """
+    
+    """
+    from rohan.dandage.io_strs import replacemany    
     plots_logp=f"{ind}/log_00_metaanalysis.log.py"   
     figure_nbp=sorted(glob(f"{ind}/figures*.ipynb"))[-1]
     replace_fullpath=abspath(ind)+'/'        
@@ -77,6 +88,7 @@ def make_figure_src(
 
     plotns_used=flatten([list(fign2ploti2plotn[k].values()) for k in fign2ploti2plotn])
     plotn2text={k:plotn2text[k] for k in plotn2text if k in plotns_used}
+    plotn2text={k:replacemany(plotn2text[k],replaces) for k in plotn2text}
 
     ## order the figures
     figns_rename={s:f"S{si+1:02d}" for si,s in enumerate(sorted([k for k in fign2ploti2plotn if 's' in k]))}
@@ -87,8 +99,8 @@ def make_figure_src(
 
     # fign2text
     lines_remove=['','# In[ ]:',]
-    fign2text={fign:f"def Figure{fign}(ind,outd):\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{outd}}/figures/Figure{fign}',tight_layout=False,fmts=[])" for fign in fign2text}
-    fign2text={k:fign2text[k].replace('plot_schem("plot/','plot_schem(f"{ind}/plot/').replace("plot_schem('plot/","plot_schem(f'{ind}/plot/") for k in fign2text}
+    fign2text={fign:f"def Figure{fign}(ind,outd):\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{outd}}/figures/Figure{fign}',tight_layout=False,fmts=['png','svg'])" for fign in fign2text}
+    fign2text={k:replacemany(fign2text[k],replaces) for k in fign2text}
     # write figures.py
     with open(figures_outp,'w') as f:
         f.write(figures_imports+'\n\n'+'\n\n'.join(list(fign2text.values())))
@@ -192,17 +204,19 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
     nbformat.write(nb,figure_nboutp)
     
     
-def make_figures(packagen,force=False,parallel=False):
+def make_figures(packagen,force=False,parallel=False,test=False):
     import importlib
     script = importlib.import_module(f"{packagen}.figures")
     outd=dirname(script.__file__)
     ind=f"{outd}/../../notebooks"
     df1=pd.DataFrame({'module name':[s for s in dir(script) if s.startswith('Figure')]})
     df1['figure path']=df1['module name'].apply(lambda x: f"{outd}/figures/{x}")
-    def apply_figure(x,script,ind,outd,force=False):
+    def apply_figure(x,script,ind,outd,force=False,test=False):
         if len(glob(f"{x['figure path']}*"))==0 or force:
+            if test:
+                print(ind,outd)
             getattr(script,x['module name'])(ind=ind,outd=outd)
-    getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,ind=ind,outd=outd,force=force),axis=1)
+    getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,ind=ind,outd=outd,force=force,test=test),axis=1)
     from rohan.dandage.io_sys import runbashcmd
     outp=f"{outd}/figures/_figures.pdf"
     if not exists(outp) or force:

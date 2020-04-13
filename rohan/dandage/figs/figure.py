@@ -36,6 +36,8 @@ def savefig(plotp,tight_layout=True,fmts=['png','svg'],savepdf=False,normalise_p
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
     makedirs(dirname(plotp),exist_ok=True)
+    if len(fmts)==0:
+        fmts=['png']
     if tight_layout:
         plt.tight_layout()
     if '.' in plotp:

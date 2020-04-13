@@ -139,6 +139,9 @@ def set_logo(imp,ax,
             pngp=vector2raster(imp,force=force)
         else:
             pngp=imp
+        if not exists(pngp):
+            logging.error(f'{pngp} not found')
+            return
         im = plt.imread(pngp)
     elif isinstance(imp,np.ndarray):
         im = imp

@@ -3,17 +3,7 @@ from rohan.dandage.io_sys import runbashcmd
 from glob import glob
 import logging
 
-def svg2png(svgp,pngp=None,params={'dpi':500,'scale':4},force=False):
-    if pngp is None:
-        pngp=f"{svgp}.png"
-    if not exists(pngp) or force:
-        # import cairocffi as cairo
-        from cairosvg import svg2png
-        svg2png(open(svgp, 'rb').read(), 
-                write_to=open(pngp, 'wb'),
-               **params)
-    return pngp
-
+    
 def vector2raster(plotp,dpi=500,alpha=False,trim=False,force=False,test=False):
     """
     convert -density 300 -trim 
@@ -40,4 +30,30 @@ def vectors2rasters(plotd,ext='svg'):
     com=f'for f in {plotd}/*.{ext}; do inkscape "$f" -z --export-dpi=500 --export-area-drawing --export-png="$f.png"; done'
     return runbashcmd(com)
     
-    
+def svg2png(svgp,pngp=None,params={'dpi':500,'scale':4},force=False):
+    logging.warning('output might have boxes around image elements')
+    if pngp is None:
+        pngp=f"{svgp}.png"
+    if not exists(pngp) or force:
+        # import cairocffi as cairo
+        from cairosvg import svg2png
+        svg2png(open(svgp, 'rb').read(), 
+                write_to=open(pngp, 'wb'),
+               **params)
+    return pngp
+
+def svg_resize(svgp,svgoutp=None,scale=1.2,pad=200,test=False):
+    logging.warning('output might have missing elements')
+    if svgoutp is None:
+        svgoutp=f"{splitext(svgp)[0]}_resized.svg"
+    import svgutils as su
+    svg=su.transform.fromfile(svgp)
+    w,h=[int(re.sub('[^0-9]','', s)) for s in [svg.width,svg.height]]
+    if test:
+        print(svg.width,svg.height,end='-> ')
+    svgout=su.transform.SVGFigure(w*scale,h)
+    if test:
+        print(svgout.width,svgout.height)
+    svgout.root.set("viewBox", "0 0 %s %s" % (w,h))
+    svgout.append(svg.getroot())
+    svgout.save(svgoutp)    

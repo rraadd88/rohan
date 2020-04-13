@@ -27,7 +27,7 @@ def replacebyposition(s,i,replaceby):
 
 def replacemany(s,replaces,replacewith=''):
     if isinstance(replaces,list):
-        replaces={k:replacewith for k in replaces}
+        replaces={k:replacewith for k in replaces}        
     for k in replaces:
         s=s.replace(k,replaces[k])
     return s
