@@ -51,6 +51,7 @@ def make_figure_src(
     """
     
     """
+    ind,outd=abspath(ind),abspath(outd)
     from rohan.dandage.io_strs import replacemany    
     plots_logp=f"{ind}/log_00_metaanalysis.log.py"   
     figure_nbp=sorted(glob(f"{ind}/figures*.ipynb"))[-1]
@@ -89,7 +90,13 @@ def make_figure_src(
     plotns_used=flatten([list(fign2ploti2plotn[k].values()) for k in fign2ploti2plotn])
     plotn2text={k:plotn2text[k] for k in plotn2text if k in plotns_used}
     plotn2text={k:replacemany(plotn2text[k],replaces) for k in plotn2text}
-
+    plotn2text={k:replacemany(plotn2text[k],{'00_metaanalysis':'notebooks',
+                                             f"'{ind}":"f'{ind}",
+                                             f'"{ind}':'f"{ind}',
+                                             '=ff"':'=f"',"=ff'":"=f'",
+                                             '(ff"':'(f"',"(ff'":"(f'",
+                                            }) for k in plotn2text}
+    
     ## order the figures
     figns_rename={s:f"S{si+1:02d}" for si,s in enumerate(sorted([k for k in fign2ploti2plotn if 's' in k]))}
 
