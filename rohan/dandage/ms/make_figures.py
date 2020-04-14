@@ -106,7 +106,7 @@ def make_figure_src(
 
     # fign2text
     lines_remove=['','# In[ ]:',]
-    fign2text={fign:f"def Figure{fign}(ind,outd):\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{outd}}/figures/Figure{fign}',tight_layout=False,fmts=['png','svg'])" for fign in fign2text}
+    fign2text={fign:f"def Figure{fign}(ind,outd):\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{outd}}/figures/Figure{fign}',tight_layout=True,fmts=['png','svg'])" for fign in fign2text}
     fign2text={k:replacemany(fign2text[k],replaces) for k in fign2text}
     # write figures.py
     with open(figures_outp,'w') as f:
@@ -184,5 +184,5 @@ def make_figures(packagen,force=False,parallel=False,test=False):
     getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,ind=ind,outd=outd,force=force,test=test),axis=1)
     from rohan.dandage.io_sys import runbashcmd
     outp=f"{outd}/figures/_figures.pdf"
-    if not exists(outp) or force:
-        runbashcmd(f"for p in {outd}/figures/Figure*.svg;do convert $p $p.pdf;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
+    print('making a combo pdf for proofing')
+    runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p --dpi 100 $p.pdf;done;pdfunite {outd}/figures/Figure*.pdf {outp}")

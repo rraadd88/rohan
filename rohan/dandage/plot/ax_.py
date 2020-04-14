@@ -17,7 +17,7 @@ def set_equallim(ax,diagonal=False,
                  params_format_ticklabels=dict(axes=['x','y'],n=4,fmt='%.2f')):
     min_,max_=np.min([ax.get_xlim()[0],ax.get_ylim()[0]]),np.max([ax.get_xlim()[1],ax.get_ylim()[1]])
     if diagonal:
-        ax.plot([min_,max_],[min_,max_],':',color='gray')
+        ax.plot([min_,max_],[min_,max_],':',color='gray',zorder=5)
     ax.set_xticks(ax.get_yticks())
     ax.set_xlim(min_,max_)
     ax.set_ylim(min_,max_)

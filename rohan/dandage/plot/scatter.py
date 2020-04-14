@@ -250,8 +250,7 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
                 colenrichtype='enrichment type',
                 enrichmenttype2color={'high':'#d24043','low': (0.9294117647058824, 0.7003921568627451, 0.7050980392156864)},
                 label=None,
-                fig=None,ax=None):
-    fig=plt.figure() if fig is None else fig
+                 ax=None):
     ax=plt.subplot() if ax is None else ax
     ax=dplot.plot.scatter(x=colx,
                       y=coly,color='gray',ax=ax)
