@@ -94,6 +94,7 @@ def plot_dist_comparison(df,colx,colhue,coly,
             for x,s in zip(np.arange(len(hues))/len(hues)-np.mean(np.arange(len(hues))/len(hues)),legend_labels):
                 ax.text(x,ax.get_ylim()[0],s,va='top',ha='center')
         ax.set_xlabel(xs[0],labelpad=10)
+        ax.set_xlim(-0.5,0.5)
     ax.set(**params_ax)   
 #     print([t.get_text() for t in ax.get_xticklabels()])
 #     if len(xs)==1:

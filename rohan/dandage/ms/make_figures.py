@@ -91,8 +91,8 @@ def make_figure_src(
     plotn2text={k:plotn2text[k] for k in plotn2text if k in plotns_used}
     plotn2text={k:replacemany(plotn2text[k],replaces) for k in plotn2text}
     plotn2text={k:replacemany(plotn2text[k],{'00_metaanalysis':'notebooks',
-                                             f"'{ind}":"f'{ind}",
-                                             f'"{ind}':'f"{ind}',
+                                             f"'{ind}/":"'",
+                                             f'"{ind}/':'"',
                                              '=ff"':'=f"',"=ff'":"=f'",
                                              '(ff"':'(f"',"(ff'":"(f'",
                                             }) for k in plotn2text}
@@ -119,48 +119,6 @@ def make_figure_src(
     }
     to_dict(cfg,f"{dirname(abspath(figure_nbp))}/cfg.json")
     return fign2ploti2plotn
-
-def make_plot_src(figure_scriptp,logplotsp,plotn2fun,plot_srcp,replace_fullpath=''):
-    """
-    figure_scriptp='figure_v16_clean.py'
-    jupyter nbconvert --to python $(ls figure_v*.ipynb | tail -1)
-    
-    logplotsp='log_00_metaanalysis.log.py'
-    replace_fullpath=dirname(abspath('.')),#'/media/usr/drive/path/to/code/'
-    plotn2fun=globals()
-    plot_srcp='/project/plots.py'
-    """    
-    from rohan.dandage.ms import make_tables
-    lines=open(logplotsp,'r').read()
-    plotn2code={l.split('(')[0].replace(' ',''):f"def{l}".replace(replace_fullpath,'') for l in lines.split('\ndef') if l.startswith(' plot')}
-    figuren2paneln2plots=figure_scriptp2figuren2paneln2plots(figure_scriptp)
-    plotpy_text=''
-    for figuren in figuren2paneln2plots:
-        plotpy_text+=f"# {figuren}\n"
-        for paneln in figuren2paneln2plots[figuren]:
-            plotpy_text+=f"## panel {paneln}\n"
-            for ploti,plotn in enumerate(figuren2paneln2plots[figuren][paneln]):
-                plotpy_text+=f"### plot#{ploti+1}\n"
-                plotpy_text+=f"{plotn2code[plotn]}\n"
-
-    with open(plot_srcp,'w') as f:
-        f.write(plotpy_text)
-    #save dplot and params 
-    params_fun2dplot={'colsindex':['gene name','gene id','gene names','gene ids','cell line','dataset'],}
-    outd=f"{dirname(plot_srcp)}/data_plot"
-    makedirs(outd,exist_ok=True)
-    plotn2dplot,plotn2params={},{}
-    for figuren in figuren2paneln2plots:
-        for paneln in figuren2paneln2plots[figuren]:
-            for ploti,plotn in enumerate(figuren2paneln2plots[figuren][paneln]):
-                fun=plotn2fun[plotn]
-                dplot,params=fun2dplot(fun,test=False,**params_fun2dplot,ret_params=True)
-                plotn2dplot[plotn],plotn2params[plotn]=dplot,params
-                to_table(dplot,f'{outd}/{plotn}.tsv')
-                yaml.dump(params,open(f'{outd}/{plotn}.yml','w'))
-
-    from rohan.dandage.io_sys import runbashcmd
-    runbashcmd(f"zip -r {dirname(plot_srcp)}/plot.zip {outd}")
 
 def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=False):    
     import nbformat

@@ -31,25 +31,52 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 f"{label}   ",**kw_text)
         
 # from rohan.dandage.io_strs import replacebyposition
-def savefig(plotp,tight_layout=True,fmts=['png','svg'],savepdf=False,normalise_path=True,dpi=500):
+def savefig(plotp,
+            tight_layout=True,
+            fmts=['png','svg'],
+            savepdf=False,
+            normalise_path=True,
+            dpi=500):
     if normalise_path:
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
     makedirs(dirname(plotp),exist_ok=True)
     if len(fmts)==0:
         fmts=['png']
-    if tight_layout:
-        plt.tight_layout()
     if '.' in plotp:
         plt.savefig(plotp,dpi=dpi)
     else:
         for fmt in fmts:
-            plt.savefig(f"{plotp}.{fmt}",format=fmt,dpi=dpi)
+            plt.savefig(f"{plotp}.{fmt}",
+                        format=fmt,
+                        dpi=dpi,
+                        bbox_inches='tight' if tight_layout else None)
     if not is_interactive_notebook():
         plt.clf();plt.close()
     return plotp
 
-def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,params_savefig={}):
+def get_plot_inputs(plotp,dplot,params,outd):
+    if exists(plotp):
+        plotp=abspath(plotp)
+    else:
+        plotp=f"{outd}/{plotp}"
+    if not outd is None:
+        outd=abspath(outd)
+        if not outd in plotp:
+            plotp=f"{outd}/{plotp}"
+    if dplot is None:
+        dplot=read_table(f"{splitext(plotp)[0]}.tsv");
+    params_saved=read_dict(f"{splitext(plotp)[0]}.json" if exists(f"{splitext(plotp)[0]}.json") else f"{splitext(plotp)[0]}.yml");
+    params=params_saved if params is None else {k:params[k] if k in params else params_saved[k] for k in params_saved};
+    return plotp,dplot,params
+
+def saveplot(dplot,
+             logp,
+             plotp,
+             sep='# plot',
+             params={},
+             force=False,test=False,
+             params_savefig={}):
     """
     saveplot(
     dplot=pd.DataFrame(),
@@ -104,9 +131,7 @@ def saveplot(dplot,logp,plotp,sep='# plot',params={},force=False,test=False,para
             lines[linei]=f'if ax is None:{line}'                
     lines=[f"    {l}" for l in lines]
     lines=''.join(lines)
-
-    lines=f'def {defn}(plotp="{plotp}",dplot=None,ax=None,fig=None,params=None):\n    if dplot is None:dplot=read_table("{splitext(plotp)[0]}.tsv");\n    params_saved=read_dict("{splitext(plotp)[0]}.json");params=params_saved if params is None else '+'{'+'k:params[k] if k in params else params_saved[k] for k in params_saved'+'}'+';\n'+lines+'    return ax\n'
-
+    lines=f'def {defn}(plotp="{plotp}",dplot=None,params=None,ax=None,fig=None,outd=None):\n    plotp,dplot,params=get_plot_inputs(plotp=plotp,dplot=dplot,params=params,outd=f"{{dirname(__file__)}}");\n'+lines+'    return ax\n'
     #save def
     with open(srcp,'a') as f:
         f.write(lines)
