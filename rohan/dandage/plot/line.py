@@ -65,7 +65,7 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                  )
     dplot.apply(lambda x: ax.plot(*[[label2xys_rectangle_centers[x[k]][0] for k in ['index','column']],
                                   [label2xys_rectangle_centers[x[k]][1] for k in ['index','column']]],
-                                lw=(x[colval]-0.49)*line_scale,color='k',zorder=-1,
+                                lw=(x[colval]-0.49)*line_scale,linestyle=params_line['linestyle'],color='k',zorder=-1,
                                   alpha=params_line['alpha'],
                                 ),axis=1)            
     from matplotlib.lines import Line2D

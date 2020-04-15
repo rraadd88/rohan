@@ -185,4 +185,4 @@ def make_figures(packagen,force=False,parallel=False,test=False):
     from rohan.dandage.io_sys import runbashcmd
     outp=f"{outd}/figures/_figures.pdf"
     print('making a combo pdf for proofing')
-    runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p --dpi 100 $p.pdf;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
+    runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -density 100 $p.pdf;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
