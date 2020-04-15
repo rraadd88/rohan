@@ -30,4 +30,5 @@ rohan/lib/_pub/
 rohan/deps/
 rohan/dandage/figs/data/
 test/jupnbuks/
-test/_*
+test/*
+!test/test_install.py
