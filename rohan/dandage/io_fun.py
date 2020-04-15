@@ -342,3 +342,25 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
 def scriptp2modules(pyp):
     lines=open(pyp,'r').readlines()
     return [s.split('def ')[1].split('(')[0] for s in lines if s.startswith('def ')]
+
+def git_notebooks(packagen,packagep,notebooksdp=None):
+    packagescriptsp=f"{packagep}/{packagen}"
+    if notebooksdp is None:
+        notebooksdp=f'{packagescriptsp}/notebooks'
+    # get all the notebooks
+    import pandas as pd
+    df1=pd.DataFrame(pd.Series({(basename(p)).split('_v')[0]:p for p in sorted(glob(f'{notebooksdp}/*ipynb'))[::-1]},name='notebook path'))
+    df1.index.name='step name'
+    df1=df1.sort_index().reset_index()
+    from rohan.dandage.io_fun import notebook2packagescript
+    df1['script text']=df1['notebook path'].apply(notebook2packagescript)
+    df1['script path']=df1['step name'].apply(lambda x: f"{packagescriptsp}/curate{x}.py")
+    def write_script(x):
+        with open(x['script path'],'w') as f: 
+            f.write(x['script text'])
+    _=df1.apply(write_script,axis=1)
+    from git import Repo
+    repo=Repo(packagep)
+    repo.git.add(update=True)
+    repo.index.commit('update')
+    return df1
