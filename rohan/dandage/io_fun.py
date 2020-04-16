@@ -362,5 +362,5 @@ def git_notebooks(packagen,packagep,notebooksdp=None):
     from git import Repo
     repo=Repo(packagep)
     repo.git.add(update=True)
-    repo.index.commit('update')
+    repo.index.commit('auto-update')
     return df1
