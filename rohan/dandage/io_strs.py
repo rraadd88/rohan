@@ -283,3 +283,4 @@ def str_split(strng, sep, pos):
     strng = strng.split(sep)
     return sep.join(strng[:pos]), sep.join(strng[pos:])
 
+def str2dict(s): return dict(item.split("=") for item in s.split(";"))

@@ -97,6 +97,8 @@ def jaccard_index(l1,l2):
     u=len(set(l1).union(l2))
     return i/u,i,u
 
+def difference(l1,l2): return list(set(l1).difference(l2))
+
 ## dicts
 def merge_dict(d1,d2):
     from itertools import chain

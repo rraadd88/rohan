@@ -27,7 +27,7 @@ def notebook2packagescript(notebookp,test=False):
     funs=[s.split('## trash')[0] for s in funs if '\nto_' in s]
     
     if len(funs)==0:
-        logging.error(f'{notebookp}: no functions found')
+        logging.error(f'{basename(notebookp)}: no functions found')
         if not test:
             return ''
         else:
