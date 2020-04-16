@@ -343,6 +343,31 @@ def scriptp2modules(pyp):
     lines=open(pyp,'r').readlines()
     return [s.split('def ')[1].split('(')[0] for s in lines if s.startswith('def ')]
 
+
+def git_commit(repop):
+    from git import Repo
+    repo=Repo(repop)
+    def commit_changes(repo):
+        """if any"""
+        repo.git.add(update=True)
+        repo.index.commit('auto-update')
+
+    if len(repo.untracked_files)!=0:
+        from rohan.dandage import input_binary
+        print(len(repo.untracked_files),'untracked file/s in the repo:',repo.untracked_files)
+        yes=input_binary("add all of them? [y/n]")
+        if yes:
+            repo.git.add(repo.untracked_files)
+        else:
+            yes=input_binary("add none of them? [y/n]")
+            if yes:
+                commit_changes(repo)
+            else:
+                repo.git.add(eval(input('list of files in py syntax:')))
+        repo.index.commit('manual-update')
+    else:
+        commit_changes()
+        
 def git_notebooks(packagen,packagep,notebooksdp=None):
     packagescriptsp=f"{packagep}/{packagen}"
     if notebooksdp is None:
@@ -359,8 +384,5 @@ def git_notebooks(packagen,packagep,notebooksdp=None):
         with open(x['script path'],'w') as f: 
             f.write(x['script text'])
     _=df1.apply(write_script,axis=1)
-    from git import Repo
-    repo=Repo(packagep)
-    repo.git.add(update=True)
-    repo.index.commit('auto-update')
+    git_commit(packagep)
     return df1

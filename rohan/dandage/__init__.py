@@ -1,10 +1,7 @@
 # import rohan.dandage.io_dfs
-
-
-import logging
-from rohan.dandage.io_sys import runbashcmd    
-    
 def get_deps(cfg=None,deps=[]):
+    import logging
+    from rohan.dandage.io_sys import runbashcmd    
     """
     Installs conda dependencies.
 
@@ -23,3 +20,13 @@ def get_deps(cfg=None,deps=[]):
                 cfg[dep]=dep
     logging.info(f"{len(deps)} deps installed.")
     return cfg
+
+def input_binary(q): 
+    reply=''
+    while not reply in ['y','n','o']:
+        reply = input(f"{q}:")
+        if reply == 'y':
+            return True
+        if reply == 'n':
+            return False
+    return reply
