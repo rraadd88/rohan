@@ -366,7 +366,8 @@ def git_commit(repop):
                 repo.git.add(eval(input('list of files in py syntax:')))
         repo.index.commit('manual-update')
     else:
-        commit_changes()
+        commit_changes(repo)
+    print('git-committed')
         
 def git_notebooks(packagen,packagep,notebooksdp=None):
     packagescriptsp=f"{packagep}/{packagen}"
