@@ -92,3 +92,10 @@ def backup_to_zip(ps,destp,test=False):
                 print(f"cp {p_} {p_dest}")
                 copyfile(p_,p_dest)
     zip_folder(destdp, destp)    
+    
+def read_url(url):
+    # read text on url
+    from urllib.request import urlopen
+    f = urlopen(url)
+    myfile = f.read()
+    return str(myfile)

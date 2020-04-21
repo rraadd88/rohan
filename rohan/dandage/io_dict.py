@@ -85,3 +85,7 @@ def str2dict(s,sep=';',sep_equal='='):
     thanks to https://stackoverflow.com/a/186873/3521099
     """
     return dict(item.split(sep_equal) for item in s.split(sep))
+
+def merge_dict_list(l):    
+    from collections import ChainMap
+    return dict(ChainMap(*l))
