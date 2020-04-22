@@ -16,6 +16,7 @@ def plot_dist_comparison(df,colx,colhue,coly,
                         kws_annot_boxplot={'yoff':0.025},
                          legend_labels=None,
                          legend2xticklabels=True,
+                        params_legend={'bbox_to_anchor':[1,1]},
                         params_ax={},
                         ax=None,plotp=None,
                         test=False
@@ -75,7 +76,7 @@ def plot_dist_comparison(df,colx,colhue,coly,
     if len(xs)!=1:
         handles, labels = ax.get_legend_handles_labels()    
         legend=ax.legend(handles=handles[:len(hues)],labels=labels[:len(hues)],
-                         title=colhue,bbox_to_anchor=[1,1],)
+                         title=colhue,**params_legend)
         if len(legend.get_texts())!=0:
             if not legend_labels is None:
                 for labeli,label in enumerate(legend_labels):

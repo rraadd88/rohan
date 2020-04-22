@@ -315,6 +315,8 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
                             module_exclude=global_imports,
                             #modulen_prefix='curate',
                             )
+    from pprint import pprint
+    pprint(modulen2funn2params)
     to_dict(modulen2funn2params,cfg['cfg_modulen2funn2paramsp'])
     if len(reruns)!=0 and exists(cfg['cfgp']):
         cfg_=read_dict(cfg['cfgp'])
