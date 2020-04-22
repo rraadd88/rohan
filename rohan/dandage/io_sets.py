@@ -4,6 +4,7 @@ from functools import reduce
 import numpy as np
 import pandas as pd
 
+
 def list2intersection(l):
     return reduce(np.intersect1d, (l))
 def list2union(l):
@@ -22,6 +23,8 @@ def unique(l,drop=None):
     if drop is not None:
         l=[s for s in l if s!=drop]
     return tuple(np.unique(l))
+
+def list_value_counts(l):return dict(zip(*np.unique(l, return_counts=True)))
 
 def tuple2str(tup,sep='; '): 
     if not isinstance(tup,list):
