@@ -262,16 +262,30 @@ def translate(dnaseq,fmtout=str,tax_id=None):
     
 ## io file
 ### multiple seq fasta
-def fap2id2seq(fap):
-    id2seq=SeqIO.to_dict(SeqIO.parse(fap,format='fasta'))
-    id2seq={k:str(id2seq[k].seq) for k in id2seq}
-    return id2seq
-def ids2seqs2fasta(ids2seqs,fastap):
+def read_fasta(fap,key_type='id',duplicates=False):
+    if (not duplicates) or key_type=='id':
+        try:
+            id2seq=SeqIO.to_dict(SeqIO.parse(fap,format='fasta'))
+            id2seq={k:str(id2seq[k].seq) for k in id2seq}
+            return id2seq
+        except:
+            duplicates=True
+    if duplicates or key_type=='description':
+        id2seq={}
+        for seq_record in SeqIO.parse(fap, "fasta"):
+            id2seq[getattr(seq_record,key_type)]=str(seq_record.seq)
+        return id2seq
+def to_fasta(ids2seqs,fastap):
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id], Alphabet.ProteinAlphabet), id) for id in ids2seqs)
     SeqIO.write(seqs, fastap, "fasta")
-def read_fasta(fap):
+    return fastap
+def dedup_fasta(fap,faoutp=None):
+    return to_fasta(read_fasta(fap,key_type='description'),
+             fastap=f"{splitext(fap)[0]}_dedup.fasta" if faoutp is None else faoutp)    
+# to be deprecated
+def fap2id2seq(fap):
     return fap2id2seq(fap)
-def to_fasta(ids2seqs,fastap):
+def ids2seqs2fasta(ids2seqs,fastap):
     return ids2seqs2fasta(ids2seqs,fastap)
     
 ## generate mutations

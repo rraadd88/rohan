@@ -35,7 +35,7 @@ def get_sequence(queries,fap=None,fmt='fasta',
 def get_sequence_batch(queries,fap,interval=1000,params_get_sequence={'organism_taxid':9606,}):
     text=''
     for ini,end in zip(range(0,len(queries)-1,interval),range(interval,len(queries)-1+interval,interval)):
-        print(ini,end)
+        print(f"{ini}-{end}",end=' ')
         text_=get_sequence(queries=queries[ini:end],**params_get_sequence
                           )
         text=f"{text}\n{text_}"
