@@ -368,8 +368,9 @@ def df2unstack(df,coln='columns',idxn='index',col='value'):
     """
     return dmap2lin(df,idxn=idxn,coln=coln,colvalue_name=col)
 
+## paired dfs
 from rohan.dandage.io_strs import replacelist
-def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
+def unpair_df(df,cols_df1,cols_df2,cols_common,replace_suffix):
     dfs=[]
     for cols in [df1cols,df2cols]:
         df_=df[cols+cols_common]
@@ -378,7 +379,9 @@ def lin_dfpair(df,df1cols,df2cols,cols_common,replace_suffix):
     dfout=dfs[0].append(dfs[1])
     return dfout
 
-def merge_dfpairwithdf(dfpair,df,
+lin_dfpair=unpair_df
+
+def merge_dfs_paired_with_unpaireds(dfpair,df,
                         left_ons=['gene1 name','gene2 name'],
                         right_on='gene name',right_ons_common=[],
                         suffixes=[' gene1',' gene2'],how='left',dryrun=False, test=False):
@@ -420,7 +423,10 @@ def merge_dfpairwithdf(dfpair,df,
         if test:
             print('> dfpair_merge2 columns');print(dfpair_merge2.columns.tolist())
         return dfpair_merge2
+    
+merge_dfpairwithdf=merge_dfs_paired_with_unpaireds
 
+    
 def lambda2cols(df,lambdaf,in_coln,to_colns):
     df_=df.apply(lambda x: lambdaf(x[in_coln]),
                  axis=1).apply(pd.Series)

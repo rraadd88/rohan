@@ -289,3 +289,7 @@ def str_ranges2list(s,func=int,range_marker='-',sep=',',replace=['[',']']):
     s=replacemany(s,replace)
     from rohan.dandage.io_sets import flatten
     return flatten([list(range(func(i.split(range_marker)[0]),func(i.split(range_marker)[1])+1)) if '-' in i else int(i) for i in s.split(sep)])
+
+def str2urlformat(s):
+    import urllib
+    return urllib.parse.quote_plus(s)
