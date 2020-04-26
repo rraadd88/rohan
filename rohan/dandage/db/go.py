@@ -94,8 +94,10 @@ def get_goterms_physical_interactions(taxid,outd):
         with open(outp,'w') as f:
             f.write(responseBody)
         df=read_gpad(outp)
-        if len(dn2df[aspect])==50000:
+        if len(df)==50000:
             logging.warning('some terms are cut off. keep it within the limit of 50k lines')
+        if len(df)==0:
+            logging.warning('no results. check the taxid')            
         # remove multi-org interactions
         dn2df[aspect]=df.loc[df['Interacting taxon ID'].isnull(),:]
     return pd.concat(dn2df,names=['aspect'],axis=0).reset_index()
@@ -114,7 +116,7 @@ def get_curated_goterms_physical_interactions(taxid,outd,force=False):
     if not exists(genesetid2namep):
         genesetid2name=goid2name(queries=unique(df2['GO ID'].tolist()+df2['go id slimmed'].tolist()),
                                  result='name',interval=500)
-        to_dict(genesetid2name,outp)
+        to_dict(genesetid2name,genesetid2namep)
     else:
         genesetid2name=read_dict(genesetid2namep)
     df2['gene set name']=df2['GO ID'].map(genesetid2name)
