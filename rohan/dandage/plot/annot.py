@@ -185,3 +185,45 @@ def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
 def pval2stars(pval,alternative): return pval2annot(pval,alternative=alternative,fmt='*',)
 
                
+def annot_many(ax,df,axis2col,colannot,
+               colcolor=None,color_annot='k',color_line='gray',
+               axis2cutoffs={'x':None,'y':None},
+               xoff_bend=0.1,xoff_annot=0.05,off_axes=1,
+               test=False):
+    from rohan.dandage.io_strs import linebreaker
+    axis2params={axis:{} for axis in ['x','y']}
+    for axis in ['x','y']:
+        axis2params[axis]['cutoff']=df[axis2col[axis]].median() if axis2cutoffs[axis] is None else axis2cutoffs[axis]
+        axis2params[axis]['original']=getattr(ax,f'get_{axis}lim')()
+        axis2params[axis]['length']=axis2params[axis]['original'][1]-axis2params[axis]['original'][0]
+        axis2params[axis]['bend']=[axis2params[axis]['original'][0]-axis2params[axis]['length']*xoff_bend,
+                                 axis2params[axis]['original'][1]+axis2params[axis]['length']*xoff_bend]
+        axis2params[axis]['annot']=[axis2params[axis]['original'][0]-axis2params[axis]['length']*(xoff_bend+xoff_annot),
+                                    axis2params[axis]['original'][1]+axis2params[axis]['length']*(xoff_bend+xoff_annot)]
+        axis2params[axis]['expanded']=[axis2params[axis]['original'][0]-axis2params[axis]['length']*(xoff_bend+xoff_annot+(off_axes if axis=='x' else off_axes)),
+                                     axis2params[axis]['original'][1]+axis2params[axis]['length']*(xoff_bend+xoff_annot+(off_axes if axis=='x' else off_axes))]
+        axis2params[axis]['expanded length']=axis2params[axis]['expanded'][1]-axis2params[axis]['expanded'][0]
+        df[f"{axis} high"]=df[axis2col[axis]].apply(lambda x: x>axis2params[axis]['cutoff'])
+    
+    df=df.sort_values(by=[axis2col['y']],ascending=[True])
+    df['x annot']=df['x high'].apply(lambda x : axis2params['x']['annot'][1] if x else axis2params['x']['annot'][0])
+    def getys(x):
+        if len(x)>2:
+            x['y annot']=np.linspace(axis2params['y']['expanded'][0]+(axis2params['y']['expanded length']/len(x)),
+                                     axis2params['y']['expanded'][1]-(axis2params['y']['expanded length']/len(x)),
+                                     len(x))
+        else:
+            x['y annot']=x[axis2col['y']]
+        return x
+    df=df.groupby(['x annot'],as_index=False).apply(getys)
+    if test:
+        print(axis2params['x'])
+        print(df.loc[:,['x annot','y annot']].head())
+    df.apply(lambda x: ax.text(x['x annot'],x['y annot'],linebreaker(x[colannot],break_pt=25,),
+                              ha='right' if not x['x high'] else 'left',va='center',
+                              color=color_annot if colcolor is None else x[colcolor]),axis=1)
+    df.apply(lambda x: ax.plot([x[axis2col['x']],axis2params['x']['bend'][1] if x['x high'] else axis2params['x']['bend'][0],x['x annot']],
+                               [x[axis2col['y']],x['y annot'],x['y annot']],
+                              color='gray',lw=1),axis=1)
+    ax.set(**{f'{axis}lim':axis2params[axis]['expanded'] for axis in ['x','y']})
+    return ax
