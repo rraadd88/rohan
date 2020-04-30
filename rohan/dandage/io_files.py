@@ -11,6 +11,22 @@ from shutil import copyfile
 # def copy(src, dst):copyfile(src, dst)
 # def cp(src, dst):copy(src, dst)
 
+# walker
+def get_all_subpaths(d='.',include_directories=False): 
+    from glob import glob
+    import os
+    paths=[]
+    for root, dirs, files in os.walk(d):
+        if include_directories:
+            for d in dirs:
+                path=os.path.relpath(os.path.join(root, d), ".")        
+                paths.append(path)
+        for f in files:
+            path=os.path.relpath(os.path.join(root, f), d)
+            paths.append(path)
+    paths=sorted(paths)
+    return paths
+
 from os.path import splitext,basename
 def basenamenoext(p): return splitext(basename(p))[0]
 
