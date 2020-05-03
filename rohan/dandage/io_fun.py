@@ -167,8 +167,8 @@ def get_modulen2funn2params_for_run(modulen2funn2params,cfg,
                 else:
                     logging.error(f"paramn: {paramn} not found for {modulen}.{funn}:{paramn}")
                     from rohan.dandage.io_dict import to_dict
-                    to_dict(modulen2funn2params,'test/modulen2funn2params.yml')
-                    to_dict(cfg,'test/cfg.yml')
+                    to_dict(modulen2funn2params,'test/modulen2funn2params.json')
+                    to_dict(cfg,'test/cfg.json')
                     logging.error(f"check test/modulen2funn2params,cfg for debug")
                     return 
                 if paramn.endswith('p') and not exists(modulen2funn2params[modulen][funn][paramn]):
@@ -302,9 +302,9 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
                 reruns=[]
     cfg['cfg_inp']=cfgp
     cfg['prjd']=splitext(abspath(cfgp))[0]
-    cfg['cfgp']=f"{cfg['prjd']}/cfg.yml"
-    cfg['cfg_modulen2funn2paramsp']=f"{cfg['prjd']}/cfg_modulen2funn2params.yml"
-    cfg['cfg_modulen2funn2params_for_runp']=f"{cfg['prjd']}/cfg_modulen2funn2params_for_run.yml"
+    cfg['cfgp']=f"{cfg['prjd']}/cfg.json"
+    cfg['cfg_modulen2funn2paramsp']=f"{cfg['prjd']}/cfg_modulen2funn2params.json"
+    cfg['cfg_modulen2funn2params_for_runp']=f"{cfg['prjd']}/cfg_modulen2funn2params_for_run.json"
     for k in cfg:
         if isinstance(cfg[k],str):
             if exists(cfg[k]):
