@@ -65,3 +65,12 @@ def is_interactive_notebook():
 #     logging.warning("is_interactive_notebook function could misbehave")
     # thanks to https://stackoverflow.com/a/22424821
     return 'ipykernel.kernelapp' in sys.modules
+
+def p2time(filename,time_type='m'):
+    import os
+    import datetime
+    if time_type=='m':
+        t = os.path.getmtime(filename)
+    else:
+        t = os.path.getctime(filename)
+    return str(datetime.datetime.fromtimestamp(t))
