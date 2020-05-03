@@ -4,11 +4,11 @@ from os.path import basename,dirname,exists,splitext,abspath
 from rohan.dandage.io_files import basenamenoext
 from rohan.dandage.io_sets import sort_list_by_list
 import logging
+from rohan.dandage.io_dict import read_dict,to_dict
 
 # auto scripts
 def notebook2packagescript(notebookp,test=False):
     from rohan.dandage.io_sets import unique
-    from rohan.dandage.io_dict import read_dict
     import pandas as pd
     d1=read_dict(notebookp,fmt='json')
     funs=[]
@@ -108,10 +108,18 @@ def fun2params(f,test=False):
 def f2params(f,test=False): return fun2params(f,test=False)
 
 def get_funn2params_by_module(module,module_exclude,prefix=''):
-    funns=list(set(dir(module)).difference(dir(module_exclude)+['read_dict','to_dict']))
+    funns=list(set(dir(module)).difference(dir(module_exclude)))#+['read_dict','to_dict']
     if not prefix is None:
         funns=[s for s in funns if s.startswith(prefix)]
-    return {funn:fun2params(getattr(module,funn)) for funn in funns}
+    funn2params_by_module={}
+    for funn in funns:
+        d=fun2params(getattr(module,funn))
+        for k in d:
+            if not isinstance(d[k],(int,float,bool,list)):
+#                 inspect._empty
+                d[k]=None
+        funn2params_by_module[funn]=d
+    return funn2params_by_module
 def get_modulen2funn2params_by_package(package,module_exclude,modulen_prefix=None):
     modulen2get_funn2params={}
     modulens=[basenamenoext(p) for p in glob(f"{dirname(package.__file__)}/*.py")]
@@ -143,6 +151,7 @@ def get_modulen2funn2params_for_run(modulen2funn2params,cfg,
             dirn='data'+re.findall('\d\d',modulen)[0]+'_'+re.split('\d\d_',modulen)[1]
             filen=re.split('\d\d_',funn)[1]
             doutp=f"{cfg['prjd']}/{dirn}/{filen}.{'pqt' if not '2' in paramns[-1] else 'json'}"
+#             print(modulen2funn2params[modulen][funn],paramns)
             modulen2funn2params[modulen][funn][paramns[-1]]=doutp
             cfg[paramns[-1]]=doutp
 #             print(modulen,funn,doutp)#list(cfg.keys()))
@@ -185,7 +194,6 @@ def run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run):
                 __import__(f'{package.__name__}.{modulen}')
                 getattr(getattr(package,modulen),funn)(**modulen2funn2params_for_run[modulen][funn])
 #                 return
-
             
 def get_dparams(modulen2funn2params):
     import pandas as pd
@@ -293,7 +301,7 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
     """
     :params reruns: list of file names
     """
-    from rohan.dandage.io_dict import read_dict,to_dict
+    
     cfg=read_dict(cfgp)
     if isinstance(reruns,str):
         reruns=reruns.split(',') 
@@ -315,8 +323,9 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
                             module_exclude=global_imports,
                             #modulen_prefix='curate',
                             )
-    from pprint import pprint
-    pprint(modulen2funn2params)
+    if test:
+        from pprint import pprint
+        pprint(modulen2funn2params)
     to_dict(modulen2funn2params,cfg['cfg_modulen2funn2paramsp'])
     if len(reruns)!=0 and exists(cfg['cfgp']):
         cfg_=read_dict(cfg['cfgp'])
