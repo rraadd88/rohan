@@ -46,7 +46,10 @@ def read_dict(p,fmt=''):
     else:
         logging.error(f'supported extensions: .yml .yaml .json')
 def to_dict(d,p):
-    p=p.replace(' ','_')
+    if not 'My Drive' in p:
+        p=p.replace(' ','_')
+    else:
+        logging.warning('probably working on google drive; space/s left in the path.')
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     if p.endswith('.yml') or p.endswith('.yaml'):
