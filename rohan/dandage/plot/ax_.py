@@ -34,6 +34,19 @@ def grid(ax,axis=None):
         ax.xaxis.grid(color='gray', linestyle='dashed')
     return ax
 
+def set_legend_lines(ax,
+                     legend2param,param='color',lw=1,color='k',
+                     params_legend={}):
+    from matplotlib.lines import Line2D
+    legend_elements=[Line2D([0], [0], 
+                            color=(color if param!='color' else legend2param[k]), 
+                            linestyle='solid', 
+                            lw=(lw if param!='lw' else legend2param[k]), 
+                            label=k) for k in legend2param]
+    ax.legend(handles=legend_elements,
+              **params_legend)
+    return ax
+
 ## egend related stuff: also includes colormaps
 def sort_legends(ax,params={}):
     handles, labels = ax.get_legend_handles_labels()
