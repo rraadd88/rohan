@@ -713,36 +713,76 @@ def pd_merge_dfwithobjcols(df1,df2,left_on=None,right_on=None,on=None,
     df=pd.concat([df1,df2], axis=1, join=how)
     return df.reset_index()
 
-import logging
-def merge_dn2df(dn2df,on,how='left',
-               test=False):
-    dn2dflen=dict(zip([len(dn2df[dn].drop_duplicates(subset=on)) for dn in dn2df.keys()],dn2df.keys()))
+# import logging
+def merge_dfs(dfs,how='left',suffixes=['','_'],
+              test=False,
+              **params_merge):
+    if all([isinstance(df,str) for df in dfs]):
+        dfs=[read_table(p) for p in dfs]
+    if not 'on' in params_merge:
+        params_merge['on']=list(list2intersection([df.columns for df in dfs]))
+        if len(params_merge['on'])==0:
+            logging.error('no common columns found for infer params_merge[on]')
+            return
+    params_merge['how']=how
+    params_merge['suffixes']=suffixes
+    # sort largest first
     if test:
-        print(dn2dflen)
-    for dni,dflen in enumerate(sorted(dn2dflen,reverse=True)):
-        dn=dn2dflen[dflen]
-        df=dn2df[dn]
-        df_ddup=df.drop_duplicates(subset=on)
-        if len(df)!=len(df_ddup):
-            df=df_ddup.copy()
-            logging.warning(f'{dn}: dropped duplicates. size drop from {len(df)} to {len(df_ddup)}')
-        if dni==0:
-            cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
-            df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
-            dfmerged=df.copy()
+        print(params_merge)
+        print('size',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
+    dfi2cols_value={dfi:df.select_dtypes([int,float]).columns.tolist() for dfi,df in enumerate(dfs)}
+    cols_common=params_merge['on']+list(list2intersection(dn2cols_value.values()))
+    dfi2cols_value={k:list(set(dn2cols_value[k]).difference(cols_common)) for k in dfi2cols_value}
+    dfs=[drop_duplicates_by_agg(dfs[dfi],cols_common,dn2cols_value[dfi]) for dfi in dfi2cols_value]
+    print('size agg',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
+    sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(params_merge['on']))] for dfi,df in enumerate(dfs)},0)
+    print('size dedup',sorted_indices_by_size)
+    sorted_indices_by_size=list(sorted_indices_by_size.keys())[::-1]
+    dfs=[dfs[i] for i in sorted_indices_by_size]
+    for dfi,df in enumerate(dfs):
+        if dfi==0:
+            df1=df.copy()
         else:
-            cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
             if test:
-                print(dn,cols)
-                print(dict(zip(cols,[f"{c} {dn}" for c in cols])))
-            df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
-            dfmerged=dfmerged.merge(df,on=on,how=how,
-#                                     suffixes=['',f" {dn}"],
-                                   )
-            if test:
-                print(f" {dn}",dfmerged.columns.tolist(),df.columns.tolist())
-        del df
-    return dfmerged
+                print(df1.columns)
+                print(df.columns)
+            df1=pd.merge(df1, df, **params_merge)
+        print(dfi,':',df1.shape,'; ',end='')
+    print('')
+    cols_std=[f"{c} std" for c in flatten(list(dfi2cols_value.values()))]
+    cols_del=[c for c in cols_std if df1[c].isnull().all()]
+    df1=df1.drop(cols_del,axis=1)
+    return df1
+
+# def merge_dn2df(dn2df,on,how='left',
+#                test=False):
+#     dn2dflen=dict(zip([len(dn2df[dn].drop_duplicates(subset=on)) for dn in dn2df.keys()],dn2df.keys()))
+#     if test:
+#         print(dn2dflen)
+#     for dni,dflen in enumerate(sorted(dn2dflen,reverse=True)):
+#         dn=dn2dflen[dflen]
+#         df=dn2df[dn]
+#         df_ddup=df.drop_duplicates(subset=on)
+#         if len(df)!=len(df_ddup):
+#             df=df_ddup.copy()
+#             logging.warning(f'{dn}: dropped duplicates. size drop from {len(df)} to {len(df_ddup)}')
+#         if dni==0:
+#             cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
+#             df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
+#             dfmerged=df.copy()
+#         else:
+#             cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
+#             if test:
+#                 print(dn,cols)
+#                 print(dict(zip(cols,[f"{c} {dn}" for c in cols])))
+#             df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
+#             dfmerged=dfmerged.merge(df,on=on,how=how,
+# #                                     suffixes=['',f" {dn}"],
+#                                    )
+#             if test:
+#                 print(f" {dn}",dfmerged.columns.tolist(),df.columns.tolist())
+#         del df
+#     return dfmerged
 
 
 def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
@@ -763,25 +803,29 @@ def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
 def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
 ## drop duplicates by aggregating the dups
-def drop_duplicates_agg(df,colsgroupby,cols2aggf,test=False):
-    """
-    colsgroupby: unique names ~index
-    cols2aggf: rest of the cols `unique_dropna_str` for categories
-    """
-    if test:
-        print(df.shape)
-        print(df.drop_duplicates(subset=colsgroupby).shape)
-    #ddup aggregated
-    dfdupagg=df.loc[(df.duplicated(subset=colsgroupby,keep=False)),:].groupby(colsgroupby).agg(cols2aggf)
-    #drop duplicates all
-    df_=df.drop_duplicates(subset=colsgroupby,keep=False)
-    if test:
-        print(df_.shape)
-    #append ddup aggregated
-    dfout=df_.append(dfdupagg,sort=True)
-    if test:
-        print(dfout.shape)
-    return dfout
+def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean'):
+    df1=df.groupby(cols_groupby).agg({k:[getattr(np,aggfunc),np.std] for k in cols_value})
+    df1.columns=[c.replace(f' {aggfunc}','') for c in coltuples2str(df1.columns)]
+    return df1.reset_index()
+# def drop_duplicates_agg(df,colsgroupby,cols2aggf,test=False):
+#     """
+#     colsgroupby: unique names ~index
+#     cols2aggf: rest of the cols `unique_dropna_str` for categories
+#     """
+#     if test:
+#         print(df.shape)
+#         print(df.drop_duplicates(subset=colsgroupby).shape)
+#     #ddup aggregated
+#     dfdupagg=df.loc[(df.duplicated(subset=colsgroupby,keep=False)),:].groupby(colsgroupby).agg(cols2aggf)
+#     #drop duplicates all
+#     df_=df.drop_duplicates(subset=colsgroupby,keep=False)
+#     if test:
+#         print(df_.shape)
+#     #append ddup aggregated
+#     dfout=df_.append(dfdupagg,sort=True)
+#     if test:
+#         print(dfout.shape)
+#     return dfout
 
 ## sorting
 
