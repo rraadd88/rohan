@@ -65,9 +65,36 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
                  )
     dplot.apply(lambda x: ax.plot(*[[label2xys_rectangle_centers[x[k]][0] for k in ['index','column']],
                                   [label2xys_rectangle_centers[x[k]][1] for k in ['index','column']]],
-                                lw=(x[colval]-0.49)*line_scale,linestyle=params_line['linestyle'],color='k',zorder=-1,
+                                  lw=(x[colval]-0.49)*line_scale,
+                                  linestyle=params_line['linestyle'],
+                                  color='k',zorder=-1,
                                   alpha=params_line['alpha'],
                                 ),axis=1)            
+    if params_line['annot']:
+        def set_text_position(ax,x):
+            xs,ys=[[label2xys_rectangle_centers[x[k]][i] for k in ['index','column']] for i in [0,1]]
+            xy=[np.mean(xs),np.mean(ys)]
+            if np.subtract(*xs)==0 or np.subtract(*ys)==0:
+                ha,va='center','center'
+                rotation=0
+            else:
+                if np.subtract(*xs)<0:      
+                    ha,va='right','bottom'
+                    xy[1]=xy[1]+0.025
+                    rotation=-45
+                else:
+                    ha,va='right','top'
+                    xy[1]=xy[1]-0.025
+                    rotation=45
+            ax.text(xy[0],xy[1],f"{x[colval]:.2f}",
+                    ha=ha,va=va,
+                    color='k',rotation=rotation,
+                   bbox=dict(boxstyle="round",
+                   fc='lightgray',ec=None,)
+                   )
+            return ax
+            
+        dplot.apply(lambda x: set_text_position(ax,x),axis=1)            
     from matplotlib.lines import Line2D
     legend_elements=legend_elements+[Line2D([0], [0], color='k', linestyle='solid', lw=(i-0.49)*line_scale, 
                                 alpha=params_line['alpha'],
