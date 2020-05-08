@@ -51,6 +51,15 @@ def delunnamedcol(df):
     cols_del=[c for c in df.columns if 'Unnamed' in c]
     return df.drop(cols_del,axis=1)
 
+def dellevelcol(df):
+    """
+    Deletes all the unnamed columns
+
+    :param df: pandas dataframe
+    """
+    cols_del=[c for c in df.columns if 'level' in c]
+    return df.drop(cols_del,axis=1)
+
 def del_Unnamed(df):
     """
     to be deprecated
@@ -372,7 +381,7 @@ def df2unstack(df,coln='columns',idxn='index',col='value'):
 from rohan.dandage.io_strs import replacelist
 def unpair_df(df,cols_df1,cols_df2,cols_common,replace_suffix):
     dfs=[]
-    for cols in [df1cols,df2cols]:
+    for cols in [cols_df1,cols_df2]:
         df_=df[cols+cols_common]
         df_=df_.rename(columns=dict(zip(df_.columns,replacelist(df_.columns,replace_suffix))))
         dfs.append(df_)
@@ -804,8 +813,24 @@ def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
 ## drop duplicates by aggregating the dups
 def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean'):
-    df1=df.groupby(cols_groupby).agg({k:[getattr(np,aggfunc),np.std] for k in cols_value})
-    df1.columns=[c.replace(f' {aggfunc}','') for c in coltuples2str(df1.columns)]
+    col2aggfunc={}
+    for col in cols_value:
+        if isinstance(aggfunc,dict):
+            aggfunc_=aggfunc[col]
+        if not isinstance(aggfunc_,list):
+            aggfunc_=[aggfunc_]
+        col2aggfunc[col]=[getattr(np,k) if isinstance(k,str) else k for k in aggfunc_]
+    def agg(x,col2aggfunc):
+        xout=pd.Series()
+        for col in col2aggfunc:
+            for fun in col2aggfunc[col]:
+                xout[f'{col} {fun.__name__}']=fun(x[col])
+            if x[col].dtype in [float,int]:
+                xout[f'{col} std']=np.std(x[col])
+        return xout
+#         agg({k:col2aggfunc[k]+[np.std] for k in cols_value})
+    df1=df.groupby(cols_groupby).progress_apply(lambda x: agg(x,col2aggfunc))
+#     df1.columns=[c.replace(f' {aggfunc}','') for c in coltuples2str(df1.columns)]
     return df1.reset_index()
 # def drop_duplicates_agg(df,colsgroupby,cols2aggf,test=False):
 #     """

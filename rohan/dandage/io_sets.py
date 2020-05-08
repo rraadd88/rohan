@@ -92,7 +92,10 @@ def intersections(dn2list,jaccard=False,count=True,fast=False,test=False):
             else:
                 df.loc[k1,k2]=l
     return df
-jaccard_index_dict=intersections
+
+def jaccard_index_dict(dn2list,jaccard=True,count=False,fast=False,test=False):
+    return intersections(dn2list,jaccard,count,fast,test)
+
 compare_lists_jaccard=intersections
 
 def jaccard_index(l1,l2):
