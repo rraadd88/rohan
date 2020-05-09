@@ -397,6 +397,20 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
     """
     :param right_ons_common: columns to merge the right ones. eg. cell line
     """
+#     left_ons=[[s] isinstance(s,str) else s for s in left_ons]
+#     right_on=[right_on] isinstance(right_on,str) else right_on
+#     right_ons_common=[right_ons_common] isinstance(right_ons_common,str) else right_ons_common
+    
+#     # force suffixes
+#     df1=df.copy()
+#     df1.columns=df1.columns+suffixes[0]
+#     df2=df.copy()
+#     df2.columns=df2.columns+suffixes[1]
+
+#     merge2side2cols={1:{'left':[]}}
+#     merge2side2cols[1]['left']=left_ons[0]+right_ons_common
+#     merge2side2cols[1]['right']=right_on+right_ons_common
+    
     # force suffixes                        
     df1=df.copy()
     df1.columns=df1.columns+suffixes[0]
@@ -817,6 +831,8 @@ def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean'):
     for col in cols_value:
         if isinstance(aggfunc,dict):
             aggfunc_=aggfunc[col]
+        else:
+            aggfunc_=aggfunc
         if not isinstance(aggfunc_,list):
             aggfunc_=[aggfunc_]
         col2aggfunc[col]=[getattr(np,k) if isinstance(k,str) else k for k in aggfunc_]
