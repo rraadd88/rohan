@@ -51,6 +51,9 @@ def get_spearmanr_str(x,y):
     return f"$\\rho$={r:.1e} ({pval2annot(p,fmt='<')})".replace('\n','')
 
 def get_corr_str(x,y,method='spearman'):
+    """
+    TODO bootstraping
+    """
     r,p=getattr(sc.stats,f"{method}r")(x, y,nan_policy='omit')
     return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
 

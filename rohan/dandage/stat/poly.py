@@ -40,3 +40,8 @@ def mlr_2(df,coly,colxs):
     dplot=pd.DataFrame({f'{coly}': y,
     f'{coly} predicted': reg.predict(X),})
     return label_score,label_eqn,dplot
+
+def get_mlr_2_str(df,coly,colxs):
+    label_score,label_eqn,dplot_reg=mlr_2(df,coly,colxs)
+    label_eqn=label_eqn.replace('$y$','$z$').replace('$x_1$','$x$').replace('$x_2$','$y$')
+    return f"{label_eqn}; {label_score}"

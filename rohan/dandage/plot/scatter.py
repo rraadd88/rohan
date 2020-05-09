@@ -3,6 +3,69 @@ from rohan.dandage.io_strs import make_pathable_string
 #rasterized=True
 # sns scatter_kws={'s':5, 'alpha':0.3, 'rasterized':True}
 
+def plot_trendline(dplot,colx,coly,
+                    params_plot={'color':'r','linestyle':'solid','lw':2},
+                    poly=False,lowess=True,
+                    params_poly={'deg':1},
+                    params_lowess={'frac':0.9,'it':20},
+                    ax):
+    """
+    TODO label with goodness of fit, r (y_hat vs y)
+    """
+    if poly:
+        coef = np.polyfit(d[colx], d[coly],**params_poly)
+        poly1d_fn = np.poly1d(coef)
+        # poly1d_fn is now a function which takes in x and returns an estimate for y
+        ax.plot(d[colx], poly1d_fn(d[colx]), **params_plot)
+    if lowess:
+        from statsmodels.nonparametric.smoothers_lowess import lowess
+        xys_lowess=lowess(d[coly], d[colx],frac=0.9,it=20)
+        ax.plot(xys_lowess[:,0],xys_lowess[:,1], **params_plot)
+    return ax
+
+def plot_scatter(dplot,colx,coly,colz=None,
+            kind='hexbin',
+            trendline_method='poly',
+            stat_method="spearman",
+            cmap='Reds',
+            stat_title=False,
+            params_plot={},
+            ax=None,):
+    """
+    trendline:['poly','lowess']
+    method=['mlr',"spearman"],
+    """
+    trendline_method = [trendline_method] if isinstance(trendline_method,str) else trendline_method
+    stat_method = [stat_method] if isinstance(stat_method,str) else stat_method
+    
+    dplot=dplot.dropna(subset=[colx,coly],how='any')
+    if colz is None and kind in ['hexbin','kde']:
+        colz='count'
+        dplot[colz]=1
+    ax=dplot.plot(kind=kind, x=colx, y=coly, 
+        C=colz,
+        reduce_C_function=params_plot['reduce_C_function'] if 'reduce_C_function' in params_plot and colz!='count' else len,
+        gridsize=params_plot['gridsize'] if 'gridsize' in params_plot else 25,
+        ax=ax)
+    from rohan.dandage.plot.ax_ import set_label_colorbar
+    ax=set_label_colorbar(ax,colz)
+    from rohan.dandage.stat.corr import get_corr_str
+    from rohan.dandage.plot.ax_ import set_label
+    if 'mlr' in stat_method:
+        from rohan.dandage.stat.poly import get_mlr_2_str
+        ax=set_label(get_mlr_2_str(df,colz,[colx,coly]),
+                    title=True)
+    if 'spearman' in stat_method and 'pearson' in stat_method:
+        ax=set_label(get_corr_str(d[colx],d[coly],method=method))
+    from rohan.dandage.plot.colors import saturate_color
+    plot_trendline(dplot,colx,coly,
+                    params_plot={'color':saturate_color(params_plot['color']) if 'color' in params_plot else None,
+                                 'linestyle':'solid','lw':2},
+                    poly='poly' in stat_method,
+                    lowess='lowess' in stat_method,
+                    ax)    
+    return ax
+
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
              scafmt='hexbin',method="spearman",pval=True,
              trendline=False,
@@ -13,14 +76,9 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
             ax=None,
             plotp=None,plotsave=False):
     d=d.dropna(subset=[xcol,ycol],how='any')
-    d=d.dropna(subset=[xcol,ycol],how='all')
     if ax is None:
         ax=plt.subplot(111)
     if scafmt=='hexbin':
-#         if cbar_label is None and d.index.name is None:
-#             cbar_label='# of points'
-#         else:
-#             cbar_label=f"# of {d.index.name}s"
         cbar_label='count'
         hb = ax.hexbin(d[xcol], d[ycol], gridsize=25, cmap=cmap)
         cb = plt.colorbar(hb, ax=ax)
@@ -54,7 +112,6 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
                )
         ax.set_title(f"{'' if d.columns.name is None else d.columns.name+' '}",loc='left',
                      ha='left')    
-#     plt.tight_layout()
     if plotsave:
         if plotp is None:
             plotp=f"plot/{scafmt}_{make_pathable_string(xcol)}_vs_{make_pathable_string(ycol)}.svg"

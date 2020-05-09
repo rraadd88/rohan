@@ -214,3 +214,17 @@ def set_logos(label,element2color,ax=None,test=False):
 #     [getattr(ax_funs,fun)(ax=ax,**fun2params[fun]) for fun in fun2params]
     _=[globals()[fun](ax=ax,**fun2params[fun]) for fun in fun2params]
     return ax
+
+def set_label_colorbar(ax,label):
+    for a in ax.figure.get_axes()[::-1]:
+        if a.properties()['label']=='<colorbar>':
+            if hasattr(a,'set_ylabel'):
+                a.set_ylabel(label)
+                break
+    return ax
+def set_label(ax,label,title=False,params={'x':0,'y':1,'ha':'left','va':'top'}):
+    if title:
+        ax.set_title(label,**{k:params[k] for k in params if not k ['x','y']})
+    else:
+        ax.text(s=label,transform=ax.transAxes,**params)
+    return ax
