@@ -8,18 +8,19 @@ def plot_trendline(dplot,colx,coly,
                     poly=False,lowess=True,
                     params_poly={'deg':1},
                     params_lowess={'frac':0.9,'it':20},
-                    ax):
+                    ax=None):
     """
     TODO label with goodness of fit, r (y_hat vs y)
     """
+    ax= plt.subplot() if ax is None else ax    
     if poly:
-        coef = np.polyfit(d[colx], d[coly],**params_poly)
+        coef = np.polyfit(dplot[colx], dplot[coly],**params_poly)
         poly1d_fn = np.poly1d(coef)
         # poly1d_fn is now a function which takes in x and returns an estimate for y
-        ax.plot(d[colx], poly1d_fn(d[colx]), **params_plot)
+        ax.plot(dplot[colx], poly1d_fn(dplot[colx]), **params_plot)
     if lowess:
         from statsmodels.nonparametric.smoothers_lowess import lowess
-        xys_lowess=lowess(d[coly], d[colx],frac=0.9,it=20)
+        xys_lowess=lowess(dplot[coly], dplot[colx],frac=0.9,it=20)
         ax.plot(xys_lowess[:,0],xys_lowess[:,1], **params_plot)
     return ax
 
@@ -27,43 +28,48 @@ def plot_scatter(dplot,colx,coly,colz=None,
             kind='hexbin',
             trendline_method='poly',
             stat_method="spearman",
-            cmap='Reds',
-            stat_title=False,
             params_plot={},
+            cmap='Reds',
+            gridsize=25,
             ax=None,):
     """
     trendline:['poly','lowess']
     method=['mlr',"spearman"],
     """
+    ax= plt.subplot() if ax is None else ax
+    
     trendline_method = [trendline_method] if isinstance(trendline_method,str) else trendline_method
     stat_method = [stat_method] if isinstance(stat_method,str) else stat_method
     
-    dplot=dplot.dropna(subset=[colx,coly],how='any')
-    if colz is None and kind in ['hexbin','kde']:
+    dplot=dplot.dropna(subset=[colx,coly]+[] if colz is None else [colz],how='any')
+    if colz is None and kind in ['hexbin']:
         colz='count'
         dplot[colz]=1
     ax=dplot.plot(kind=kind, x=colx, y=coly, 
         C=colz,
-        reduce_C_function=params_plot['reduce_C_function'] if 'reduce_C_function' in params_plot and colz!='count' else len,
-        gridsize=params_plot['gridsize'] if 'gridsize' in params_plot else 25,
-        ax=ax)
+        reduce_C_function=len if colz=='count' else params_plot['reduce_C_function'] if 'reduce_C_function' in params_plot else np.mean,
+        gridsize=params_plot['gridsize'] if 'gridsize' in params_plot else gridsize,
+        cmap=params_plot['cmap'] if 'cmap' in params_plot else cmap,
+        ax=ax,
+        **params_plot,
+        )
     from rohan.dandage.plot.ax_ import set_label_colorbar
     ax=set_label_colorbar(ax,colz)
     from rohan.dandage.stat.corr import get_corr_str
     from rohan.dandage.plot.ax_ import set_label
     if 'mlr' in stat_method:
         from rohan.dandage.stat.poly import get_mlr_2_str
-        ax=set_label(get_mlr_2_str(df,colz,[colx,coly]),
-                    title=True)
-    if 'spearman' in stat_method and 'pearson' in stat_method:
-        ax=set_label(get_corr_str(d[colx],d[coly],method=method))
+        ax=set_label(ax,label=get_mlr_2_str(dplot,colz,[colx,coly]),
+                    title=True,params={'loc':'left'})
+    if 'spearman' in stat_method or 'pearson' in stat_method:
+        ax=set_label(ax,label=get_corr_str(dplot[colx],dplot[coly],method=stat_method[0]))
     from rohan.dandage.plot.colors import saturate_color
     plot_trendline(dplot,colx,coly,
                     params_plot={'color':saturate_color(params_plot['color']) if 'color' in params_plot else None,
                                  'linestyle':'solid','lw':2},
-                    poly='poly' in stat_method,
-                    lowess='lowess' in stat_method,
-                    ax)    
+                    poly='poly' in trendline_method,
+                    lowess='lowess' in trendline_method,
+                    ax=ax)    
     return ax
 
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
@@ -169,60 +175,6 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
         return df
     else:
         return ax    
-
-def plot_scatter(dplot,params,equallim=True,
-                 ax=None):
-    if ax is None:ax=plt.subplot()
-    ax=dplot.plot.scatter(**params,ax=ax)
-    ax=set_equallim(ax,diagonal=True)
-    if equallim:
-        ax=set_equallim(ax,diagonal=True)        
-    ax.grid(True)
-    return ax
-
-
-def plot_scatter_by_qbins(df,colx,coly,colgroupby=None,bins=10,
-                          subset2color=None,cmap='Reds_r',
-                          ax=None):
-    """
-    :param colx: continuous variable to be binned by quantiles
-    :param coly: continuous variable
-    :param colgroupby: classes for overlaying    
-    """
-#     df[f"{colx} qbin"]=pd.qcut(df[colx],bins)
-#     if colgroupby is None:
-#         colgroupby='del'
-#         df[colgroupby]='del'
-#     from rohan.dandage.stat.variance import confidence_interval_95
-#     dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
-#     dplot.columns=coltuples2str(dplot.columns)
-#     dplot=dplot.reset_index()
-    from rohan.dandage.stat.transform import aggcol_by_qbins
-    dplot=aggcol_by_qbins(df, colx, coly, colgroupby=colgroupby, bins=bins)
-    if subset2color is None:
-        from rohan.dandage.plot.colors import get_ncolors
-        subsets=df[colgroupby].unique()
-        subset2color=dict(zip(subsets,get_ncolors(len(subsets),cmap)))
-    params={'subset2color':subset2color,
-           'colgroupby':colgroupby,
-           'colx':colx,'coly':coly}
-#     plt.figure(figsize=[3,3])
-    ax=plt.subplot() if ax is None else ax
-    dplot.groupby([params['colgroupby']]).apply(lambda df: df.plot(kind='scatter',x=f"{params['colx']} qbin midpoint",
-                                                                y=f"{params['coly']} mean",
-                                                                yerr=f"{params['coly']} confidence_interval_95",
-                                                                style='.o',
-                                                               ax=ax,label=df.name if colgroupby!='del' else None,
-                                                               color=params['subset2color'][df.name]))
-    if colgroupby!='del':
-        ax.legend(bbox_to_anchor=[1,1],
-                  title=params['colgroupby']) if len(ax.get_legend_handles_labels()[0])!=1 else ax.get_legend().remove()
-    df_=dplot.groupby([params['colgroupby']]).agg({f"{params['coly']} mean":[np.min,np.max]})
-    xmin,xmax=df_[(f"{params['coly']} mean",'amin')].min(),df_[(f"{params['coly']} mean",'amax')].max()
-    ax.set_ylim(xmin-(xmax-xmin)*0.2,xmax+(xmax-xmin)*0.2)
-    ax.set_xlabel(f"{params['colx']}\n(mid-ponts of equal-sized intervals)")
-    ax.set_ylabel(params['coly'])
-    return ax
 
 def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary',cmap_child='Reds'):
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
