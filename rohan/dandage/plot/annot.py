@@ -227,3 +227,25 @@ def annot_many(ax,df,axis2col,colannot,
                               color='gray',lw=1),axis=1)
     ax.set(**{f'{axis}lim':axis2params[axis]['expanded'] for axis in ['x','y']})
     return ax
+
+def annot_subsets(dplot,colx,colsubsets,
+                off_ylim=1.2,
+                params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
+                cmap='tab10',
+                ax=None):
+    if ax is None:ax=plt.subplot()
+    ax.set_ylim(0,ax.get_ylim()[1]*off_ylim)
+    from rohan.dandage.plot.colors import get_ncolors
+#     dplot=dplot.loc[:,[colx]+colsubsets].dropna(how='all',axis=1)
+    colsubsets=[c for c in colsubsets if dplot[c].isnull().sum()!=len(dplot)]
+    subsets=dplot.loc[:,colsubsets].melt()['value'].dropna().unique().tolist()
+    subset2color=dict(zip(subsets,get_ncolors(len(subsets),cmap=cmap)))
+    for coli,col in enumerate(colsubsets):
+        subsets=dplot[col].dropna().unique().tolist()
+        for subseti,subset in enumerate(subsets):
+            y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-(subseti+coli))/10-0.05)+ax.set_ylim()[0]
+            X=dplot.loc[(dplot[col]==subset),colx]
+            Y=[y for i in X]
+            ax.scatter(X,Y,label=subset,color=subset2color[subset],**params_scatter)
+            ax.text(ax.get_xlim()[1],y,subset,ha='left')
+    return ax

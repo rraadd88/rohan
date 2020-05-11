@@ -174,7 +174,7 @@ def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
     from rohan.dandage.plot.colors import get_ncolors
     colors=get_ncolors(len(colssubsets),cmap=cmap)
     for colsubsetsi,(colsubsets,color) in enumerate(zip(colssubsets,colors)):
-        subsets=[s for s in dplot[colsubsets].unique() if not (subset_unclassified and s=='unclassified')]
+        subsets=[s for s in dropna(dplot[colsubsets].unique()) if not (subset_unclassified and s=='unclassified')]
         for subseti,subset in enumerate(subsets):
             y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-(subseti+colsubsetsi))/10-0.05)+ax.set_ylim()[0]
             X=dplot.loc[(dplot[colsubsets]==subset),colx]
