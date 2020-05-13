@@ -357,7 +357,8 @@ class intact():
                           
 
 def get_dint_combo(taxid=559292,
-            dint_db2rawps={'biogrid':'database/biogrid/BIOGRID-ORGANISM-3.5.167.tab2/BIOGRID-ORGANISM-Saccharomyces_cerevisiae_S288c-3.5.167.tab2.txt.pqt',
+            dint_db2rawps={
+                    'biogrid':'database/biogrid/BIOGRID-ORGANISM-3.5.167.tab2/BIOGRID-ORGANISM-Saccharomyces_cerevisiae_S288c-3.5.167.tab2.txt.pqt',
                      'intact':'database/intact/pub/databases/intact/current/psimitab/intact.pqt',
                      'string':'database/string/4932/4932.protein.links.v11.0.txt.gz',
                      'hitpredict':'database/hitpredict/S_cerevisiae_interactions_MITAB-2.5.tgz',

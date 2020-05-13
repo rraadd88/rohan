@@ -7,7 +7,7 @@ def plot_trendline(dplot,colx,coly,
                     params_plot={'color':'r','linestyle':'solid','lw':2},
                     poly=False,lowess=True,
                     params_poly={'deg':1},
-                    params_lowess={'frac':0.9,'it':20},
+                    params_lowess={'frac':0.7,'it':5},
                     ax=None):
     """
     TODO label with goodness of fit, r (y_hat vs y)
@@ -20,7 +20,7 @@ def plot_trendline(dplot,colx,coly,
         ax.plot(dplot[colx], poly1d_fn(dplot[colx]), **params_plot)
     if lowess:
         from statsmodels.nonparametric.smoothers_lowess import lowess
-        xys_lowess=lowess(dplot[coly], dplot[colx],frac=0.9,it=20)
+        xys_lowess=lowess(dplot[coly], dplot[colx],frac=0.7,it=5)
         ax.plot(xys_lowess[:,0],xys_lowess[:,1], **params_plot)
     return ax
 
@@ -31,6 +31,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
             params_plot={},
             cmap='Reds',
             gridsize=25,
+            params_plot_trendline={},
             ax=None,):
     """
     trendline:['poly','lowess']
@@ -69,7 +70,9 @@ def plot_scatter(dplot,colx,coly,colz=None,
                                  'linestyle':'solid','lw':2},
                     poly='poly' in trendline_method,
                     lowess='lowess' in trendline_method,
-                    ax=ax)    
+                   ax=ax, 
+                   **params_plot_trendline,
+                    )    
     return ax
 
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
