@@ -994,3 +994,12 @@ def append_similar_cols(df,suffixes=None,prefixes=None,ffixes=None,test=False):
 
 def dict2df(d,colkey='key',colvalue='value'):
     return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
+
+
+def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
+                       col_out='position'):
+    if col_list is None:
+        col_list='_col_list'
+        df[col_list]=df.apply(lambda x: range(x[col_start],x[col_end]+1),axis=1)
+    df1=df[col_list].apply(pd.Series)
+    return dmap2lin(df1).rename(columns={'value':col_out})[col_out].dropna()
