@@ -179,6 +179,22 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
     else:
         return ax    
 
+def plot_scatter_agg(dplot,colgroupby,colx,coly,
+                     params_errorbar=dict(),
+                     params_legend=dict(loc=2,bbox_to_anchor=[1,1]),
+                     ax=None):
+    ax=plt.subplot() if ax is None else ax
+    from rohan.dandage.stat.variance import confidence_interval_95
+    dplot2=dplot.groupby('sector name').agg({k:[np.median,confidence_interval_95] for k in [colx,coly]})
+    dplot2.columns=coltuples2str(dplot2.columns)
+    dplot2=dplot2.reset_index()
+    dplot2.apply(lambda x: ax.errorbar(**params_errorbar,
+                ),axis=1)
+    ax.set_xlabel(params_errorbar['x'])
+    ax.set_ylabel(params_errorbar['y'])
+    ax.legend(**params_legend)
+    return ax
+        
 def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary',cmap_child='Reds'):
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
     import circlify as circ
