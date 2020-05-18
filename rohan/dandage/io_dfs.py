@@ -108,7 +108,8 @@ def read_table(p,params_read_csv={}):
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
-def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={},params_concat={}):
+def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={},params_concat={},
+                   to_dict=False):
     if isinstance(ps,str):
         ps=glob(ps)
     if len(labels)!=0:
@@ -124,7 +125,10 @@ def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={
         if len(cols)!=0:
             df=df.loc[:,cols]
         dn2df[label]=df        
-    return delunnamedcol(pd.concat(dn2df,names=[collabel,'Unnamed'],axis=axis,**params_concat).reset_index())
+    if not to_dict:
+        return delunnamedcol(pd.concat(dn2df,names=[collabel,'Unnamed'],axis=axis,**params_concat).reset_index())
+    else:
+        return dn2df
 
 ## save table
 def to_table(df,p):
