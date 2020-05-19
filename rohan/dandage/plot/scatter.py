@@ -29,7 +29,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
             trendline_method='poly',
             stat_method="spearman",
             params_plot={},
-            cmap='Reds',
+            cmap='Reds',label_colorbar=None,
             gridsize=25,
             params_plot_trendline={},
             ax=None,):
@@ -55,7 +55,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
         **params_plot,
         )
     from rohan.dandage.plot.ax_ import set_label_colorbar
-    ax=set_label_colorbar(ax,colz)
+    ax=set_label_colorbar(ax,colz if label_colorbar is None else label_colorbar)
     from rohan.dandage.stat.corr import get_corr_str
     from rohan.dandage.plot.ax_ import set_label
     if 'mlr' in stat_method:

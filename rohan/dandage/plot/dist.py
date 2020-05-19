@@ -160,7 +160,8 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
     return [locals()[arg] for arg in inspect.getargspec(plot_dist_comparison).args]
 
 from rohan.dandage.plot.colors import reset_legend_colors
-def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
+def hist_annot(dplot,colx,
+               colssubsets=[],
                 subset_unclassified=True,cmap='tab10',ylimoff=1.2,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
                 ax=None):
@@ -169,8 +170,6 @@ def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
     ax.set_xlabel(colx)
     ax.set_ylabel('count')
     ax.set_ylim(0,ax.get_ylim()[1]*ylimoff)
-    if len(colssubsets)==0:
-        colssubsets=[colsubsets]
     from rohan.dandage.plot.colors import get_ncolors
     colors=get_ncolors(len(colssubsets),cmap=cmap)
     for colsubsetsi,(colsubsets,color) in enumerate(zip(colssubsets,colors)):
@@ -179,8 +178,11 @@ def hist_annot(dplot,colx,colsubsets=None,colssubsets=[],
             y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-(subseti+colsubsetsi))/10-0.05)+ax.set_ylim()[0]
             X=dplot.loc[(dplot[colsubsets]==subset),colx]
             Y=[y for i in X]
-            ax.scatter(X,Y,label=subset,color=color,**params_scatter)
+            ax.scatter(X,Y,
+#                        label=subset,
+                       color=color,**params_scatter)
+            ax.text(max(X),max(Y),subset,ha='left',va='center')
     #     break
-    ax=reset_legend_colors(ax)
-    ax.legend(bbox_to_anchor=[1,1])
+#     ax=reset_legend_colors(ax)
+#     ax.legend(bbox_to_anchor=[1,1])
     return ax

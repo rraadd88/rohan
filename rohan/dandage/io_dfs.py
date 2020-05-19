@@ -730,20 +730,22 @@ def colobj2str(df,test=False):
 
 #merge
 ##fix for merge of object cols + non-object cols
-def pd_merge_dfwithobjcols(df1,df2,left_on=None,right_on=None,on=None,
-                          how='inner'):
-    if not on is None:
-        left_on=on
-        right_on=on
-    df1=set_index(df1,left_on)
-    df2=set_index(df2,right_on)
-    df=pd.concat([df1,df2], axis=1, join=how)
-    return df.reset_index()
+# def pd_merge_dfwithobjcols(df1,df2,left_on=None,right_on=None,on=None,
+#                           how='inner'):
+#     if not on is None:
+#         left_on=on
+#         right_on=on
+#     df1=set_index(df1,left_on)
+#     df2=set_index(df2,right_on)
+#     df=pd.concat([df1,df2], axis=1, join=how)
+#     return df.reset_index()
 
 # import logging
 def merge_dfs(dfs,how='left',suffixes=['','_'],
-              test=False,
+              test=False,fast=False,
               **params_merge):
+    from rohan.dandage.io_sets import list2intersection,flatten
+    from rohan.dandage.io_dict import sort_dict
     if all([isinstance(df,str) for df in dfs]):
         dfs=[read_table(p) for p in dfs]
     if not 'on' in params_merge:
@@ -758,9 +760,12 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
         print(params_merge)
         print('size',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
     dfi2cols_value={dfi:df.select_dtypes([int,float]).columns.tolist() for dfi,df in enumerate(dfs)}
-    cols_common=params_merge['on']+list(list2intersection(dn2cols_value.values()))
-    dfi2cols_value={k:list(set(dn2cols_value[k]).difference(cols_common)) for k in dfi2cols_value}
-    dfs=[drop_duplicates_by_agg(dfs[dfi],cols_common,dn2cols_value[dfi]) for dfi in dfi2cols_value]
+    cols_common=list(np.unique(params_merge['on']+list(list2intersection(dfi2cols_value.values()))))
+    dfi2cols_value={k:list(set(dfi2cols_value[k]).difference(cols_common)) for k in dfi2cols_value}
+    if test:
+        print('cols_common',cols_common)
+        print('dfi2cols_value',dfi2cols_value)
+    dfs=[drop_duplicates_by_agg(dfs[dfi],cols_common,dfi2cols_value[dfi],fast=fast) for dfi in dfi2cols_value]
     print('size agg',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
     sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(params_merge['on']))] for dfi,df in enumerate(dfs)},0)
     print('size dedup',sorted_indices_by_size)
@@ -776,7 +781,7 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
             df1=pd.merge(df1, df, **params_merge)
         print(dfi,':',df1.shape,'; ',end='')
     print('')
-    cols_std=[f"{c} std" for c in flatten(list(dfi2cols_value.values()))]
+    cols_std=[f"{c} var" for c in flatten(list(dfi2cols_value.values()))]
     cols_del=[c for c in cols_std if df1[c].isnull().all()]
     df1=df1.drop(cols_del,axis=1)
     return df1
@@ -830,7 +835,7 @@ def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
 def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
 ## drop duplicates by aggregating the dups
-def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean'):
+def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False):
     col2aggfunc={}
     for col in cols_value:
         if isinstance(aggfunc,dict):
@@ -846,10 +851,13 @@ def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean'):
             for fun in col2aggfunc[col]:
                 xout[f'{col} {fun.__name__}']=fun(x[col])
             if x[col].dtype in [float,int]:
-                xout[f'{col} std']=np.std(x[col])
+                xout[f'{col} var']=np.var(x[col])
         return xout
 #         agg({k:col2aggfunc[k]+[np.std] for k in cols_value})
-    df1=df.groupby(cols_groupby).progress_apply(lambda x: agg(x,col2aggfunc))
+#     print(cols_groupby)
+#     print(col2aggfunc)
+#     print(df.columns.tolist())
+    df1=getattr(df.groupby(cols_groupby),f"{'progress' if not fast else 'parallel'}_apply")(lambda x: agg(x,col2aggfunc))
 #     df1.columns=[c.replace(f' {aggfunc}','') for c in coltuples2str(df1.columns)]
     return df1.reset_index()
 # def drop_duplicates_agg(df,colsgroupby,cols2aggf,test=False):
@@ -1006,4 +1014,9 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
         col_list='_col_list'
         df[col_list]=df.apply(lambda x: range(x[col_start],x[col_end]+1),axis=1)
     df1=df[col_list].apply(pd.Series)
-    return dmap2lin(df1).rename(columns={'value':col_out})[col_out].dropna()
+    if len(df1)==1:
+        df1=df1.T
+        df1.columns=[col_out]
+        return df1
+    else:
+        return dmap2lin(df1).rename(columns={'value':col_out})[col_out].dropna()

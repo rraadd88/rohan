@@ -161,7 +161,16 @@ def normalise_uniprot_fasta(fap,test=True):
 # from rohan.global_imports import *
 # from rohan.dandage.io_dict import to_dict,read_dict
 
-def uniprotid2features(uniprotid):
+def uniprotid2features(uniprotid,databasep='data/database',force=False,out_dict=True):
+    from rohan.dandage.io_dfs import read_table,to_table
+    from rohan.dandage.io_dict import read_dict,to_dict
+    dp=f'{databasep}/uniprot/{uniprotid}.json'
+    dfp=f'{databasep}/uniprot/{uniprotid}.tsv'
+    if all([exists(dp),exists(dfp)]) and not force:
+        if out_dict:
+            return read_dict(dp),read_table(dfp)
+        else:
+            return read_table(dfp)
     import requests, sys
     urls=[f'https://www.ebi.ac.uk/proteins/api/features/{uniprotid}?types=ACT_SITE,DOMAIN,HELIX,TURN,STRAND,REGION,MOTIF,VARIANT,INIT_MET,SIGNAL,PROPEP,TRANSIT,CHAIN,PEPTIDE,TOPO_DOM,TRANSMEM,REPEAT,CA_BIND,ZN_FING,DNA_BIND',
 'https://www.ebi.ac.uk/proteins/api/features/P12931?types=NP_BIND,COILED,COMPBIAS,METAL,BINDING,SITE,NON_STD,MOD_RES,LIPID,CARBOHYD,DISULFID,CROSSLNK,VAR_SEQ,MUTAGEN,UNSURE,CONFLICT,NON_CONS,NON_TER,INTRAMEM']
@@ -196,10 +205,21 @@ def uniprotid2features(uniprotid):
         return d['Note'] if 'Note' in d else d['ID'] if 'ID' in d else s['feature type']
     df1['feature name']=df1.apply(lambda x: get_feature_name(x),axis=1)
     df1.loc[df1['feature type'].isin(['HELIX','STRAND','TURN']),'feature type']='secondary structure'
-    return uniprotid2features,df1.drop(['feature description'],axis=1)
+    d,df=uniprotid2features,df1.drop(['feature description'],axis=1)
+    to_dict(d,dp)
+    to_table(df,dfp)
+    if out_dict:
+        return d,df
+    else:
+        return df
 #     to_dict(uniprotid2features,uniprotid2featuresp)
 #     to_table(df1.drop(['feature description'],axis=1),dseqfeaturesp)
-    
+def uniprotids2features(queries,databasep='data/database',fast=False,force=False):
+    df1=pd.DataFrame({'uniprot id':queries,}).dropna()
+    df2=getattr(df1.groupby('uniprot id',as_index=False),f"{'parallel' if fast else 'progress'}_apply")(lambda x: uniprotid2features(x.iloc[0,:]['uniprot id'],
+                                                                                                                                     databasep='data/database',
+                                                                                                                                     force=force,out_dict=False))
+    return df2
 
 def geneid2proteinid(df,frm='ENSEMBLGENOME_ID',to='ENSEMBLGENOME_PRO_ID',interval=400):
     rename={frm:'gene id',to:'protein id'}
