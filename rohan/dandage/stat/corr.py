@@ -57,7 +57,7 @@ def get_corr_str(x,y,method='spearman'):
     r,p=getattr(sc.stats,f"{method}r")(x, y,nan_policy='omit')
     return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
 
-def get_partial_corrs(df,xs,ys):
+def get_partial_corrs(df,xs,ys,method='spearman',splits=5):
     """
     xs=['protein expression balance','coexpression']
     ys=[
@@ -66,7 +66,28 @@ def get_partial_corrs(df,xs,ys):
 
     """
     import pingouin as pg
-    chunks=np.array_split(df.sample(frac=1,random_state=88),5)
-    df1=pd.concat({chunki:pd.concat({"$r_{s}$"+f" {x} versus "+(y if isinstance(y,str) else f"{y[0]} (corrected for {' '.join(y[1:])})"):pg.partial_corr(data=chunk, x=x, y=(y if isinstance(y,str) else y[0]),y_covar=(None if isinstance(y,str) else y[1:]), tail='two-sided', method='spearman') for x,y in list(itertools.product(xs,ys)) if x!=(y if isinstance(y,str) else y[1])},axis=0) for chunki,chunk in enumerate(chunks)},axis=0)
+    import itertools
+    chunks=np.array_split(df.sample(frac=1,random_state=88),splits)
+    dn2df={}
+    for chunki,chunk in enumerate(chunks):
+        dn2df_={}
+        for x,y in list(itertools.product(xs,ys)):
+            if (x if isinstance(x,str) else x[0])!=(y if isinstance(y,str) else y[0]): 
+                params=dict(
+                        x=(x if isinstance(x,str) else x[0]),x_covar=(None if isinstance(x,str) else x[1:]), 
+                        y=(y if isinstance(y,str) else y[0]),y_covar=(None if isinstance(y,str) else y[1:]), )
+                label=str(params)#+(x if isinstance(x,str) else f"{x[0]} (corrected for {' '.join(x[1:])})")+" versus "+(y if isinstance(y,str) else f"{y[0]} (corrected for {' '.join(y[1:])})")
+                dn2df_[label]=pg.partial_corr(data=chunk, 
+                                        tail='two-sided', method=method,
+                                         **params)
+#                 print(dn2df_[label])
+#                 print(params)
+                for k in params:
+                    dn2df_[label].loc[method,k]=params[k] if isinstance(params[k],str) else str(params[k])
+        dn2df[chunki]=pd.concat(dn2df_,axis=0)
+    df1=pd.concat(dn2df,axis=0)
     df1.index.names=['chunk #','correlation name','correlation method']
+    for c in ['x','y']:
+        if f"{c}_covar" in df1:
+            df1[f"{c}_covar"]=df1[f"{c}_covar"].apply(eval)
     return df1.reset_index()
