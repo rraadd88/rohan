@@ -273,10 +273,12 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
                 colxerr='interation score ratio hybrid/parent (log2 scale) zscore std',
                  colsize='gene set size',
                  element2color={'between Scer Suva': '#428774',
-  'within Scer Scer': '#dc9f4e',
-  'within Suva Suva': '#53a9cb'},
+                              'within Scer Scer': '#dc9f4e',
+                              'within Suva Suva': '#53a9cb'},
                 colenrichtype='enrichment type',
                 enrichmenttype2color={'high':'#d24043','low': (0.9294117647058824, 0.7003921568627451, 0.7050980392156864)},
+                 annots_off=0.2,
+                 annot_count_max=10,
                 label=None,
                  ax=None):
     ax=plt.subplot() if ax is None else ax
@@ -294,20 +296,32 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
                         ax=ax,
                        alpha=0.5)
         ax.set_xlim(-4,4)
-        df=df.sort_values(by=[coly],ascending=[True]).tail(10)
+        df=df.sort_values(by=[coly],ascending=[True]).tail(annot_count_max)
         df['y']=np.linspace(ax.get_ylim()[0],
-                            ax.get_ylim()[0]+((ax.get_ylim()[1]-ax.get_ylim()[0])*len(df)/10),
-                            len(df) if len(df)<=10 else 10)
-        df['x']=ax.get_xlim()[0]-1.2 if enrichtype=='low' else ax.get_xlim()[1]+0.2
-        df.apply(lambda x: ax.text(x['x'],x['y'],linebreaker(x['gene set description'],break_pt=25,),
-                                  ha='right' if enrichtype=='low' else 'left',
-                                  color=element2color[x['comparison type']]),axis=1)
-        df.apply(lambda x: ax.plot([x[colx],ax.get_xlim()[0 if enrichtype=='low' else 1],x['x']],[x[coly],x['y'],x['y']],
+                            ax.get_ylim()[0]+((ax.get_ylim()[1]-ax.get_ylim()[0])*len(df)/annot_count_max),
+                            len(df) if len(df)<=annot_count_max else annot_count_max)
+        xmin=ax.get_xlim()[0]*(1.2+(annots_off))
+        xmax=ax.get_xlim()[1]+annots_off
+        xlen=ax.get_xlim()[1]-ax.get_xlim()[0]
+        xmin_axhline=1-(ax.get_xlim()[1]-xmin)/xlen
+        xmax_axhline=(xmax-ax.get_xlim()[0])/xlen
+        df['x']= xmin if enrichtype=='low' else xmax
+        df.apply(lambda x: ax.plot([x[colx],ax.get_xlim()[0 if enrichtype=='low' else 1],x['x']],
+                                   [x[coly],x['y'],x['y']],
                                   color='gray',lw=1),axis=1)
-        df.apply(lambda x:ax.axhline(y = x['y'], xmin=-.2 if enrichtype=='low' else 1, 
-                                                 xmax=0 if enrichtype=='low' else 1.1,
+        df.apply(lambda x:ax.axhline(y = x['y'], 
+                                     xmin=xmin_axhline if enrichtype=='low' else 1,
+                                     xmax=0 if enrichtype=='low' else xmax_axhline,
+                                     
+#                                      xmin=-1*(annots_off*0.7) if enrichtype=='low' else 1,
+#                                      xmax=0 if enrichtype=='low' else 1+(annots_off*annots_off*0.7),
                                              clip_on = False,color='gray',lw=1,
                                     ),axis=1)
+        df.apply(lambda x: ax.text(x['x'],x['y'],linebreaker(x['gene set description'],break_pt=25,),
+                                  ha='right' if enrichtype=='low' else 'left',
+                                   va='center',
+                                  color=element2color[x['comparison type']],
+                                  zorder=2),axis=1)
         ax.axvspan(2, 4, color=enrichmenttype2color['high'], alpha=0.2,label='significantly high')
         ax.axvspan(-4, -2, color=enrichmenttype2color['low'], alpha=0.2,label='significantly low')
 #     if not label is None:
