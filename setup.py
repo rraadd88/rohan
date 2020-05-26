@@ -24,8 +24,8 @@ try:
     from setuptools import setup, find_packages, Extension
 except ImportError:
     from distutils.core import setup, find_packages, Extension
-# if (sys.version_info[0], sys.version_info[1],sys.version_info[2]) != (3, 6 ,5):
-#     raise RuntimeError('Python 3.6.5 required ')
+if (sys.version_info[0],sys.version_info[1]) != (3, 6):
+     raise RuntimeError('Python 3.6 required ')
 
 with open('requirements.txt') as f:
     required = f.read().splitlines()
@@ -39,15 +39,12 @@ version='0.2.2',
 url='https://github.com/rraadd88/rohan',
 download_url='https://github.com/rraadd88/rohan/archive/master.zip',
 description='Python package for data analysis',
-long_description='https://github.com/rraadd88/rohan/README.md',
+long_description='https://github.com/rraadd88/rohan',
 # keywords=['','',''],
 license='General Public License v. 3',
 install_requires=required,
-platforms='Tested on Ubuntu 16.04 64bit',
+platforms='Tested on Ubuntu >= 16.04; 64bit',
 packages=find_packages(exclude=['test*', 'deps*', 'data*', 'data']),
 #package_data={'': ['rohan/data']},
 #include_package_data=True,
-#entry_points={
-#    'console_scripts': ['rohan = rohan.pipeline:main',],
-#    },
 )
