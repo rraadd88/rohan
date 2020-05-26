@@ -186,3 +186,4 @@ def make_figures(packagen,force=False,parallel=False,test=False):
     outp=f"{outd}/figures/_figures.pdf"
     print('making a combo pdf for proofing')
     runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -density 100 $p.pdf;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
+    to_table(df1,f"{outd}/figures/_figures.tsv")

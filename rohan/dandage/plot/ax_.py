@@ -34,6 +34,25 @@ def grid(ax,axis=None):
         ax.xaxis.grid(color='gray', linestyle='dashed')
     return ax
 
+def set_legend_custom(ax,
+                     legend2param,param='color',lw=1,
+                      size=10,color='k',
+                     params_legend={}):
+    from matplotlib.lines import Line2D
+    legend_elements=[Line2D([0], [0],
+                       marker='o',
+                       color='none',
+                       markeredgecolor=(color if param!='color' else legend2param[k]), 
+                       markerfacecolor=(color if param!='color' else legend2param[k]),
+                       markersize=(size if param!='size' else legend2param[k]),
+                       label=k,
+                       lw=(lw if param!='lw' else legend2param[k]),
+                       linestyle='',
+                      ) for k in legend2param]
+    ax.legend(handles=legend_elements,
+              **params_legend)
+    return ax
+
 def set_legend_lines(ax,
                      legend2param,param='color',lw=1,color='k',
                      params_legend={}):

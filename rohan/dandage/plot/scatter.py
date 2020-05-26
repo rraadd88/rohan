@@ -196,7 +196,8 @@ def plot_scatter_agg(dplot,colgroupby,colx,coly,
     return ax
         
 def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary',cmap_child='Reds'):
-    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+#     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+    from rohan.dandage.plot.ax_ import set_legend_custom
     import circlify as circ
     
     dplot=dplot.rename(columns={circvar2col[k]:k for k in circvar2col})
@@ -244,26 +245,36 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
         df.apply(lambda x: ax.plot([x[0],x[1]+(0.2 if side=='-' else -0.2),x[1]],[x[2],x[2],x[3]],color='darkgray',lw=0.25),axis=1)
         df.apply(lambda x: ax.text(x[1],x[3],linebreaker(x.name,break_pt=60),color='k',ha='right' if side=='-' else 'left',va='center'),axis=1)
 #     return lineside2params
-    ax.set_axis_off()
-    
-    for ki,k in enumerate(type2params_legend.keys()):
-        if 'data' in type2params_legend[k]:
-            axin = inset_axes(ax, width="100%", height="100%",
-                           bbox_to_anchor=(1.1+ki*0.2, 0.1, 0.2, 0.1),
-                           bbox_transform=ax.transAxes, 
-#                               loc=2, 
-                              borderpad=0
-                                    )
-            for x,y,c,s in zip(np.repeat(0.3,3),np.linspace(0.2,0.8,3),
-                               type2params_legend[k]['data'].values(),
-                               type2params_legend[k]['data'].keys()):
-                axin.scatter(x,y,color=c,s=250)
-                axin.text(x+0.2,y,s=f"{s:.2f}",ha='left',va='center')
-            axin.set_xlim(0,1)
-            axin.set_ylim(0,1)
-            axin.set_title(type2params_legend[k]['title'])
-            axin.set_axis_off()
-            ax.axis('equal')
+    ax.set_axis_off()    
+    set_legend_custom(ax,
+                     param='color',lw=1,color='k',
+                    legend2param={np.round(k,decimals=2):type2params_legend['child']['data'][k] for k in type2params_legend['child']['data']},
+                    params_legend={'title':type2params_legend['child']['title'],
+                                  'ncol':3,
+                                   'loc':2,'bbox_to_anchor':[1,1.05]
+#                                    'loc':4,'bbox_to_anchor':[1.75,-0.1]
+                                  },
+                     )
+
+#     print(type2params_legend)
+#     for ki,k in enumerate(type2params_legend.keys()):
+#         if 'data' in type2params_legend[k]:
+#             axin = inset_axes(ax, width="100%", height="100%",
+#                            bbox_to_anchor=(1.1+ki*0.2, 0.1, 0.2, 0.1),
+#                            bbox_transform=ax.transAxes, 
+# #                               loc=2, 
+#                               borderpad=0
+#                                     )
+#             for x,y,c,s in zip(np.repeat(0.3,3),np.linspace(0.2,0.8,3),
+#                                type2params_legend[k]['data'].values(),
+#                                type2params_legend[k]['data'].keys()):
+#                 axin.scatter(x,y,color=c,s=250)
+#                 axin.text(x+0.2,y,s=f"{s:.2f}",ha='left',va='center')
+#             axin.set_xlim(0,1)
+#             axin.set_ylim(0,1)
+#             axin.set_title(type2params_legend[k]['title'])
+#             axin.set_axis_off()
+#             ax.axis('equal')
     return ax
 
                   
