@@ -2,18 +2,36 @@
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 """
 
-def get_service_drive():
-    from getpass import getpass
-    client_config=eval(getpass())
+def get_service(service_name='drive',access_limit=True,client_config=None):
+    service_name2params={
+    'drive': {
+        'scope':'https://www.googleapis.com/auth/drive.readonly',
+        'build':'drive',
+        'version': 'v3'},        
+    'slides': {
+        'scope':'https://www.googleapis.com/auth/presentations',
+        'build':'slides',
+        'version': 'v1'},
+    'sheets':{
+        'scope':'https://www.googleapis.com/auth/spreadsheets',
+        'build':'sheets',
+        'version': 'v4'}}
+    if client_config is None:
+        from getpass import getpass
+        client_config=eval(getpass())
     from googleapiclient.discovery import build
     from google_auth_oauthlib.flow import InstalledAppFlow
-    SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+    SCOPES = [service_name2params[service_name]['scope']]
+    if not access_limit:
+        SCOPES = [s.replace('.readonly','') for s in SCOPES]
     flow = InstalledAppFlow.from_client_config(client_config,SCOPES)
     creds = flow.run_console(port=0)
-    service = build('drive', 'v3', credentials=creds)
+    service = build(service_name,service_name2params[service_name]['version'], credentials=creds)
     return service
 
-def search_filetype_in_folder(folderid,filetype,service,test=False):
+get_service_drive=get_service
+    
+def list_files_in_folder(service,folderid,filetype=None,test=False):
     filetype2mimetype={"audio":"application/vnd.google-apps.audio", #
     "document":"application/vnd.google-apps.document", #Google Docs
     "drive":"application/vnd.google-apps.drive-sdk", #3rd party shortcut
@@ -32,7 +50,8 @@ def search_filetype_in_folder(folderid,filetype,service,test=False):
     "unknown":"application/vnd.google-apps.unknown", #
     "video":"application/vnd.google-apps.video",}
 
-    results = service.files().list(q=f"'{folderid}' in parents and mimeType='{filetype2mimetype[filetype]}'",
+    results = service.files().list(
+        q=f"'{folderid}' in parents"+(" and mimeType='{filetype2mimetype[filetype]}'" if not filetype is None else ""),
         fields="nextPageToken, files(id, name)",).execute()
     items = results.get('files', [])
     name2id={d['name']:d['id'] for d in items}
@@ -65,7 +84,29 @@ def download_file(service,fileid,filetypes,outp,test=False):
             if test:
                 print( f"Downloading {outp_}: {int(status.progress() * 100)}")
                 
-                
+def upload_file(service,filep,folder_id,test=False):
+    from googleapiclient.http import MediaFileUpload
+    from os.path import basename
+    file_metadata = {'name': basename(filep),
+                    'parents': [folder_id]}
+    media = MediaFileUpload(filep, mimetype=f"image/{filep.split('.')[1]}")
+    file_name2id=list_files_in_folder(service,folderid=folder_id,filetype=None,test=False)
+    if not basename(filep) in file_name2id:
+        file = service.files().create(body=file_metadata,
+                                        media_body=media,
+                                        fields='id').execute()
+        file_id=file['id']
+    else:
+        file_id=file_name2id[basename(filep)]
+        if test:
+            print(f"replacing {basename(filep)} in the folder")
+        file=service.files().get(fileId=file_name2id[basename(filep)]).execute()
+        del file['id']
+        response = service.files().update(fileId=file_id,
+                                          body=file,
+                                          media_body=media,
+                                         ).execute()
+    return file_id
 def download_drawings(folderid,outd,service=None,test=False):
     if service is None:
         service=get_service_drive()
@@ -78,4 +119,58 @@ def download_drawings(folderid,outd,service=None,test=False):
 #                                                 'image/png',
                                               'image/svg+xml'],
                       f"{outd}/{n}",test=test)
-                
+
+class slides():
+    def get_page_ids(service,presentation_id):
+        presentation = service.presentations().get(
+            presentationId=presentation_id).execute()
+        slides = presentation.get('slides')
+        print('The presentation contains {} slides:'.format(len(slides)))
+        return [slide.get('objectId') for i, slide in enumerate(slides)]
+
+    def create_image(service, presentation_id, page_id,image_id):
+        """
+        image less than 1.5 Mb
+        """
+        import numpy as np
+        IMAGE_URL = (f'https://drive.google.com/uc?id={image_id}')
+        image_id = f'image_{np.random.rand()}'.replace('.','')
+        size = {
+            'magnitude': 576,
+            'unit': 'PT'
+        }
+        requests = []
+        requests.append({
+            'createImage': {
+                'objectId': image_id,
+                'url': IMAGE_URL,
+                'elementProperties': {
+                    'pageObjectId': page_id,
+                    'size': {
+                        'height': size,
+                        'width': size
+                    },
+                    'transform': {
+                        'scaleX': 1,
+                        'scaleY': 1,
+                        'unit': 'EMU'
+                    }
+                }
+            }
+        })
+        # Execute the request.
+        body = {
+            'requests': requests
+        }
+        response = service.presentations() \
+            .batchUpdate(presentationId=presentation_id, body=body).execute()
+        create_image_response = response.get('replies')[0].get('createImage')
+#         print('Created image with ID: {0}'.format(
+#             create_image_response.get('objectId')))
+
+        # [END slides_create_image]
+        return create_image_response.get('objectId')
+#     def update_images(presentation_id,page_id2image_id):
+#         create_image(service, presentation_id, page_id,image_id)
+#         page_ids=get_page_ids(service,presentation_id)
+#         zip(page_ids)

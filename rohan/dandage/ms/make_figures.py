@@ -168,8 +168,33 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
             pass        
     nbformat.write(nb,figure_nboutp)
     
-    
-def make_figures(packagen,force=False,parallel=False,test=False):
+def upload_figures(dfigures,presentation_id,folder_id,client_config):
+    from rohan.dandage.cloud.google import get_service,upload_file,slides    
+    print(f'https://docs.google.com/presentation/d/{presentation_id}')
+    servicetype2obj={k : get_service(k,access_limit=False,client_config=client_config) for k in ['drive','slides']}
+    df0=dfigures.copy()
+    df0['image id png']=df0['figure path'].parallel_apply(lambda x: upload_file(servicetype2obj['drive'],
+                                            filep=f"{x}.png",
+                                            folder_id=folder_id))
+    df0['image id svg']=df0['figure path'].parallel_apply(lambda x: upload_file(servicetype2obj['drive'],
+                                            filep=f"{x}.svg",
+                                            folder_id=folder_id))
+    df0['image id jpeg']=df0['figure path'].parallel_apply(lambda x: upload_file(servicetype2obj['drive'],
+                                            filep=f"{x}.png.jpeg",
+                                            folder_id=folder_id))
+    page_ids=slides.get_page_ids(service=servicetype2obj['slides'], 
+                        presentation_id=presentation_id)
+    df0['page id']=page_ids[:len(df0)]
+    df0.progress_apply(lambda x: slides.create_image(service=servicetype2obj['slides'], 
+                                                     presentation_id=presentation_id, 
+                                                     page_id=x["page id"],
+                                                     image_id=x["image id jpeg"]),axis=1)
+    return df0
+
+def make_figures(packagen,force=False,parallel=False,upload=False,test=False,check_formats=['png','svg'],cfgp=None):
+    if upload and cfgp is None:
+        print("need cfgp for upload")
+        return
     import importlib
     script = importlib.import_module(f"{packagen}.figures")
     outd=dirname(script.__file__)
@@ -177,13 +202,29 @@ def make_figures(packagen,force=False,parallel=False,test=False):
     df1=pd.DataFrame({'module name':[s for s in dir(script) if s.startswith('Figure')]})
     df1['figure path']=df1['module name'].apply(lambda x: f"{outd}/figures/{x}")
     def apply_figure(x,script,ind,outd,force=False,test=False):
-        if len(glob(f"{x['figure path']}*"))==0 or force:
+        formats=[s.split('.')[-1] for s in glob(f"{x['figure path']}*")]
+        make_figure=not all([s in formats for s in check_formats]) 
+        if make_figure or force:
             if test:
                 print(ind,outd)
             getattr(script,x['module name'])(ind=ind,outd=outd)
-    getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,ind=ind,outd=outd,force=force,test=test),axis=1)
-    from rohan.dandage.io_sys import runbashcmd
-    outp=f"{outd}/figures/_figures.pdf"
-    print('making a combo pdf for proofing')
-    runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -density 100 $p.pdf;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
-    to_table(df1,f"{outd}/figures/_figures.tsv")
+            return True
+        else:
+            False
+    ds=getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,ind=ind,outd=outd,force=force,test=test),axis=1)
+    if ds.any():
+        outp=f"{outd}/figures/_figures.pdf"
+        from rohan.dandage.io_sys import runbashcmd
+        print('making a combo pdf for proofing')
+        runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -resize 2000\> -density 100 $p.pdf;convert $p -resize 2000\> $p.jpeg;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
+    else:
+        print("no changes")
+    # save table with info
+    lines=open(script.__file__).readlines()
+    order_figures=[s.split('(')[0].split(' ')[1] for s in lines if s.startswith('def Figure')]
+    df1=df1.set_index('module name').loc[order_figures].reset_index()
+    if upload:
+        df1=upload_figures(dfigures=df1,
+                           **read_dict(cfgp),
+                          )
+    to_table(df1,f"{outd}/figures/_figures.tsv")    

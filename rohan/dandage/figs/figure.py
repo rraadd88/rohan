@@ -19,6 +19,7 @@ def scatter_overlap(ax,funs):
     return ax
 
 def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom','ha':'right'}):
+    """oldy"""
     import string
     label2ax=dict(zip(string.ascii_uppercase[:len(axes)],axes))
     for label in label2ax:
@@ -29,8 +30,8 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
         ax.text(ax.get_xlim()[0]+xoff_,
                 ax.get_ylim()[1]+yoff_,
                 f"{label}   ",**kw_text)
+
         
-# from rohan.dandage.io_strs import replacebyposition
 def savefig(plotp,
             tight_layout=True,
             fmts=['png','svg'],
