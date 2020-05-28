@@ -31,6 +31,28 @@ def labelsubplots(axes,xoff=0,yoff=0,test=False,kw_text={'size':20,'va':'bottom'
                 ax.get_ylim()[1]+yoff_,
                 f"{label}   ",**kw_text)
 
+def labelplots(fig,axes,xoff=0,yoff=0,
+                  params_alignment={},
+                  params_text={'size':20,'va':'bottom',
+                               'ha':'right'
+                              },
+                  test=False,
+                 ):
+    """
+    """
+    import string
+    label2ax=dict(zip(string.ascii_uppercase[:len(axes)],axes))
+    axi2xy={}
+    for axi,label in enumerate(label2ax.keys()):
+        ax=label2ax[label]
+        axi2xy[axi]=ax.get_position(original=True).xmin+xoff,ax.get_position(original=False).ymax+yoff
+    for pair in params_alignment:
+        axi2xy[pair[1]]=[axi2xy[pair[0 if 'x' in params_alignment[pair] else 1]][0],
+                         axi2xy[pair[0 if 'y' in params_alignment[pair] else 1]][1]]
+    for axi,label in enumerate(label2ax.keys()):
+        label2ax[label].text(*axi2xy[axi],f"{label}",
+                             transform=fig.transFigure,
+                             **params_text)    
         
 def savefig(plotp,
             tight_layout=True,
