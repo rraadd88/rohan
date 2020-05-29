@@ -31,14 +31,8 @@ plt.rcParams['axes.prop_cycle']= cycler('color',["#f55f5f", "#D3DDDC","#046C9A",
 plt.rc('grid', lw=0.2,linestyle="-", color=[0.98,0.98,0.98])
 plt.rc('axes', axisbelow=True)
 plt.rcParams['axes.labelcolor'] = 'k'
-# if not any([prj in pwd for prj in prjs]):
-#     plt.rcParams["font.family"] = "Monospace", "Monaco"
-# else:
-# plt.rcParams["font.family"] = "Arial", "arial", "Monospace", "Monaco"
 sns.set_context('notebook') # paper < notebook < talk < poster
-# always save plots 
 from rohan.dandage.figs.figure import *
-# if basename(pwd).split('_')[0].isdigit():
 print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log';get_ipython().run_line_magic('logstart',f'{logplotp} over')")
 
 # debug
@@ -50,7 +44,6 @@ if not is_interactive_notebook:
 else:
     from tqdm import notebook
     notebook.tqdm().pandas()
-#     print("")
 from pandarallel import pandarallel
 pandarallel.initialize(nb_workers=6,progress_bar=True)
 print("pandarallel.initialize(nb_workers=6,progress_bar=True)")
