@@ -7,17 +7,20 @@ setup.py
 
 installs rohan
 
-USAGE :
+# USAGE :
+
 python setup.py install
 
 Or for local installation:
 
 python setup.py install --prefix=/your/local/dir
 
-DEV only:
+# DEV only:
 
 git commit -am "version bump";git push origin master
+python setup.py --version
 git tag -a v$(python setup.py --version) -m "Update";git push --tags
+
 """
 import sys
 try:
