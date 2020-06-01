@@ -110,7 +110,7 @@ def upload_file(service,filep,folder_id,test=False):
 def download_drawings(folderid,outd,service=None,test=False):
     if service is None:
         service=get_service_drive()
-    filename2id=search_filetype_in_folder(service=service,
+    filename2id=list_files_in_folder(service=service,
                               filetype='drawing',
                               folderid=folderid,
                               test=test,)           
