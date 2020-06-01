@@ -24,7 +24,7 @@ try:
     from setuptools import setup, find_packages, Extension
 except ImportError:
     from distutils.core import setup, find_packages, Extension
-if (sys.version_info[0],sys.version_info[1]) != (3, 6):
+if (sys.version_info[0]) != (3):
      raise RuntimeError('Python 3.6 required ')
 
 with open('requirements.txt') as f:
