@@ -76,7 +76,7 @@ def notebook2packagescript(notebookp,test=False):
     else:
         return code,df1
     
-def notebook2script(notebookp, scriptp=None):
+def notebook2script(notebookp, scriptp=None,keep_comments=True):
     """
     blind convert
     """
@@ -87,6 +87,8 @@ def notebook2script(notebookp, scriptp=None):
     nb = nbformat.read(notebookp, nbformat.NO_CONVERT)
     exporter = PythonExporter()
     source, meta = exporter.from_notebook_node(nb)
+    if not keep_comments:
+        source=[s for s in source if not s.startswith('#')]
     with open(scriptp, 'w+') as fh:
         fh.writelines(source)
     return scriptp

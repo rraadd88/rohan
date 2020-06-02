@@ -290,6 +290,7 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
                 enrichmenttype2color={'high':'#d24043','low': (0.9294117647058824, 0.7003921568627451, 0.7050980392156864)},
                  annots_off=0.2,
                  annot_count_max=10,
+                 break_pt=15,
                 label=None,
                  ax=None):
     ax=plt.subplot() if ax is None else ax
@@ -328,7 +329,7 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
 #                                      xmax=0 if enrichtype=='low' else 1+(annots_off*annots_off*0.7),
                                              clip_on = False,color='gray',lw=1,
                                     ),axis=1)
-        df.apply(lambda x: ax.text(x['x'],x['y'],linebreaker(x['gene set description'],break_pt=25,),
+        df.apply(lambda x: ax.text(x['x'],x['y'],linebreaker(x['gene set description'],break_pt=break_pt,),
                                   ha='right' if enrichtype=='low' else 'left',
                                    va='center',
                                   color=element2color[x['comparison type']],

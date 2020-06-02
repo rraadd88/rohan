@@ -106,7 +106,7 @@ def make_figure_src(
 
     # fign2text
     lines_remove=['','# In[ ]:',]
-    fign2text={fign:f"def Figure{fign}(ind,outd):\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if (not s in lines_remove) and (not 'savefig(' in s)])+f"\n    savefig(f'{{outd}}/figures/Figure{fign}',tight_layout=True,fmts=['png','svg'])" for fign in fign2text}
+    fign2text={fign:f"def Figure{fign}(ind,outd):\n"+'\n'.join([f"    {s}" for s in fign2text[fign].split('\n')[1:] if not (s in lines_remove or s.startswith('#') or 'savefig(' in s)])+f"\n    savefig(f'{{outd}}/figures/Figure{fign}',tight_layout=True,fmts=['png','svg'])" for fign in fign2text}
     fign2text={k:replacemany(fign2text[k],replaces) for k in fign2text}
     # write figures.py
     with open(figures_outp,'w') as f:
@@ -117,7 +117,8 @@ def make_figure_src(
     cfg={'figns_rename':figns_rename,
         'fign2ploti2plotn':fign2ploti2plotn,
     }
-    to_dict(cfg,f"{dirname(abspath(figure_nbp))}/cfg.json")
+    print(f"cfg_figures sored at: {dirname(abspath(figure_nbp))}/cfg_figures.json")
+    to_dict(cfg,f"{dirname(abspath(figure_nbp))}/cfg_figures.json")
     return fign2ploti2plotn
 
 def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=False):    
@@ -169,6 +170,7 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
     nbformat.write(nb,figure_nboutp)
     
 def upload_figures(dfigures,presentation_id,folder_id,client_config):
+    pandarallel.initialize(nb_workers=4,progress_bar=True)        
     from rohan.dandage.cloud.google import get_service,upload_file,slides    
     print(f'https://docs.google.com/presentation/d/{presentation_id}')
     servicetype2obj={k : get_service(k,access_limit=False,client_config=client_config) for k in ['drive','slides']}
@@ -191,7 +193,9 @@ def upload_figures(dfigures,presentation_id,folder_id,client_config):
                                                      image_id=x["image id jpeg"]),axis=1)
     return df0
 
-def make_figures(packagen,force=False,parallel=False,upload=False,test=False,check_formats=['png','svg'],cfgp=None):
+def make_figures(packagen,force=False,parallel=False,upload=False,test=False,check_formats=['png','svg'],cfgp=None,cores=15):
+    if parallel:
+        pandarallel.initialize(nb_workers=cores,progress_bar=True)    
     if upload and cfgp is None:
         print("need cfgp for upload")
         return
@@ -216,7 +220,8 @@ def make_figures(packagen,force=False,parallel=False,upload=False,test=False,che
         outp=f"{outd}/figures/_figures.pdf"
         from rohan.dandage.io_sys import runbashcmd
         print('making a combo pdf for proofing')
-        runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -resize 2000\> -density 100 $p.pdf;convert $p -resize 2000\> $p.jpeg;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
+        # TODO parallel -j 8 convert {} -resize ... {} ::: *.png
+        runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -resize 500\> -density 100 $p.pdf;convert $p -resize 2000\> $p.jpeg;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
     else:
         print("no changes")
     # save table with info

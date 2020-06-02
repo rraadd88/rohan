@@ -51,7 +51,7 @@ def list_files_in_folder(service,folderid,filetype=None,test=False):
     "video":"application/vnd.google-apps.video",}
 
     results = service.files().list(
-        q=f"'{folderid}' in parents"+(" and mimeType='{filetype2mimetype[filetype]}'" if not filetype is None else ""),
+        q=f"'{folderid}' in parents"+(f" and mimeType='{filetype2mimetype[filetype]}'" if not filetype is None else ""),
         fields="nextPageToken, files(id, name)",).execute()
     items = results.get('files', [])
     name2id={d['name']:d['id'] for d in items}
