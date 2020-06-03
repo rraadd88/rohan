@@ -117,7 +117,7 @@ def make_figure_src(
     cfg={'figns_rename':figns_rename,
         'fign2ploti2plotn':fign2ploti2plotn,
     }
-    print(f"cfg_figures sored at: {dirname(abspath(figure_nbp))}/cfg_figures.json")
+    print(f"cfg_figures stored at: {dirname(abspath(figure_nbp))}/cfg_figures.json")
     to_dict(cfg,f"{dirname(abspath(figure_nbp))}/cfg_figures.json")
     return fign2ploti2plotn
 
@@ -219,9 +219,15 @@ def make_figures(packagen,force=False,parallel=False,upload=False,test=False,che
     if ds.any():
         outp=f"{outd}/figures/_figures.pdf"
         from rohan.dandage.io_sys import runbashcmd
-        print('making a combo pdf for proofing')
         # TODO parallel -j 8 convert {} -resize ... {} ::: *.png
-        runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -resize 500\> -density 100 $p.pdf;convert $p -resize 2000\> $p.jpeg;done;pdfunite {outd}/figures/Figure*.pdf {outp}")
+#         runbashcmd(f"parallel -j {6} "+"convert {} -resize 500\> -density 100 {}.pdf ::: figures/Figure*.png")
+#         runbashcmd(f"parallel -j {6} "+"convert {} -resize 2000\> {}.jpeg ::: figures/Figure*.png")
+        if upload:
+            runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -resize 2000\> $p.jpeg;done;")
+        else:
+            print('making a combo pdf for proofing')
+            runbashcmd(f"for p in {outd}/figures/Figure*.png;do convert $p -resize 500\> -density 100 $p.pdf;done;")
+            runbashcmd(f"pdfunite {outd}/figures/Figure*.pdf {outp}")
     else:
         print("no changes")
     # save table with info
