@@ -182,12 +182,17 @@ def read_excel(p,sheet_name=None,params_read_excel={},to_dict=False):
             sheetname2df[sheet_name]=xl.parse(sheet_name) 
         return sheetname2df
         
-def to_excel(sheetname2df,datap,):
+def to_excel(sheetname2df,datap,append=False):
 #     if not 'xlrd' in sys.modules:
 #         logging.error('need xlrd to work with excel; pip install xlrd')
     writer = pd.ExcelWriter(datap)
+    startrow=0
     for sn in sheetname2df:
-        sheetname2df[sn].to_excel(writer,sn)
+        if not append:
+            sheetname2df[sn].to_excel(writer,sn)
+        else:
+            sheetname2df[sn].to_excel(writer,startrow=startrow)  
+            startrow+=len(sheetname2df[sn])+2
     writer.save()
     
 #slice     
