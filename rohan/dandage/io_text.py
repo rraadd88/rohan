@@ -2,7 +2,9 @@ from rohan.global_imports import *
 from rohan.dandage.stat.cluster import get_clusters
 def corpus2clusters(corpus, index,params_clustermap={'vmin':0,'vmax':1,'figsize':[6,6]}):
     """
-    corpus: list of strings
+    Cluster a list of strings.
+    
+    :params corpus: list of strings
     """
     from sklearn.feature_extraction.text import TfidfVectorizer
     vect = TfidfVectorizer()

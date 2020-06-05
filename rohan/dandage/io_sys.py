@@ -4,6 +4,9 @@ from os.path import dirname,basename,abspath
 import logging
 
 def runbashcmd(cmd,test=False,logf=None,dirs2ps=None):
+    """
+    Run bash commands from python.
+    """
     if not dirs2ps is None:
         import rohan
         dirs2ps={'pyp':str(subprocess.check_output('which python3'.split(' '))).replace("b'",'').replace("\\n'",''),
@@ -21,12 +24,17 @@ def runbashcmd(cmd,test=False,logf=None,dirs2ps=None):
         sys.exit(1)
 
 def is_interactive():
+    """
+    Check if the UI is interactive e.g. jupyter or command line. 
+    """
     # thanks to https://stackoverflow.com/a/22424821/3521099
     import __main__ as main
     return not hasattr(main, '__file__')
 
 def is_interactive_notebook():
     """
+    Check if the UI is interactive e.g. jupyter or command line.     
+    
     difference in sys.module of notebook and shell
     'IPython.core.completerlib',
      'IPython.core.payloadpage',
@@ -67,6 +75,9 @@ def is_interactive_notebook():
     return 'ipykernel.kernelapp' in sys.modules
 
 def p2time(filename,time_type='m'):
+    """
+    Get the creation/modification dates of files.
+    """
     import os
     import datetime
     if time_type=='m':

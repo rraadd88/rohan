@@ -13,6 +13,9 @@ from shutil import copyfile
 
 # walker
 def get_all_subpaths(d='.',include_directories=False): 
+    """
+    Get all the subpaths (folders and files) from a path.
+    """
     from glob import glob
     import os
     paths=[]
@@ -36,6 +39,7 @@ from rohan.dandage.io_strs import getall_fillers
 def fill_form(df,templatep,template_insert_line,outp,splitini,splitend,field2replace,
            test=False):
     """
+    Fill a table interactively.
     """
     template=open(templatep, 'r').read()
     fillers=getall_fillers(template_insert_line,
@@ -61,6 +65,9 @@ def fill_form(df,templatep,template_insert_line,outp,splitini,splitend,field2rep
 #     return True
 
 def cat(ps,outp):
+    """
+    Concatenate text files.
+    """
     makedirs(dirname(outp),exist_ok=True)
     with open(outp, 'w') as outfile:
         for p in ps:
@@ -68,6 +75,9 @@ def cat(ps,outp):
                 outfile.write(infile.read())    
 
 def get_encoding(p):
+    """
+    Get encoding of a file.
+    """
     import chardet
     with open(p, 'rb') as f:
         result = chardet.detect(f.read())
@@ -75,6 +85,9 @@ def get_encoding(p):
 
 import shutil
 def zip_folder(source, destination):
+    """
+    Zip a folder.
+    """
     #https://stackoverflow.com/a/50381250/3521099
     base = os.path.basename(destination)
     name = base.split('.')[0]
@@ -85,6 +98,9 @@ def zip_folder(source, destination):
     shutil.move(f'{name}.{fmt}', destination)
     
 def backup_to_zip(ps,destp,test=False):
+    """
+    Zip files for backup.
+    """
     if not destp.endswith('.zip'):
         loggin.error('arg destp should have .zip extension')
         return 0
@@ -110,8 +126,12 @@ def backup_to_zip(ps,destp,test=False):
     zip_folder(destdp, destp)    
     
 def read_url(url):
-    # read text on url
+    """
+    Read text from a url.
+    """
     from urllib.request import urlopen
     f = urlopen(url)
     myfile = f.read()
     return str(myfile)
+
+from rohan.dandage.io_sys import p2time
