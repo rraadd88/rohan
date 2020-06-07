@@ -95,10 +95,9 @@ def gene_id2homology(gene_id,headers={'target_taxon':'9606',
     ext = f"/homology/id/{gene_id}?"
     r = requests.get(server+ext, headers=headers)
     if test:
-        print(f"https://rest.ensembl.org/homology/id/{gene_id}?format=full;target_taxon=9606;type=paralogues;content-type=application/json")
+        print(r.url)
     if r.ok:
         return r.json()
-    
     
 def ensembl_lookup(id_,headers={'target_taxon':'9606',
                                                'release':95,
