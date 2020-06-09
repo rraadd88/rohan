@@ -214,7 +214,7 @@ def findall(s,substring,outends=False,outstrs=False):
             return [s[l[0]:l[1]] for l in locs]
     else:
         return [a.start() for a in finds]
-    
+        
 def getall_fillers(s,leftmarker='{',rightmarker='}',
                   leftoff=0,rightoff=0):
     filers=[]
@@ -249,6 +249,8 @@ def bracket(s,sbracket):
     return f"{s[:pos]}({s[pos:pos+len(sbracket)]})"
 
 def get_bracket(s,l='(',r=')'):
+#     import re
+#     re.search(r'{l}(.*?){r}', s).group(1)    
     if l in s and r in s:
         return s[s.find(l)+1:s.find(r)]
     else:

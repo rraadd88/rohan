@@ -35,6 +35,10 @@ def str2num(x):
     """
     return int(''.join(ele for ele in x if ele.isdigit()))
 
+def str2nums(s):
+    import re
+    return re.findall(r'\d+', s)
+
 def str2numorstr(x,method=int):
     """
     This extracts numbers from strings. eg. 114 from M114R.

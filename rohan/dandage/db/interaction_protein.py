@@ -371,11 +371,11 @@ def get_dint_combo(taxid=559292,
         dintp=f'database/interactions_protein/{taxid}/dint.pqt'
     if not exists(dintp) or force:
         dn2df={}
-        dn2df['biogrid']=biogrid.get_dint(taxid=559292, dint_rawp=dint_db2rawps['biogrid'],
+        dn2df['biogrid']=biogrid.get_dint(taxid=taxid, dint_rawp=dint_db2rawps['biogrid'],
                     outd=None, experimental_system_type='physical', 
                     force=force, test=False).filter(regex='^interaction ',axis=1).set_index('interaction id')
 
-        dn2df['intact']=intact.get_dint(speciesn='559292',
+        dn2df['intact']=intact.get_dint(speciesn=taxid,
                     dintact_rawp=dint_db2rawps['intact'],
                     dgene_annotp=dgene_annotp,
                     force=force).filter(regex='^interaction ',axis=1).set_index('interaction id')
