@@ -11,7 +11,7 @@
 import re
 import logging
 import numpy as np
-from rohan.dandage.io_nums import str2num,format_number_human
+from rohan.dandage.io_nums import str2num,str2nums,format_number_human
 # from rohan.dandage.io_dict import str2dict
 
 # convert

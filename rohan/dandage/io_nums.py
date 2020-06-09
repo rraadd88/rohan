@@ -37,7 +37,7 @@ def str2num(x):
 
 def str2nums(s):
     import re
-    return re.findall(r'\d+', s)
+    return [int(i) for i in re.findall(r'\d+', s)]
 
 def str2numorstr(x,method=int):
     """
