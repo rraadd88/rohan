@@ -378,8 +378,6 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
     return df.reset_index().melt(id_vars=id_vars,
                              var_name=coln,value_name=colvalue_name)        
      
-def split_lists(ds):return dmap2lin(ds.apply(pd.Series),colvalue_name=ds.name).drop(['column'],axis=1).set_index(ds.index.names).dropna()
-
 def df2unstack(df,coln='columns',idxn='index',col='value'):
     """
     will be deprecated
@@ -822,20 +820,26 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
 #     return dfmerged
 
 
-def dfsyn2appended(df,colsyn,colsynfmt=None,colsynstrsep=';'):
+def split_rows(df,collist,rowsep=None):
     """
     for merging dfs with names with df with synonymns
     param colsyn: col containing tuples of synonymns 
     """
-    colsynappended=colsyn+' appended'
-    df.index=range(len(df))
-    if colsynfmt=='str':
-        df.loc[:,colsyn]=df.loc[:,colsyn].apply(lambda x : x.split(colsynstrsep))
-    #make duplicated row for each synonymn
-    dfsynappended=df[colsyn].apply(pd.Series).unstack().reset_index().drop('level_0',axis=1).set_index('level_1')
-    dfsynappended.columns=[colsynappended]
-    dfsynappended=dfsynappended.dropna()
-    return dfsynappended.join(df,how='left')
+    if not rowsep is None:
+        df.loc[:,colsyn]=df.loc[:,colsyn].apply(lambda x : x.split(rowsep))
+    return dellevelcol(df.set_index([c for c in df if c!=collist])[collist].apply(pd.Series).stack().reset_index().rename(columns={0:collist}))        
+#     #make duplicated row for each synonymn
+#     dfsynappended=df[colsyn].apply(pd.Series).unstack().reset_index().drop('level_0',axis=1).set_index('level_1')
+#     dfsynappended.columns=[colsynappended]
+#     dfsynappended=dfsynappended.dropna()
+#     return dfsynappended.join(df,how='left')
+
+dfsyn2appended=split_rows
+
+def split_lists(ds):
+    """
+    """
+    return dmap2lin(ds.apply(pd.Series),colvalue_name=ds.name).drop(['column'],axis=1).set_index(ds.index.names).dropna()
 
 def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
