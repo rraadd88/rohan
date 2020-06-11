@@ -172,7 +172,7 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
     ax.set_ylabel(coly)
     if equallim:
         ax=set_equallim(ax,diagonal=True)    
-    ax=sort_legends(ax,params={'loc':'best'})    
+    ax=sort_legends(ax,params={'loc':'best'}) 
     ax.grid(True)
     if dfout:
         return df

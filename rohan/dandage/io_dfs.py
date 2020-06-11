@@ -456,13 +456,16 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
     
 merge_dfpairwithdf=merge_dfs_paired_with_unpaireds
 
-    
-def lambda2cols(df,lambdaf,in_coln,to_colns):
-    df_=df.apply(lambda x: lambdaf(x[in_coln]),
-                 axis=1).apply(pd.Series)
-    df_.columns=to_colns
-    df=df.join(df_)        
+def column_suffixes2multiindex(df,suffixes,test=False):
+    cols=[c for c in df1 if c.endswith(f' {suffixes[0]}') or c.endswith(f' {suffixes[1]}')]
+    if test:
+        print(cols)
+    df=df.loc[:,cols]
+    df=df.rename(columns={c: (s,c.replace(f' {s}','')) for s in suffixes for c in df if c.endswith(f' {s}')})
+    df.columns=pd.MultiIndex.from_tuples(df.columns)
     return df
+
+## chucking
 
 def df2chucks(din,chunksize,outd,fn,return_fmt='\t',force=False):
     """
@@ -897,7 +900,7 @@ def dfsortbybins(df, col):
     df=df.sort_values(f'{col} dfrankbybins').drop(f'{col} dfrankbybins',axis=1)
     return df
 
-def sortdfcolbylist(df, col,l):
+def sort_col_by_list(df, col,l):
     df[col]=pd.Categorical(df[col],categories=l, ordered=True)
     return df.sort_values(col)
 def sort_binnnedcol(df,col):
@@ -905,6 +908,70 @@ def sort_binnnedcol(df,col):
     df=df.sort_values(by=f'_{col}')
     df=df.drop([f'_{col}'],axis=1)
     return df
+
+def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
+                                    test=False):
+    """
+    Checks if values in pair of columns is sorted.
+    
+    Numbers are sorted in ascending order.
+    
+    :returns : True if sorted else 
+    """
+    if categories is None:
+        if x[f'{colvalue} {suffixes[0]}'] < x[f'{colvalue} {suffixes[1]}']:
+            return True
+        else:
+            return False            
+    else:
+        if test:
+            print([x[f'{colvalue} {suffixes[0]}'],x[f'{colvalue} {suffixes[1]}']],
+              categories,
+              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+                            x[f'{colvalue} {suffixes[1]}']==categories[1]]),
+              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+                            x[f'{colvalue} {suffixes[1]}']==categories[0]]))
+        if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+                            x[f'{colvalue} {suffixes[1]}']==categories[1]]):
+            return True
+        elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+                              x[f'{colvalue} {suffixes[1]}']==categories[0]]):
+            return False
+        else:
+            return np.nan        
+        
+def sort_column_pair(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
+    suffix2cols={s:sorted(df.filter(like=s).columns.tolist()) for s in suffixes}
+    if len(suffix2cols[suffixes[0]])!=len(suffix2cols[suffixes[1]]):
+        logging.error("df should contain paired columns")
+        print(suffix2cols)
+        return 
+    from rohan.dandage.io_sets import list2intersection
+    if len(list2intersection(list(suffix2cols.values())))!=0:
+        logging.error("df should contain non-overlapping paired columns")
+        print(suffix2cols)
+        return 
+    df['sorted']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: sorted_column_pair(x,colvalue=colvalue,suffixes=suffixes,
+                                                                                                                       categories=categories,how=how,test=test),axis=1)
+    if test:
+        print(df.shape,end=' ')
+    df=df.dropna(subset=['sorted'])
+    df['sorted']=df['sorted'].astype(bool)
+    if test:
+        print(df.shape)
+    df1,df2=df.loc[df['sorted'],:],df.loc[~df['sorted'],:]
+    # rename cols of df2 (not sorted) 
+    rename=dict(zip(suffix2cols[suffixes[0]]+suffix2cols[suffixes[1]],
+             suffix2cols[suffixes[1]]+suffix2cols[suffixes[0]]))
+    if test:
+        print(rename)
+    df2=df2.rename(columns=rename)
+    df3=df1.append(df2)
+    if test:
+        print(df1.shape,df2.shape,df3.shape)
+    return df3.drop(['sorted'],axis=1)
+
+
 def is_col_numeric(ds):
     return np.issubdtype(ds.dtype, np.number)
 
