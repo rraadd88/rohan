@@ -457,7 +457,7 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
 merge_dfpairwithdf=merge_dfs_paired_with_unpaireds
 
 def column_suffixes2multiindex(df,suffixes,test=False):
-    cols=[c for c in df1 if c.endswith(f' {suffixes[0]}') or c.endswith(f' {suffixes[1]}')]
+    cols=[c for c in df if c.endswith(f' {suffixes[0]}') or c.endswith(f' {suffixes[1]}')]
     if test:
         print(cols)
     df=df.loc[:,cols]
