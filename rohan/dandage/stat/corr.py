@@ -7,6 +7,20 @@ def df2corrmean(df):
     return df.corr(method='spearman').replace(1,np.nan).mean().mean()
 
 from scipy.stats import spearmanr,pearsonr
+def get_spearmanr(x,y):
+    t=sc.stats.spearmanr(x,y,nan_policy='omit')
+    return t.correlation,float(t.pvalue)
+def get_pearsonr(x,y):
+    t=sc.stats.pearsonr(x,y)
+    return t.correlation,float(t.pvalue)
+
+def get_corr_str(x,y,method='spearman'):
+    """
+    TODO bootstraping
+    """
+    r,p=getattr(globals(),f"get_{method}r")(x, y)
+    return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
+
 def corrdfs(df1,df2,method):
     """
     df1 in columns
@@ -23,13 +37,9 @@ def corrdfs(df1,df2,method):
     for c1 in df1:
         for c2 in df2:
             if method=='spearman':
-                dcorr.loc[c2,c1],dpval.loc[c2,c1]=spearmanr(df1[c1],df2[c2],
-                                                        nan_policy='omit'
-                                                       )
+                dcorr.loc[c2,c1],dpval.loc[c2,c1]=get_spearmanr(df1[c1],df2[c2],)
             elif method=='pearson':
-                dcorr.loc[c2,c1],dpval.loc[c2,c1]=pearsonr(df1[c1],df2[c2],
-#                                                         nan_policy='omit'
-                                                       )
+                dcorr.loc[c2,c1],dpval.loc[c2,c1]=get_pearsonr(df1[c1],df2[c2],)
                 
     if not df1.columns.name is None:
         dcorr.columns.name=df1.columns.name
@@ -39,23 +49,13 @@ def corrdfs(df1,df2,method):
         dpval.index.name=df2.columns.name
     return dcorr,dpval
 
-def get_spearmanr(x,y):
-    t=sc.stats.spearmanr(x,y,nan_policy='omit')
-#     print(t)
-#     print(t.pvalue)    
-    return t.correlation,float(t.pvalue)
+# def get_corr_str(r,p):
+#     from rohan.dandage.plot.annot import pval2annot
+#     return f"$\\rho$={r:.1e} ({pval2annot(p,fmt='<')})".replace('\n','')
 
-from rohan.dandage.plot.annot import pval2annot
-def get_spearmanr_str(x,y):    
-    r,p=get_spearmanr(x,y)
-    return f"$\\rho$={r:.1e} ({pval2annot(p,fmt='<')})".replace('\n','')
-
-def get_corr_str(x,y,method='spearman'):
-    """
-    TODO bootstraping
-    """
-    r,p=getattr(sc.stats,f"{method}r")(x, y,nan_policy='omit')
-    return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
+# def get_spearmanr_str(x,y):    
+#     r,p=get_spearmanr(x,y)
+#     return get_correlation_str(r,p)
 
 def get_partial_corrs(df,xs,ys,method='spearman',splits=5):
     """
