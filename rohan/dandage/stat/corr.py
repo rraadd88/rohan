@@ -18,7 +18,8 @@ def get_corr_str(x,y,method='spearman'):
     """
     TODO bootstraping
     """
-    r,p=getattr(globals(),f"get_{method}r")(x, y)
+    from rohan.dandage.plot.annot import pval2annot
+    r,p=globals()[f"get_{method}r"](x, y)
     return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
 
 def corrdfs(df1,df2,method):

@@ -32,10 +32,13 @@ def get_ddist(df,window_size_max=10,corr=False):
     return ddist
 
 # scikit learn below        
-def get_clusters(X,n_clusters,test=False):
+def get_clusters(X,n_clusters,random_state=88,
+                 params={},
+                 test=False):
     from sklearn import cluster,metrics
     kmeans = cluster.MiniBatchKMeans(n_clusters=n_clusters,
-                             random_state=88,
+                             random_state=random_state,
+                             **params,
                             ).fit(X)
     clusters=kmeans.predict(X)
     ds=pd.Series(dict(zip(X.index,clusters)))
@@ -47,46 +50,60 @@ def get_clusters(X,n_clusters,test=False):
     df['silhouette value'] = metrics.silhouette_samples(X, clusters)
     is_optimum=(df.groupby(['cluster #']).agg({'silhouette value':np.max})['silhouette value']>=df['silhouette value'].mean()).all()
     if test:
-        print(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}")
+        print(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}, random state {random_state}")
     if not is_optimum:
-        logging.warning(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}")
+        logging.warning(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}, random state {random_state}")
     return df
 def get_n_clusters_optimum(df3):
-    df=df3.groupby('clusters total').agg({'silhouette value':np.mean}).reset_index().sort_values(by=['silhouette value','clusters total',],ascending=[False,False])
+    df=df3.groupby('clusters total').agg({'silhouette value':lambda x: np.quantile(x,0.25)}).reset_index().sort_values(by=['silhouette value','clusters total',],ascending=[False,False])
     df.index=range(len(df))
     for i,n in enumerate(df['clusters total'].diff()):
         if n < 0:
             return df.iloc[i-1,:].to_dict()['clusters total']
-def plot_n_clusters_optimization(df,n_clusters_optimum,ax=None):
+def plot_n_clusters_optimization(df,n_clusters_optimum=None,ax=None):
     import matplotlib.pyplot as plt
     import seaborn as sns
     ax=plt.subplot() if ax is None else ax
-    ax=sns.swarmplot(data=df.groupby(['clusters total','cluster #']).agg({'silhouette value':np.max}).reset_index(),
+#     ax=sns.swarmplot(data=df.groupby(['clusters total','cluster #']).agg({'silhouette value':np.min}).reset_index(),
+#                      y='silhouette value',x='clusters total',
+#                      color='salmon',alpha=0.7,
+#                      ax=ax)
+#     ax=sns.swarmplot(data=df.groupby(['clusters total','cluster #']).agg({'silhouette value':np.max}).reset_index(),
+#                      y='silhouette value',x='clusters total',
+#                      color='r',alpha=0.7,
+#                      ax=ax)
+    ax=sns.violinplot(data=df.groupby(['clusters total','cluster #','random state']).agg({'silhouette value':np.mean}).reset_index(),
                      y='silhouette value',x='clusters total',
-                     color='r',alpha=0.7,
+                     color='salmon',alpha=0.7,
                      ax=ax)
     ax=sns.pointplot(data=df.groupby('clusters total').agg({'silhouette value':np.mean}).reset_index(),
                      y='silhouette value',x='clusters total',
                      color='k',
                      ax=ax)
-    ax.annotate('optimum', xy=(n_clusters_optimum-int(ax.get_xticklabels()[0].get_text()), 0.2),  xycoords='data',
+    if not n_clusters_optimum is None:
+        ax.annotate('optimum', 
+                xy=(n_clusters_optimum-int(ax.get_xticklabels()[0].get_text()),
+                    ax.get_ylim()[0]),  
+                xycoords='data',
                     xytext=(+50, +50), textcoords='offset points',
                     arrowprops=dict(arrowstyle="->",ec='k',
                                     connectionstyle="angle3,angleA=0,angleB=-90"),
                     )
     ax.set_xlabel('clusters')  
     return ax
-def get_clusters_optimum(X,n_clusters_range_min=2,n_clusters_range_max=10,
+def get_clusters_optimum(X,n_clusters=range(2,11),
+=                         params_clustering=dict(max_iter=500),
                          test=False,
                          out_optimized_only=False,
                         ):
     """
     :params X: samples to cluster in indexed 
     """
+    import itertools
     dn2df={}
-    for n_clusters in list(range(n_clusters_range_min,n_clusters_range_max+1)):
-        dn2df[n_clusters]=get_clusters(X,n_clusters,test=test)
-    df1=pd.concat(dn2df,axis=0,names=['clusters total']).reset_index()
+    for n,r in itertools.product(n_clusters=):
+        dn2df[(n,r)]=get_clusters(X=X,n_clusters=n,random_state=r,test=test,**params_clustering)
+    df1=pd.concat(dn2df,axis=0,names=['clusters total','random state']).reset_index()
     n_clusters_optimum=get_n_clusters_optimum(df1) 
     if test or plot:
         plot_n_clusters_optimization(df=df1,n_clusters_optimum=n_clusters_optimum)
