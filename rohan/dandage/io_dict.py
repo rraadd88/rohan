@@ -73,15 +73,21 @@ def groupby_value(d):
 #            for g, items in groupby(sorted(d.items()), key=lambda kv: kv[0][0])}
 def convert_tuplekeys2nested(d1): return {k1:{k[1]:d1[k] for k in d1 if k1 in k} for k1 in np.unique([k[0] for k in d1])}
 
-def dict_flip(d):
-    if not get_offdiagonal_values(intersections(d)).sum().sum()==0:
-        ValueError('dict values should be mutually exclusive') 
-    d_={}
-    for k in d:
-        for v in d[k]:
-            d_[v]=k
-    return d_
-def flip_dict(d): return dict_flip(d) 
+def flip_dict(d):
+    if all([isinstance(s,str) for s in d.values()]):
+        if len(np.unique(d.keys()))!=len(np.unique(d.values())):
+            logging.error('values should be unique to flip the dict')
+            return
+        else:
+            return {d[k]:k for k in d}
+    else:
+        if not get_offdiagonal_values(intersections(d)).sum().sum()==0:
+            ValueError('dict values should be mutually exclusive') 
+        d_={}
+        for k in d:
+            for v in d[k]:
+                d_[v]=k
+        return d_
 
 def str2dict(s,sep=';',sep_equal='='):
     """
@@ -89,6 +95,26 @@ def str2dict(s,sep=';',sep_equal='='):
     """
     return dict(item.split(sep_equal) for item in s.split(sep))
 
-def merge_dict_list(l):    
+def merge_dicts(l):    
     from collections import ChainMap
     return dict(ChainMap(*l))
+# def merge_dict(d1,d2):
+#     from itertools import chain
+#     from collections import defaultdict
+#     dict3 = defaultdict(list)
+#     for k, v in chain(d1.items(), d2.items()):
+#         dict3[k].append(v)
+#     return dict3
+
+def s2dict(s,sep=';',sep_key=':',):
+    d={}
+    for pair in s.split(sep):
+        if pair!='':
+            d[pair.split(sep_key)[0]]=pair.split(sep_key)[1]
+    return d
+
+def head_dict(d, lines=5):
+    return dict(itertools.islice(d.items(), lines))
+
+def group_list_bylen(l,length): return list(zip(*(iter(l),) * length))
+def sort_list_by_list(l,byl): return [x for x,_ in sorted(zip(l,byl))]

@@ -102,3 +102,40 @@ def fit_power_law(xdata,ydata,yerr=None,pinit = [1.5, -1.5],axes=None):
     ax.set_xlabel('# of degrees (log scale)')
     ax.set_ylabel('frequency (log scale)')
     ax.legend()
+    
+def fit_2d_distribution_kde(x, y, bandwidth, 
+                            xmin=None,xmax=None,xbins=100j, 
+                            ymin=None,ymax=None,ybins=100j, 
+                           test=False,
+                           **kwargs,): 
+    """
+    Build 2D kernel density estimate (KDE).
+    
+    ## cut off outliers
+    quantile_coff=0.01
+    params_grid=merge_dicts([
+    df01.loc[:,var2col.values()].quantile(quantile_coff).rename(index=flip_dict({f"{k}min":var2col[k] for k in var2col})).to_dict(),
+    df01.loc[:,var2col.values()].quantile(1-quantile_coff).rename(index=flip_dict({f"{k}max":var2col[k] for k in var2col})).to_dict(),
+            ])
+    """
+    from sklearn.neighbors import KernelDensity
+    # create grid of sample locations (default: 100x100)
+    xx, yy = np.mgrid[x.min() if xmin is None else xmin:x.max() if xmax is None else xmax:xbins, 
+                      y.min() if ymin is None else ymin:y.max() if ymax is None else ymax:ybins]
+
+    xy_sample = np.vstack([yy.ravel(), xx.ravel()]).T
+    xy_train  = np.vstack([y, x]).T
+
+    kde_skl = KernelDensity(bandwidth=bandwidth, **kwargs)
+    kde_skl.fit(xy_train)
+
+    # score_samples() returns the log-likelihood of the samples
+    z = np.exp(kde_skl.score_samples(xy_sample))
+    zz=np.reshape(z, xx.shape)
+    if test:
+        fig=plt.figure(figsize=[5,4])
+        ax=plt.subplot()
+        ax.scatter(x, y, s=1, fc='k')
+        pc=ax.pcolormesh(xx, yy, zz,cmap='Reds')
+        fig.colorbar(pc)
+    return xx, yy, zz    

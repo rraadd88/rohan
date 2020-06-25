@@ -162,11 +162,12 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
 from rohan.dandage.plot.colors import reset_legend_colors
 def hist_annot(dplot,colx,
                colssubsets=[],
+               bins=100,
                 subset_unclassified=True,cmap='tab10',ylimoff=1.2,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
                 ax=None):
     if ax is None:ax=plt.subplot(111)
-    ax=dplot[colx].hist(bins=100,ax=ax,color='gray',zorder=1)
+    ax=dplot[colx].hist(bins=bins,ax=ax,color='gray',zorder=1)
     ax.set_xlabel(colx)
     ax.set_ylabel('count')
     ax.set_ylim(0,ax.get_ylim()[1]*ylimoff)

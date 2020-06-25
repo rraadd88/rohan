@@ -909,6 +909,12 @@ def sort_binnnedcol(df,col):
     df=df.drop([f'_{col}'],axis=1)
     return df
 
+def groupby_sort(df,col_groupby,col_sortby,func='mean',ascending=True):
+    df1=df.groupby(col_groupby).agg({col_sortby:getattr(np,func)}).reset_index()
+    df2=df.merge(df1,
+            on=col_groupby,how='inner',suffixes=['',f' per {col_groupby}'])
+    return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
+     
 def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
                                     test=False):
     """

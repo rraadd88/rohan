@@ -53,31 +53,28 @@ def get_clusters(X,n_clusters,random_state=88,
         print(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}, random state {random_state}")
     if not is_optimum:
         logging.warning(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}, random state {random_state}")
-    return df
+    dn2df={'clusters':df,
+           'inertia':kmeans.inertia_,
+           'centers':pd.DataFrame(kmeans.cluster_centers_,index=range(n_clusters),columns=X.columns).rename_axis(index='cluster #').stack().reset_index().rename(columns={'level_1':'variable',0:'value'}),
+          }
+    return dn2df
+
 def get_n_clusters_optimum(df3):
-    df=df3.groupby('clusters total').agg({'silhouette value':lambda x: np.quantile(x,0.25)}).reset_index().sort_values(by=['silhouette value','clusters total',],ascending=[False,False])
+    df=df3.groupby('total clusters').agg({'silhouette value':lambda x: np.quantile(x,0.25)}).reset_index().sort_values(by=['silhouette value','total clusters',],ascending=[False,False])
     df.index=range(len(df))
-    for i,n in enumerate(df['clusters total'].diff()):
+    for i,n in enumerate(df['total clusters'].diff()):
         if n < 0:
-            return df.iloc[i-1,:].to_dict()['clusters total']
-def plot_n_clusters_optimization(df,n_clusters_optimum=None,ax=None):
+            return df.iloc[i-1,:].to_dict()['total clusters']
+def plot_silhouette(df,n_clusters_optimum=None,ax=None):
     import matplotlib.pyplot as plt
     import seaborn as sns
     ax=plt.subplot() if ax is None else ax
-#     ax=sns.swarmplot(data=df.groupby(['clusters total','cluster #']).agg({'silhouette value':np.min}).reset_index(),
-#                      y='silhouette value',x='clusters total',
-#                      color='salmon',alpha=0.7,
-#                      ax=ax)
-#     ax=sns.swarmplot(data=df.groupby(['clusters total','cluster #']).agg({'silhouette value':np.max}).reset_index(),
-#                      y='silhouette value',x='clusters total',
-#                      color='r',alpha=0.7,
-#                      ax=ax)
-    ax=sns.violinplot(data=df.groupby(['clusters total','cluster #','random state']).agg({'silhouette value':np.mean}).reset_index(),
-                     y='silhouette value',x='clusters total',
+    ax=sns.violinplot(data=df.groupby(['total clusters','cluster #']).agg({'silhouette value':np.mean}).reset_index(),
+                     y='silhouette value',x='total clusters',
                      color='salmon',alpha=0.7,
                      ax=ax)
-    ax=sns.pointplot(data=df.groupby('clusters total').agg({'silhouette value':np.mean}).reset_index(),
-                     y='silhouette value',x='clusters total',
+    ax=sns.pointplot(data=df.groupby('total clusters').agg({'silhouette value':np.mean}).reset_index(),
+                     y='silhouette value',x='total clusters',
                      color='k',
                      ax=ax)
     if not n_clusters_optimum is None:
@@ -91,23 +88,26 @@ def plot_n_clusters_optimization(df,n_clusters_optimum=None,ax=None):
                     )
     ax.set_xlabel('clusters')  
     return ax
+
 def get_clusters_optimum(X,n_clusters=range(2,11),
-=                         params_clustering=dict(max_iter=500),
+                         params_clustering={},
                          test=False,
-                         out_optimized_only=False,
                         ):
     """
     :params X: samples to cluster in indexed 
     """
-    import itertools
-    dn2df={}
-    for n,r in itertools.product(n_clusters=):
-        dn2df[(n,r)]=get_clusters(X=X,n_clusters=n,random_state=r,test=test,**params_clustering)
-    df1=pd.concat(dn2df,axis=0,names=['clusters total','random state']).reset_index()
-    n_clusters_optimum=get_n_clusters_optimum(df1) 
+    dn2d={}
+    for n in n_clusters:
+        dn2d[n]=get_clusters(X=X,n_clusters=n,test=test,params=params_clustering)
+    df1=pd.concat({k:dn2d[k]['clusters'] for k in dn2d},axis=0,names=['total clusters']).reset_index()
+    df2=pd.concat({k:dn2d[k]['centers'] for k in dn2d},axis=0,names=['total clusters']).reset_index()
+    df3=pd.DataFrame(pd.Series({k:dn2d[k]['inertia'] for k in dn2d}),columns=['itertia']).rename_axis(index='total clusters').reset_index()
+    # TODO identify saturation point in the intertia plot for n_clusters_optimum
+    # n_clusters_optimum=get_n_clusters_optimum(df1,ds1)
     if test or plot:
-        plot_n_clusters_optimization(df=df1,n_clusters_optimum=n_clusters_optimum)
-    if not out_optimized_only:
-        return df1,n_clusters_optimum
-    else:
-        return dn2df[n_clusters_optimum]
+        plot_silhouette(df=df1,n_clusters_optimum=None)
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        plt.figure()
+        df3.set_index('total clusters')['itertia'].plot()        
+    return df1,df2,df3
