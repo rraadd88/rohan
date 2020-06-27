@@ -138,4 +138,6 @@ def fit_2d_distribution_kde(x, y, bandwidth,
         ax.scatter(x, y, s=1, fc='k')
         pc=ax.pcolormesh(xx, yy, zz,cmap='Reds')
         fig.colorbar(pc)
+        ax.set(**{'xlim':[xmin,xmax],'ylim':[ymin,ymax],
+                 'title':f"bandwidth{bandwidth}_bins{xbins}"})
     return xx, yy, zz    

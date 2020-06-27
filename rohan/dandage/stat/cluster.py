@@ -31,7 +31,9 @@ def get_ddist(df,window_size_max=10,corr=False):
     print(ddist.shape)   
     return ddist
 
-# scikit learn below        
+# scikit learn below       
+def check_clusters(df):
+    return (df.groupby(['cluster #']).agg({'silhouette value':np.max})['silhouette value']>=df['silhouette value'].mean()).all()
 def get_clusters(X,n_clusters,random_state=88,
                  params={},
                  test=False):
@@ -48,23 +50,25 @@ def get_clusters(X,n_clusters,random_state=88,
     df['cluster #'].value_counts()
     # Compute the silhouette scores for each sample
     df['silhouette value'] = metrics.silhouette_samples(X, clusters)
-    is_optimum=(df.groupby(['cluster #']).agg({'silhouette value':np.max})['silhouette value']>=df['silhouette value'].mean()).all()
-    if test:
-        print(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}, random state {random_state}")
-    if not is_optimum:
+#     if test:
+#         print(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}, random state {random_state}")
+    if not check_clusters:
         logging.warning(f"{n_clusters} cluster : silhouette average score {df['silhouette value'].mean():1.2f}, ok?: {is_optimum}, random state {random_state}")
     dn2df={'clusters':df,
            'inertia':kmeans.inertia_,
-           'centers':pd.DataFrame(kmeans.cluster_centers_,index=range(n_clusters),columns=X.columns).rename_axis(index='cluster #').stack().reset_index().rename(columns={'level_1':'variable',0:'value'}),
+           'centers':pd.DataFrame(kmeans.cluster_centers_,index=range(n_clusters),columns=X.columns).rename_axis(index='cluster #')#.stack().reset_index().rename(columns={'level_1':'variable',0:'value'}),
           }
     return dn2df
 
-def get_n_clusters_optimum(df3):
-    df=df3.groupby('total clusters').agg({'silhouette value':lambda x: np.quantile(x,0.25)}).reset_index().sort_values(by=['silhouette value','total clusters',],ascending=[False,False])
-    df.index=range(len(df))
-    for i,n in enumerate(df['total clusters'].diff()):
-        if n < 0:
-            return df.iloc[i-1,:].to_dict()['total clusters']
+def get_n_clusters_optimum(df5,test=False):
+    from kneed import KneeLocator
+    kn = KneeLocator(x=df5['total clusters'], y=df5['inertia'], curve='convex', direction='decreasing')
+    if test:
+        import matplotlib.pyplot as plt
+        kn.plot_knee()
+        plt.title(f"knee point={kn.knee}")
+    return kn.knee
+        
 def plot_silhouette(df,n_clusters_optimum=None,ax=None):
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -95,19 +99,24 @@ def get_clusters_optimum(X,n_clusters=range(2,11),
                         ):
     """
     :params X: samples to cluster in indexed 
+    
+    cluster center intertia
     """
     dn2d={}
     for n in n_clusters:
         dn2d[n]=get_clusters(X=X,n_clusters=n,test=test,params=params_clustering)
-    df1=pd.concat({k:dn2d[k]['clusters'] for k in dn2d},axis=0,names=['total clusters']).reset_index()
-    df2=pd.concat({k:dn2d[k]['centers'] for k in dn2d},axis=0,names=['total clusters']).reset_index()
-    df3=pd.DataFrame(pd.Series({k:dn2d[k]['inertia'] for k in dn2d}),columns=['itertia']).rename_axis(index='total clusters').reset_index()
+    df1=pd.DataFrame(pd.Series({k:dn2d[k]['inertia'] for k in dn2d}),columns=['inertia']).rename_axis(index='total clusters').reset_index()
     # TODO identify saturation point in the intertia plot for n_clusters_optimum
-    # n_clusters_optimum=get_n_clusters_optimum(df1,ds1)
-    if test or plot:
-        plot_silhouette(df=df1,n_clusters_optimum=None)
+    n_clusters_optimum=get_n_clusters_optimum(df1,test=test)
+    #
+    dn2df={dn:pd.concat({k:dn2d[k][dn] for k in dn2d},axis=0,names=['total clusters']).reset_index() for dn in ['clusters','centers']}
+    if not check_clusters(dn2df['clusters']):
+        logging.warning('low silhoutte scores')
+        return
+    if test:
         import matplotlib.pyplot as plt
-        import seaborn as sns
         plt.figure()
-        df3.set_index('total clusters')['itertia'].plot()        
-    return df1,df2,df3
+        plot_silhouette(df=dn2df['clusters'],n_clusters_optimum=None)
+    # make output
+    dn2df={dn:dn2df[dn].loc[(dn2df[dn]['total clusters']==n_clusters_optimum),:].drop(['total clusters'],axis=1) for dn in dn2df}
+    return dn2df
