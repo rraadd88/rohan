@@ -141,3 +141,23 @@ def fit_2d_distribution_kde(x, y, bandwidth,
         ax.set(**{'xlim':[xmin,xmax],'ylim':[ymin,ymax],
                  'title':f"bandwidth{bandwidth}_bins{xbins}"})
     return xx, yy, zz    
+
+def fit_gauss_bimodal(data,bins=50,expected=(1,.2,250,2,.2,125),test=False):
+    #
+#     expected=(1,.2,250,2,.2,125)
+#     data=concatenate((normal(1,.2,5000),normal(2,.2,2500)))
+    from scipy.optimize import curve_fit
+    def gauss(x,mu,sigma,A):
+        return A*np.exp(-(x-mu)**2/2/sigma**2)
+    def bimodal(x,mu1,sigma1,A1,mu2,sigma2,A2):
+        return gauss(x,mu1,sigma1,A1)+gauss(x,mu2,sigma2,A2)
+    y,x=np.histogram(data, bins=bins,density=True)
+    x=(x[:-1] + x[1:]) / 2
+    params,cov=curve_fit(bimodal,x,y,expected)
+    sigma=np.sqrt(np.diag(cov))
+    if test:
+        plt.figure()
+        _=plt.hist(data,bins,alpha=.3,label='data',density=True)
+        plt.plot(x,bimodal(x,*params),color='red',lw=3,label='model')
+        plt.legend()
+    return params,sigma
