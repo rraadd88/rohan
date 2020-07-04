@@ -363,6 +363,8 @@ def dfswapcols(df,cols):
     df=df.drop([f"_{cols[0]}"],axis=1)
     return df
 
+## reshape df
+
 def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
     """
     dmap: ids in index and columns 
@@ -383,6 +385,17 @@ def df2unstack(df,coln='columns',idxn='index',col='value'):
     will be deprecated
     """
     return dmap2lin(df,idxn=idxn,coln=coln,colvalue_name=col)
+
+
+def pivot_table_str(df,index,columns,values):
+    def apply_(x):
+        zx=list()
+        if len(x)>1:
+            logging.warning('more than 1 str value encountered, returning list')
+            rerturn x
+        else:
+            return x[0]
+    return df.pivot_table(index=index,columns=columns,values=values,aggfunc=apply_)
 
 ## paired dfs
 from rohan.dandage.io_strs import replacelist
@@ -839,10 +852,10 @@ def split_rows(df,collist,rowsep=None):
 
 dfsyn2appended=split_rows
 
-def split_lists(ds):
-    """
-    """
-    return dmap2lin(ds.apply(pd.Series),colvalue_name=ds.name).drop(['column'],axis=1).set_index(ds.index.names).dropna()
+# def split_lists(ds):
+#     """
+#     """
+#     return dmap2lin(ds.apply(pd.Series),colvalue_name=ds.name).drop(['column'],axis=1).set_index(ds.index.names).dropna()
 
 def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
