@@ -322,26 +322,6 @@ def fhs2data_combo_appended(fhs, cols=None,labels=None,labels_coln='labels',sep=
                     data=data.loc[:,cols]
                 data_all=data_all.append(data,sort=True)
         return del_Unnamed(data_all)
-    
-
-def rename_cols(df,names,renames=None,prefix=None,suffix=None):
-    """
-    rename columns of a pandas table
-
-    :param df: pandas dataframe
-    :param names: list of new column names
-    """
-    if not prefix is None:
-        renames=[ "%s%s" % (prefix,s) for s in names]
-    if not suffix is None:    
-        renames=[ "%s%s" % (s,suffix) for s in names]
-    if not renames is None:
-        for i,name in enumerate(names):
-#             names=[renames[i] if s==names[i] else s for s in names]    
-            rename=renames[i]    
-            df.loc[:,rename]=df.loc[:,name]
-        df=df.drop(names,axis=1)
-        return df 
 
 
 def reorderbydf(df2,df1):
@@ -378,24 +358,10 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
         df.index.name=idxn
         id_vars=[df.index.name]
     return df.reset_index().melt(id_vars=id_vars,
-                             var_name=coln,value_name=colvalue_name)        
-     
-def df2unstack(df,coln='columns',idxn='index',col='value'):
-    """
-    will be deprecated
-    """
-    return dmap2lin(df,idxn=idxn,coln=coln,colvalue_name=col)
-
+                             var_name=coln,value_name=colvalue_name)    
 
 def pivot_table_str(df,index,columns,values):
-    def apply_(x):
-        zx=list()
-        if len(x)>1:
-            logging.warning('more than 1 str value encountered, returning list')
-            rerturn x
-        else:
-            return x[0]
-    return df.pivot_table(index=index,columns=columns,values=values,aggfunc=apply_)
+    return df.pivot_table(index=index,columns=columns,values=values,aggfunc=list2str)
 
 ## paired dfs
 from rohan.dandage.io_strs import replacelist
@@ -548,6 +514,7 @@ def dflin2dfbinarymap(dflin,col1,col2,params_df2submap={'aggfunc':'sum','binary'
         logging.debug(df_map_symm.unstack().unique())
     return df_map_symm
 
+## adjacenct matrices
 def symmetric_dflin(df,col1,col2,colval,sort=False,dropna=False):
     """
     col1 becomes columns
@@ -630,24 +597,6 @@ def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
                     dcorr.loc[i,c]=replace
     return dcorr
 
-# def get_offdiag_vals(dcorr):
-#     """
-#     for lin dcorr i guess
-#     """
-#     del_indexes=[]
-#     for spc1 in np.unique(dcorr.index.get_level_values(0)):
-#         for spc2 in np.unique(dcorr.index.get_level_values(0)):
-#             if (not (spc1,spc2) in del_indexes) and (not (spc2,spc1) in del_indexes):
-#                 del_indexes.append((spc1,spc2))
-#     #         break
-#     for spc1 in np.unique(dcorr.index.get_level_values(0)):
-#         for spc2 in np.unique(dcorr.index.get_level_values(0)):
-#             if spc1==spc2:
-#                 del_indexes.append((spc1,spc2))
-    
-#     return dcorr.drop(del_indexes)
-
-
 def make_symmetric_across_diagonal(df,fill='lower'):
     for c1i,c1 in enumerate(df.columns):
         for c2i,c2 in enumerate(df.columns):
@@ -691,24 +640,10 @@ def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
     return df
 
 ## df stats
-def df2colwise_unique_counts(df,cols,out=False):
-    col2uniquec={}
-    for col in cols:
-        if col in df:
-            col2uniquec[col]=len(df.loc[:,col].unique())
-        else:
-            col2uniquec[col]='column not found'
-    dcol2uniquec=pd.Series(col2uniquec)
-    if out:
-        return dcol2uniquec
-    else:
-        print(dcol2uniquec)
-
 def percentiles(ds):
     return [(f"{per:.2f}",ds.quantile(per)) for per in np.arange(0,1.1,0.1)]        
 
 ## dedup
-
 def dfdupval2unique(df,coldupval,preffix_unique='variant'):  
     dups=df[coldupval].value_counts()[(df[coldupval].value_counts()>1)].index
 
@@ -759,7 +694,6 @@ def colobj2str(df,test=False):
 #     df=pd.concat([df1,df2], axis=1, join=how)
 #     return df.reset_index()
 
-# import logging
 def merge_dfs(dfs,how='left',suffixes=['','_'],
               test=False,fast=False,
               **params_merge):
@@ -852,11 +786,6 @@ def split_rows(df,collist,rowsep=None):
 
 dfsyn2appended=split_rows
 
-# def split_lists(ds):
-#     """
-#     """
-#     return dmap2lin(ds.apply(pd.Series),colvalue_name=ds.name).drop(['column'],axis=1).set_index(ds.index.names).dropna()
-
 def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
 ## drop duplicates by aggregating the dups
@@ -885,28 +814,8 @@ def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False)
     df1=getattr(df.groupby(cols_groupby),f"{'progress' if not fast else 'parallel'}_apply")(lambda x: agg(x,col2aggfunc))
 #     df1.columns=[c.replace(f' {aggfunc}','') for c in coltuples2str(df1.columns)]
     return df1.reset_index()
-# def drop_duplicates_agg(df,colsgroupby,cols2aggf,test=False):
-#     """
-#     colsgroupby: unique names ~index
-#     cols2aggf: rest of the cols `unique_dropna_str` for categories
-#     """
-#     if test:
-#         print(df.shape)
-#         print(df.drop_duplicates(subset=colsgroupby).shape)
-#     #ddup aggregated
-#     dfdupagg=df.loc[(df.duplicated(subset=colsgroupby,keep=False)),:].groupby(colsgroupby).agg(cols2aggf)
-#     #drop duplicates all
-#     df_=df.drop_duplicates(subset=colsgroupby,keep=False)
-#     if test:
-#         print(df_.shape)
-#     #append ddup aggregated
-#     dfout=df_.append(dfdupagg,sort=True)
-#     if test:
-#         print(dfout.shape)
-#     return dfout
 
 ## sorting
-
 def dfsortbybins(df, col):
     d=dict(zip(bins,[float(s.split(',')[0].split('(')[1]) for s in bins]))
     df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
@@ -1115,3 +1024,6 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
         return df1
     else:
         return dmap2lin(df1).rename(columns={'value':col_out})[col_out].dropna()
+
+## make ids
+def make_ids_sorted(x,cols): return '--'.join(sorted(x[cols].tolist()))    

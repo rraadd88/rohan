@@ -3,7 +3,7 @@ import itertools
 from functools import reduce
 import numpy as np
 import pandas as pd
-
+import logging
 
 def list2intersection(l):
     return reduce(np.intersect1d, (l))
@@ -37,6 +37,14 @@ def unique_dropna(l): return dropna(unique(l,drop='nan'))
 def unique_dropna_str(l,sep='; '): return tuple2str(dropna(unique(l,drop='nan')),sep=sep)
 
 def merge_unique_dropna(l): return dropna(unique(list(itertools.chain(*l)),drop='nan'))
+def list2str(x):
+    x=list(x)
+    if len(x)>1:
+        logging.warning('more than 1 str value encountered, returning list')
+        return x
+    else:
+        return x[0]
+
 
 def flatten(l):
     return list(np.hstack(np.array(l)))
