@@ -3,7 +3,34 @@ from rohan.dandage.plot.colors import *
 from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
 
-    
+def plot_dists(dplot,colx,coly,colindex,order,
+               xlims,
+               cmap='Reds',
+               ax=None):
+    ax=plt.subplot() if ax is None else ax
+    params_dist={'x':colx,
+                'y':coly,
+                'order':order,
+                'data':dplot}
+    from rohan.dandage.plot.colors import get_ncolors
+    ax=sns.violinplot(**params_dist,
+                      palette=get_ncolors(2,cmap=cmap)[::-1]+['lightgray'],
+                      ax=ax,
+                   )
+    ax=sns.boxplot(**params_dist,
+                   zorder=1,showbox=False,showcaps=False,showfliers=False,
+                  ax=ax)    
+    ax.set_xlim(xlims)
+    label2n=dplot.groupby(params_dist['y']).agg({params['colindex']:len})['gene id'].to_dict()
+    _=[ax.text(ax.get_xlim()[0],y+0.15,f"n={label2n[t.get_text()]}",color='gray',ha='left',va='top') for y,t in enumerate(ax.get_yticklabels())]
+    subset2metrics=get_subset2metrics(dplot,
+                                  colvalue=params_dist['x'],
+                                colsubset=params_dist['y'],
+                                order=params_dist['order'],
+                                )
+    _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
+    return ax
+
 def plot_dist_comparison(df,colx,colhue,coly,
                          hues=None,xs=None,
                          violin=True,params_violin={},
