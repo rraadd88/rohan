@@ -6,29 +6,42 @@ from rohan.dandage.plot.ax_ import *
 def plot_dists(dplot,colx,coly,colindex,order,
                xlims,
                cmap='Reds',
+               annot_pval=True,
+               annot_n=True,
+               annot_stat=False,
+               params_dist={},
                ax=None):
+    dplot=dplot.dropna(subset=[colx,coly,colindex])    
     ax=plt.subplot() if ax is None else ax
-    params_dist={'x':colx,
-                'y':coly,
-                'order':order,
-                'data':dplot}
+    params_dist['x']=colx
+    params_dist['y']=coly
+    params_dist['order']=order
+    params_dist['data']=dplot
     from rohan.dandage.plot.colors import get_ncolors
     ax=sns.violinplot(**params_dist,
-                      palette=get_ncolors(2,cmap=cmap)[::-1]+['lightgray'],
+                      palette=get_ncolors(len(params_dist['data'][params_dist['y']].unique()),
+                                          cmap=cmap)[::-1]+['lightgray'],
                       ax=ax,
                    )
     ax=sns.boxplot(**params_dist,
                    zorder=1,showbox=False,showcaps=False,showfliers=False,
                   ax=ax)    
     ax.set_xlim(xlims)
-    label2n=dplot.groupby(params_dist['y']).agg({params['colindex']:len})['gene id'].to_dict()
-    _=[ax.text(ax.get_xlim()[0],y+0.15,f"n={label2n[t.get_text()]}",color='gray',ha='left',va='top') for y,t in enumerate(ax.get_yticklabels())]
-    subset2metrics=get_subset2metrics(dplot,
-                                  colvalue=params_dist['x'],
-                                colsubset=params_dist['y'],
-                                order=params_dist['order'],
-                                )
-    _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
+    if annot_stat!=False:
+        label2stat=dplot.groupby(params_dist['y']).agg({colx:getattr(np,annot_stat)})[colx].to_dict()
+        _=[ax.text(label2stat[t.get_text()],y,
+                   f"{label2stat[t.get_text()]:.2g}",color='gray',ha='center',va='bottom') for y,t in enumerate(ax.get_yticklabels())]    
+    if annot_n:
+        label2n=dplot.groupby(params_dist['y']).agg({colindex:len})[colindex].to_dict()
+        _=[ax.text(ax.get_xlim()[0],y+0.15,f"n={label2n[t.get_text()]}",color='gray',ha='left',va='top') for y,t in enumerate(ax.get_yticklabels())]
+    if annot_pval:
+        from rohan.dandage.stat.diff import get_subset2metrics
+        subset2metrics=get_subset2metrics(dplot,
+                                      colvalue=params_dist['x'],
+                                    colsubset=params_dist['y'],
+                                    order=params_dist['order'],
+                                    )
+        _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
     return ax
 
 def plot_dist_comparison(df,colx,colhue,coly,
