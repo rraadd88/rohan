@@ -81,18 +81,24 @@ def dfbool2intervals(df,colbool):
     return df
 
 def intersections(dn2list,jaccard=False,count=True,fast=False,test=False):
+    """
+    TODO: way to fill up the symetric half of the adjacency matrix
+    """
     df=pd.DataFrame(index=dn2list.keys(),
                 columns=dn2list.keys())
     if jaccard:
         dn2list={k:set(dn2list[k]) for k in dn2list}
-    for k1i,k1 in enumerate(dn2list.keys()):
-        if test:
-            print(f"{(k1i/len(dn2list.keys()))*100:.02f}")
+    for k1i,k1 in tqdm(enumerate(dn2list.keys())):
+#         if test:
+#             print(f"{(k1i/len(dn2list.keys()))*100:.02f}")
         for k2i,k2 in enumerate(dn2list.keys()):
             if fast and k1i>=k2i:
                 continue
             if jaccard:
-                l=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(dn2list[k1].union(dn2list[k2]))
+                if len(dn2list[k1].union(dn2list[k2]))!=0:
+                    l=len(set(dn2list[k1]).intersection(dn2list[k2]))/len(dn2list[k1].union(dn2list[k2]))
+                else:
+                    l=np.nan
             else:
                 l=list(set(dn2list[k1]).intersection(dn2list[k2]))
             if count:
@@ -101,8 +107,10 @@ def intersections(dn2list,jaccard=False,count=True,fast=False,test=False):
                 df.loc[k1,k2]=l
     return df
 
-def jaccard_index_dict(dn2list,jaccard=True,count=False,fast=False,test=False):
-    return intersections(dn2list,jaccard,count,fast,test)
+def jaccard_index_dict(dn2list,fast=False,test=False):
+    return intersections(dn2list,
+                         jaccard=True,count=False,
+                         fast=fast,test=test)
 
 compare_lists_jaccard=intersections
 

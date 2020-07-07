@@ -4,13 +4,17 @@ from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
 
 def plot_dists(dplot,colx,coly,colindex,order,
-               xlims,
+               xlims=None,
                cmap='Reds',
+               palette=None,
                annot_pval=True,
                annot_n=True,
                annot_stat=False,
                params_dist={},
                ax=None):
+    if cmap is None:
+        palette=get_ncolors(len(params_dist['data'][params_dist['y']].unique()),
+                                          cmap=cmap)[::-1]+['lightgray']
     dplot=dplot.dropna(subset=[colx,coly,colindex])    
     ax=plt.subplot() if ax is None else ax
     params_dist['x']=colx
@@ -19,14 +23,14 @@ def plot_dists(dplot,colx,coly,colindex,order,
     params_dist['data']=dplot
     from rohan.dandage.plot.colors import get_ncolors
     ax=sns.violinplot(**params_dist,
-                      palette=get_ncolors(len(params_dist['data'][params_dist['y']].unique()),
-                                          cmap=cmap)[::-1]+['lightgray'],
+                      palette=palette,
                       ax=ax,
                    )
     ax=sns.boxplot(**params_dist,
                    zorder=1,showbox=False,showcaps=False,showfliers=False,
                   ax=ax)    
-    ax.set_xlim(xlims)
+    if not xlims is None:
+        ax.set_xlim(xlims)
     if annot_stat!=False:
         label2stat=dplot.groupby(params_dist['y']).agg({colx:getattr(np,annot_stat)})[colx].to_dict()
         _=[ax.text(label2stat[t.get_text()],y,

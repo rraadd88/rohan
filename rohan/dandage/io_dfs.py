@@ -1026,4 +1026,6 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
         return dmap2lin(df1).rename(columns={'value':col_out})[col_out].dropna()
 
 ## make ids
-def make_ids_sorted(x,cols): return '--'.join(sorted(x[cols].tolist()))    
+def get_ids_sorted(x,cols): return '--'.join(sorted(x[cols].tolist()))
+def make_ids_sorted(df,cols,fast=False): 
+    return getattr(df,f"{'progress' if not fast else 'parallel'}_apply")(lambda x: get_ids_sorted(x,cols),axis=1)
