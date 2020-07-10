@@ -904,17 +904,21 @@ def is_col_numeric(ds):
     return np.issubdtype(ds.dtype, np.number)
 
 # 2d subsets
-def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,test=False):    
+def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,
+                           fast=False,
+                           test=False):    
     for col in col2cutoffs:
         if isinstance(col2cutoffs[col],float):
-            cutoffs=[col2cutoffs[col],1-col2cutoffs[col]]
             if quantile:
+                cutoffs=[col2cutoffs[col],col2cutoffs[col]]
                 col2cutoffs[col]=[df[col].quantile(c) for c in cutoffs]
             else:
-                col2cutoffs[col]=cutoffs
+                col2cutoffs[col]=[col2cutoffs[col],col2cutoffs[col]]
         elif not isinstance(col2cutoffs[col],list):
             logging.error("cutoff should be float or list")
-        df[f"{col} (high or low)"]=df[col].apply(lambda x: 'low' if x<col2cutoffs[col][0] else 'high' if x>col2cutoffs[col][1] else np.nan)
+        df.loc[(df[col]<=col2cutoffs[col][0]),f"{col} (high or low)"]='low'
+        df.loc[(df[col]>col2cutoffs[col][1]),f"{col} (high or low)"]='high'
+        print(df.loc[:,f"{col} (high or low)"].isnull().sum())
     colout=f"{'-'.join(list(col2cutoffs.keys()))} (low or high)"
     def get_subsetname(x):
         l=[x[f"{col} (high or low)"] for col in col2cutoffs]
@@ -922,7 +926,7 @@ def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,test=False)
             return '-'.join(l)
         else:
             return np.nan
-    df[colout]=df.apply(lambda x:  get_subsetname(x),axis=1)
+    df[colout]=getattr(df,'progress_apply' if not fast else 'parallel_apply')(lambda x:  get_subsetname(x),axis=1)
     if test:
         print(col2cutoffs)
         if len(col2cutoffs.keys())==2:
@@ -934,7 +938,7 @@ def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,test=False)
             import matplotlib.pyplot as plt
             ax=plt.subplot()
             df.groupby(colout).apply(lambda x: x.plot.scatter(x=list(col2cutoffs.keys())[0],
-                                                              y=list(col2cutoffs.keys())[0],
+                                                              y=list(col2cutoffs.keys())[1],
                                                               alpha=1,ax=ax,label=x.name,color=element2color[x.name]))
     if not outdf:
         return df[colout]

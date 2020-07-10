@@ -88,6 +88,7 @@ def intersections(dn2list,jaccard=False,count=True,fast=False,test=False):
                 columns=dn2list.keys())
     if jaccard:
         dn2list={k:set(dn2list[k]) for k in dn2list}
+    from tqdm import tqdm
     for k1i,k1 in tqdm(enumerate(dn2list.keys())):
 #         if test:
 #             print(f"{(k1i/len(dn2list.keys()))*100:.02f}")

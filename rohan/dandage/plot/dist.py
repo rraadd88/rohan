@@ -24,6 +24,7 @@ def plot_dists(dplot,colx,coly,colindex,order,
     from rohan.dandage.plot.colors import get_ncolors
     ax=sns.violinplot(**params_dist,
                       palette=palette,
+                      scale='count',
                       ax=ax,
                    )
     ax=sns.boxplot(**params_dist,

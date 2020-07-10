@@ -10,3 +10,16 @@ def get_subset2metrics(dplot,colvalue,colsubset,order):
     from rohan.dandage.plot.annot import pval2annot
     subset2metrics={k: pval2annot(subset2metrics[k],fmt='<',alternative='two-sided',linebreak=False) for k in subset2metrics}
     return subset2metrics
+
+def diff(a,b,absolute=True): 
+    diff=a-b
+    if absolute:
+        return abs(diff)
+    else:
+        return diff
+def balance(a,b,absolute=True):
+    sum_=a+b
+    if sum_!=0:
+        return 1-(diff(a,b,absolute=absolute)/(sum_))
+    else:
+        return np.nan
