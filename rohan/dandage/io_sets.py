@@ -123,3 +123,5 @@ def jaccard_index(l1,l2):
 
 def difference(l1,l2): return list(set(l1).difference(l2))
 
+def group_list_bylen(l,length): return list(zip(*(iter(l),) * length))
+def sort_list_by_list(l,byl): return [x for x,_ in sorted(zip(l,byl))]
