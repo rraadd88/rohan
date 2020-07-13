@@ -43,3 +43,7 @@ def get_stats_by_bins(df,colx,coly,fun,bins=4):
         dn2df[f"{col} bins"]=df.groupby([f"{col} bins"]).apply(lambda df : fun(df[colx],df[coly]))
         
     return pd.DataFrame(pd.concat(dn2df))
+
+import numpy as np
+from rohan.dandage.stat.diff import diff,balance 
+def aggbypair(a,b,absolute=True): return np.mean([a,b]),diff(a,b,absolute=absolute),balance(a,b)
