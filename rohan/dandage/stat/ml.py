@@ -1,25 +1,44 @@
 from rohan.global_imports import *
 
-def get_grid_search(modeln,
-                    X,y,param_grid={},
-                    cv=5,
-                    n_jobs=6,
-                    random_state=88,
-                   ):
-    from sklearn.model_selection import GridSearchCV
-    from sklearn import ensemble
-    estimator = getattr(ensemble,modeln)(random_state=random_state)
-    grid_search = GridSearchCV(estimator, param_grid,cv=cv,n_jobs=n_jobs)
-    grid_search.fit(X, y)
-    print(modeln,grid_search.best_score_)
-    return grid_search
+# currate data 
 
-def make_kfold2df(df,colxs,coly,colidx):
+def get_Xy_for_classification(df1,coly,qcut):
+    """
+    : param df1: is indexed  
+    """
+    if qcut>0.5:
+        logging.error('qcut should be <=0.5')
+        return 
+    cols_X=[c for c in df1 if c!=coly]
+    df1[coly]=df1.progress_apply(lambda x: True if x[coly]>df1[coly].quantile(1-qcut) else False if x[coly]<df1[coly].quantile(qcut) else np.nan,axis=1)
+    print(df1.shape,end='')
+    df1=df1.dropna()
+    print(df1.shape)
+    df1[coly]=df1[coly].apply(bool)
+    y=df1[coly]
+    X=df1.loc[:,cols_X]
+    # remove low complexity features
+    logging.warning(f"xs with very low complexity are removed: {X.loc[:,~(X.apply(lambda x: len(x.unique()))>=5)].columns}")
+    X=X.loc[:,(X.apply(lambda x: len(x.unique()))>=5)]
+    return {'X':X,'y':y}
+
+def get_cv2Xy(X,y,cv=5):
+    from sklearn.model_selection import KFold
+    cv = KFold(n_splits=cv)
+    cv2Xy={}
+    for i, (train ,test) in enumerate(cv.split(X.index)):
+        dtype2index=dict(zip(('train' ,'test'),(train ,test)))
+        cv2Xy[i]={}
+        for dtype in dtype2index:
+            cv2Xy[i][dtype]={}
+            cv2Xy[i][dtype]['X']=X.iloc[dtype2index[dtype],:]
+            cv2Xy[i][dtype]['y']=y[dtype2index[dtype]]
+    return cv2Xy
+
+def make_kfold2df_balanced(df,colxs,coly,colidx,random_state=88):
     """
     split the major class
     """
-    
-    random_state=88
     np.random.seed(random_state)
     
     df=df.loc[:,colxs+[coly,colidx]]
@@ -79,6 +98,133 @@ def make_kfold2df(df,colxs,coly,colidx):
         ### kfold to dataset
         kfold2dataset={0:(df.loc[:,colxs].values,df.loc[:,coly].values)}
     return kfold2dataset
+
+# search estimator
+def get_grid_search(modeln,
+                    X,y,param_grid={},
+                    cv=5,
+                    n_jobs=6,
+                    random_state=88,
+                   ):
+    from sklearn.model_selection import GridSearchCV
+    from sklearn import ensemble
+    estimator = getattr(ensemble,modeln)(random_state=random_state)
+    grid_search = GridSearchCV(estimator, param_grid,cv=cv,n_jobs=n_jobs)
+    grid_search.fit(X, y)
+    print(modeln,grid_search.best_score_)
+    return grid_search
+
+def get_estimatorn2grid_search(estimatorn2param_grid,X,y):
+    estimatorn2grid_search={}
+    for k in estimatorn2param_grid:
+        estimatorn2grid_search[k]=get_grid_search(modeln=k,
+                        X=X,y=y,
+                        param_grid=estimatorn2param_grid[k],
+                        cv=5,
+                        n_jobs=6,
+                        random_state=88,
+                       )
+    print({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
+    return estimatorn2grid_search
+
+# evaluate
+def get_probability(estimatorn2grid_search,X,y):
+    """
+    TODO: for non-binary classification
+    """
+    return dellevelcol(pd.concat({k:pd.DataFrame({'sample name':X.index,
+                                                  'true':y,
+                                                  'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search},
+             axis=0,names=['estimator name']).reset_index())
+
+def get_auc_cv(estimator,X,y,cv=5):
+    """
+    TODO: just predict_probs as inputs
+    TODO: resolve duplication of stat.binary.auc
+    TODO: add more metrics in ds1 in addition to auc
+    """
+    cv2Xy=get_cv2Xy(X,y,cv=cv)
+    mean_fpr = np.linspace(0, 1, 100)
+    from sklearn.metrics import roc_curve,auc
+    dn2df={}
+    d={}
+    for i in tqdm(cv2Xy.keys()):
+        estimator.fit(cv2Xy[i]['train']['X'], cv2Xy[i]['train']['y'])
+        tpr,fpr,thresholds = roc_curve(cv2Xy[i]['test']['y'],
+                                       estimator.predict_proba(cv2Xy[i]['test']['X'])[:,0],
+                                      )
+        interp_tpr = np.interp(mean_fpr, fpr, tpr)
+        interp_tpr[0] = 0.0
+        dn2df[i]=pd.DataFrame({'FPR':mean_fpr,
+                               'TPR':interp_tpr,
+                              })
+        d[i]=auc(fpr,tpr)        
+    df1=dellevelcol(pd.concat(dn2df,axis=0,names=['cv #']).reset_index())
+    ds1=pd.Series(d)
+    ds1.name='AUC'
+    ds1=pd.DataFrame(ds1)
+    ds1.index.name='cv #'
+    return ds1,df1
+
+# interpret 
+
+def get_feature_importances(estimatorn2grid_search,
+                            X,y,
+                            random_state=88):
+    dn2df={}
+    for k in estimatorn2grid_search:
+        from sklearn.inspection import permutation_importance
+        r = permutation_importance(estimator=estimatorn2grid_search[k].best_estimator_, 
+                                   X=X, y=y,
+                                   scoring='accuracy',
+                                   n_repeats=20,
+                                   n_jobs=6,
+                                   random_state=random_state,
+                                  )
+        df=pd.DataFrame(r.importances)
+        df['feature']=X.columns
+        dn2df[k]=df.melt(id_vars=['feature'],value_vars=range(20),
+            var_name='permutation #',
+            value_name='importance',
+           )
+    df2=dellevelcol(pd.concat(dn2df,axis=0,names=['estimator name']).reset_index())
+    from rohan.dandage.stat.norm import rescale
+
+    def apply_(df):
+        df['importance rescaled']=rescale(df['importance'])
+        df['importance rank']=len(df)-df['importance'].rank()
+        return df#.sort_values('importance rescaled',ascending=False)
+    df3=df2.groupby(['estimator name','permutation #']).apply(apply_)
+    return df3
+
+def get_partial_dependence(estimatorn2grid_search,
+                            X,y,):
+    df3=pd.DataFrame({'feature #':range(len(X.columns)),
+                     'feature name':X.columns})
+
+    def apply_(featuren,featurei,estimatorn2grid_search):
+        from sklearn.inspection import partial_dependence
+        dn2df={}
+        for k in estimatorn2grid_search:
+            t=partial_dependence(estimator=estimatorn2grid_search[k].best_estimator_,
+                                 X=X,
+                                 features=[featurei],
+                                 response_method='predict_proba',
+                                 method='brute',
+                                 percentiles=[0,1],
+                                 grid_resolution=100,
+                                 )
+            dn2df[k]=pd.DataFrame({'probability':t[0][0],
+                                    'feature value':t[1][0]})
+        df1=pd.concat(dn2df,axis=0,names=['estimator name']).reset_index()
+        df1['feature name']=featuren
+        return dellevelcol(df1)
+    df4=df3.groupby('feature #',as_index=False).parallel_apply(lambda df:apply_(featuren=df.iloc[0,:]['feature name'],
+                                    featurei=df.iloc[0,:]['feature #'],                                                                                                estimatorn2grid_search=estimatorn2grid_search))
+    
+    return df4
+
+## metas
 
 def many_classifiers(dn2dataset={},
                      cv=5,

@@ -45,6 +45,7 @@ def read_dict(p,fmt=''):
         return read_json(p)
     else:
         logging.error(f'supported extensions: .yml .yaml .json')
+        
 def to_dict(d,p):
     if not 'My Drive' in p:
         p=p.replace(' ','_')
@@ -56,8 +57,14 @@ def to_dict(d,p):
         return to_yaml(d,p)
     elif p.endswith('.json'):
         return to_json(d,p)
+    elif p.endswith('.pickle'):
+        import pickle
+        pickle.dump(d, open(p, 'wb'))
+    elif p.endswith('.joblib'):
+        import joblib
+        joblib.dump(d, p)     
     else:
-        ValueError(f'supported extensions: .yml .yaml .json')        
+        ValueError(f'supported extensions: .yml .yaml .json .pickle .joblib')        
         
 def groupby_value(d):
     d_={k:[] for k in unique_dropna(d.values())}
