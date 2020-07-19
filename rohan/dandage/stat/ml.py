@@ -1,5 +1,19 @@
 from rohan.global_imports import *
 
+def get_grid_search(modeln,
+                    X,y,param_grid={},
+                    cv=5,
+                    n_jobs=6,
+                    random_state=88,
+                   ):
+    from sklearn.model_selection import GridSearchCV
+    from sklearn import ensemble
+    estimator = getattr(ensemble,modeln)(random_state=random_state)
+    grid_search = GridSearchCV(estimator, param_grid,cv=cv,n_jobs=n_jobs)
+    grid_search.fit(X, y)
+    print(modeln,grid_search.best_score_)
+    return grid_search
+
 def make_kfold2df(df,colxs,coly,colidx):
     """
     split the major class
