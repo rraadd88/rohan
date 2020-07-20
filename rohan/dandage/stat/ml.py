@@ -128,21 +128,52 @@ def get_estimatorn2grid_search(estimatorn2param_grid,X,y):
     return estimatorn2grid_search
 
 # evaluate
-def get_probability(estimatorn2grid_search,X,y):
+def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
     """
     TODO: for non-binary classification
     """
-    return dellevelcol(pd.concat({k:pd.DataFrame({'sample name':X.index,
+    df1=dellevelcol(pd.concat({k:pd.DataFrame({'sample name':X.index,
                                                   'true':y,
                                                   'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search},
              axis=0,names=['estimator name']).reset_index())
+    print(df1.shape,end='')
+    df1.loc[:,'correct by truth']=df1.apply(lambda x: ((x['true'] and x['probability']>coff) or (not x['true'] and x['probability']<1-coff)),axis=1)
+    print(df1.loc[:,'correct by truth'].sum())
 
-def get_auc_cv(estimator,X,y,cv=5):
+    df1['probability per class']=df1.apply(lambda x: np.nan if not x['correct by truth'] else 1-x['probability'] if x['probability']<0.5 else x['probability'],axis=1)
+    if test:
+        plt.figure(figsize=[4,4])
+        ax=plt.subplot()
+        df1.groupby('estimator name').apply(lambda df: df['probability'].hist(bins=50,label=df.name,histtype='step'))
+        ax.axvline(coff,label='cut off')
+        ax.set(xlim=[0.5,1])
+        ax.legend(loc=2)
+        _=ax.set(xlabel='probability',ylabel='count')
+
+    df1=df1.merge(df1.groupby(['sample name']).agg({'probability per class': lambda x: all([i>coff or i<1-coff for i in x])}).rename(columns={'probability per class':'correct by estimators'}).reset_index(),
+             on='sample name',how='left')
+
+    print('total samples\t',len(df1))
+    print(df1.groupby(['sample name']).agg({c:lambda x: any(x) for c in df1.filter(regex='^correct ')}).sum())
+    return df1
+
+def get_auc_cv(estimator,X,y,cv=5,test=False):
     """
     TODO: just predict_probs as inputs
     TODO: resolve duplication of stat.binary.auc
     TODO: add more metrics in ds1 in addition to auc
     """
+    def plot(df1,df2,ax=None):
+        params={'label':'Mean ROC\n(AUC=%0.2f$\pm$%0.2f)' % (df1['AUC'].mean(), df1['AUC'].std()),}
+        ax=plt.subplot() if ax is None else ax
+        sns.lineplot(x="FPR", y="TPR", data=df2,
+                     ci='sd',
+                     label=params['label'],
+                     ax=ax,
+                    )
+        ax.plot([0, 1], [0, 1], linestyle=':', lw=2, color='lightgray',)
+        ax.set(xlim=[0, 1], ylim=[0, 1],)
+        return ax
     cv2Xy=get_cv2Xy(X,y,cv=cv)
     mean_fpr = np.linspace(0, 1, 100)
     from sklearn.metrics import roc_curve,auc
@@ -159,18 +190,43 @@ def get_auc_cv(estimator,X,y,cv=5):
                                'TPR':interp_tpr,
                               })
         d[i]=auc(fpr,tpr)        
-    df1=dellevelcol(pd.concat(dn2df,axis=0,names=['cv #']).reset_index())
     ds1=pd.Series(d)
     ds1.name='AUC'
-    ds1=pd.DataFrame(ds1)
-    ds1.index.name='cv #'
-    return ds1,df1
+    df1=pd.DataFrame(ds1)
+    df1.index.name='cv #'
+    df2=dellevelcol(pd.concat(dn2df,axis=0,names=['cv #']).reset_index())
+    if test:
+        plt.figure(figsize=[3,3])
+        plot(df1,df2,ax=None)
+    return df1,df2
 
 # interpret 
 
 def get_feature_importances(estimatorn2grid_search,
                             X,y,
-                            random_state=88):
+                            random_state=88,test=False):
+    def plot(df,ax=None):
+        ax=plt.subplot() if ax is None else ax
+        dplot=groupby_sort(df,
+             col_groupby=['estimator name','feature'],
+             col_sortby='importance rescaled',
+             func='mean', ascending=False
+            )
+        dplot=dplot.loc[(dplot['importance']!=0),:]
+
+        sns.pointplot(data=dplot,
+              x='importance rescaled',
+              y='feature',
+              hue='estimator name',
+             linestyles=' ',
+              markers='o',
+              alpha=0.1,
+              dodge=True,
+              scatter_kws = {'facecolors':'none'},
+              ax=ax
+             )
+        return ax
+    
     dn2df={}
     for k in estimatorn2grid_search:
         from sklearn.inspection import permutation_importance
@@ -195,6 +251,8 @@ def get_feature_importances(estimatorn2grid_search,
         df['importance rank']=len(df)-df['importance'].rank()
         return df#.sort_values('importance rescaled',ascending=False)
     df3=df2.groupby(['estimator name','permutation #']).apply(apply_)
+    if test:
+        plot(df3)
     return df3
 
 def get_partial_dependence(estimatorn2grid_search,
