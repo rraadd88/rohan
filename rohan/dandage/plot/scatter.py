@@ -35,7 +35,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
             ax=None,):
     """
     trendline:['poly','lowess']
-    method=['mlr',"spearman"],
+    stat_method=['mlr',"spearman"],
     """
     ax= plt.subplot() if ax is None else ax
     
@@ -56,14 +56,14 @@ def plot_scatter(dplot,colx,coly,colz=None,
         )
     from rohan.dandage.plot.ax_ import set_label_colorbar
     ax=set_label_colorbar(ax,colz if label_colorbar is None else label_colorbar)
-    from rohan.dandage.stat.corr import get_corr_str
+    from rohan.dandage.stat.corr import get_corr
     from rohan.dandage.plot.ax_ import set_label
     if 'mlr' in stat_method:
         from rohan.dandage.stat.poly import get_mlr_2_str
         ax=set_label(ax,label=get_mlr_2_str(dplot,colz,[colx,coly]),
                     title=True,params={'loc':'left'})
     if 'spearman' in stat_method or 'pearson' in stat_method:
-        ax=set_label(ax,label=get_corr_str(dplot[colx],dplot[coly],method=stat_method[0]))
+        ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],outstr=True))
     from rohan.dandage.plot.colors import saturate_color
     plot_trendline(dplot,colx,coly,
                     params_plot={'color':saturate_color(params_plot['color']) if 'color' in params_plot else None,
@@ -76,7 +76,8 @@ def plot_scatter(dplot,colx,coly,colz=None,
     return ax
 
 def plot_reg(d,xcol,ycol,textxy=[0.65,1],
-             scafmt='hexbin',method="spearman",pval=True,
+             scafmt='hexbin',
+             method="spearman",pval=True,bootstrapped=False,
              trendline=False,
              trendline_lowess=False,
              cmap='Reds',vmax=10,cbar_label=None,title_stat=False,
@@ -111,8 +112,8 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         xys_lowess=lowess(d[ycol], d[xcol],frac=0.9,it=20)
         ax.plot(xys_lowess[:,0],xys_lowess[:,1], linestyle='--',
                 color=params_scatter['color'] if 'color' in params_scatter else None)
-    from rohan.dandage.stat.corr import get_corr_str
-    textstr=get_corr_str(d[xcol],d[ycol],method=method)#.replace('\n',', ')
+    from rohan.dandage.stat.corr import get_corr
+    textstr=get_corr(d[xcol],d[ycol],method=method,bootstrapped=bootstrapped,outstr=True)#.replace('\n',', ')
     if title_stat:
         ax.set_title(textstr)            
     else:

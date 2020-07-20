@@ -37,10 +37,10 @@ def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
         else:
             return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
         
-def get_corr_str(x,y,method='spearman',bootstrapped=False,ci_type='max',
-            outstr=True):
-    return get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
-            outstr=False):    
+# def get_corr_str(x,y,method='spearman',bootstrapped=False,ci_type='max',
+#             outstr=True):
+#     return get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
+#             outstr=False):    
 
 def corrdfs(df1,df2,method):
     """
