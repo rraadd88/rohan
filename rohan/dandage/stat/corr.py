@@ -14,13 +14,33 @@ def get_pearsonr(x,y):
     t=sc.stats.pearsonr(x,y)
     return t.correlation,float(t.pvalue)
 
-def get_corr_str(x,y,method='spearman'):
-    """
-    TODO bootstraping
-    """
+def get_corr_bootstrapped(x,y,method='spearman',ci_type='max')
+    from rohan.dandage.stat.ml import get_cvsplits
+    from rohan.dandage.stat.variance import get_ci
+    cv2xy=get_cvsplits(x,y,cv=5,outtest=False)
+    rs=[globals()[f"get_{method}r"](**cv2xy[k])[0] for k in cv2xy]
+    return np.mean(rs), get_ci(rs,ci_type=ci_type)
+
+def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
+            outstr=False):
     from rohan.dandage.plot.annot import pval2annot
-    r,p=globals()[f"get_{method}r"](x, y)
-    return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
+    if bootstrapped:
+        r,ci=get_corr_bootstrapped(x,y,method=method,ci_type=ci_type)
+        if not outstr:
+            return r,ci
+        else:
+            return f"$r_{method[0]}$={r:.2f}$\pm${ci:.2f}{ci_type if ci_type!='max' else ''}"
+    else
+        r,p=globals()[f"get_{method}r"](x, y)
+        if not outstr:
+            return r,p
+        else:
+            return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
+        
+def get_corr_str(x,y,method='spearman',bootstrapped=False,ci_type='max',
+            outstr=True):
+    return get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
+            outstr=False):    
 
 def corrdfs(df1,df2,method):
     """

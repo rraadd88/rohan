@@ -22,17 +22,24 @@ def get_Xy_for_classification(df1,coly,qcut):
     X=X.loc[:,(X.apply(lambda x: len(x.unique()))>=5)]
     return {'X':X,'y':y}
 
-def get_cv2Xy(X,y,cv=5):
+def get_cvsplits(X,y,cv=5,random_state=88,outtest=True):
+    X.index=range(len(X))
+    y.index=range(len(y))
+    
     from sklearn.model_selection import KFold
-    cv = KFold(n_splits=cv)
+    cv = KFold(n_splits=cv,random_state=random_state)
     cv2Xy={}
     for i, (train ,test) in enumerate(cv.split(X.index)):
         dtype2index=dict(zip(('train' ,'test'),(train ,test)))
         cv2Xy[i]={}
-        for dtype in dtype2index:
-            cv2Xy[i][dtype]={}
-            cv2Xy[i][dtype]['X']=X.iloc[dtype2index[dtype],:]
-            cv2Xy[i][dtype]['y']=y[dtype2index[dtype]]
+        if outtest:
+            for dtype in dtype2index:
+                cv2Xy[i][dtype]={}
+                cv2Xy[i][dtype]['X' if isinstance(X,pd.DataFrame) else 'x']=X.iloc[dtype2index[dtype],:] if isinstance(X,pd.DataFrame) else X[dtype2index[dtype]]
+                cv2Xy[i][dtype]['y']=y[dtype2index[dtype]]
+        else:
+            cv2Xy[i]['X' if isinstance(X,pd.DataFrame) else 'x']=X.iloc[dtype2index['train'],:] if isinstance(X,pd.DataFrame) else X[dtype2index['train']]
+            cv2Xy[i]['y']=y[dtype2index['train']]                
     return cv2Xy
 
 def make_kfold2df_balanced(df,colxs,coly,colidx,random_state=88):
@@ -174,7 +181,7 @@ def get_auc_cv(estimator,X,y,cv=5,test=False):
         ax.plot([0, 1], [0, 1], linestyle=':', lw=2, color='lightgray',)
         ax.set(xlim=[0, 1], ylim=[0, 1],)
         return ax
-    cv2Xy=get_cv2Xy(X,y,cv=cv)
+    cv2Xy=get_cvsplits(X,y,cv=cv)
     mean_fpr = np.linspace(0, 1, 100)
     from sklearn.metrics import roc_curve,auc
     dn2df={}
