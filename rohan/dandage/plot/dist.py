@@ -45,6 +45,7 @@ def plot_dists(dplot,colx,coly,colindex,order,
                                       colvalue=params_dist['x'],
                                     colsubset=params_dist['y'],
                                     order=params_dist['order'],
+                                          outstr=True,
                                     )
         _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
     return ax
