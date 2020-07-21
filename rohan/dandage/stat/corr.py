@@ -14,7 +14,7 @@ def get_pearsonr(x,y):
     t=sc.stats.pearsonr(x,y)
     return t.correlation,float(t.pvalue)
 
-def get_corr_bootstrapped(x,y,method='spearman',ci_type='max')
+def get_corr_bootstrapped(x,y,method='spearman',ci_type='max'):
     from rohan.dandage.stat.ml import get_cvsplits
     from rohan.dandage.stat.variance import get_ci
     cv2xy=get_cvsplits(x,y,cv=5,outtest=False)
@@ -26,11 +26,12 @@ def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
     from rohan.dandage.plot.annot import pval2annot
     if bootstrapped:
         r,ci=get_corr_bootstrapped(x,y,method=method,ci_type=ci_type)
+        _,p=globals()[f"get_{method}r"](x, y)
         if not outstr:
             return r,ci
         else:
-            return f"$r_{method[0]}$={r:.2f}$\pm${ci:.2f}{ci_type if ci_type!='max' else ''}"
-    else
+            return f"$r_{method[0]}$={r:.2f}$\pm${ci:.2f}{ci_type if ci_type!='max' else ''}\n{pval2annot(p,fmt='<',linebreak=False)}"
+    else:
         r,p=globals()[f"get_{method}r"](x, y)
         if not outstr:
             return r,p

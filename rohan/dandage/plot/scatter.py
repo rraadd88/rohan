@@ -28,6 +28,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
             kind='hexbin',
             trendline_method='poly',
             stat_method="spearman",
+            bootstrapped=False,
             params_plot={},
             cmap='Reds',label_colorbar=None,
             gridsize=25,
@@ -63,7 +64,9 @@ def plot_scatter(dplot,colx,coly,colz=None,
         ax=set_label(ax,label=get_mlr_2_str(dplot,colz,[colx,coly]),
                     title=True,params={'loc':'left'})
     if 'spearman' in stat_method or 'pearson' in stat_method:
-        ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],outstr=True))
+        ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],
+                                       bootstrapped=bootstrapped,
+                                       outstr=True))
     from rohan.dandage.plot.colors import saturate_color
     plot_trendline(dplot,colx,coly,
                     params_plot={'color':saturate_color(params_plot['color']) if 'color' in params_plot else None,
