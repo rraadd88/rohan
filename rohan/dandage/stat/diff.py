@@ -26,3 +26,16 @@ def balance(a,b,absolute=True):
         return 1-(diff(a,b,absolute=absolute)/(sum_))
     else:
         return np.nan
+    
+def get_col2metrics(df,colxs,coly,method='mannwhitneyu',alternative='two-sided'):
+    """
+    coly: two values
+    """
+    from scipy import stats
+    class1,class2=df[coly].unique()
+    d={}
+    for colx in colxs:
+        _,d[colx]=getattr(stats,method)(df.loc[(df[coly]==class1),colx],
+                                       df.loc[(df[coly]==class2),colx],
+                                       alternative=alternative)
+    return d    

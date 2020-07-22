@@ -138,6 +138,8 @@ def to_table(df,p):
         p=p.replace(' ','_')
     else:
         logging.warning('probably working on google drive; space/s left in the path.')
+    if not df.index.name is None:
+        df=df.reset_index()
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     if p.endswith('.tsv') or p.endswith('.tab'):

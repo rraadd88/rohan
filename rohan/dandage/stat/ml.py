@@ -27,7 +27,7 @@ def get_cvsplits(X,y,cv=5,random_state=88,outtest=True):
     y.index=range(len(y))
     
     from sklearn.model_selection import KFold
-    cv = KFold(n_splits=cv,random_state=random_state)
+    cv = KFold(n_splits=cv,random_state=random_state,shuffle=True)
     cv2Xy={}
     for i, (train ,test) in enumerate(cv.split(X.index)):
         dtype2index=dict(zip(('train' ,'test'),(train ,test)))
