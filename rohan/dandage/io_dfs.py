@@ -838,39 +838,53 @@ def groupby_sort(df,col_groupby,col_sortby,func='mean',ascending=True):
     df2=df.merge(df1,
             on=col_groupby,how='inner',suffixes=['',f' per {col_groupby}'])
     return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
-     
-def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
-                                    test=False):
-    """
-    Checks if values in pair of columns is sorted.
+
+def sort_by_column_pairs_many_categories(df,
+    preffixes=['gene','protein'],
+    suffixes=[1,2],
+    test=False,
+    ):
+    from rohan.dandage.io_strs import replacemany
+    kws={i:[f"{s}{i}" for s in preffixes] for i in suffixes}
+    replaces={i:{s:s.replace(str(i),str(suffixes[0] if i==suffixes[1] else suffixes[1])) for s in kws[i]} for i in kws}
+    renames={c:replacemany(c,replaces[1]) if any([s in c for s in kws[1]]) else replacemany(c,replaces[2]) if any([s in c for s in kws[2]]) else c for c in df.columns}
+    if test:
+        print('renames',renames)
+    return dellevelcol(pd.concat({False:df,
+                      True:df.rename(columns=renames)},names=['is reciprical']).reset_index())
+
+# def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
+#                                     test=False):
+#     """
+#     Checks if values in pair of columns is sorted.
     
-    Numbers are sorted in ascending order.
+#     Numbers are sorted in ascending order.
     
-    :returns : True if sorted else 
-    """
-    if categories is None:
-        if x[f'{colvalue} {suffixes[0]}'] < x[f'{colvalue} {suffixes[1]}']:
-            return True
-        else:
-            return False            
-    else:
-        if test:
-            print([x[f'{colvalue} {suffixes[0]}'],x[f'{colvalue} {suffixes[1]}']],
-              categories,
-              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
-                            x[f'{colvalue} {suffixes[1]}']==categories[1]]),
-              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
-                            x[f'{colvalue} {suffixes[1]}']==categories[0]]))
-        if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
-                            x[f'{colvalue} {suffixes[1]}']==categories[1]]):
-            return True
-        elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
-                              x[f'{colvalue} {suffixes[1]}']==categories[0]]):
-            return False
-        else:
-            return np.nan        
+#     :returns : True if sorted else 
+#     """
+#     if categories is None:
+#         if x[f'{colvalue} {suffixes[0]}'] < x[f'{colvalue} {suffixes[1]}']:
+#             return True
+#         else:
+#             return False            
+#     else:
+#         if test:
+#             print([x[f'{colvalue} {suffixes[0]}'],x[f'{colvalue} {suffixes[1]}']],
+#               categories,
+#               getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+#                             x[f'{colvalue} {suffixes[1]}']==categories[1]]),
+#               getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+#                             x[f'{colvalue} {suffixes[1]}']==categories[0]]))
+#         if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+#                             x[f'{colvalue} {suffixes[1]}']==categories[1]]):
+#             return True
+#         elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+#                               x[f'{colvalue} {suffixes[1]}']==categories[0]]):
+#             return False
+#         else:
+#             return np.nan        
         
-def sort_column_pair(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
+def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
     suffix2cols={s:sorted(df.filter(like=s).columns.tolist()) for s in suffixes}
     if len(suffix2cols[suffixes[0]])!=len(suffix2cols[suffixes[1]]):
         logging.error("df should contain paired columns")
