@@ -10,7 +10,8 @@ def plot_dists(dplot,colx,coly,colindex,order,
                annot_pval=True,
                annot_n=True,
                annot_stat=False,
-               params_dist={'scale':'count'},
+               params_dist={},
+               params_violin={'scale':'count'},
                ax=None):
     if cmap is None:
         palette=get_ncolors(len(params_dist['data'][params_dist['y']].unique()),
@@ -24,11 +25,13 @@ def plot_dists(dplot,colx,coly,colindex,order,
     from rohan.dandage.plot.colors import get_ncolors
     ax=sns.violinplot(**params_dist,
                       palette=palette,
+                      **params_violin,
                       ax=ax,
                    )
     ax=sns.boxplot(
-#         **params_dist,
-                   zorder=1,showbox=False,showcaps=False,showfliers=False,
+        **params_dist,
+                   zorder=1,
+        showbox=False,showcaps=False,showfliers=False,
                   ax=ax)    
     if xlims is None:
 #         xlims=dplot[colx].quantile(0.05),dplot[colx].quantile(0.95)

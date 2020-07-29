@@ -851,7 +851,7 @@ def sort_by_column_pairs_many_categories(df,
     if test:
         print('renames',renames)
     return dellevelcol(pd.concat({False:df,
-                      True:df.rename(columns=renames)},names=['is reciprical']).reset_index())
+                      True:df.rename(columns=renames)},names=['is reciprocal']).reset_index())
 
 # def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
 #                                     test=False):
