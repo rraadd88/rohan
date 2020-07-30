@@ -826,7 +826,9 @@ def dfsortbybins(df, col):
 
 def sort_col_by_list(df, col,l):
     df[col]=pd.Categorical(df[col],categories=l, ordered=True)
-    return df.sort_values(col)
+    df=df.sort_values(col)
+    df[col]=df[col].astype(str)
+    return df
 def sort_binnnedcol(df,col):
     df[f'_{col}']=df[col].apply(lambda s : float(s.split('(')[1].split(',')[0]))
     df=df.sort_values(by=f'_{col}')

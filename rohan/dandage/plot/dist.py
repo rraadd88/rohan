@@ -36,7 +36,6 @@ def plot_dists(dplot,colx,coly,colindex,order,
     if xlims is None:
 #         xlims=dplot[colx].quantile(0.05),dplot[colx].quantile(0.95)
         xlims=dplot[colx].min(),dplot[colx].max()
-#         print(xlims)
     ax.set_xlim(xlims)
     if annot_stat!=False:
         label2stat=dplot.groupby(params_dist['y']).agg({colx:getattr(np,annot_stat)})[colx].to_dict()
@@ -48,9 +47,10 @@ def plot_dists(dplot,colx,coly,colindex,order,
     if annot_pval:
         from rohan.dandage.stat.diff import get_subset2metrics
         subset2metrics=get_subset2metrics(dplot,
+                                          colindex=colindex,
                                       colvalue=params_dist['x'],
                                     colsubset=params_dist['y'],
-                                    order=params_dist['order'],
+                                    subset_control=params_dist['order'][-1],
                                           outstr=True,
                                     )
         _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
@@ -215,7 +215,11 @@ from rohan.dandage.plot.colors import reset_legend_colors
 def hist_annot(dplot,colx,
                colssubsets=[],
                bins=100,
-                subset_unclassified=True,cmap='Reds_r',ylimoff=1.2,
+                subset_unclassified=True,cmap='Reds_r',
+               ylimoff=1.2,
+               ywithinoff=1.2,
+                annotaslegend=True,
+                annotn=True,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
                 ax=None):
     if ax is None:ax=plt.subplot(111)
@@ -228,13 +232,15 @@ def hist_annot(dplot,colx,
     for colsubsetsi,(colsubsets,color) in enumerate(zip(colssubsets,colors)):
         subsets=[s for s in dropna(dplot[colsubsets].unique()) if not (subset_unclassified and s=='unclassified')]
         for subseti,subset in enumerate(subsets):
-            y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-(subseti+colsubsetsi))/10-0.05)+ax.set_ylim()[0]
+            y=(ax.set_ylim()[1]-ax.set_ylim()[0])*((10-(subseti*ywithinoff+colsubsetsi))/10-0.05)+ax.set_ylim()[0]
             X=dplot.loc[(dplot[colsubsets]==subset),colx]
             Y=[y for i in X]
             ax.scatter(X,Y,
-#                        label=subset,
                        color=color,**params_scatter)
-            ax.text(max(X),max(Y),subset,ha='left',va='center')
+            ax.text(max(X) if not annotaslegend else ax.get_xlim()[1],
+                    max(Y),
+                    f" {subset}\n(n={len(X)})" if annotn else f" {subset}",
+                    ha='left',va='center')
     #     break
 #     ax=reset_legend_colors(ax)
 #     ax.legend(bbox_to_anchor=[1,1])

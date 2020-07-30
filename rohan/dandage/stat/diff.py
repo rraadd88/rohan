@@ -1,17 +1,26 @@
 import pandas as pd
 import numpy as np
+import logging
 
-def get_subset2metrics(dplot,colvalue,colsubset,order,outstr=False):
-    subset_control=order[-1]
-#     from rohan.dandage.io_dfs import filter_rows_bydict
+def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_control=None):
+    if subset_control is None:
+        subset_control=df[colsubset].unique().tolist()[-1]
     from scipy.stats import mannwhitneyu    
-    df0=dplot.loc[(dplot[colsubset]==subset_control),:]
-#     df0=filter_rows_bydict(dplot,{colsubset: subset_control})
-    cols_subsets=[colsubset]
-    subset2metrics=dplot.loc[(dplot[colsubset]!=subset_control),:].groupby(cols_subsets).apply(lambda df : mannwhitneyu(df0[colvalue],df[colvalue],alternative='two-sided')).apply(pd.Series)[1].to_dict()
+    df1=df.merge(df.loc[(df[colsubset]==subset_control),:],on=colindex, 
+                 how='left',
+                 suffixes=['',' reference'],
+                )
+    subset2metrics=df1.groupby(colsubset).apply(lambda df : mannwhitneyu(df[colvalue],df[f"{colvalue} reference"],
+                                                     alternative='two-sided')).apply(pd.Series)[1].to_dict()
+    if subset2metrics[subset_control]<0.9:
+        logging.warning(f"pval for reference condition vs reference condition = {subset2metrics[subset_control]}. shouldn't be. check colindex")
+    subset2metrics={k:subset2metrics[k] for k in subset2metrics if k!=subset_control}
     if outstr:
         from rohan.dandage.plot.annot import pval2annot
-        subset2metrics={k: pval2annot(subset2metrics[k],fmt='<',alternative='two-sided',linebreak=False) for k in subset2metrics}
+        subset2metrics={k: pval2annot(subset2metrics[k],
+                                      fmt='<',
+                                      alternative='two-sided',
+                                      linebreak=False) for k in subset2metrics}
     return subset2metrics
 
 def diff(a,b,absolute=True): 

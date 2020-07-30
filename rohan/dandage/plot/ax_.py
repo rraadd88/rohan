@@ -14,10 +14,15 @@ def format_ticklabels(ax,axes=['x','y'],n=4,fmt=None):
     return ax
 
 def set_equallim(ax,diagonal=False,
-                 params_format_ticklabels=dict(axes=['x','y'],n=4,fmt='%.2f')):
+                 params_format_ticklabels=dict(axes=['x','y'],n=4,fmt='%.2f'),
+                difference=None):
     min_,max_=np.min([ax.get_xlim()[0],ax.get_ylim()[0]]),np.max([ax.get_xlim()[1],ax.get_ylim()[1]])
     if diagonal:
         ax.plot([min_,max_],[min_,max_],':',color='gray',zorder=5)
+    if not difference is None:
+        off=np.sqrt(difference**2+difference**2)
+        ax.plot([min_+off ,max_+off],[min_,max_],':',color='gray',zorder=5)        
+        ax.plot([min_-off ,max_-off],[min_,max_],':',color='gray',zorder=5)        
     ax.set_xticks(ax.get_yticks())
     ax.set_xlim(min_,max_)
     ax.set_ylim(min_,max_)
