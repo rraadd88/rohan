@@ -44,15 +44,16 @@ def plot_dists(dplot,colx,coly,colindex,order,
     if annot_n:
         label2n=dplot.groupby(params_dist['y']).agg({colindex:len})[colindex].to_dict()
         _=[ax.text(ax.get_xlim()[0],y+0.15,f"n={label2n[t.get_text()]}",color='gray',ha='left',va='top') for y,t in enumerate(ax.get_yticklabels())]
-    if annot_pval:
+    if annot_pval!=False:
         from rohan.dandage.stat.diff import get_subset2metrics
         subset2metrics=get_subset2metrics(dplot,
-                                          colindex=colindex,
-                                      colvalue=params_dist['x'],
-                                    colsubset=params_dist['y'],
-                                    subset_control=params_dist['order'][-1],
-                                          outstr=True,
+                                colindex=colindex,
+                                colvalue=params_dist['x'],
+                                colsubset=params_dist['y'],
+                                subset_control=params_dist['order'][-1],
+                                outstr=True,
                                     )
+        subset2metrics={k:subset2metrics[k] for k in subset2metrics if k==params_dist['order'][int(annot_pval)]}
         _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
     return ax
 
