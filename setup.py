@@ -38,7 +38,7 @@ setup(
 name='rohan',
 author='Rohan Dandage',
 author_email='rohanadandage@gmail.com',
-version='0.2.5',
+version='0.2.6',
 url='https://github.com/rraadd88/rohan',
 download_url='https://github.com/rraadd88/rohan/archive/master.zip',
 description='Python package for data analysis, but mostly for bioinformatics really.',
