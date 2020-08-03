@@ -47,6 +47,8 @@ def rescale(a, range1, range2):
     delta2 = range2[1] - range2[0]
     return (delta2 * (a - range1[0]) / delta1) + range2[0]
 
+def get_qbins(ds,bins,value='mid'):
+    return pd.qcut(ds,bins,duplicates='drop').apply(lambda x: getattr(x,value)).astype(float)
 
 def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
     df[f"{colx} qbin"]=pd.qcut(df[colx],bins,duplicates='drop')    
