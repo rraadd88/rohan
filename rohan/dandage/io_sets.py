@@ -22,7 +22,7 @@ def unique(l,drop=None):
     l=[str(s) for s in l]
     if drop is not None:
         l=[s for s in l if s!=drop]
-    return tuple(np.unique(l))
+    return list(np.unique(l))
 
 def list_value_counts(l):return dict(zip(*np.unique(l, return_counts=True)))
 

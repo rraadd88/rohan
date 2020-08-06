@@ -172,8 +172,9 @@ def uniprotid2features(uniprotid,databasep='data/database',force=False,out_dict=
         else:
             return read_table(dfp)
     import requests, sys
-    urls=[f'https://www.ebi.ac.uk/proteins/api/features/{uniprotid}?types=ACT_SITE,DOMAIN,HELIX,TURN,STRAND,REGION,MOTIF,VARIANT,INIT_MET,SIGNAL,PROPEP,TRANSIT,CHAIN,PEPTIDE,TOPO_DOM,TRANSMEM,REPEAT,CA_BIND,ZN_FING,DNA_BIND',
-'https://www.ebi.ac.uk/proteins/api/features/P12931?types=NP_BIND,COILED,COMPBIAS,METAL,BINDING,SITE,NON_STD,MOD_RES,LIPID,CARBOHYD,DISULFID,CROSSLNK,VAR_SEQ,MUTAGEN,UNSURE,CONFLICT,NON_CONS,NON_TER,INTRAMEM']
+    urls=[ f'https://www.ebi.ac.uk/proteins/api/features/{uniprotid}?types=ACT_SITE,DOMAIN,HELIX,TURN,STRAND,REGION,MOTIF,VARIANT,INIT_MET,SIGNAL,PROPEP,TRANSIT,CHAIN,PEPTIDE,TOPO_DOM,TRANSMEM,REPEAT,CA_BIND,ZN_FING,DNA_BIND',
+            'https://www.ebi.ac.uk/proteins/api/features/P12931?types=NP_BIND,COILED,COMPBIAS,METAL,BINDING,SITE,NON_STD,MOD_RES,LIPID,CARBOHYD,DISULFID,CROSSLNK,VAR_SEQ,MUTAGEN,UNSURE,CONFLICT,NON_CONS,NON_TER,INTRAMEM',
+         ]
     uniprotid2features={}
     for requestURL in urls:
         r = requests.get(requestURL, headers={ "Accept" : "application/json"})

@@ -699,6 +699,10 @@ def colobj2str(df,test=False):
 def merge_dfs(dfs,how='left',suffixes=['','_'],
               test=False,fast=False,
               **params_merge):
+    """
+    TODO: use reduce(lambda df1,df2: pd.merge(df1,df2,on='genes id',how='inner'), dfs)
+    """
+    
     from rohan.dandage.io_sets import list2intersection,flatten
     from rohan.dandage.io_dict import sort_dict
     if all([isinstance(df,str) for df in dfs]):
