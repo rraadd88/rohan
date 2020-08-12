@@ -859,36 +859,36 @@ def sort_by_column_pairs_many_categories(df,
     return dellevelcol(pd.concat({False:df,
                       True:df.rename(columns=renames)},names=['is reciprocal']).reset_index())
 
-# def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
-#                                     test=False):
-#     """
-#     Checks if values in pair of columns is sorted.
+def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
+                                    test=False):
+    """
+    Checks if values in pair of columns is sorted.
     
-#     Numbers are sorted in ascending order.
+    Numbers are sorted in ascending order.
     
-#     :returns : True if sorted else 
-#     """
-#     if categories is None:
-#         if x[f'{colvalue} {suffixes[0]}'] < x[f'{colvalue} {suffixes[1]}']:
-#             return True
-#         else:
-#             return False            
-#     else:
-#         if test:
-#             print([x[f'{colvalue} {suffixes[0]}'],x[f'{colvalue} {suffixes[1]}']],
-#               categories,
-#               getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
-#                             x[f'{colvalue} {suffixes[1]}']==categories[1]]),
-#               getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
-#                             x[f'{colvalue} {suffixes[1]}']==categories[0]]))
-#         if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
-#                             x[f'{colvalue} {suffixes[1]}']==categories[1]]):
-#             return True
-#         elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
-#                               x[f'{colvalue} {suffixes[1]}']==categories[0]]):
-#             return False
-#         else:
-#             return np.nan        
+    :returns : True if sorted else 
+    """
+    if categories is None:
+        if x[f'{colvalue} {suffixes[0]}'] < x[f'{colvalue} {suffixes[1]}']:
+            return True
+        else:
+            return False            
+    else:
+        if test:
+            print([x[f'{colvalue} {suffixes[0]}'],x[f'{colvalue} {suffixes[1]}']],
+              categories,
+              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+                            x[f'{colvalue} {suffixes[1]}']==categories[1]]),
+              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+                            x[f'{colvalue} {suffixes[1]}']==categories[0]]))
+        if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+                            x[f'{colvalue} {suffixes[1]}']==categories[1]]):
+            return True
+        elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+                              x[f'{colvalue} {suffixes[1]}']==categories[0]]):
+            return False
+        else:
+            return np.nan        
         
 def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
     suffix2cols={s:sorted(df.filter(like=s).columns.tolist()) for s in suffixes}
@@ -902,7 +902,7 @@ def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=Fal
         print(suffix2cols)
         return 
     df['sorted']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: sorted_column_pair(x,colvalue=colvalue,suffixes=suffixes,
-                                                                                                                       categories=categories,how=how,test=test),axis=1)
+                                                                                                categories=categories,how=how,test=test),axis=1)
     if test:
         print(df.shape,end=' ')
     df=df.dropna(subset=['sorted'])
