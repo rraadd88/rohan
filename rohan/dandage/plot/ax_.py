@@ -248,7 +248,7 @@ def set_label_colorbar(ax,label):
     return ax
 def set_label(ax,label,title=False,params={'x':0,'y':1,'ha':'left','va':'top'}):
     if title:
-        ax.set_title(label,**params)
+        ax.set_title(label)
     else:
         ax.text(s=label,transform=ax.transAxes,**params)
     return ax

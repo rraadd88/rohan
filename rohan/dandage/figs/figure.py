@@ -67,7 +67,10 @@ def savefig(plotp,
     if len(fmts)==0:
         fmts=['png']
     if '.' in plotp:
-        plt.savefig(plotp,dpi=dpi)
+        plt.savefig(plotp,
+                    dpi=dpi,
+                    bbox_inches='tight' if tight_layout else None
+                   )
     else:
         for fmt in fmts:
             plt.savefig(f"{plotp}.{fmt}",

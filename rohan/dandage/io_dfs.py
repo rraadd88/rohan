@@ -112,6 +112,8 @@ def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={
                    to_dict=False):
     if isinstance(ps,str):
         ps=glob(ps)
+    elif isinstance(ps,dict):
+        labels,ps=list(ps.keys()),list(ps.values())
     if len(labels)!=0:
         if len(labels)!=len(ps):
             ValueError('len(labels)!=len(ps)')

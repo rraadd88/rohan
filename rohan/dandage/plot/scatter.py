@@ -33,6 +33,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
             cmap='Reds',label_colorbar=None,
             gridsize=25,
             params_plot_trendline={},
+            params_set_label={},
             ax=None,):
     """
     trendline:['poly','lowess']
@@ -56,6 +57,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
         **params_plot,
         )
     from rohan.dandage.plot.ax_ import set_label_colorbar
+#     print(colz)
     ax=set_label_colorbar(ax,colz if label_colorbar is None else label_colorbar)
     from rohan.dandage.stat.corr import get_corr
     from rohan.dandage.plot.ax_ import set_label
@@ -66,7 +68,8 @@ def plot_scatter(dplot,colx,coly,colz=None,
     if 'spearman' in stat_method or 'pearson' in stat_method:
         ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],
                                        bootstrapped=bootstrapped,
-                                       outstr=True))
+                                       outstr=True),
+                    **params_set_label)
     from rohan.dandage.plot.colors import saturate_color
     plot_trendline(dplot,colx,coly,
                     params_plot={'color':saturate_color(params_plot['color']) if 'color' in params_plot else None,
