@@ -13,6 +13,9 @@ def plot_dists(dplot,colx,coly,colindex,order,
                params_dist={},
                params_violin={'scale':'count'},
                ax=None):
+    if isinstance(order,str):
+        raise TypeError("order must be a list")
+        return 
     if cmap is None:
         palette=get_ncolors(len(params_dist['data'][params_dist['y']].unique()),
                                           cmap=cmap)[::-1]+['lightgray']
