@@ -253,6 +253,18 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
         df=pd.DataFrame({k:np.ravel(list(lineside2params[side][k].values())) for k in lineside2params[side]}).T.sort_values(by=[3,0],
                                         ascending=[True,True])
         df[3]=np.linspace(-0.9,0.9,len(df))
+        
+        line_ys=[]
+        i_=None
+        for i in df[2]:
+            if not i_ is None:
+                print(i-i_)
+                if abs(i-i_)<0.01:
+                    i+=0.05
+            line_ys.append(i)
+            i_=i
+        df[2]=line_ys
+        
         df.apply(lambda x: ax.plot([x[0],x[1],x[1]+(-0.1 if side=='-' else 0.1)],
                                    [x[2],x[2],x[3]],color=color,
                                    alpha=0.5,
