@@ -214,11 +214,12 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
                                                                       'datum': df.loc[:,'parent datum'].unique()[0],
                                                               'children':list(df.loc[:,['child id','child datum']].rename(columns={c:c.split(' ')[1] for c in ['child id','child datum']}).T.to_dict().values())}).tolist()
     from rohan.dandage.plot.colors import get_val2color,get_cmap_subset
-    type2params_legend={k:{'title':circvar2col[f"{k} color"]} for k in ['child','parent']}
-    dplot['child color'],type2params_legend['child']['data']=get_val2color(dplot['child color'],cmap=cmap_child)
+    type2params_legend={k:{'title':circvar2col[f"{k} color"]} for k in ['child','parent'] if f"{k} color" in circvar2col}
+    if "child color" in circvar2col:
+        dplot['child color'],type2params_legend['child']['data']=get_val2color(dplot['child color'],cmap=cmap_child)
     if not cmap_parent is None:
         dplot['parent color'],type2params_legend['parent']['data']=get_val2color(dplot['parent color'],cmap=cmap_parent) 
-    id2color={**dplot.set_index('child id')['child color'].to_dict(),
+    id2color={**(dplot.set_index('child id')['child color'].to_dict() if "child color" in circvar2col else {}),
               **(dplot.set_index('parent id')['parent color'].to_dict() if not cmap_parent is None else {})}
     l = circ.circlify(data, show_enclosure=True)
     if ax is None:
@@ -229,7 +230,7 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
                      alpha=1,
                      fc='w' if circle.ex is None else id2color[circle.ex['id']] if circle.ex['id'] in id2color else 'w',
                      ec='darkgray' if circle.ex is None else '#dc9f4e' if circle.ex['id'].startswith('Scer') else '#6cacc5' if circle.ex['id'].startswith('Suva') else 'lightgray',
-                    lw='1' if circle.ex is None else '4' if circle.ex['id'] in id2color else '1',
+                    lw='1' if circle.ex is None else '1' if circle.ex['id'] in id2color else '3',
                     )
         ax.add_patch(c)
         if not circle.ex is None:
@@ -246,22 +247,33 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
 #                     color='r' if 'child' in circle.ex else 'b')
     ax.plot()
     from rohan.dandage.io_strs import linebreaker
+    lw=2
+    color='k'
     for side in lineside2params:
-        df=pd.DataFrame({k:np.ravel(list(lineside2params[side][k].values())) for k in lineside2params[side]}).T.sort_values(by=[3,0],ascending=[True,True])
-        df[3]=np.linspace(-0.8,0.8,len(df))
-        df.apply(lambda x: ax.plot([x[0],x[1]+(0.2 if side=='-' else -0.2),x[1]],[x[2],x[2],x[3]],color='darkgray',lw=0.25),axis=1)
-        df.apply(lambda x: ax.text(x[1],x[3],linebreaker(x.name,break_pt=60),color='k',ha='right' if side=='-' else 'left',va='center'),axis=1)
+        df=pd.DataFrame({k:np.ravel(list(lineside2params[side][k].values())) for k in lineside2params[side]}).T.sort_values(by=[3,0],
+                                        ascending=[True,True])
+        df[3]=np.linspace(-0.9,0.9,len(df))
+        df.apply(lambda x: ax.plot([x[0],x[1],x[1]+(-0.1 if side=='-' else 0.1)],
+                                   [x[2],x[2],x[3]],color=color,
+                                   alpha=0.5,
+                                   lw=lw),axis=1)
+        df.apply(lambda x: ax.text(x[1]+(-0.11 if side=='-' else 0.11),x[3],
+                                   linebreaker(x.name,break_pt=60),
+                                   color=color,
+                                   ha='right' if side=='-' else 'left',
+                                   va='center'),axis=1)
 #     return lineside2params
     ax.set_axis_off()    
-    set_legend_custom(ax,
-                     param='color',lw=1,color='k',
-                    legend2param={np.round(k,decimals=2):type2params_legend['child']['data'][k] for k in type2params_legend['child']['data']},
-                    params_legend={'title':type2params_legend['child']['title'],
-                                  'ncol':3,
-                                   'loc':2,'bbox_to_anchor':[1,1.05]
-#                                    'loc':4,'bbox_to_anchor':[1.75,-0.1]
-                                  },
-                     )
+    if 'child color' in circvar2col:
+        set_legend_custom(ax,
+                         param='color',lw=1,color='k',
+                        legend2param={np.round(k,decimals=2):type2params_legend['child']['data'][k] for k in type2params_legend['child']['data']},
+                        params_legend={'title':type2params_legend['child']['title'],
+                                      'ncol':3,
+                                       'loc':2,'bbox_to_anchor':[1,1.05]
+    #                                    'loc':4,'bbox_to_anchor':[1.75,-0.1]
+                                      },
+                         )
 
 #     print(type2params_legend)
 #     for ki,k in enumerate(type2params_legend.keys()):

@@ -543,7 +543,7 @@ def symmetric_dflin(df,col1,col2,colval,sort=False,dropna=False):
     return dmap
 
 
-def filldiagonal(df,filler=None):
+def fill_diagonal(df,filler=None):
     if df.shape[0]!=df.shape[1]:
         logging.warning('df not symmetric')      
 #     ids=set(df.columns).intersection(df.index)
@@ -554,7 +554,7 @@ def filldiagonal(df,filler=None):
     np.fill_diagonal(df.values, filler)        
     return df
 
-def getdiagonalvals(df):
+def get_diagonalvals(df):
     if df.shape[0]!=df.shape[1]:
         logging.warning('df not symmetric')
 #     ids=set(df.columns).intersection(df.index)
@@ -564,30 +564,33 @@ def getdiagonalvals(df):
 #         id2val[i]=df.loc[i,c]
     return pd.DataFrame(ds,columns=['diagonal value']).reset_index()
 
-def df2submap(df,col,idx,aggfunc='sum',binary=False,binaryby='nan'):
-    df['#']=1
-    dsubmap=df.pivot_table(columns=col,index=idx,values='#',
-                       aggfunc=aggfunc)
-    if binary:
-        if binaryby=='nan':
-            dsubmap=~pd.isnull(dsubmap)
-        else:
-            dsubmap=dsubmap!=binaryby
-    return dsubmap
-
-def completesubmap(dsubmap,fmt,
-    fmt2vals={'aminoacid':["A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y","*"], 
-    'aminoacid_3letter':['ALA','ARG','ASN','ASP','CYS','GLN','GLU','GLY','HIS','ILE','LEU','LYS','MET','PHE','PRO','SER','THR','TRP','TYR','VAL'],
-    'codon':["TTT",    "TTC",    "TTA",  "TTG",  "TCT",  "TCC",  "TCA",  "TCG",  "TAT",  "TAC",  "TAA",  "TAG",  "TGT",  "TGC",  "TGA",  "TGG",  "CTT",  "CTC",  "CTA",  "CTG",  "CCT",  "CCC",  "CCA",  "CCG",  "CAT",  "CAC",  "CAA",  "CAG",  "CGT",  "CGC",  "CGA",  "CGG",  "ATT",  "ATC",  "ATA",  "ATG",  "ACT",  "ACC",  "ACA",  "ACG",  "AAT",  "AAC",  "AAA",  "AAG",  "AGT",  "AGC",  "AGA",  "AGG",  "GTT",  "GTC",  "GTA",  "GTG",  "GCT",  "GCC",  "GCA",  "GCG",  "GAT",  "GAC",  "GAA",  "GAG",  "GGT",  "GGC",  "GGA",  "GGG"],
-    'nucleotide': ['A','T','G','C'],}):
-    
-    vals=fmt2vals[fmt]
+def fill_symmetricdf_indices(dsubmap,vals=None):
+    if vals is None:
+        vals=np.unique(dsubmap.index.tolist()+dsubmap.columns.tolist())
     for v in vals: 
         if not v in dsubmap.columns:            
             dsubmap[v]=np.nan
         if not v in dsubmap.index:
             dsubmap.loc[v,:]=np.nan
     return dsubmap.loc[vals,vals]
+
+def fill_symmetricdf_across_diagonal(df,fill=None):
+    df=fill_symmetricdf_indices(dsubmap=df,vals=None)
+    for c1i,c1 in enumerate(df.columns):
+        for c2i,c2 in enumerate(df.columns):
+            if c1i>c2i:
+                if fill is None:
+                    bools=[pd.isnull(i) for i in [df.loc[c1,c2],df.loc[c2,c1]]]
+                    if sum(bools)==1:
+                        if bools[0]==True:
+                            df.loc[c1,c2]=df.loc[c2,c1]
+                        elif bools[1]==True:
+                            df.loc[c2,c1]=df.loc[c1,c2]
+                elif fill=='lower': 
+                    df.loc[c1,c2]=df.loc[c2,c1]
+                elif fill=='upper':
+                    df.loc[c2,c1]=df.loc[c1,c2]                            
+    return df
 
 def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
     for ii,i in enumerate(dcorr.index):
@@ -600,19 +603,7 @@ def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
                 if ci==ii:
                     dcorr.loc[i,c]=replace
     return dcorr
-
-def make_symmetric_across_diagonal(df,fill='lower'):
-    for c1i,c1 in enumerate(df.columns):
-        for c2i,c2 in enumerate(df.columns):
-            if c1i>c2i:
-                if fill=='lower': 
-                    df.loc[c1,c2]=df.loc[c2,c1]
-                elif fill=='upper':
-                    df.loc[c2,c1]=df.loc[c1,c2]                
-    return df
-
 # aggregate dataframes
-
 def get_group(groups,i=0):return groups.get_group(list(groups.groups.keys())[i])
 
 def dfaggregate_unique(df,colgroupby,colaggs):
