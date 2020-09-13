@@ -246,7 +246,7 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
 #                      ha='center',
 #                     color='r' if 'child' in circle.ex else 'b')
     ax.plot()
-    from rohan.dandage.io_strs import linebreaker
+#     from rohan.dandage.io_strs import linebreaker
     lw=2
     color='k'
     for side in lineside2params:
@@ -254,11 +254,13 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
                                         ascending=[True,True])
         df[3]=np.linspace(-0.9,0.9,len(df))
         
+        # resolve overlapping annotation lines
         line_ys=[]
         i_=None
         for i in df[2]:
             if not i_ is None:
-                print(i-i_)
+#                 if test:
+#                     print(i-i_)
                 if abs(i-i_)<0.01:
                     i+=0.05
             line_ys.append(i)
@@ -270,7 +272,7 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
                                    alpha=0.5,
                                    lw=lw),axis=1)
         df.apply(lambda x: ax.text(x[1]+(-0.11 if side=='-' else 0.11),x[3],
-                                   linebreaker(x.name,break_pt=60),
+                                   x.name.split(' [')[0].split(' -')[0].split(', ')[0],
                                    color=color,
                                    ha='right' if side=='-' else 'left',
                                    va='center'),axis=1)
