@@ -4,6 +4,8 @@ from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
 
 def plot_dists(dplot,colx,coly,colindex,order,
+               colhue=None,
+               hue_order=None,
                xlims=None,
                cmap='Reds',
                palette=None,
@@ -25,39 +27,70 @@ def plot_dists(dplot,colx,coly,colindex,order,
     params_dist['y']=coly
     params_dist['order']=order
     params_dist['data']=dplot
-    from rohan.dandage.plot.colors import get_ncolors
-    ax=sns.violinplot(**params_dist,
-                      palette=palette,
-                      **params_violin,
-                      ax=ax,
-                   )
-    ax=sns.boxplot(
-        **params_dist,
-                   zorder=1,
-        showbox=False,showcaps=False,showfliers=False,
-                  ax=ax)    
-    if xlims is None:
-#         xlims=dplot[colx].quantile(0.05),dplot[colx].quantile(0.95)
-        xlims=dplot[colx].min(),dplot[colx].max()
-    ax.set_xlim(xlims)
-    if annot_stat!=False:
-        label2stat=dplot.groupby(params_dist['y']).agg({colx:getattr(np,annot_stat)})[colx].to_dict()
-        _=[ax.text(label2stat[t.get_text()],y,
-                   f"{label2stat[t.get_text()]:.2g}",color='gray',ha='center',va='bottom') for y,t in enumerate(ax.get_yticklabels())]    
-    if annot_n:
-        label2n=dplot.groupby(params_dist['y']).agg({colindex:len})[colindex].to_dict()
-        _=[ax.text(ax.get_xlim()[0],y+0.15,f"n={label2n[t.get_text()]}",color='gray',ha='left',va='top') for y,t in enumerate(ax.get_yticklabels())]
-    if annot_pval!=False:
-        from rohan.dandage.stat.diff import get_subset2metrics
-        subset2metrics=get_subset2metrics(dplot,
-                                colindex=colindex,
-                                colvalue=params_dist['x'],
-                                colsubset=params_dist['y'],
-                                subset_control=params_dist['order'][-1],
-                                outstr=True,
-                                    )
-        subset2metrics={k:subset2metrics[k] for k in subset2metrics if k in params_dist['order']}#[int(annot_pval)]}
-        _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
+    if colhue is None:
+        from rohan.dandage.plot.colors import get_ncolors
+        ax=sns.violinplot(**params_dist,
+                          palette=palette,
+                          **params_violin,
+                          ax=ax,
+                       )
+        ax=sns.boxplot(
+            **params_dist,
+                       zorder=1,
+            showbox=False,showcaps=False,showfliers=False,
+                      ax=ax)    
+        if xlims is None:
+    #         xlims=dplot[colx].quantile(0.05),dplot[colx].quantile(0.95)
+            xlims=dplot[colx].min(),dplot[colx].max()
+        ax.set_xlim(xlims)
+        if annot_stat!=False:
+            label2stat=dplot.groupby(params_dist['y']).agg({colx:getattr(np,annot_stat)})[colx].to_dict()
+            _=[ax.text(label2stat[t.get_text()],y,
+                       f"{label2stat[t.get_text()]:.2g}",color='gray',ha='center',va='bottom') for y,t in enumerate(ax.get_yticklabels())]    
+        if annot_n:
+            label2n=dplot.groupby(params_dist['y']).agg({colindex:len})[colindex].to_dict()
+            _=[ax.text(ax.get_xlim()[0],y+0.15,f"n={label2n[t.get_text()]}",color='gray',ha='left',va='top') for y,t in enumerate(ax.get_yticklabels())]
+        if annot_pval!=False:
+            from rohan.dandage.stat.diff import get_subset2metrics
+            subset2metrics=get_subset2metrics(dplot,
+                                    colindex=colindex,
+                                    colvalue=params_dist['x'],
+                                    colsubset=params_dist['y'],
+                                    subset_control=params_dist['order'][-1],
+                                    outstr=True,
+                                        )
+            subset2metrics={k:subset2metrics[k] for k in subset2metrics if k in params_dist['order']}#[int(annot_pval)]}
+            _=[ax.text(ax.get_xlim()[1],y+0.15,subset2metrics[t.get_text()],color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in subset2metrics]
+    else:
+        params_dist['hue_order']=hue_order
+        params_dist['hue']=colhue
+        sns.pointplot(data=dplot,
+                x=params_dist['x'],
+                y=params_dist['y'],
+                hue=params_dist['hue'],              
+                order=params_dist['order'],
+                hue_order=params_dist['hue_order'],              
+                dodge=True,
+                ax=ax,
+                linestyles='-',
+#                   markers='|',
+                 )
+        dplot[params_dist['y']]=dplot[params_dist['y']].astype(str)
+        params_dist['order']=[str(i) for i in params_dist['order']]
+        def apply_(df):
+            from rohan.dandage.stat.diff import get_subset2metrics
+            subset2metrics=get_subset2metrics(df,
+                                    colindex=colindex,
+                                    colvalue=params_dist['x'],
+                                    colsubset=params_dist['hue'],
+                                    subset_control=params_dist['hue_order'][-1],
+                                    outstr=True,
+                                        )
+            return dict2df(subset2metrics)
+        yticklabel2metric=dplot.groupby(params_dist['y']).apply(apply_).reset_index(1)['value'].to_dict()
+        _=[ax.text(ax.get_xlim()[1],y+0.15,yticklabel2metric[t.get_text()],
+                   color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in yticklabel2metric]
+        ax.legend(bbox_to_anchor=[1,1],title=params_dist['hue'])    
     return ax
 
 def plot_dist_comparison(df,colx,colhue,coly,
