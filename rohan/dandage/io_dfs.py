@@ -495,52 +495,52 @@ def dfmap2symmcolidx(df,test=False):
         logging.debug(df_symm.shape)
     return df_symm
 
-def dflin2dfbinarymap(dflin,col1,col2,params_df2submap={'aggfunc':'sum','binary':True,'binaryby':'nan'},test=False):
-    """
-    if not binary:
-        dropna the df by value [col index and value] column
-    """
-    # get the submap ready
-    df_map=df2submap(df=dflin,
-              col=col1,idx=col2,**params_df2submap)
-    if test:           
-        logging.debug(df_map.unstack().unique())
-    # make columns and index symmetric
-    df_map_symm=dfmap2symmcolidx(df_map)
-    df_map_symm=df_map_symm.fillna(False)
-    if test:           
-        logging.debug(df_map_symm.unstack().unique())
-    df_map_symm=(df_map_symm+df_map_symm.T)/2
-    if test:           
-        logging.debug(df_map_symm.unstack().unique())
-    df_map_symm=df_map_symm!=0
-    if test:           
-        logging.debug(df_map_symm.unstack().unique())
-    return df_map_symm
+# def dflin2dfbinarymap(dflin,col1,col2,params_df2submap={'aggfunc':'sum','binary':True,'binaryby':'nan'},test=False):
+#     """
+#     if not binary:
+#         dropna the df by value [col index and value] column
+#     """
+#     # get the submap ready
+#     df_map=dfmap2symmcolidx(df=dflin,
+#               col=col1,idx=col2,**params_df2submap)
+#     if test:           
+#         logging.debug(df_map.unstack().unique())
+#     # make columns and index symmetric
+#     df_map_symm=dfmap2symmcolidx(df_map)
+#     df_map_symm=df_map_symm.fillna(False)
+#     if test:           
+#         logging.debug(df_map_symm.unstack().unique())
+#     df_map_symm=(df_map_symm+df_map_symm.T)/2
+#     if test:           
+#         logging.debug(df_map_symm.unstack().unique())
+#     df_map_symm=df_map_symm!=0
+#     if test:           
+#         logging.debug(df_map_symm.unstack().unique())
+#     return df_map_symm
 
-## adjacenct matrices
-def symmetric_dflin(df,col1,col2,colval,sort=False,dropna=False):
-    """
-    col1 becomes columns
-    col2 becomes index    
-    """
+# ## adjacenct matrices
+# def symmetric_dflin(df,col1,col2,colval,sort=False,dropna=False):
+#     """
+#     col1 becomes columns
+#     col2 becomes index    
+#     """
     
-    ds=df.set_index([col1,col2])[colval].unstack()
-    for i in set(ds.index.tolist()).difference(ds.columns.tolist()):
-        ds.loc[:,i]=np.nan
-    for i in set(ds.columns.tolist()).difference(ds.index.tolist()):
-        ds.loc[i,:]=np.nan
-    arr=ds.values
-    arr2=np.triu(arr) + np.triu(arr,1).T
-    dmap=pd.DataFrame(arr2,columns=ds.columns,index=ds.columns)
-    if sort:
-        index=dmap.mean().sort_values(ascending=False).index
-        dmap=dmap.loc[index,index]
-    if dropna:
-        print(dmap.shape,end='')
-        dmap=dmap.dropna(axis=1,how='all').dropna(axis=0,how='all')
-        print(dmap.shape)        
-    return dmap
+#     ds=df.set_index([col1,col2])[colval].unstack()
+#     for i in set(ds.index.tolist()).difference(ds.columns.tolist()):
+#         ds.loc[:,i]=np.nan
+#     for i in set(ds.columns.tolist()).difference(ds.index.tolist()):
+#         ds.loc[i,:]=np.nan
+#     arr=ds.values
+#     arr2=np.triu(arr) + np.triu(arr,1).T
+#     dmap=pd.DataFrame(arr2,columns=ds.columns,index=ds.columns)
+#     if sort:
+#         index=dmap.mean().sort_values(ascending=False).index
+#         dmap=dmap.loc[index,index]
+#     if dropna:
+#         print(dmap.shape,end='')
+#         dmap=dmap.dropna(axis=1,how='all').dropna(axis=0,how='all')
+#         print(dmap.shape)        
+#     return dmap
 
 
 def fill_diagonal(df,filler=None):
