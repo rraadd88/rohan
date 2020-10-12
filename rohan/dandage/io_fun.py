@@ -53,7 +53,7 @@ def notebook2packagescript(notebookp,test=False):
     if any(df1['parameters'].apply(lambda x: len(unique(x))!=len(x))):
         logging.error(f'{notebookp}: duplicate parametter/s')
     if df1['path output'].apply(lambda x: basename(dirname(x))).unique().shape[0]!=1:
-        logging.error(f"{notebookp}: should be a single output directory. {','.join(df1['path output'].apply(lambda x: basename(dirname(x))).unique().tolist())}")  
+        logging.error(f"{notebookp}: should be a single output directory. {','.join(df1['path output'].apply(lambda x: basename(dirname(x))).unique().tolist())}")
     else:
         if df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')!=basename(notebookp).split('_v')[0]:
             logging.error(f"{notebookp}: output directory should match notebook directory. {df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')}!={basename(notebookp).split('_v')[0]}")
