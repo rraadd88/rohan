@@ -690,7 +690,7 @@ def colobj2str(df,test=False):
 #     return df.reset_index()
 
 def merge_dfs(dfs,how='left',suffixes=['','_'],
-              test=False,fast=False,
+              test=False,fast=False,drop_duplicates=True,
               **params_merge):
     """
     TODO: use reduce(lambda df1,df2: pd.merge(df1,df2,on='genes id',how='inner'), dfs)
@@ -714,10 +714,16 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
     dfi2cols_value={dfi:df.select_dtypes([int,float]).columns.tolist() for dfi,df in enumerate(dfs)}
     cols_common=list(np.unique(params_merge['on']+list(list2intersection(dfi2cols_value.values()))))
     dfi2cols_value={k:list(set(dfi2cols_value[k]).difference(cols_common)) for k in dfi2cols_value}
+    dfis_duplicates=[dfi for dfi in dfi2cols_value if len(dfs[dfi])!=len(dfs[dfi].loc[:,cols_common].drop_duplicates())]
     if test:
         print('cols_common',cols_common)
         print('dfi2cols_value',dfi2cols_value)
-    dfs=[drop_duplicates_by_agg(dfs[dfi],cols_common,dfi2cols_value[dfi],fast=fast) for dfi in dfi2cols_value]
+        print('duplicates in dfs',dfis_duplicates)
+    for dfi in dfi2cols_value:
+        if (dfi in dfis_duplicates) and drop_duplicates:
+            dfs[dfi]=drop_duplicates_by_agg(dfs[dfi],cols_common,dfi2cols_value[dfi],fast=fast)
+#         else:
+#             dfs[dfi]=dfi2cols_value[dfi]
     print('size agg',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
     sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(params_merge['on']))] for dfi,df in enumerate(dfs)},0)
     print('size dedup',sorted_indices_by_size)
@@ -733,7 +739,7 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
             df1=pd.merge(df1, df, **params_merge)
         print(dfi,':',df1.shape,'; ',end='')
     print('')
-    cols_std=[f"{c} var" for c in flatten(list(dfi2cols_value.values()))]
+    cols_std=[f"{c} var" for c in flatten(list(dfi2cols_value.values())) if f"{c} var" in df1]
     cols_del=[c for c in cols_std if df1[c].isnull().all()]
     df1=df1.drop(cols_del,axis=1)
     return df1
