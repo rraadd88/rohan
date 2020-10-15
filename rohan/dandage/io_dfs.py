@@ -154,6 +154,11 @@ def to_table(df,p):
             print(p)
     else: 
         logging.error(f'unknown extension {p}')
+        
+def to_manytables(df,p,groupby):
+    outd,ext=splitext(p)
+    df.groupby(groupby).apply(lambda x: to_table(x,f"{outd}/{x.name if isinstance(x.name, str) else '/'.join(x.name)}{ext}"))
+    
 def to_table_pqt(df,p):
     if len(df.index.names)>1:
         df=df.reset_index()    
