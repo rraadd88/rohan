@@ -17,9 +17,7 @@ def aathreeletters2one(s):
     else:
         return '*'
 
-
 ##defs
-
 def reverse_complement(s): return str((str2seq(s) if isinstance(s,str) else s).reverse_complement())
 
 def reverse_complement_multintseq(seq,nt2complement):

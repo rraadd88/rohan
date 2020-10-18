@@ -61,6 +61,14 @@ def enst2cdsseq(id,ensembl):
     except:
         return np.nan 
     
+def get_utr_sequence(ensembl,x,loc='five'):
+    try:
+        t=ensembl.transcript_by_protein_id(x)
+        return getattr(t,f'{loc}_prime_utr_sequence')
+    except: 
+        logging.warning(f"{x}: no sequence found")
+        return     
+    
 def protein_id2transcript_id(protein_id,ensembl):    
     if (protein_id in ensembl.protein_ids() and (not pd.isnull(protein_id))):
         return ensembl.transcript_by_protein_id(protein_id).transcript_id
@@ -149,4 +157,5 @@ def convert_coords_human_assemblies(chrom,start,end,frm=38,to=37):
             if 'mapped' in d_:
 #                 return d_['mapped']['seq_region_name'],d_['mapped']['start'],d_['mapped']['end']
                 return pd.Series(d_['mapped'])#['seq_region_name'],d_['mapped']['start'],d_['mapped']['end']
+    
     
