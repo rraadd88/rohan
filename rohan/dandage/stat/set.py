@@ -65,3 +65,12 @@ def test_set_enrichment(tests_set2elements,test2_set2elements,background_size):
                                         )
     denrich=pd.concat(dn2df,axis=0,names=['difference','test2 set'])
     return denrich
+
+def get_paired_sets_stats(l1,l2):
+    """
+    overlap, intersection, union, ratio
+    """
+    if all([isinstance(l, list) for l  in [l1,l2]]):
+        l=list(jaccard_index(l1,l2))
+        l.append(get_ratio_sorted(len(l1),len(l2)))
+        return l

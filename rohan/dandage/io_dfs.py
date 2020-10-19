@@ -372,6 +372,71 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
 def pivot_table_str(df,index,columns,values):
     return df.pivot_table(index=index,columns=columns,values=values,aggfunc=list2str)
 
+## merge dfs
+
+def merge_dfs(dfs,how='left',suffixes=['','_'],
+              test=False,fast=False,drop_duplicates=True,
+              sort=True,
+              **params_merge):
+    """
+    TODO: use reduce(lambda df1,df2: pd.merge(df1,df2,on='genes id',how='inner'), dfs)
+    """
+    from rohan.dandage.io_sets import list2intersection,flatten
+    if isinstance(dfs,dict):
+        dfs=list(dfs.values())
+    if all([isinstance(df,str) for df in dfs]):
+        dfs=[read_table(p) for p in dfs]
+    if not 'on' in params_merge:
+        params_merge['on']=list(list2intersection([df.columns for df in dfs]))
+        if len(params_merge['on'])==0:
+            logging.error('no common columns found for infer params_merge[on]')
+            return
+    else:
+        if isinstance(params_merge['on'],str):
+            params_merge['on']=[params_merge['on']]
+    params_merge['how']=how
+    params_merge['suffixes']=suffixes
+    # sort largest first
+    if test:
+        print(params_merge)
+        print('size',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
+    dfi2cols_value={dfi:df.select_dtypes([int,float]).columns.tolist() for dfi,df in enumerate(dfs)}
+    cols_common=list(np.unique(params_merge['on']+list(list2intersection(dfi2cols_value.values()))))
+    dfi2cols_value={k:list(set(dfi2cols_value[k]).difference(cols_common)) for k in dfi2cols_value}
+    dfis_duplicates=[dfi for dfi in dfi2cols_value if len(dfs[dfi])!=len(dfs[dfi].loc[:,cols_common].drop_duplicates())]
+    if test:
+        print('cols_common',cols_common)
+        print('dfi2cols_value',dfi2cols_value)
+        print('duplicates in dfs',dfis_duplicates)
+    for dfi in dfi2cols_value:
+        if (dfi in dfis_duplicates) and drop_duplicates:
+            dfs[dfi]=drop_duplicates_by_agg(dfs[dfi],cols_common,dfi2cols_value[dfi],fast=fast)
+#         else:
+#             dfs[dfi]=dfi2cols_value[dfi]
+    if sort:
+        print('size agg',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
+        from rohan.dandage.io_dict import sort_dict
+        sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(params_merge['on']))] for dfi,df in enumerate(dfs)},0)
+        print('size dedup',sorted_indices_by_size)
+        sorted_indices_by_size=list(sorted_indices_by_size.keys())#[::-1]
+        dfs=[dfs[i] for i in sorted_indices_by_size]
+    from functools import reduce
+    df1=reduce(lambda df1,df2: pd.merge(df1,df2,**params_merge), dfs)
+#     for dfi,df in enumerate(dfs):
+#         if dfi==0:
+#             df1=df.copy()
+#         else:
+#             if test:
+#                 print(df1.columns)
+#                 print(df.columns)
+#             df1=pd.merge(df1, df, )
+#         print(dfi,':',df1.shape,'; ',end='')
+#     print('')
+    cols_std=[f"{c} var" for c in flatten(list(dfi2cols_value.values())) if f"{c} var" in df1]
+    cols_del=[c for c in cols_std if df1[c].isnull().all()]
+    df1=df1.drop(cols_del,axis=1)
+    return df1
+
 ## paired dfs
 from rohan.dandage.io_strs import replacelist
 def unpair_df(df,cols_df1,cols_df2,cols_common,replace_suffix):
@@ -693,92 +758,6 @@ def colobj2str(df,test=False):
 #     df2=set_index(df2,right_on)
 #     df=pd.concat([df1,df2], axis=1, join=how)
 #     return df.reset_index()
-
-def merge_dfs(dfs,how='left',suffixes=['','_'],
-              test=False,fast=False,drop_duplicates=True,
-              **params_merge):
-    """
-    TODO: use reduce(lambda df1,df2: pd.merge(df1,df2,on='genes id',how='inner'), dfs)
-    """
-    
-    from rohan.dandage.io_sets import list2intersection,flatten
-    from rohan.dandage.io_dict import sort_dict
-    if all([isinstance(df,str) for df in dfs]):
-        dfs=[read_table(p) for p in dfs]
-    if not 'on' in params_merge:
-        params_merge['on']=list(list2intersection([df.columns for df in dfs]))
-        if len(params_merge['on'])==0:
-            logging.error('no common columns found for infer params_merge[on]')
-            return
-    params_merge['how']=how
-    params_merge['suffixes']=suffixes
-    # sort largest first
-    if test:
-        print(params_merge)
-        print('size',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
-    dfi2cols_value={dfi:df.select_dtypes([int,float]).columns.tolist() for dfi,df in enumerate(dfs)}
-    cols_common=list(np.unique(params_merge['on']+list(list2intersection(dfi2cols_value.values()))))
-    dfi2cols_value={k:list(set(dfi2cols_value[k]).difference(cols_common)) for k in dfi2cols_value}
-    dfis_duplicates=[dfi for dfi in dfi2cols_value if len(dfs[dfi])!=len(dfs[dfi].loc[:,cols_common].drop_duplicates())]
-    if test:
-        print('cols_common',cols_common)
-        print('dfi2cols_value',dfi2cols_value)
-        print('duplicates in dfs',dfis_duplicates)
-    for dfi in dfi2cols_value:
-        if (dfi in dfis_duplicates) and drop_duplicates:
-            dfs[dfi]=drop_duplicates_by_agg(dfs[dfi],cols_common,dfi2cols_value[dfi],fast=fast)
-#         else:
-#             dfs[dfi]=dfi2cols_value[dfi]
-    print('size agg',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
-    sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(params_merge['on']))] for dfi,df in enumerate(dfs)},0)
-    print('size dedup',sorted_indices_by_size)
-    sorted_indices_by_size=list(sorted_indices_by_size.keys())[::-1]
-    dfs=[dfs[i] for i in sorted_indices_by_size]
-    for dfi,df in enumerate(dfs):
-        if dfi==0:
-            df1=df.copy()
-        else:
-            if test:
-                print(df1.columns)
-                print(df.columns)
-            df1=pd.merge(df1, df, **params_merge)
-        print(dfi,':',df1.shape,'; ',end='')
-    print('')
-    cols_std=[f"{c} var" for c in flatten(list(dfi2cols_value.values())) if f"{c} var" in df1]
-    cols_del=[c for c in cols_std if df1[c].isnull().all()]
-    df1=df1.drop(cols_del,axis=1)
-    return df1
-
-# def merge_dn2df(dn2df,on,how='left',
-#                test=False):
-#     dn2dflen=dict(zip([len(dn2df[dn].drop_duplicates(subset=on)) for dn in dn2df.keys()],dn2df.keys()))
-#     if test:
-#         print(dn2dflen)
-#     for dni,dflen in enumerate(sorted(dn2dflen,reverse=True)):
-#         dn=dn2dflen[dflen]
-#         df=dn2df[dn]
-#         df_ddup=df.drop_duplicates(subset=on)
-#         if len(df)!=len(df_ddup):
-#             df=df_ddup.copy()
-#             logging.warning(f'{dn}: dropped duplicates. size drop from {len(df)} to {len(df_ddup)}')
-#         if dni==0:
-#             cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
-#             df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
-#             dfmerged=df.copy()
-#         else:
-#             cols=[c for c in df.columns.tolist() if (not ((c in on) or (c==on))) and (c in df)]
-#             if test:
-#                 print(dn,cols)
-#                 print(dict(zip(cols,[f"{c} {dn}" for c in cols])))
-#             df=df.rename(columns=dict(zip(cols,[f"{c} {dn}" for c in cols])))
-#             dfmerged=dfmerged.merge(df,on=on,how=how,
-# #                                     suffixes=['',f" {dn}"],
-#                                    )
-#             if test:
-#                 print(f" {dn}",dfmerged.columns.tolist(),df.columns.tolist())
-#         del df
-#     return dfmerged
-
 
 def split_rows(df,collist,rowsep=None):
     """
