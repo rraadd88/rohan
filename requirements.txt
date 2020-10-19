@@ -12,3 +12,5 @@ fastparquet
 pandarallel
 xlrd
 # pingouin
+argh
+gitpython

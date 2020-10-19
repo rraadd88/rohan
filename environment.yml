@@ -20,4 +20,6 @@ dependencies:
     - fastcluster
     - pandarallel
     - xlrd
+    - argh
+    - gitpython
 #     - pingouin
