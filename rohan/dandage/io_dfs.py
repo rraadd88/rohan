@@ -108,32 +108,25 @@ def read_table(p,params_read_csv={}):
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
-def read_manytables(ps,axis,collabel='label',labels=[],cols=[],params_read_csv={},params_concat={},
-                   to_dict=False):
+def read_manytables(ps,axis,collabel='label',
+#                     labels=[],cols=[],
+                    params_read_csv={},params_concat={},
+#                    to_dict=False
+                    fast=False,
+                   ):
     if isinstance(ps,str):
         ps=glob(ps)
-    elif isinstance(ps,dict):
-        labels,ps=list(ps.keys()),list(ps.values())
-    if len(labels)!=0:
-        if len(labels)!=len(ps):
-            ValueError('len(labels)!=len(ps)')
-    dn2df={}
-    for pi,p in enumerate(ps):
-        if len(labels)!=0:
-            label=labels[pi]
-        else:
-            label=basenamenoext(p)
-        df=read_table(p,params_read_csv)
-        if len(cols)!=0:
-            df=df.loc[:,cols]
-        dn2df[label]=df        
-    if not to_dict:
-        return delunnamedcol(pd.concat(dn2df,names=[collabel,'Unnamed'],axis=axis,**params_concat).reset_index())
-    else:
-        return dn2df
+    df1=pd.DataFrame({'path':ps})
+    df1['label']=df1['path'].apply(basenamenoext)
+    def apply_(df):
+        p=df.iloc[0,:]['path']
+        return read_table(p)
+    df2=getattr(df1.groupby('label'),f"{'parallel' if fast else 'progress'}_apply")(apply_)
+    return df2.reset_index()
 
 ## save table
-def to_table(df,p):
+def to_table(df,p,test=False):
+    if is_interactive_notebook(): test=True
 #     from rohan.dandage.io_strs import make_pathable_string
 #     p=make_pathable_string(p)
     if not 'My Drive' in p:
@@ -146,18 +139,18 @@ def to_table(df,p):
         makedirs(dirname(p),exist_ok=True)
     if p.endswith('.tsv') or p.endswith('.tab'):
         df.to_csv(p,sep='\t')
-        if is_interactive_notebook():
+        if test:
             print(p)
     elif p.endswith('.pqt') or p.endswith('.parquet'):
         to_table_pqt(df,p)
-        if is_interactive_notebook():
+        if test:
             print(p)
     else: 
         logging.error(f'unknown extension {p}')
         
 def to_manytables(df,p,groupby):
     outd,ext=splitext(p)
-    df.groupby(groupby).apply(lambda x: to_table(x,f"{outd}/{x.name if isinstance(x.name, str) else '/'.join(x.name)}{ext}"))
+    df.groupby(groupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if isinstance(x.name, str) else '/'.join(x.name)}{ext}"))
     
 def to_table_pqt(df,p):
     if len(df.index.names)>1:
@@ -277,61 +270,6 @@ def get_colmin(data):
     for col in data:
         colmins.append(data[col].idxmin())
     return colmins
-
-    
-def fhs2data_combo(fhs,cols,index,labels=None,col_sep=': '):
-    """
-    to be deprecated
-    Collates data from multiple csv files
-
-    :param fhs: list of paths to csv files
-    :param cols: list of column names to concatenate
-    :param index: name of the column name to be used as the common index of the output pandas table 
-    """
-
-    if labels is None:
-        labels=[basename(fh) for fh in fhs]
-    if len(fhs)>0:
-        for fhi,fh in enumerate(fhs):
-            label=labels[fhi]
-            data=pd.read_csv(fh).set_index(index)
-            if fhi==0:
-                data_combo=pd.DataFrame(index=data.index)
-                for col in cols:
-                    data_combo.loc[:,'%s%s%s' % (label,col_sep,col)]=data.loc[:,col]
-            else:
-                for col in cols:
-                    data_combo.loc[:,'%s%s%s' % (label,col_sep,col)]=data.loc[:,col]    
-        return del_Unnamed(data_combo)
-    else:
-        logging.error('no fhs found: len(fhs)=0')
-        
-def fhs2data_combo_appended(fhs, cols=None,labels=None,labels_coln='labels',sep=',',
-                           error_bad_lines=True):
-    """
-    to be deprecated
-    Collates data from multiple csv files vertically
-
-    :param fhs: list of paths to csv files
-    :param cols: list of column names to concatenate
-    """    
-    if labels is None:
-        labels=[basename(fh) for fh in fhs]
-    if len(fhs)>0:
-        data_all=pd.DataFrame(columns=cols)
-        for fhi,fh in enumerate(fhs):
-            label=labels[fhi]
-            try:
-                data=pd.read_csv(fh,sep=sep,error_bad_lines=error_bad_lines)
-            except:
-                raise ValueError(f"something wrong with file pd.read_csv({fh},sep={sep})")
-            if len(data)!=0:
-                data.loc[:,labels_coln]=label
-                if not cols is None:
-                    data=data.loc[:,cols]
-                data_all=data_all.append(data,sort=True)
-        return del_Unnamed(data_all)
-
 
 def reorderbydf(df2,df1):
     """
@@ -491,21 +429,21 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
         print('> dfpair');print(dfpair.columns.tolist())
         print('> df1');print(df1.columns.tolist())
         print('> df2');print(df2.columns.tolist())
-                    
-    if not dryrun:
-        dfpair_merge1=dfpair.merge(df1,
-                        left_on=merge1_left_on,
-                        right_on=merge1_right_on,
-                        how=how)
-        if test:
-            print('> dfpair_merge1 columns'); print(dfpair_merge1.columns.tolist())
-        dfpair_merge2=dfpair_merge1.merge(df2,
-                    left_on=merge2_left_on,
-                    right_on=merge2_right_on,
+        return    
+    
+    dfpair_merge1=dfpair.merge(df1,
+                    left_on=merge1_left_on,
+                    right_on=merge1_right_on,
                     how=how)
-        if test:
-            print('> dfpair_merge2 columns');print(dfpair_merge2.columns.tolist())
-        return dfpair_merge2
+    if test:
+        print('> dfpair_merge1 columns'); print(dfpair_merge1.columns.tolist())
+    dfpair_merge2=dfpair_merge1.merge(df2,
+                left_on=merge2_left_on,
+                right_on=merge2_right_on,
+                how=how)
+    if test:
+        print('> dfpair_merge2 columns');print(dfpair_merge2.columns.tolist())
+    return dfpair_merge2
     
 merge_dfpairwithdf=merge_dfs_paired_with_unpaireds
 
@@ -833,18 +771,24 @@ def sort_by_column_pairs_many_categories(df,
     suffixes=[1,2],
     test=False,
     ):
+    """
+    append reciprocal
+    """
     from rohan.dandage.io_strs import replacemany
     kws={i:[f"{s}{i}" for s in preffixes] for i in suffixes}
     replaces={i:{s:s.replace(str(i),str(suffixes[0] if i==suffixes[1] else suffixes[1])) for s in kws[i]} for i in kws}
     renames={c:replacemany(c,replaces[1]) if any([s in c for s in kws[1]]) else replacemany(c,replaces[2]) if any([s in c for s in kws[2]]) else c for c in df.columns}
     if test:
         print('renames',renames)
-    return dellevelcol(pd.concat({False:df,
+    df1=dellevelcol(pd.concat({False:df,
                       True:df.rename(columns=renames)},names=['is reciprocal']).reset_index())
-
-def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
+    if 'index' in df1:
+        df1=df1.drop(['index'],axis=1)
+    return df1
+def apply_sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
                                     test=False):
     """
+    Apply
     Checks if values in pair of columns is sorted.
     
     Numbers are sorted in ascending order.
@@ -874,6 +818,9 @@ def sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
             return np.nan        
         
 def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
+    """
+    sort values in pair of columns and sort the index accordingly.
+    """
     suffix2cols={s:sorted(df.filter(like=s).columns.tolist()) for s in suffixes}
     if len(suffix2cols[suffixes[0]])!=len(suffix2cols[suffixes[1]]):
         logging.error("df should contain paired columns")
@@ -884,7 +831,7 @@ def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=Fal
         logging.error("df should contain non-overlapping paired columns")
         print(suffix2cols)
         return 
-    df['sorted']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: sorted_column_pair(x,colvalue=colvalue,suffixes=suffixes,
+    df['sorted']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: apply_sorted_column_pair(x,colvalue=colvalue,suffixes=suffixes,
                                                                                                 categories=categories,how=how,test=test),axis=1)
     if test:
         print(df.shape,end=' ')
