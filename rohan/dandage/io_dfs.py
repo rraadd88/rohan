@@ -121,8 +121,8 @@ def read_manytables(ps,axis,collabel='label',
     def apply_(df):
         p=df.iloc[0,:]['path']
         return read_table(p)
-    df2=getattr(df1.groupby('label'),f"{'parallel' if fast else 'progress'}_apply")(apply_)
-    return df2.reset_index()
+    df2=getattr(df1.groupby('label',as_index=False),f"{'parallel' if fast else 'progress'}_apply")(apply_)
+    return df2
 
 ## save table
 def to_table(df,p,test=False):
