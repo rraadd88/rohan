@@ -715,6 +715,15 @@ dfsyn2appended=split_rows
 
 def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
+
+## duplicates:
+def check_duplicates(df,cols):
+    if df.duplicated(subset=cols).any():
+        logging.error('duplicates in the table!')  
+        return True
+    else:
+        False
+
 ## drop duplicates by aggregating the dups
 def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False):
     col2aggfunc={}
@@ -808,14 +817,17 @@ def apply_sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
                             x[f'{colvalue} {suffixes[1]}']==categories[1]]),
               getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
                             x[f'{colvalue} {suffixes[1]}']==categories[0]]))
-        if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
-                            x[f'{colvalue} {suffixes[1]}']==categories[1]]):
-            return True
-        elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
-                              x[f'{colvalue} {suffixes[1]}']==categories[0]]):
-            return False
+        if categories[0]!=categories[1]:
+            if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+                                x[f'{colvalue} {suffixes[1]}']==categories[1]]):
+                return True
+            elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+                                  x[f'{colvalue} {suffixes[1]}']==categories[0]]):
+                return False
+            else:
+                return np.nan        
         else:
-            return np.nan        
+            return True            
         
 def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
     """
@@ -831,15 +843,18 @@ def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=Fal
         logging.error("df should contain non-overlapping paired columns")
         print(suffix2cols)
         return 
-    df['sorted']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: apply_sorted_column_pair(x,colvalue=colvalue,suffixes=suffixes,
-                                                                                                categories=categories,how=how,test=test),axis=1)
+#     df['fsorted {colvalue}']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: apply_sorted_column_pair(x,colvalue=colvalue,
+#                                                                                                       suffixes=suffixes,
+#                                                                                                       categories=categories,
+#                                                                                                       how=how,test=test),axis=1)
+    df[f'sorted {colvalue}']=((df[f'{colvalue}{suffixes[0]}']==categories[0]) & (df[f'{colvalue}{suffixes[1]}']==categories[1]))
     if test:
         print(df.shape,end=' ')
-    df=df.dropna(subset=['sorted'])
-    df['sorted']=df['sorted'].astype(bool)
+#     df=df.dropna(subset=[f'sorted {colvalue}'])
+#     df[f'sorted {colvalue}']=df[f'sorted {colvalue}'].astype(bool)
     if test:
         print(df.shape)
-    df1,df2=df.loc[df['sorted'],:],df.loc[~df['sorted'],:]
+    df1,df2=df.loc[df[f'sorted {colvalue}'],:],df.loc[~df[f'sorted {colvalue}'],:]
     # rename cols of df2 (not sorted) 
     rename=dict(zip(suffix2cols[suffixes[0]]+suffix2cols[suffixes[1]],
              suffix2cols[suffixes[1]]+suffix2cols[suffixes[0]]))
@@ -849,7 +864,7 @@ def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=Fal
     df3=df1.append(df2)
     if test:
         print(df1.shape,df2.shape,df3.shape)
-    return df3.drop(['sorted'],axis=1)
+    return df3#.drop([f'sorted {colvalue}'],axis=1)
 
 
 def is_col_numeric(ds):
