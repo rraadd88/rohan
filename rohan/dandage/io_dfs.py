@@ -150,7 +150,7 @@ def to_table(df,p,test=False):
         
 def to_manytables(df,p,groupby):
     outd,ext=splitext(p)
-    df.groupby(groupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if isinstance(x.name, str) else '/'.join(x.name)}{ext}"))
+    df.groupby(groupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if not isinstance(x.name, tuple) else '/'.join(x.name)}{ext}"))
     
 def to_table_pqt(df,p):
     if len(df.index.names)>1:

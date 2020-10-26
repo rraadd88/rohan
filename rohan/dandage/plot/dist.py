@@ -258,12 +258,19 @@ def hist_annot(dplot,colx,
                 annotaslegend=True,
                 annotn=True,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
+               xlim=None,
                 ax=None):
+    if not xlim is None:
+        logging.warning('colx adjusted to xlim')
+        dplot.loc[(dplot[colx]<xlim[0]),colx]=xlim[0]
+        dplot.loc[(dplot[colx]>xlim[1]),colx]=xlim[1]
     if ax is None:ax=plt.subplot(111)
     ax=dplot[colx].hist(bins=bins,ax=ax,color='gray',zorder=1)
     ax.set_xlabel(colx)
     ax.set_ylabel('count')
-    ax.set_ylim(0,ax.get_ylim()[1]*ylimoff)
+    if not xlim is None:
+        ax.set_xlim(xlim)
+    ax.set_ylim(0,ax.get_ylim()[1]*ylimoff)        
     from rohan.dandage.plot.colors import get_ncolors
     colors=get_ncolors(len(colssubsets),cmap=cmap)
     for colsubsetsi,(colsubsets,color) in enumerate(zip(colssubsets,colors)):
