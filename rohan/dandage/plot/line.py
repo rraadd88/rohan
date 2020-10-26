@@ -108,17 +108,23 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
 
 def plot_groupby_qbin(dplot,bins,
                       colindex,colx,coly,
-#                       colhue,
-             ax=None,**params_pointplot):
+                      colhue=None,
+                      ax=None,
+                      aggfunc=None,
+                      ticklabels_precision=1,
+                      **params_pointplot,
+                     ):
     from rohan.dandage.stat.transform import get_qbins
     d=get_qbins(dplot.set_index(colindex)[f"{colx}"],bins, 'mid')
-    d={k:f"{d[k]:.1f}" for k in d}
+    d={k:"{:.{}f}".format(d[k],ticklabels_precision) for k in d}
     dplot[f"{colx}\n(midpoint of qbin)"]=dplot[colindex].map(d)
+    if not aggfunc is None: 
+        dplot=dplot.groupby([colhue,f"{colx}\n(midpoint of qbin)"]).agg({coly:aggfunc}).reset_index()
     if ax is None: ax=plt.subplot()
     sns.pointplot(data=dplot,
                   x=f"{colx}\n(midpoint of qbin)",
                   y=coly,
-#                  hue=colhue,
-                 ax=ax,
-                 **params_pointplot)
+                  hue=colhue,
+                  ax=ax,
+                  **params_pointplot)
     return ax
