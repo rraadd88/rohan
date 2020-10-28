@@ -1,8 +1,7 @@
 from rohan.global_imports import *
 
 # currate data 
-
-def get_Xy_for_classification(df1,coly,qcut):
+def get_Xy_for_classification(df1,coly,qcut,drop_xs_low_complexity=False):
     """
     : param df1: is indexed  
     """
@@ -10,7 +9,8 @@ def get_Xy_for_classification(df1,coly,qcut):
         logging.error('qcut should be <=0.5')
         return 
     cols_X=[c for c in df1 if c!=coly]
-    df1[coly]=df1.progress_apply(lambda x: True if x[coly]>df1[coly].quantile(1-qcut) else False if x[coly]<df1[coly].quantile(qcut) else np.nan,axis=1)
+    lims=[df1[coly].quantile(1-qcut),df1[coly].quantile(qcut)]
+    df1[coly]=df1.progress_apply(lambda x: True if x[coly]>=lims[0] else False if x[coly]<lims[1] else np.nan,axis=1)
     print(df1.shape,end='')
     df1=df1.dropna()
     print(df1.shape)
@@ -18,8 +18,9 @@ def get_Xy_for_classification(df1,coly,qcut):
     y=df1[coly]
     X=df1.loc[:,cols_X]
     # remove low complexity features
-    logging.warning(f"xs with very low complexity are removed: {X.loc[:,~(X.apply(lambda x: len(x.unique()))>=5)].columns}")
-    X=X.loc[:,(X.apply(lambda x: len(x.unique()))>=5)]
+    logging.warning(f"xs with very low complexity: {X.loc[:,~(X.apply(lambda x: len(x.unique()))>=5)].columns.tolist()}")
+    if drop_xs_low_complexity:
+        X=X.loc[:,(X.apply(lambda x: len(x.unique()))>=5)]
     return {'X':X,'y':y}
 
 def get_cvsplits(X,y,cv=5,random_state=88,outtest=True):
@@ -123,7 +124,7 @@ def get_grid_search(modeln,
 
 def get_estimatorn2grid_search(estimatorn2param_grid,X,y):
     estimatorn2grid_search={}
-    for k in estimatorn2param_grid:
+    for k in tqdm(estimatorn2param_grid.keys()):
         estimatorn2grid_search[k]=get_grid_search(modeln=k,
                         X=X,y=y,
                         param_grid=estimatorn2param_grid[k],
@@ -133,6 +134,65 @@ def get_estimatorn2grid_search(estimatorn2param_grid,X,y):
                        )
     print({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
     return estimatorn2grid_search
+
+def run_grid_search(df,
+    colindex,#='genes id',
+    coly,#='robustness mean min',
+    qcut,#=0.5,
+    outp,#=f"data/data_analysed/data71_classification/predict_{coly}/len {len(df)}/qcut {qcut}/",
+    estimatorns,#=[
+    n_estimators,
+#                 'RandomForestClassifier',
+    #     'GradientBoostingClassifier', 
+#     ],
+    test=False,
+    ):
+    from sklearn import ensemble
+    estimatorn2param_grid={k:getattr(ensemble,k)().get_params() for k in estimatorns}
+#     print(estimatorn2param_grid)
+    for k in estimatorn2param_grid:
+        estimatorn2param_grid[k]['n_estimators']=[n_estimators]
+    # estimatorn2param_grid['RandomForestClassifier']['criterion']=['gini']
+    # estimatorn2param_grid['RandomForestClassifier']['oob_score']=[True]
+    # estimatorn2param_grid['RandomForestClassifier']['bootstrap']=[True]
+    # estimatorn2param_grid['GradientBoostingClassifier']['loss']=['deviance']
+    # estimatorn2param_grid['RandomForestRegressor']['n_estimators']=estimatorn2param_grid['GradientBoostingRegressor']['n_estimators']=[250,500]
+    # estimatorn2param_grid['RandomForestRegressor']['min_samples_leaf']=estimatorn2param_grid['GradientBoostingRegressor']['min_samples_leaf']=[1,10,100]
+    # estimatorn2param_grid['GradientBoostingRegressor']['loss']=['ls','lad', 'huber','quantile']
+    d={}
+    for k1 in estimatorn2param_grid:
+        d[k1]={}
+        for k2 in estimatorn2param_grid[k1]:
+            if isinstance(estimatorn2param_grid[k1][k2],list):
+                d[k1][k2]=estimatorn2param_grid[k1][k2]
+    estimatorn2param_grid=d
+    if test: print(estimatorn2param_grid)
+#     %run ../../../../rohan/rohan/dandage/stat/ml.py
+    params=get_Xy_for_classification(df.set_index(colindex),coly=coly,
+                              qcut=qcut,drop_xs_low_complexity=True,
+                                    )
+    dn2df={}
+    dn2df['input']=params['X'].join(params['y'])
+    estimatorn2grid_search=get_estimatorn2grid_search(estimatorn2param_grid,
+                               X=params['X'],y=params['y'])
+#     to_dict({k:estimatorn2grid_search[k].cv_results_ for k in estimatorn2grid_search},
+#            f'{outp}/estimatorn2grid_search_results.json')
+#     %run ../../../../rohan/rohan/dandage/io_dict.py
+    to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.pickle')
+    to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.joblib')
+#     return estimatorn2grid_search
+    dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],coff=qcut,test=True)
+
+    dn2df['feature importances']=get_feature_importances(estimatorn2grid_search,
+                                X=params['X'],y=params['y'],
+                                random_state=88,test=test)
+    dn2df['partial dependence']=get_partial_dependence(estimatorn2grid_search,
+                                X=params['X'],y=params['y'],)
+    ## save data
+    for k in dn2df:
+        if isinstance(dn2df[k],dict):
+            dn2df[k]=dellevelcol(pd.concat(dn2df[k],axis=0,names=['estimator name']).reset_index())
+        to_table(dn2df[k],f'{outp}/{k}.pqt')
 
 # evaluate
 def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
@@ -164,7 +224,7 @@ def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
     print(df1.groupby(['sample name']).agg({c:lambda x: any(x) for c in df1.filter(regex='^correct ')}).sum())
     return df1
 
-def get_auc_cv(estimator,X,y,cv=5,test=False):
+def get_auc_cv(estimator,X,y,cv=5,test=False,fitted=False):
     """
     TODO: just predict_probs as inputs
     TODO: resolve duplication of stat.binary.auc
@@ -187,7 +247,8 @@ def get_auc_cv(estimator,X,y,cv=5,test=False):
     dn2df={}
     d={}
     for i in tqdm(cv2Xy.keys()):
-        estimator.fit(cv2Xy[i]['train']['X'], cv2Xy[i]['train']['y'])
+        if not fitted:
+            estimator.fit(cv2Xy[i]['train']['X'], cv2Xy[i]['train']['y'])
         tpr,fpr,thresholds = roc_curve(cv2Xy[i]['test']['y'],
                                        estimator.predict_proba(cv2Xy[i]['test']['X'])[:,0],
                                       )
@@ -235,7 +296,7 @@ def get_feature_importances(estimatorn2grid_search,
         return ax
     
     dn2df={}
-    for k in estimatorn2grid_search:
+    for k in tqdm(estimatorn2grid_search.keys()):
         from sklearn.inspection import permutation_importance
         r = permutation_importance(estimator=estimatorn2grid_search[k].best_estimator_, 
                                    X=X, y=y,
@@ -252,7 +313,6 @@ def get_feature_importances(estimatorn2grid_search,
            )
     df2=dellevelcol(pd.concat(dn2df,axis=0,names=['estimator name']).reset_index())
     from rohan.dandage.stat.norm import rescale
-
     def apply_(df):
         df['importance rescaled']=rescale(df['importance'])
         df['importance rank']=len(df)-df['importance'].rank()

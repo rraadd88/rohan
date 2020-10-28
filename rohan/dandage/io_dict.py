@@ -37,14 +37,23 @@ def read_json(path_to_file):
 def to_json(data,p):
     with open(p, 'w') as outfile:
         json.dump(data, outfile)
-        
+def read_pickle(p):
+    import pickle
+    return pickle.load(open(p,
+               'rb'))
+
 def read_dict(p,fmt=''):
     if p.endswith('.yml') or p.endswith('.yaml') or fmt=='yml' or fmt=='yaml':
         return read_yaml(p)
     elif p.endswith('.json') or fmt=='json':
         return read_json(p)
+    elif p.endswith('.pickle'):
+        d = read_pickle(p)
+    elif p.endswith('.joblib'):
+        import joblib
+        d=joblib.load(p)
     else:
-        logging.error(f'supported extensions: .yml .yaml .json')
+        logging.error(f'supported extensions: .yml .yaml .json .pickle .joblib')
         
 def to_dict(d,p):
     if not 'My Drive' in p:

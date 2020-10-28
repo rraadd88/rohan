@@ -53,16 +53,3 @@ def get_col2metrics(df,colxs,coly,method='mannwhitneyu',alternative='two-sided')
                                        df.loc[(df[coly]==class2),colx],
                                        alternative=alternative)
     return d    
-
-def get_paired_values_stats(a,b,sort=False,logscaled=False):
-    if sort:
-        a,b=sorted([a,b])
-    d={}
-    d['sum']=a+b
-    d['min']=a+b
-    d['max']=a+b
-    if logscaled:
-        d['difference']=b-a
-    else:
-        d['ratio']=b/a
-    return d

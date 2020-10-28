@@ -47,3 +47,16 @@ def get_stats_by_bins(df,colx,coly,fun,bins=4):
 import numpy as np
 from rohan.dandage.stat.diff import diff,balance 
 def aggbypair(a,b,absolute=True): return np.mean([a,b]),diff(a,b,absolute=absolute),balance(a,b)
+
+def agg_paired_values(a,b,sort=True,logscaled=False):
+    if sort:
+        a,b=sorted([a,b])
+    d={}
+    d['mean']=(a+b)/2
+    d['min']=min([a,b])
+    d['max']=max([a,b])
+    if logscaled:
+        d['difference']=b-a
+    else:
+        d['ratio']=b/a
+    return d

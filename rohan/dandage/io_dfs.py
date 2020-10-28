@@ -458,6 +458,18 @@ def column_suffixes2multiindex(df,suffixes,test=False):
 
 ## chucking
 
+def get_chunks_bysize(din,chunksize):
+    din.index=range(0,len(din),1)
+    chunkrange=list(np.arange(0,len(din),chunksize))
+    print(chunkrange)
+    chunkrange=list(zip([c   if ci!=0 else 0   for ci,c in enumerate(chunkrange)],
+                        [c-1 for ci,c in enumerate(chunkrange[1:])]+[len(din)-1]))
+    print(chunkrange)
+    for i,r in enumerate(chunkrange):
+        din.loc[r[0]:r[1],'chunk']=int(i)
+    logging.warning('column added to df: chunk')
+    return din
+
 def df2chucks(din,chunksize,outd,fn,return_fmt='\t',force=False):
     """
     :param return_fmt: '\t': tab-sep file, lly, '.', 'list': returns a list
@@ -465,14 +477,11 @@ def df2chucks(din,chunksize,outd,fn,return_fmt='\t',force=False):
     from os.path import exists#,splitext,dirname,splitext,basename,realpath
     from os import makedirs
     din.index=range(0,len(din),1)
-
     chunkrange=list(np.arange(0,len(din),chunksize))
     chunkrange=list(zip([c+1 if ci!=0 else 0 for ci,c in enumerate(chunkrange)],chunkrange[1:]+[len(din)-1]))
-
     chunk2range={}
     for ri,r in enumerate(chunkrange):    
         chunk2range[ri+1]=r
-
     if not exists(outd):
         makedirs(outd)
     chunks=[]
@@ -752,28 +761,30 @@ def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False)
     return df1.reset_index()
 
 ## sorting
-def dfsortbybins(df, col):
-    d=dict(zip(bins,[float(s.split(',')[0].split('(')[1]) for s in bins]))
-    df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
-    df=df.sort_values(f'{col} dfrankbybins').drop(f'{col} dfrankbybins',axis=1)
-    return df
+# def dfsortbybins(df, col):
+#     d=dict(zip(bins,[float(s.split(',')[0].split('(')[1]) for s in bins]))
+#     df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
+#     df=df.sort_values(f'{col} dfrankbybins').drop(f'{col} dfrankbybins',axis=1)
+#     return df
 
 def sort_col_by_list(df, col,l):
     df[col]=pd.Categorical(df[col],categories=l, ordered=True)
     df=df.sort_values(col)
     df[col]=df[col].astype(str)
     return df
-def sort_binnnedcol(df,col):
-    df[f'_{col}']=df[col].apply(lambda s : float(s.split('(')[1].split(',')[0]))
-    df=df.sort_values(by=f'_{col}')
-    df=df.drop([f'_{col}'],axis=1)
-    return df
+# def sort_binnnedcol(df,col):
+#     df[f'_{col}']=df[col].apply(lambda s : float(s.split('(')[1].split(',')[0]))
+#     df=df.sort_values(by=f'_{col}')
+#     df=df.drop([f'_{col}'],axis=1)
+#     return df
 
 def groupby_sort(df,col_groupby,col_sortby,func='mean',ascending=True):
     df1=df.groupby(col_groupby).agg({col_sortby:getattr(np,func)}).reset_index()
     df2=df.merge(df1,
             on=col_groupby,how='inner',suffixes=['',f' per {col_groupby}'])
+    logging.warning(f'column added to df: {col_sortby} per {col_groupby}')
     return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
+sort_values_groupby=groupby_sort
 
 def sort_by_column_pairs_many_categories(df,
     preffixes=['gene','protein'],
