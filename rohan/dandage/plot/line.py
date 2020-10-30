@@ -117,6 +117,7 @@ def plot_groupby_qbin(dplot,bins,
     from rohan.dandage.stat.transform import get_qbins
     d=get_qbins(dplot.set_index(colindex)[f"{colx}"],bins, 'mid')
     d={k:"{:.{}f}".format(d[k],ticklabels_precision) for k in d}
+    d={k:int(d[k]) if ticklabels_precision==0 else float(d[k]) for k in d}
     dplot[f"{colx}\n(midpoint of qbin)"]=dplot[colindex].map(d)
     if not aggfunc is None: 
         dplot=dplot.groupby([colhue,f"{colx}\n(midpoint of qbin)"]).agg({coly:aggfunc}).reset_index()
