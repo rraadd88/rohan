@@ -6,6 +6,8 @@ def plotc(cs,title=''):
     sns.set_palette(cs)
     ax=sns.palplot(sns.color_palette())
     plt.title(f"{title}{','.join(cs)}")
+def get_colors_default():
+    return plt.rcParams['axes.prop_cycle'].by_key()['color']
     
 def get_colors(shade='light',
                 c1='r',

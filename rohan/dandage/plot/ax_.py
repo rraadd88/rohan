@@ -1,5 +1,9 @@
 from rohan.global_imports import * 
 
+def get_ticklabel2position(ax,axis='x'):
+    return dict(zip([t.get_text() for t in getattr(ax,f'get_{axis}ticklabels')()],
+                  getattr(ax,f"{axis}axis").get_ticklocs()))
+     
 def format_ticklabels(ax,axes=['x','y'],n=4,fmt=None):
     if isinstance(n,int):
         n={'x':n,

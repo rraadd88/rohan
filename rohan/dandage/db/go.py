@@ -1,7 +1,7 @@
 from rohan.global_imports import *
 import requests
 
-def goid2name(queries,result='name',interval=500):
+def get_goid_info(queries,result=None,interval=500):
     """
     quickgo
     result: 'name','definition','synonyms'
@@ -33,12 +33,31 @@ def goid2name(queries,result='name',interval=500):
             r.raise_for_status()
             logging.error(f"check the list: {', '.join(queries[ini:end])}")
         responseBody = r.json()
-        ds.append({d['id']:d[result] for d in responseBody['results']})
-    from rohan.dandage.io_dict import merge_dict_list
-    return merge_dict_list(ds)
-    
-get_go_info=goid2name
+        for di,d in enumerate(responseBody['results']):
+            if not result is None:
+                ds.append(pd.Series({k:d[k] for k in d if k in ['id',result]}))            
+            else:
+                ds.append(pd.Series({k:d[k] if (isinstance(d[k],(str,bool))) else d[k]['text'] for k in d if isinstance(d[k],(str,bool)) or (isinstance(d[k],(dict)) and k=='definition')}))
+                
+    return pd.concat(ds,axis=1).T
+#     from rohan.dandage.io_dict import merge_dict_values
+#     return merge_dict_values(ds)
 
+def get_genes_bygoids(
+    goids=['GO:0004713','GO:0004725'],
+    taxid=559292):
+    requestURL=f"https://www.ebi.ac.uk/QuickGO/services/annotation/downloadSearch?taxonId={taxid}&taxonUsage=exact&geneProductSubset=Swiss-Prot&proteome=gcrpCan,complete&geneProductType=protein&reference=PMID,DOI&goId={','.join(goids)}&goUsage=exact&downloadLimit=50000"
+    import requests
+    # requestURL=
+    r = requests.get(requestURL, headers={"Accept" : "text/gpad"})
+    if not r.ok:
+        r.raise_for_status()
+        sys.exit()
+    responseBody = r.text
+    from rohan.dandage.db.go import read_gpad
+    from io import StringIO
+    return read_gpad(StringIO(responseBody))                          
+                          
 def slim_goterms(queries,interval=500,subset='generic'):
     """
     "results": [
@@ -141,3 +160,6 @@ def get_curated_goterms_physical_interactions(taxid,outd,force=False):
     print(df4.shape)
     to_table(df4,dgenesets_smallp)
     return df4
+                          
+                          
+                          

@@ -44,18 +44,40 @@ def plot_value_counts(df,col,logx=False,
             if grid:
                 axes.set_axisbelow(False)
             
-def plot_barh_stacked_percentage(df1,cols_y,ax=None):
-    dplot=pd.DataFrame({k:df1.drop_duplicates(k)[f'{k} '].value_counts() for k in cols_y})
-    dplot_=dplot.apply(lambda x:x/x.sum()*100,axis=0)
-    d=dplot.sum().to_dict()
-    dplot_=dplot_.rename(columns={k:f"{k}\n(n={d[k]})" for k in d})
-    dplot_.index.name='subset'
-    if ax is None: ax=plt.subplot()
-    dplot_.T.plot.barh(stacked=True,ax=ax)
-    ax.legend(bbox_to_anchor=[1,1])
+# def plot_barh_stacked_percentage(df1,cols_y,ax=None):
+#     dplot=pd.DataFrame({k:df1.drop_duplicates(k)[f'{k} '].value_counts() for k in cols_y})
+#     dplot_=dplot.apply(lambda x:x/x.sum()*100,axis=0)
+#     d=dplot.sum().to_dict()
+#     dplot_=dplot_.rename(columns={k:f"{k}\n(n={d[k]})" for k in d})
+#     dplot_.index.name='subset'
+#     if ax is None: ax=plt.subplot()
+#     dplot_.T.plot.barh(stacked=True,ax=ax)
+#     ax.legend(bbox_to_anchor=[1,1])
+#     ax.set(xlim=[0,100],xlabel='%')
+#     _=[ax.text(1,y,f"{s:.0f}%",va='center') for y,s in enumerate(dplot_.iloc[0,:])]
+#     return ax
+
+def plot_barh_stacked_percentage(dplot,col_annot,
+                     color=None,
+                     yoff=0.3,
+                     ax=None,
+                     ):
+    from rohan.dandage.plot.ax_ import get_ticklabel2position
+    from rohan.dandage.plot.colors import get_colors_default
+    if color is None:
+        color=get_colors_default()[0]
+    ax=plt.subplot() if ax is None else ax
+    ax=dplot.plot.barh(stacked=True,ax=ax)
+    ticklabel2position=get_ticklabel2position(ax,'y')
+    _=dplot.reset_index().apply(lambda x: ax.text(0,
+                                                  ticklabel2position[x['index']]-yoff,
+                                                  f"{x[col_annot]:.1f}%",ha='left',va='top',
+                                                 color=color),
+                                axis=1)
+    ax.legend(bbox_to_anchor=[1,1],title=dplot.columns.name)
     ax.set(xlim=[0,100],xlabel='%')
-    _=[ax.text(1,y,f"{s:.0f}%",va='center') for y,s in enumerate(dplot_.iloc[0,:])]
-    return ax               
+    return ax
+
 def plot_bar_intersections(dplot,cols,col_index):
     """
     upset
