@@ -201,9 +201,10 @@ def uniprotid2features(uniprotid,databasep='data/database',force=False,out_dict=
         dfs.append(df1)
     df1=pd.concat(dfs,axis=0)
     def get_feature_name(s):
-        from rohan.dandage.io_dict import str2dict
-        d=str2dict(s['feature description'])
-        return d['Note'] if 'Note' in d else d['ID'] if 'ID' in d else s['feature type']
+        if len(s['feature description'])>1:
+            from rohan.dandage.io_dict import str2dict
+            d=str2dict(s['feature description'])
+            return d['Note'] if 'Note' in d else d['ID'] if 'ID' in d else s['feature type']
     df1['feature name']=df1.apply(lambda x: get_feature_name(x),axis=1)
     df1.loc[df1['feature type'].isin(['HELIX','STRAND','TURN']),'feature type']='secondary structure'
     d,df=uniprotid2features,df1.drop(['feature description'],axis=1)

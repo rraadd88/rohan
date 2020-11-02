@@ -91,6 +91,12 @@ def plot_dists(dplot,colx,coly,colindex,order,
         _=[ax.text(ax.get_xlim()[1],y+0.15,yticklabel2metric[t.get_text()],
                    color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in yticklabel2metric]
         ax.legend(bbox_to_anchor=[1,1],title=params_dist['hue'])    
+# from rohan.dandage.plot.ax_ import get_ticklabel2position
+# yticklabel2y=get_ticklabel2position(ax,'y')
+# _=dplot.groupby(params['y']).agg({params['x']:max}).reset_index().apply(lambda x: ax.text(ax.get_xlim()[1],
+#                                                                                              yticklabel2y[x[params['y']]],
+#                                                                                              x[params['x']],va='center'),axis=1)
+# ax.text(ax.get_xlim()[1],ax.get_ylim()[1],'max')        
     return ax
 
 def plot_dist_comparison(df,colx,colhue,coly,

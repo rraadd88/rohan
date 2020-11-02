@@ -46,7 +46,11 @@ def get_goid_info(queries,result=None,interval=500):
 def get_genes_bygoids(
     goids=['GO:0004713','GO:0004725'],
     taxid=559292):
-    requestURL=f"https://www.ebi.ac.uk/QuickGO/services/annotation/downloadSearch?taxonId={taxid}&taxonUsage=exact&geneProductSubset=Swiss-Prot&proteome=gcrpCan,complete&geneProductType=protein&reference=PMID,DOI&goId={','.join(goids)}&goUsage=exact&downloadLimit=50000"
+    """
+    geneProductSubset=Swiss-Prot&proteome=gcrpCan,complete&
+    reference=PMID,DOI&
+    """
+    requestURL=f"https://www.ebi.ac.uk/QuickGO/services/annotation/downloadSearch?taxonId={taxid}&taxonUsage=exact&geneProductType=protein&goId={','.join(goids)}&goUsage=descendants&downloadLimit=50000"
     import requests
     # requestURL=
     r = requests.get(requestURL, headers={"Accept" : "text/gpad"})
