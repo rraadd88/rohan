@@ -108,7 +108,7 @@ def read_table(p,params_read_csv={}):
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
-def read_manytables(ps,axis,collabel='label',
+def read_manytables(ps,axis,collabel=False,
 #                     labels=[],cols=[],
                     params_read_csv={},params_concat={},
 #                    to_dict=False
@@ -117,11 +117,12 @@ def read_manytables(ps,axis,collabel='label',
     if isinstance(ps,str):
         ps=glob(ps)
     df1=pd.DataFrame({'path':ps})
-    df1['label']=df1['path'].apply(basenamenoext)
+    df1[collabel if isinstance(collabel,str) else 'label']=df1['path'].apply(basenamenoext)
     def apply_(df):
         p=df.iloc[0,:]['path']
         return read_table(p)
-    df2=getattr(df1.groupby('label',as_index=False),f"{'parallel' if fast else 'progress'}_apply")(apply_)
+    df2=getattr(df1.groupby(collabel if isinstance(collabel,str) else 'label',
+                            as_index=True if isinstance(collabel,str) else False),f"{'parallel' if fast else 'progress'}_apply")(apply_)
     return df2
 
 ## save table
