@@ -392,7 +392,8 @@ lin_dfpair=unpair_df
 def merge_dfs_paired_with_unpaireds(dfpair,df,
                         left_ons=['gene1 name','gene2 name'],
                         right_on='gene name',right_ons_common=[],
-                        suffixes=[' gene1',' gene2'],how='left',dryrun=False, test=False):
+                        suffixes=[' gene1',' gene2'],how='left',dryrun=False, test=False,
+                                   **kws_merge):
     """
     :param right_ons_common: columns to merge the right ones. eg. cell line
     """
@@ -435,13 +436,14 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
     dfpair_merge1=dfpair.merge(df1,
                     left_on=merge1_left_on,
                     right_on=merge1_right_on,
-                    how=how)
+                    how=how,**kws_merge)
     if test:
         print('> dfpair_merge1 columns'); print(dfpair_merge1.columns.tolist())
     dfpair_merge2=dfpair_merge1.merge(df2,
                 left_on=merge2_left_on,
                 right_on=merge2_right_on,
-                how=how)
+                how=how,
+                 **kws_merge)
     if test:
         print('> dfpair_merge2 columns');print(dfpair_merge2.columns.tolist())
     return dfpair_merge2
