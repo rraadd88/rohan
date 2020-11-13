@@ -84,8 +84,32 @@ def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
         return df
     else:
         print('Something went wrong ', response.status_code)  
+
+def map_ids_chained(queries,frm='GENENAME',
+                    to='ENSEMBL_ID',intermediate='ACC',
+                    **kws_map_ids):
+    """
+    organism_taxid=9606,
+    test=False
+    """
+    df1=map_ids(queries=queries,
+                frm=frm,
+                to=intermediate,
+                **kws_map_ids,
+                )
+    if len(df1)==0:
+        logging.error(f"conversion from {frm} to {intermediate} failed")
+    df2=map_ids(queries=df1[intermediate].unique().tolist(),
+                frm=intermediate,
+                to=to,
+                **kws_map_ids,
+                )
+    if len(df2)==0:
+        logging.error(f"conversion from {intermediate} to {to} failed")
+    return df1.merge(df2,on=intermediate,how='left').drop([intermediate],axis=1).dropna()        
         
-def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMBL_PRO_ID'}):
+def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMBL_PRO_ID'},
+                 intermediate=None):
     range2df={}
     for ini,end in zip(range(0,len(queries)-1,interval),range(interval,len(queries)-1+interval,interval)):
         print(end,end=', ')
