@@ -5,6 +5,17 @@ from os import makedirs
 import yaml
 import json
 
+def pprint_dict(d, indent=0):
+    """
+    thanks to https://stackoverflow.com/a/3229493/3521099
+    """
+    for key, value in d.items():
+        print('\t' * indent + str(key+":"))
+        if isinstance(value, dict):
+            pretty(value, indent+1)
+    else:
+         print('\t' * (indent+1) + str(value))
+
 def sort_dict(d,by_pos_in_list,out_list=False):
     l=sorted(d.items(), key=lambda x: x[by_pos_in_list])
     if out_list:

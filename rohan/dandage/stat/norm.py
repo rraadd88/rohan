@@ -57,3 +57,29 @@ def norm_by_gaussian_kde(values):
 
 from rohan.dandage.io_nums import rescale
 
+## z-scores
+def zscore(ds): 
+    return (ds - ds.mean())/ds.std()
+def zscore_cols(df,cols=None): 
+    if cols is None:
+        cols=df.columns
+    return (df[cols] - df[cols].mean())/df[cols].std()
+def get_zscore_robust(x,median,mad):
+    return (x-median)/(mad*1.4826)
+def zscore_robust(a):
+    """
+    Example:
+    t = sc.stats.norm.rvs(size=100, scale=1, random_state=123456)
+    plt.hist(t,bins=40)
+    plt.hist(apply_zscore_robust(t),bins=40)
+    print(np.median(t),np.median(apply_zscore_robust(t)))
+    """
+    median=np.median(a)
+    mad=sc.stats.median_abs_deviation(a)
+    if mad==0:
+        logging.error('mad==0')
+    return [get_zscore_robust(x,median,mad) for x in a]
+
+
+
+

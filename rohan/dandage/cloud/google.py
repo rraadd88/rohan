@@ -174,3 +174,49 @@ class slides():
 #         create_image(service, presentation_id, page_id,image_id)
 #         page_ids=get_page_ids(service,presentation_id)
 #         zip(page_ids)
+
+
+def get_comments(fileid,fields='comments/quotedFileContent/value,comments/content,comments/id'):
+    """
+    fields: comments/
+                kind:
+                id:
+                createdTime:
+                modifiedTime:
+                author:
+                    kind:
+                    displayName:
+                    photoLink:
+                    me:
+                        True
+                htmlContent:
+                content:
+                deleted:
+                quotedFileContent:
+                    mimeType:
+                    value:
+                anchor:
+                replies:
+                    []
+    """
+    def apply_(service,**kws_list)
+        comments = service.comments().list(**kws_list).execute()
+        df1=pd.DataFrame(pd.concat({di:pd.Series({k:d[k] for k in d}) for di,d in enumerate(comments['comments'])},
+                 axis=0)).reset_index().rename(columns={'level_0':'comment #',
+                                                        'level_1':'key',0:'value'})
+        df1['value']=df1['value'].apply(lambda x: ','.join(x.values()) if isinstance(x,dict) else x)
+        df1=df1.set_index(['comment #','key'])
+        df1=df1.unstack(1).droplevel(0,1)
+        df1['link']=df1['id'].apply(lambda x: f"https://drive.google.com/file/d/{fileid}/edit?disco={x}")
+        df1=df1.rename(columns={'content':'comment',
+                           'quotedFileContent':'text'}).drop(['id'],axis=1)
+    service=get_service()    
+    if not isinstance(fileid,str):
+        fileid=[fileid]
+    df1=pd.concat([apply_(service,fileId=fileid,
+                    #fields='comments',
+                     fields=fields,# nextPageToken',
+                     includeDeleted='false',
+                     pageSize=100) for k in fileid],
+             axis=0)
+    return df1

@@ -925,7 +925,8 @@ def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,
         return df[colout]
     else:
         return df
-    
+
+# quantile bins
 from rohan.dandage.io_sets import dropna
 def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids,params_qcut={'q':10,'duplicates':'drop'}):
     """
@@ -947,6 +948,23 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids,params_qc
                 ids_subset=df.loc[(df[col_subset]==subset),col_ids].dropna().unique()
                 df.loc[(df[col_subset]==subset),f'P {col_fracby} {col_subset}']=len(set(ids_subset).intersection(ids))/len(ids_subset)
     return df
+
+def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
+    df[f"{colx} qbin"]=pd.qcut(df[colx],bins,duplicates='drop')    
+    if colgroupby is None:
+        colgroupby='del'
+        df[colgroupby]='del'
+    from rohan.dandage.stat.variance import confidence_interval_95
+    dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
+    from rohan.dandage.io_dfs import coltuples2str
+    dplot.columns=coltuples2str(dplot.columns)
+    dplot=dplot.reset_index()
+    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin"].apply(lambda x:x.mid).astype(float)
+    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin midpoint"].apply(float)
+    if 'del' in dplot:
+        dplot=dplot.drop(['del'],axis=1)
+    return dplot
+
 #filter df
 def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
     qry = f' {logic} '.join([f"`{k}` {sign} '{v}'" for k,v in d.items()])
