@@ -19,29 +19,14 @@ dtypes
 'U'       Unicode
 'V'       raw data (void)
 """
-
-
-
 from rohan.dandage.io_files import *
 from rohan.dandage.io_sys import is_interactive_notebook
 import pandas as pd
 import numpy as np
 import sys
-
 import logging
 
-def df2info(df,col_searches=None):
-    if col_searches is None:
-        if len(df.columns)>5:
-            print('**COLS**: ',df.columns.tolist())
-        print('**HEAD**: ',df.loc[:,df.columns[:5]].head())
-        print('**SHAPE**: ',df.shape)
-    else:
-        cols_searched=[c2 for c1 in col_searches for c2 in df if c1 in c2]
-        print('**SEARCHEDCOLS**:\n',cols_searched)
-        print('**HEAD**: ',df.loc[:,cols_searched].head())
-        
-
+## delete unneeded columns
 def delunnamedcol(df):
     """
     Deletes all the unnamed columns
@@ -65,7 +50,8 @@ def del_Unnamed(df):
     to be deprecated
     """
     return delunnamedcol(df)
-    
+
+## index setting
 def set_index(data,col_index):
     """
     Sets the index if the index is not present
@@ -89,7 +75,7 @@ def reset_index(df):
         df.index.name=df.index.name+' index'
     return df.reset_index()
 
-#tsv io
+## tables io
 def read_table(p,params_read_csv={}):
     """
     'decimal':'.'
@@ -198,101 +184,7 @@ def to_excel(sheetname2df,datap,append=False):
             startrow+=len(sheetname2df[sn])+2
     writer.save()
     
-#slice     
-def dfvslicebysstr(df,sstr,include=True,how='and',outcols=False):
-    if isinstance(sstr,str):        
-        if include:
-            cols=[c for c in df if sstr in c]
-        else:
-            cols=[c for c in df if not sstr in c]            
-    elif isinstance(sstr,list):
-        cols=[]
-        for s in sstr:
-            if include:
-                cols.append([c for c in df if s in c])
-            else:
-                cols.append([c for c in df if not s in c])
-#         print()
-        from rohan.dandage.io_sets import list2union,list2intersection
-        if how=='or':
-            cols=list2union(cols)
-        elif how=='and':
-            cols=list2intersection(cols)
-    else:
-        logging.error('sstr should be str or list')
-    if outcols:
-        return cols
-    else:
-        return df.loc[:,cols]
-
-# multi dfs
-def concat_cols(df1,df2,idx_col,df1_cols,df2_cols,
-                df1_suffix,df2_suffix,wc_cols=[],suffix_all=False):
-    """
-    Concatenates two pandas tables 
-
-    :param df1: dataframe 1
-    :param df2: dataframe 2
-    :param idx_col: column name which will be used as a common index 
-    """
-
-    df1=df1.set_index(idx_col)
-    df2=df2.set_index(idx_col)    
-    if not len(wc_cols)==0:
-        for wc in wc_cols:
-            df1_cols=df1_cols+[c for c in df1.columns if wc in c]
-            df2_cols=df2_cols+[c for c in df2.columns if wc in c]
-    combo=pd.concat([df1.loc[:,df1_cols],df2.loc[:,df2_cols]],axis=1)
-    # find common columns and rename them
-    # print df1_cols
-    # print df2_cols    
-    if suffix_all:
-        df1_cols=["%s%s" % (c,df1_suffix) for c in df1_cols]
-        df2_cols=["%s%s" % (c,df2_suffix) for c in df2_cols]
-        # df1_cols[df1_cols.index(col)]="%s%s" % (col,df1_suffix)
-        # df2_cols[df2_cols.index(col)]="%s%s" % (col,df2_suffix)
-    else:
-        common_cols=[col for col in df1_cols if col in df2_cols]
-        for col in common_cols:
-            df1_cols[df1_cols.index(col)]="%s%s" % (col,df1_suffix)
-            df2_cols[df2_cols.index(col)]="%s%s" % (col,df2_suffix)
-    combo.columns=df1_cols+df2_cols
-    combo.index.name=idx_col
-    return combo     
-
-def get_colmin(data):
-    """
-    Get rowwise column names with minimum values
-
-    :param data: pandas dataframe
-    """
-    data=data.T
-    colmins=[]
-    for col in data:
-        colmins.append(data[col].idxmin())
-    return colmins
-
-def reorderbydf(df2,df1):
-    """
-    Reorder rows of a dataframe by other dataframe
-
-    :param df2: input dataframe
-    :param df1: template dataframe 
-    """
-    df3=pd.DataFrame()
-    for idx,row in df1.iterrows():
-        df3=df3.append(df2.loc[idx,:])
-    return df3
-
-def dfswapcols(df,cols):
-    df[f"_{cols[0]}"]=df[cols[0]].copy()
-    df[cols[0]]=df[cols[1]].copy()
-    df[cols[1]]=df[f"_{cols[0]}"].copy()
-    df=df.drop([f"_{cols[0]}"],axis=1)
-    return df
-
 ## reshape df
-
 def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
     """
     dmap: ids in index and columns 
@@ -312,7 +204,6 @@ def pivot_table_str(df,index,columns,values):
     return df.pivot_table(index=index,columns=columns,values=values,aggfunc=list2str)
 
 ## merge dfs
-
 def merge_dfs(dfs,how='left',suffixes=['','_'],
               test=False,fast=False,drop_duplicates=True,
               sort=True,
@@ -450,17 +341,7 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
     
 merge_dfpairwithdf=merge_dfs_paired_with_unpaireds
 
-def column_suffixes2multiindex(df,suffixes,test=False):
-    cols=[c for c in df if c.endswith(f' {suffixes[0]}') or c.endswith(f' {suffixes[1]}')]
-    if test:
-        print(cols)
-    df=df.loc[:,cols]
-    df=df.rename(columns={c: (s,c.replace(f' {s}','')) for s in suffixes for c in df if c.endswith(f' {s}')})
-    df.columns=pd.MultiIndex.from_tuples(df.columns)
-    return df
-
-## chucking
-
+## chunking
 def get_chunks_bysize(din,chunksize):
     din.index=range(0,len(din),1)
     chunkrange=list(np.arange(0,len(din),chunksize))
@@ -562,7 +443,6 @@ def dfmap2symmcolidx(df,test=False):
 #         print(dmap.shape)        
 #     return dmap
 
-
 def fill_diagonal(df,filler=None):
     if df.shape[0]!=df.shape[1]:
         logging.warning('df not symmetric')      
@@ -623,6 +503,7 @@ def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
                 if ci==ii:
                     dcorr.loc[i,c]=replace
     return dcorr
+
 # aggregate dataframes
 def get_group(groups,i=0):return groups.get_group(list(groups.groups.keys())[i])
 
@@ -644,7 +525,6 @@ def dfaggregate_unique(df,colgroupby,colaggs):
         df_.index.name=f"{colgroupby} groupby"
     return df_.reset_index()
         
-        
 def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
     df_agg=dfaggregate_unique(df,colgroupby,colaggs)
     df_agg['has values']=df_agg.apply(lambda x : len(x[f'{colval}: list'])!=0,axis=1)
@@ -658,29 +538,6 @@ def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
 def percentiles(ds):
     return [(f"{per:.2f}",ds.quantile(per)) for per in np.arange(0,1.1,0.1)]        
 
-## dedup
-def dfdupval2unique(df,coldupval,preffix_unique='variant'):  
-    dups=df[coldupval].value_counts()[(df[coldupval].value_counts()>1)].index
-
-    for dup in dups:
-        ddup=df.loc[(df[coldupval]==dup)]
-        df.loc[(df[coldupval]==dup),preffix_unique]=range(1, len(ddup)+1)
-    #     break
-    df[coldupval]=df.apply(lambda x : x[coldupval] if pd.isnull(x[preffix_unique]) else f"{x[coldupval]}: {preffix_unique} {int(x[preffix_unique])}",axis=1)
-    return df
-
-def dfliststr2dflist(df,colliststrs,colfmt='list'):
-    import ast
-    for c in colliststrs:
-#         print(c)
-        if colfmt=='list' or df[c].apply(lambda x : (('[' in x) and (']' in x))).all(): #is list
-            df[c]=df.apply(lambda x : ast.literal_eval(x[c].replace("nan","''")) if not isinstance(x[c], (list)) else x[c],axis=1)
-        elif colfmt=='tuple' or df[c].apply(lambda x : (('(' in x) and (')' in x))).all(): #is tuple        
-            df[c]=df.apply(lambda x : ast.literal_eval(x[c]) if not isinstance(x[c], (tuple)) else x[c],axis=1)
-        else:
-            df[c]=df.apply(lambda x : x[c].replace("nan","").split(',') if not isinstance(x[c], (list)) else x[c],axis=1)
-    return df
-
 # multiindex
 def coltuples2str(cols,sep=' '):
     from rohan.dandage.io_strs import tuple2str
@@ -689,6 +546,16 @@ def coltuples2str(cols,sep=' '):
         cols_str.append(tuple2str(col,sep=sep))
     return cols_str
 
+def column_suffixes2multiindex(df,suffixes,test=False):
+    cols=[c for c in df if c.endswith(f' {suffixes[0]}') or c.endswith(f' {suffixes[1]}')]
+    if test:
+        print(cols)
+    df=df.loc[:,cols]
+    df=df.rename(columns={c: (s,c.replace(f' {s}','')) for s in suffixes for c in df if c.endswith(f' {s}')})
+    df.columns=pd.MultiIndex.from_tuples(df.columns)
+    return df
+
+## dtype conversion
 def colobj2str(df,test=False):
     cols_obj=df.dtypes[df.dtypes=='object'].index.tolist()
     if test:
@@ -729,13 +596,22 @@ def meltlistvalues(df,value_vars,colsynfmt='str',colsynstrsep=';'):
     return dfsyn2appended(df,colsyn,colsynfmt=colsynfmt,colsynstrsep=colsynstrsep)
 
 ## duplicates:
+def dfdupval2unique(df,coldupval,preffix_unique='variant'):  
+    dups=df[coldupval].value_counts()[(df[coldupval].value_counts()>1)].index
+
+    for dup in dups:
+        ddup=df.loc[(df[coldupval]==dup)]
+        df.loc[(df[coldupval]==dup),preffix_unique]=range(1, len(ddup)+1)
+    #     break
+    df[coldupval]=df.apply(lambda x : x[coldupval] if pd.isnull(x[preffix_unique]) else f"{x[coldupval]}: {preffix_unique} {int(x[preffix_unique])}",axis=1)
+    return df
+
 def check_duplicates(df,cols):
     if df.duplicated(subset=cols).any():
         logging.error('duplicates in the table!')  
         return True
     else:
         False
-
 ## drop duplicates by aggregating the dups
 def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False):
     col2aggfunc={}
@@ -764,6 +640,25 @@ def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False)
     return df1.reset_index()
 
 ## sorting
+def reorderbydf(df2,df1):
+    """
+    Reorder rows of a dataframe by other dataframe
+
+    :param df2: input dataframe
+    :param df1: template dataframe 
+    """
+    df3=pd.DataFrame()
+    for idx,row in df1.iterrows():
+        df3=df3.append(df2.loc[idx,:])
+    return df3
+
+def dfswapcols(df,cols):
+    df[f"_{cols[0]}"]=df[cols[0]].copy()
+    df[cols[0]]=df[cols[1]].copy()
+    df[cols[1]]=df[f"_{cols[0]}"].copy()
+    df=df.drop([f"_{cols[0]}"],axis=1)
+    return df
+
 # def dfsortbybins(df, col):
 #     d=dict(zip(bins,[float(s.split(',')[0].split('(')[1]) for s in bins]))
 #     df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
@@ -881,9 +776,67 @@ def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=Fal
     return df3#.drop([f'sorted {colvalue}'],axis=1)
 
 
-def is_col_numeric(ds):
-    return np.issubdtype(ds.dtype, np.number)
+# quantile bins
 
+def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
+    df[f"{colx} qbin"]=pd.qcut(df[colx],bins,duplicates='drop')    
+    if colgroupby is None:
+        colgroupby='del'
+        df[colgroupby]='del'
+    from rohan.dandage.stat.variance import confidence_interval_95
+    dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
+    from rohan.dandage.io_dfs import coltuples2str
+    dplot.columns=coltuples2str(dplot.columns)
+    dplot=dplot.reset_index()
+    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin"].apply(lambda x:x.mid).astype(float)
+    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin midpoint"].apply(float)
+    if 'del' in dplot:
+        dplot=dplot.drop(['del'],axis=1)
+    return dplot
+
+#filter df
+def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
+    qry = f' {logic} '.join([f"`{k}` {sign} '{v}'" for k,v in d.items()])
+    df1=df.query(qry)
+    if test:
+        print(df1.loc[:,list(d.keys())].drop_duplicates())
+    if len(df1)==0:
+        logging.warning('may be some column names are wrong..')
+        logging.warning([k for k in d if not k in df])
+    return df1
+
+# subsets
+from rohan.dandage.io_sets import dropna
+def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids,params_qcut={'q':10,'duplicates':'drop'}):
+    """
+    cols_fracby:
+    cols_subset:
+    """
+    for coli,col in enumerate(cols_subset):
+        if is_col_numeric(df[col]):
+            try:
+                df[f"{col} bin"]=pd.qcut(df[col],**params_qcut)
+            except:
+                print(col)
+            cols_subset[coli]=f"{col} bin"
+    for col_fracby in cols_fracby2vals:
+        val=cols_fracby2vals[col_fracby]
+        ids=df.loc[(df[col_fracby]==val),col_ids].dropna().unique()
+        for col_subset in cols_subset:
+            for subset in dropna(df[col_subset].unique()):
+                ids_subset=df.loc[(df[col_subset]==subset),col_ids].dropna().unique()
+                df.loc[(df[col_subset]==subset),f'P {col_fracby} {col_subset}']=len(set(ids_subset).intersection(ids))/len(ids_subset)
+    return df
+
+def get_colsubset2stats(dannot,colssubset=None):
+    if colssubset is None:
+        colssubset=dannot_stats.columns
+    dannot_stats=dannot.loc[:,colssubset].apply(pd.Series.value_counts)
+
+    colsubset2classes=dannot_stats.apply(lambda x: x.index,axis=0)[dannot_stats.apply(lambda x: ~pd.isnull(x),axis=0)].apply(lambda x: dropna(x),axis=0).to_dict()
+    colsubset2classns=dannot_stats[dannot_stats.apply(lambda x: ~pd.isnull(x),axis=0)].apply(lambda x: dropna(x),axis=0).to_dict()
+    colsubset2classns={k:[int(i) for i in colsubset2classns[k]] for k in colsubset2classns}
+    return dannot_stats,colsubset2classes,colsubset2classns
 # 2d subsets
 def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,
                            fast=False,
@@ -925,77 +878,6 @@ def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,
         return df[colout]
     else:
         return df
-
-# quantile bins
-from rohan.dandage.io_sets import dropna
-def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids,params_qcut={'q':10,'duplicates':'drop'}):
-    """
-    cols_fracby:
-    cols_subset:
-    """
-    for coli,col in enumerate(cols_subset):
-        if is_col_numeric(df[col]):
-            try:
-                df[f"{col} bin"]=pd.qcut(df[col],**params_qcut)
-            except:
-                print(col)
-            cols_subset[coli]=f"{col} bin"
-    for col_fracby in cols_fracby2vals:
-        val=cols_fracby2vals[col_fracby]
-        ids=df.loc[(df[col_fracby]==val),col_ids].dropna().unique()
-        for col_subset in cols_subset:
-            for subset in dropna(df[col_subset].unique()):
-                ids_subset=df.loc[(df[col_subset]==subset),col_ids].dropna().unique()
-                df.loc[(df[col_subset]==subset),f'P {col_fracby} {col_subset}']=len(set(ids_subset).intersection(ids))/len(ids_subset)
-    return df
-
-def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
-    df[f"{colx} qbin"]=pd.qcut(df[colx],bins,duplicates='drop')    
-    if colgroupby is None:
-        colgroupby='del'
-        df[colgroupby]='del'
-    from rohan.dandage.stat.variance import confidence_interval_95
-    dplot=df.groupby([f"{colx} qbin",colgroupby]).agg({coly:[np.mean,confidence_interval_95],})
-    from rohan.dandage.io_dfs import coltuples2str
-    dplot.columns=coltuples2str(dplot.columns)
-    dplot=dplot.reset_index()
-    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin"].apply(lambda x:x.mid).astype(float)
-    dplot[f"{colx} qbin midpoint"]=dplot[f"{colx} qbin midpoint"].apply(float)
-    if 'del' in dplot:
-        dplot=dplot.drop(['del'],axis=1)
-    return dplot
-
-#filter df
-def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
-    qry = f' {logic} '.join([f"`{k}` {sign} '{v}'" for k,v in d.items()])
-    df1=df.query(qry)
-    if test:
-        print(df1.loc[:,list(d.keys())].drop_duplicates())
-    if len(df1)==0:
-        logging.warning('may be some column names are wrong..')
-        logging.warning([k for k in d if not k in df])
-    return df1
-
-# import from stat
-from rohan.dandage.stat.transform import dflogcol
-
-# filter with stats
-import logging
-def filterstats(df,boolcol):
-    df_=df.loc[boolcol,:]
-    logging.info(df,df_)
-    return df_
-
-# get numbers from annot 
-def get_colsubset2stats(dannot,colssubset=None):
-    if colssubset is None:
-        colssubset=dannot_stats.columns
-    dannot_stats=dannot.loc[:,colssubset].apply(pd.Series.value_counts)
-
-    colsubset2classes=dannot_stats.apply(lambda x: x.index,axis=0)[dannot_stats.apply(lambda x: ~pd.isnull(x),axis=0)].apply(lambda x: dropna(x),axis=0).to_dict()
-    colsubset2classns=dannot_stats[dannot_stats.apply(lambda x: ~pd.isnull(x),axis=0)].apply(lambda x: dropna(x),axis=0).to_dict()
-    colsubset2classns={k:[int(i) for i in colsubset2classns[k]] for k in colsubset2classns}
-    return dannot_stats,colsubset2classes,colsubset2classns
 
 def append_similar_cols(df,suffixes=None,prefixes=None,ffixes=None,test=False):
     import re
