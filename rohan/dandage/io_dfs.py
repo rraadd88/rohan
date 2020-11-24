@@ -94,12 +94,13 @@ def read_table(p,params_read_csv={}):
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
-def read_manytables(ps,axis,collabel=False,
+def read_manytables(ps,axis=0,collabel=False,
 #                     labels=[],cols=[],
                     params_read_csv={},params_concat={},
 #                    to_dict=False
                     fast=False,
                    ):
+    logging.warning(f'concat axis = {axis}')
     if isinstance(ps,str):
         ps=glob(ps)
     df1=pd.DataFrame({'path':ps})
@@ -199,7 +200,8 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
         id_vars=[df.index.name]
     return df.reset_index().melt(id_vars=id_vars,
                              var_name=coln,value_name=colvalue_name)    
-
+def melt():
+    
 def pivot_table_str(df,index,columns,values):
     return df.pivot_table(index=index,columns=columns,values=values,aggfunc=list2str)
 

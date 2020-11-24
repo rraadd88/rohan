@@ -82,6 +82,7 @@ def dfbool2intervals(df,colbool):
 
 def intersections(dn2list,jaccard=False,count=True,fast=False,test=False):
     """
+    TODO: feed as an estimator to df.corr()
     TODO: way to fill up the symetric half of the adjacency matrix
     """
     df=pd.DataFrame(index=dn2list.keys(),
