@@ -27,6 +27,7 @@ plt.rcParams['axes.formatter.min_exponent'] = 3
 plt.rcParams['legend.frameon']=False
 from cycler import cycler
 plt.rcParams['axes.prop_cycle']= cycler('color',["#f55f5f", "#D3DDDC","#046C9A", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6", "#ECCBAE", "#D69C4E", "#ABDDDE", "#000000"])
+from rohan.dandage.plot.colors import get_colors_default
 # plt.rcParams['xtick.color']=[0.95,0.95,0.95]
 plt.rc('grid', lw=0.2,linestyle="-", color=[0.98,0.98,0.98])
 plt.rc('axes', axisbelow=True)

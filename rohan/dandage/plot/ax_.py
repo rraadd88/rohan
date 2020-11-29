@@ -75,12 +75,15 @@ def set_legend_lines(ax,
               **params_legend)
     return ax
 
-## egend related stuff: also includes colormaps
-def sort_legends(ax,params={}):
+## legend related stuff: also includes colormaps
+def sort_legends(ax,sort_order=None,**kws):
     handles, labels = ax.get_legend_handles_labels()
     # sort both labels and handles by labels
-    labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-    ax.legend(handles, labels,**params)
+    if sort_order is None:
+        labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+    else:
+        labels, handles =[handles[idx] for idx in sort_order],[labels[idx] for idx in sort_order]
+    ax.legend(handles, labels,**kws)
     return ax
 
 

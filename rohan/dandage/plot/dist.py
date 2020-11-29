@@ -295,3 +295,19 @@ def hist_annot(dplot,colx,
 #     ax=reset_legend_colors(ax)
 #     ax.legend(bbox_to_anchor=[1,1])
     return ax
+
+def pointplot_groupbyedgecolor(data,ax=None,**kws_pointplot):
+    ax=plt.subplot() if ax is None else ax
+    ax=sns.pointplot(data=data,
+                     ax=ax,
+                     **kws_pointplot)
+    plt.setp(ax.collections, sizes=[100])   
+    for c in ax.collections:
+        if c.get_label().startswith(kws_pointplot['hue_order'][0].split(' ')[0]):
+            c.set_linewidth(2)
+            c.set_edgecolor('k')
+        else:
+            c.set_linewidth(2)        
+            c.set_edgecolor('w')
+    ax.legend(bbox_to_anchor=[1,1])
+    return ax

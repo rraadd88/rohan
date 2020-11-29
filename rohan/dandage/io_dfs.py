@@ -200,7 +200,11 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
         id_vars=[df.index.name]
     return df.reset_index().melt(id_vars=id_vars,
                              var_name=coln,value_name=colvalue_name)    
-def melt():
+# rename parameters
+def melt(df, var_name_index='index',
+         var_name_col='column',
+         value_name='value',):
+    return dmap2lin(df,idxn=var_name,coln=var_name_col,colvalue_name=value_name)
     
 def pivot_table_str(df,index,columns,values):
     return df.pivot_table(index=index,columns=columns,values=values,aggfunc=list2str)

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from Bio import SeqIO,SeqRecord,Seq,Alphabet
+from Bio import SeqIO,SeqRecord,Seq
 from rohan.dandage.io_dfs import *
 import logging
 
@@ -106,7 +106,6 @@ def genomeocoords2bed(df, col_genomeocoord):
     else:
         return pd.DataFrame(columns=['chromosome', 'start', 'end','strand','id','NM'])
 
-from Bio import Alphabet,Seq
 def str2seq(s,prt=False):
     if prt:
         alpha=Alphabet.ProteinAlphabet
