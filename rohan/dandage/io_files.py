@@ -134,8 +134,9 @@ def read_url(url):
     myfile = f.read()
     return str(myfile)
 
-def download(url):
+def download(url,path):
     import urllib.request
-    urllib.request.urlretrieve(url, basename(url))
+    makedirs(dirname(path),exist_ok=True)
+    urllib.request.urlretrieve(url, path)
 
 from rohan.dandage.io_sys import p2time

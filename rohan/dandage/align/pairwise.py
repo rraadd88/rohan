@@ -12,13 +12,17 @@ def get_needle_stats(p):
 def run_needle(s1p,s2p,
                form,
                outp,
+               outfmt='pair',
                test=False):
+    """
+    :params outfmt: fasta|pair
+    """
     from rohan.dandage.io_sys import runbashcmd    
     if not exists(outp):
         if form.lower()=='dna':
-            com=f"needle -auto -asequence {s1p} -bsequence {s2p} -datafile EDNAFULL -gapopen 10.0 -gapextend 0.5 -endopen 10.0 -endextend 0.5 -aformat3 pair -snucleotide1 -snucleotide2 -outfile {outp}"
+            com=f"needle -auto -asequence {s1p} -bsequence {s2p} -datafile EDNAFULL -gapopen 10.0 -gapextend 0.5 -endopen 10.0 -endextend 0.5 -aformat3 {outfmt} -snucleotide1 -snucleotide2 -outfile {outp}"
         elif form.lower()=='protein':        
-            com=f"needle -auto -asequence {s1p} -bsequence {s2p} -datafile EBLOSUM62 -gapopen 10.0 -gapextend 0.5 -endopen 10.0 -endextend 0.5 -aformat3 pair -sprotein1 -sprotein2 -outfile {outp}"
+            com=f"needle -auto -asequence {s1p} -bsequence {s2p} -datafile EBLOSUM62 -gapopen 10.0 -gapextend 0.5 -endopen 10.0 -endextend 0.5 -aformat3 {outfmt} -sprotein1 -sprotein2 -outfile {outp}"
         else:
             logging.error(f"{outp}!=(DNA|protein)")
         if test:print(com)

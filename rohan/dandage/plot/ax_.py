@@ -80,9 +80,9 @@ def sort_legends(ax,sort_order=None,**kws):
     handles, labels = ax.get_legend_handles_labels()
     # sort both labels and handles by labels
     if sort_order is None:
-        labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+        handles,labels = zip(*sorted(zip(handles,labels), key=lambda t: t[0]))
     else:
-        labels, handles =[handles[idx] for idx in sort_order],[labels[idx] for idx in sort_order]
+        handles,labels =[handles[idx] for idx in sort_order],[labels[idx] for idx in sort_order]
     ax.legend(handles, labels,**kws)
     return ax
 
@@ -258,4 +258,22 @@ def set_label(ax,label,title=False,params={'x':0,'y':1,'ha':'left','va':'top'}):
         ax.set_title(label)
     else:
         ax.text(s=label,transform=ax.transAxes,**params)
+    return ax
+
+# metrics
+def plot_axvmetrics(ax,ds,label='',stat='mean std',color='#D3D3D3',
+                    alpha=0.1,
+#                     **kws_saturate_color=
+                   ):
+#     from rohan.dandage.plot.colors import saturate_color
+    if stat=='mean std':
+        ax.axvline(ds.mean(),
+                  color='lightgray',label=f'$\mu$ {label}',zorder=1)
+        ax.axvspan(ds.mean()-ds.std(),ds.mean()+ds.std(),
+                  color=color,alpha=alpha,#saturate_color(color, **kws_saturate_color),
+                   label=f'$\mu\pm\sigma$ {label}',zorder=0)
+    if stat=='min max':
+        ax.axvspan(ds.min(),ds.max(),
+                  color=color,alpha=alpha,#saturate_color(color, **kws_saturate_color),
+                   label=f'range {label}',zorder=0)           
     return ax

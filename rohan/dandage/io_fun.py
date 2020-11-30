@@ -39,6 +39,7 @@ def notebook2packagescript(notebookp,test=False):
             if f in s:
                 return s.split(f)[1].split(',')[1].split(')')[0].replace("'",'')
     df1['path output']=df1['code raw'].apply(get_path_output)
+#     print(df1)
     df1['parameter output']=df1['path output'].apply(lambda x: basenamenoext(x)+'p')
     def get_paths_input(s):
         s='\n'.join([line for line in s.split('\n') if not line.startswith('#')])
