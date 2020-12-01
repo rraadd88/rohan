@@ -781,9 +781,7 @@ def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=Fal
         print(df1.shape,df2.shape,df3.shape)
     return df3#.drop([f'sorted {colvalue}'],axis=1)
 
-
 # quantile bins
-
 def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
     df[f"{colx} qbin"]=pd.qcut(df[colx],bins,duplicates='drop')    
     if colgroupby is None:
@@ -918,5 +916,8 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
 
 ## make ids
 get_ids_sorted=lambda x: '--'.join(sorted(x))
-def make_ids_sorted(df,cols): 
-    return np.apply_along_axis(get_ids_sorted, 1, df.loc[:,cols].values)
+def make_ids_sorted(df,cols,ids_have_equal_length):
+    if ids_have_equal_length:
+        return np.apply_along_axis(get_ids_sorted, 1, df.loc[:,cols].values)
+    else:
+        
