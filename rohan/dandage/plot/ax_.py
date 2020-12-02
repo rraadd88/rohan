@@ -80,7 +80,7 @@ def sort_legends(ax,sort_order=None,**kws):
     handles, labels = ax.get_legend_handles_labels()
     # sort both labels and handles by labels
     if sort_order is None:
-        handles,labels = zip(*sorted(zip(handles,labels), key=lambda t: t[0]))
+        handles,labels = zip(*sorted(zip(handles,labels), key=lambda t: t[1]))
     else:
         handles,labels =[handles[idx] for idx in sort_order],[labels[idx] for idx in sort_order]
     ax.legend(handles, labels,**kws)

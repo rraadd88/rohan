@@ -1,5 +1,6 @@
 from rohan.dandage.plot.heatmap import get_clusters
 from rohan.dandage.io_dfs import *
+import matplotlib.pyplot as plt
 # dynamic time wrapping
 def get_ddist_dtw(df,window):
     from dtaidistance import dtw
@@ -120,3 +121,40 @@ def get_clusters_optimum(X,n_clusters=range(2,11),
     # make output
     dn2df={dn:dn2df[dn].loc[(dn2df[dn]['total clusters']==n_clusters_optimum),:].drop(['total clusters'],axis=1) for dn in dn2df}
     return dn2df
+
+def cluster_1d(ds,n_clusters,clf_type='gmm',
+               random_state=88,
+                 test=False,
+                return_coff=False,
+                  return_ax=False,
+              **kws_clf):
+    from rohan.dandage.plot.dist import plot_gaussianmixture    
+    x=ds.to_numpy()
+    X=x.reshape(-1,1)
+    if clf_type.lower()=='gmm':
+        from sklearn.mixture import GaussianMixture
+        clf = GaussianMixture(n_components=n_clusters,)
+    elif clf_type.lower()=='kmeans':
+        from sklearn.cluster import KMeans
+        clf=KMeans(n_clusters=n_clusters,**kws_kmeans).fit(X,)
+    else:
+        raise ValueError(clf_type)
+    ## fit and predic
+    labels =clf.fit_predict(X)
+    
+    df=pd.DataFrame({'value':x,
+    'label':labels==1})
+    if test:
+        plt.figure(figsize=[2.5,2.5])
+        ax=plt.subplot()
+        df['value'].hist(bins=50,density=True,
+                         histtype='step',
+                         ax=ax)
+        if clf_type=='gmm':
+            ax,coff=plot_gaussianmixture(g=clf,x=x,ax=ax)
+        else:
+            df.groupby('label').apply(lambda df: ax.axvline(df['value'].min(),label=df.name,
+                                                       color='b'))
+            df.groupby('label').apply(lambda df: ax.axvline(df['value'].max(),label=df.name,
+                                                       color='k'))
+    return ax if return_ax else coff if return_coff else df

@@ -920,4 +920,4 @@ def make_ids_sorted(df,cols,ids_have_equal_length):
     if ids_have_equal_length:
         return np.apply_along_axis(get_ids_sorted, 1, df.loc[:,cols].values)
     else:
-        
+        df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
