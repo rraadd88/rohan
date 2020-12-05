@@ -313,7 +313,7 @@ def pointplot_groupbyedgecolor(data,ax=None,**kws_pointplot):
     return ax
 
 def plot_gaussianmixture(g,x,ax=None):
-    from rohan.dandage.stat.solve import get_intersection_of_gaussians
+    from rohan.dandage.stat.solve import get_intersection_locations
     f = x.reshape(-1,1)
     weights = g.weights_
     means = g.means_
@@ -326,10 +326,14 @@ def plot_gaussianmixture(g,x,ax=None):
     ax.plot(x,mix_pdf.ravel(), c='lightgray')
     ax.plot(x,two_pdfs[0]*weights[0], c='gray')
     ax.plot(x,two_pdfs[1]*weights[1], c='gray')
-    x_intersections=get_intersection_of_gaussians(means[0][0],stds[0][0],
-                                            means[1][0],stds[1][0],)
+    print('weights',weights)
+    idxs=get_intersection_locations(y1=two_pdfs[0],y2=two_pdfs[1],test=False,x=x)
+    x_intersections=x[idxs]
+#     x_intersections=get_intersection_of_gaussians(means[0][0],stds[0][0],
+#                                                   means[1][0],stds[1][0],)
     print('intersections',x_intersections)
-    coff=min(x_intersections)
+    ms=sorted([means[0][0],means[1][0]])
+    coff=[i for i in x_intersections if i>ms[0] and i<ms[1]][0]
     ax.axvline(coff,color='k')
     ax.text(coff,ax.get_ylim()[1],f"{coff:.1f}",ha='center',va='bottom')
     return ax,coff

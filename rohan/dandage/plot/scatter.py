@@ -59,13 +59,13 @@ def plot_scatter(dplot,colx,coly,colz=None,
     from rohan.dandage.plot.ax_ import set_label_colorbar
 #     print(colz)
     ax=set_label_colorbar(ax,colz if label_colorbar is None else label_colorbar)
-    from rohan.dandage.stat.corr import get_corr
     from rohan.dandage.plot.ax_ import set_label
     if 'mlr' in stat_method:
         from rohan.dandage.stat.poly import get_mlr_2_str
         ax=set_label(ax,label=get_mlr_2_str(dplot,colz,[colx,coly]),
                     title=True,params={'loc':'left'})
     if 'spearman' in stat_method or 'pearson' in stat_method:
+        from rohan.dandage.stat.corr import get_corr
         ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],
                                        bootstrapped=bootstrapped,
                                        outstr=True),

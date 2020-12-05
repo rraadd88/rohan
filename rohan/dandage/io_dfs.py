@@ -80,6 +80,8 @@ def read_table(p,params_read_csv={}):
     """
     'decimal':'.'
     """
+    if isinstance(p,list) or '*' in p:
+        return read_manytables(p)
     if len(params_read_csv.keys())!=0:
         return del_Unnamed(pd.read_csv(p,**params_read_csv))        
     else:
@@ -94,22 +96,18 @@ def read_table(p,params_read_csv={}):
 def read_table_pqt(p):
     return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
 
-def read_manytables(ps,axis=0,collabel=False,
-#                     labels=[],cols=[],
-                    params_read_csv={},params_concat={},
-#                    to_dict=False
+def read_manytables(ps,axis=0,
+                    params_read_csv={},
+                    params_concat={},
                     fast=False,
                    ):
     logging.warning(f'concat axis = {axis}')
-    if isinstance(ps,str):
+    if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
     df1=pd.DataFrame({'path':ps})
-    df1[collabel if isinstance(collabel,str) else 'label']=df1['path'].apply(basenamenoext)
-    def apply_(df):
-        p=df.iloc[0,:]['path']
-        return read_table(p)
-    df2=getattr(df1.groupby(collabel if isinstance(collabel,str) else 'label',
-                            as_index=True if isinstance(collabel,str) else False),f"{'parallel' if fast else 'progress'}_apply")(apply_)
+    df2=getattr(df1.groupby('path',as_index=True),
+                        f"{'parallel' if fast else 'progress'}_apply"
+               )(lambda df: read_table(df.iloc[0,:]['path']))
     return df2
 
 ## save table
@@ -682,12 +680,25 @@ def sort_col_by_list(df, col,l):
 #     df=df.drop([f'_{col}'],axis=1)
 #     return df
 
-def groupby_sort(df,col_groupby,col_sortby,func='mean',ascending=True):
-    df1=df.groupby(col_groupby).agg({col_sortby:getattr(np,func)}).reset_index()
-    df2=df.merge(df1,
-            on=col_groupby,how='inner',suffixes=['',f' per {col_groupby}'])
-    logging.warning(f'column added to df: {col_sortby} per {col_groupby}')
-    return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
+def groupby_sort(df,col_groupby,col_sortby,
+                 subset=None,
+                 col_subset=None,
+                 func='mean',ascending=True):
+    if subset is None:
+        df1=gs.agg({col_sortby:getattr(np,func)}).reset_index()
+        df2=df.merge(df1,
+                on=col_groupby,how='inner',suffixes=['',f' per {col_groupby}'])
+        logging.warning(f'column added to df: {col_sortby} per {col_groupby}')
+        return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
+    else:
+        df1=df.groupby(col_subset).get_group(subset)
+        df2=df1.groupby(col_groupby).agg({col_sortby:getattr(np,func)}).reset_index()
+        return sort_col_by_list(df, 
+                                col_groupby,
+                                df2.sort_values(col_sortby,
+                                                ascending=ascending)[col_groupby])
+#         return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
+    
 sort_values_groupby=groupby_sort
 
 def sort_by_column_pairs_many_categories(df,
