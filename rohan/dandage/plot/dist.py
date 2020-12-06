@@ -2,7 +2,9 @@ from rohan.global_imports import *
 from rohan.dandage.plot.colors import *
 from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
+from rohan.dandage.io_fun import add_method_to_class
 
+@add_method_to_class(rd)
 def plot_dists(dplot,colx,coly,colindex,order,
                colhue=None,
                hue_order=None,

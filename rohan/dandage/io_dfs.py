@@ -25,14 +25,8 @@ import pandas as pd
 import numpy as np
 import sys
 import logging
-
 from rohan.dandage.io_fun import add_method_to_class
-
-@pd.api.extensions.register_dataframe_accessor("rd")
-class rd:
-    def __init__(self, pandas_obj):
-        self._obj = pandas_obj
-#     pass
+from rohan.global_imports import rd
 
 ## log
 def log_apply(df, fun, *args, **kwargs):

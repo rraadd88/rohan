@@ -259,3 +259,17 @@ def str_ranges2list(s,func=int,range_marker='-',sep=',',replace=['[',']']):
 def str2urlformat(s):
     import urllib
     return urllib.parse.quote_plus(s)
+
+# dict
+def str2dict(s,sep=';',sep_equal='='):
+    """
+    thanks to https://stackoverflow.com/a/186873/3521099
+    """
+    return dict(item.split(sep_equal) for item in s.split(sep))
+
+# def s2dict(s,sep=';',sep_key=':',):
+#     d={}
+#     for pair in s.split(sep):
+#         if pair!='':
+#             d[pair.split(sep_key)[0]]=pair.split(sep_key)[1]
+#     return d

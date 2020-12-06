@@ -8,6 +8,12 @@ from collections import OrderedDict
 ordereddict=OrderedDict
 import itertools
 # recepies
+@pd.api.extensions.register_dataframe_accessor("rd")
+class rd:
+    def __init__(self, pandas_obj):
+        self._obj = pandas_obj
+#     pass
+
 from rohan.dandage.io_dfs import *
 from rohan.dandage.io_dict import *
 from rohan.dandage.io_strs import get_bracket, replacemany, make_pathable_string

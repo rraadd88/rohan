@@ -116,11 +116,7 @@ def flip_dict(d):
                 d_[v]=k
         return d_
 
-def str2dict(s,sep=';',sep_equal='='):
-    """
-    thanks to https://stackoverflow.com/a/186873/3521099
-    """
-    return dict(item.split(sep_equal) for item in s.split(sep))
+from rohan.dandage.io_strs import str2dict
 
 def merge_dicts(l):    
     from collections import ChainMap
@@ -132,13 +128,6 @@ def merge_dicts(l):
 #     for k, v in chain(d1.items(), d2.items()):
 #         dict3[k].append(v)
 #     return dict3
-
-def s2dict(s,sep=';',sep_key=':',):
-    d={}
-    for pair in s.split(sep):
-        if pair!='':
-            d[pair.split(sep_key)[0]]=pair.split(sep_key)[1]
-    return d
 
 def head_dict(d, lines=5):
     return dict(itertools.islice(d.items(), lines))

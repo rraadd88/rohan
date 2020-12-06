@@ -1,5 +1,8 @@
 from rohan.global_imports import *
 from rohan.dandage.io_strs import make_pathable_string
+from rohan.dandage.io_fun import add_method_to_class
+# from rohan.global_imports import rd
+
 #rasterized=True
 # sns scatter_kws={'s':5, 'alpha':0.3, 'rasterized':True}
 
@@ -24,6 +27,7 @@ def plot_trendline(dplot,colx,coly,
         ax.plot(xys_lowess[:,0],xys_lowess[:,1], **params_plot)
     return ax
 
+@add_method_to_class(rd)
 def plot_scatter(dplot,colx,coly,colz=None,
             kind='hexbin',
             trendline_method='poly',
