@@ -1,3 +1,5 @@
+import pandas as pd
+
 # import rohan.dandage.io_dfs
 def get_deps(cfg=None,deps=[]):
     import logging

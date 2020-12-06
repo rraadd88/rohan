@@ -62,43 +62,7 @@ def get_datetime(outstr=True):
         return make_pathable_string(str(time)).replace('-','_')
     else:
         return time
-    
-def get_logger(program='program',argv=None,level=None,dp=None):
-# def initialize_logger(output_dir):
-    cmd='_'.join([str(s) for s in argv]).replace('/','_')
-    if dp is None:
-        dp=''
-    else:
-        dp=dp+'/'
-    date=get_datetime()
-    logp=f"{dp}.log_{program}_{date}_{cmd}.log"
-    log_format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..):%(lineno)d: %(message)s'
-    #'[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..):%(lineno)d: %(message)s'
-    
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    
-    # create console handler and set level to info
-    handler = logging.StreamHandler()
-    handler.setLevel(level)
-    formatter = logging.Formatter(log_format)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-#     # create error file handler and set level to error
-#     handler = logging.FileHandler(os.path.join(output_dir, "error.log"),"w", encoding=None, delay="true")
-#     handler.setLevel(logging.ERROR)
-#     formatter = logging.Formatter(log_format)
-#     handler.setFormatter(formatter)
-#     logger.addHandler(handler)
-
-    # create debug file handler and set level to debug
-    handler = logging.FileHandler(logp)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter(log_format)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logp
+from rohan.dandage.io_sys import get_logger
 
 def isstrallowed(s,form):
     """
