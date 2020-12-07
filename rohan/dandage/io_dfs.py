@@ -336,6 +336,16 @@ def check_duplicates(df,cols):
         return True
     else:
         False
+        
+def get_mappings_between_columns(df,cols):
+    """
+    identify duplicates within columns
+    """
+    d={}
+    for t in list(itertools.permutations(cols,2)):
+        d[t]=df.groupby(t[0])[t[1]].nunique().value_counts()
+    return pd.concat(d,axis=0,ignore_index=False,names=['from','to','map to']).to_frame('map from').sort_index().reset_index(-1).loc[:,['map from','map to']]
+        
 ## drop duplicates by aggregating the dups
 @add_method_to_class(rd)
 def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False):

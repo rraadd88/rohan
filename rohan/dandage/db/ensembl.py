@@ -1,3 +1,9 @@
+### Ensembl
+# for human genome
+# release 77 uses human reference genome GRCh38
+# from pyensembl import EnsemblRelease
+# EnsemblRelease(release=100)
+# for many other species
 # ensembl = pyensembl.EnsemblRelease(species=pyensembl.species.Species.register(
 # latin_name='saccharomyces_cerevisiae',
 # synonyms=['saccharomyces_cerevisiae'],
