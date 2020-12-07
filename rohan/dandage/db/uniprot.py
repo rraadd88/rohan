@@ -43,26 +43,9 @@ def get_sequence_batch(queries,fap,interval=1000,params_get_sequence={'organism_
         f.write(text)
     return fap
 
-
-def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
-            organism_taxid=9606,test=False):
-    """
-    https://www.uniprot.org/help/api_idmapping
-    Category: Genome annotation databases
-    Ensembl	ENSEMBL_ID	both
-    Ensembl Protein	ENSEMBL_PRO_ID	both
-    Ensembl Transcript	ENSEMBL_TRS_ID	both
-    Ensembl Genomes	ENSEMBLGENOME_ID	both
-    Ensembl Genomes Protein	ENSEMBLGENOME_PRO_ID	both
-    Ensembl Genomes Transcript	ENSEMBLGENOME_TRS_ID	both
-    Category: 3D structure databases
-    PDB	PDB_ID	both
-    Category: Protein-protein interaction databases
-    BioGrid	BIOGRID_ID	both
-    ComplexPortal	COMPLEXPORTAL_ID	both
-    DIP	DIP_ID	both
-    STRING	STRING_ID	both
-    """
+def map_ids_request(queries,frm='ACC',to='ENSEMBL_PRO_ID',
+        organism_taxid=9606,
+        test=False):
     url = 'https://www.uniprot.org/uploadlists/'
     params = {
     'from':frm,
@@ -83,42 +66,80 @@ def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
             df=df.rename(columns={c:c[:6] for c in renamecols})
         return df
     else:
-        print('Something went wrong ', response.status_code)  
+        print('Something went wrong ', response.status_code) 
 
-def map_ids_chained(queries,frm='GENENAME',
-                    to='ENSEMBL_ID',intermediate='ACC',
-                    **kws_map_ids):
-    """
-    organism_taxid=9606,
-    test=False
-    """
-    df1=map_ids(queries=queries,
-                frm=frm,
-                to=intermediate,
-                **kws_map_ids,
-                )
-    if len(df1)==0:
-        logging.error(f"conversion from {frm} to {intermediate} failed")
-    df2=map_ids(queries=df1[intermediate].unique().tolist(),
-                frm=intermediate,
-                to=to,
-                **kws_map_ids,
-                )
-    if len(df2)==0:
-        logging.error(f"conversion from {intermediate} to {to} failed")
-    return df1.merge(df2,on=intermediate,how='left').drop([intermediate],axis=1).dropna()        
-        
-def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMBL_PRO_ID'},
-                 intermediate=None):
+def map_ids_request_in_batches(queries,frm='ACC',to='ENSEMBL_PRO_ID',
+        organism_taxid=9606,
+        interval=1000,
+        test=False,
+        **kws_queries,
+        ):
     range2df={}
     for ini,end in zip(range(0,len(queries)-1,interval),range(interval,len(queries)-1+interval,interval)):
         print(end,end=', ')
-        dgeneids=map_ids(queries=queries[ini:end],**params_map_ids)
+        dgeneids=map_ids_request(queries=queries[ini:end],frm=frm,to=to,
+        organism_taxid=organism_taxid,
+        test=test)
         range2df[ini]=dgeneids
     if len(range2df.keys())!=0:
         return pd.concat(range2df,axis=0).drop_duplicates()
     else:
-        return pd.DataFrame(columns=[params_map_ids['frm'],params_map_ids['to']])
+        return pd.DataFrame(columns=[frm,to])        
+
+def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
+            organism_taxid=9606,
+            intermediate=None,
+            interval=1000,
+            test=False,
+            **kws_map_ids,
+            ):
+    """
+    https://www.uniprot.org/help/api_idmapping
+    Category: Genome annotation databases
+    Ensembl	ENSEMBL_ID	both
+    Ensembl Protein	ENSEMBL_PRO_ID	both
+    Ensembl Transcript	ENSEMBL_TRS_ID	both
+    Ensembl Genomes	ENSEMBLGENOME_ID	both
+    Ensembl Genomes Protein	ENSEMBLGENOME_PRO_ID	both
+    Ensembl Genomes Transcript	ENSEMBLGENOME_TRS_ID	both
+    Entrez Gene (GeneID)	P_ENTREZGENEID
+    Category: 3D structure databases
+    PDB	PDB_ID	both
+    Category: Protein-protein interaction databases
+    BioGrid	BIOGRID_ID	both
+    ComplexPortal	COMPLEXPORTAL_ID	both
+    DIP	DIP_ID	both
+    STRING	STRING_ID	both
+    def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMBL_PRO_ID'},
+                 intermediate=None):
+    # def map_ids_chained(queries,frm='GENENAME',
+    #                     to='ENSEMBL_ID',intermediate='ACC',
+    #                     **kws_map_ids):
+    """
+    if intermediate is None:
+        return map_ids_request_in_batches(queries=queries,
+                                         frm=frm,to=to,
+                                        organism_taxid=organism_taxid,
+                                        interval=interval,
+                                        test=test)
+    else:
+        df1=map_ids_request_in_batches(queries=queries,
+                                         frm=frm,to=intermediate,
+                                        organism_taxid=organism_taxid,
+                                        interval=interval,
+                                        test=test)
+        if len(df1)==0:
+            logging.error(f"conversion from {frm} to {intermediate} failed")
+        df2=map_ids_request_in_batches(queries=df1[intermediate].unique().tolist(),
+                                         frm=intermediate,to=to,
+                                        organism_taxid=organism_taxid,
+                                        interval=interval,
+                                        test=test)
+        if len(df2)==0:
+            logging.error(f"conversion from {intermediate} to {to} failed")
+        return df1.merge(df2,on=intermediate,how='left').drop([intermediate],axis=1).dropna()        
+        
+
 from rohan.dandage.io_sys import runbashcmd
 def uniproitid2seq(id,fap='tmp.fasta'):
     runbashcmd(f"wget https://www.uniprot.org/uniprot/{id}.fasta -O {fap}")

@@ -74,6 +74,16 @@ def is_interactive_notebook():
     # thanks to https://stackoverflow.com/a/22424821
     return 'ipykernel.kernelapp' in sys.modules
 
+## time
+def get_time():
+    """
+    Gets current time in a form of a formated string. Used in logger function.
+
+    """
+    import datetime
+    time=make_pathable_string('%s' % datetime.datetime.now())
+    return time.replace('-','_').replace(':','_').replace('.','_')
+
 def p2time(filename,time_type='m'):
     """
     Get the creation/modification dates of files.
@@ -85,6 +95,16 @@ def p2time(filename,time_type='m'):
     else:
         t = os.path.getctime(filename)
     return str(datetime.datetime.fromtimestamp(t))
+
+## logging system
+from rohan.dandage.io_strs import make_pathable_string
+def get_datetime(outstr=True):
+    import datetime
+    time=datetime.datetime.now()
+    if outstr:
+        return make_pathable_string(str(time)).replace('-','_')
+    else:
+        return time
 
 log_format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..):%(lineno)d: %(message)s'
 def get_logger(program='program',argv=None,level=None,dp=None):

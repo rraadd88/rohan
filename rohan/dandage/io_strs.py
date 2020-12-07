@@ -11,8 +11,6 @@
 import re
 import logging
 import numpy as np
-from rohan.dandage.io_nums import str2num,str2nums,format_number_human
-# from rohan.dandage.io_dict import str2dict
 
 # convert
 def s2re(s,ss2re):
@@ -50,19 +48,6 @@ def tuple2str(tup,sep=' '):
     elif not isinstance(tup,str):
         logging.error("tup is not str either")
     return tup
-
-
-import logging
-import os.path
-
-def get_datetime(outstr=True):
-    import datetime
-    time=datetime.datetime.now()
-    if outstr:
-        return make_pathable_string(str(time)).replace('-','_')
-    else:
-        return time
-from rohan.dandage.io_sys import get_logger
 
 def isstrallowed(s,form):
     """
@@ -150,14 +135,6 @@ def splitlabel(label,splitby=' ',ctrl='__'):
 
         return splits+[ctrl]
 
-def get_time():
-    """
-    Gets current time in a form of a formated string. Used in logger function.
-
-    """
-    import datetime
-    time=make_pathable_string('%s' % datetime.datetime.now())
-    return time.replace('-','_').replace(':','_').replace('.','_')
 
 def byte2str(b): 
     if not isinstance(b,str):
@@ -273,3 +250,8 @@ def str2dict(s,sep=';',sep_equal='='):
 #         if pair!='':
 #             d[pair.split(sep_key)[0]]=pair.split(sep_key)[1]
 #     return d
+
+# TODO: deprecate
+from rohan.dandage.io_sys import get_logger,get_datetime,get_time
+from rohan.dandage.io_nums import str2num,str2nums,format_number_human
+# from rohan.dandage.io_dict import str2dict

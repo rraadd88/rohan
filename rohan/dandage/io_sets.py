@@ -116,8 +116,13 @@ def jaccard_index_dict(dn2list,jaccard=True,count=False,fast=False,test=False):
 
 compare_lists_jaccard=intersections
 
+## stats
+def jaccard_index_df(df):
+    from rohan.dandage.io_sets import jaccard_index_dict
+    return jaccard_index_dict(df.apply(lambda x: dropna(x)).to_dict())
+
 def jaccard_index(l1,l2):
-    l1,l2=unique_dropna(l1),unique_dropna(l2)
+    l1,l2=dropna(l1),dropna(l2)
     i=len(set(l1).intersection(l2))
     u=len(set(l1).union(l2))
     return i/u,i,u

@@ -6,19 +6,6 @@ from rohan.dandage.io_sets import sort_list_by_list
 import logging
 from rohan.dandage.io_dict import read_dict,to_dict
 
-def add_method_to_class(cls):
-    """
-    thanks to https://gist.github.com/mgarod/09aa9c3d8a52a980bd4d738e52e5b97a
-    """
-    def decorator(func):
-#         @wraps(func) 
-        def wrapper(self, *args, **kwargs): 
-            return func(self._obj,*args, **kwargs)
-        setattr(cls, func.__name__, wrapper)
-        # Note we are not binding func, but wrapper which accepts self but does exactly the same as func
-        return func # returning func means func can still be used normally
-    return decorator
-
 # auto scripts
 def notebook2packagescript(notebookp,test=False):
     from rohan.dandage.io_sets import unique
@@ -52,7 +39,9 @@ def notebook2packagescript(notebookp,test=False):
             if f in s:
                 return s.split(f)[1].split(',')[1].split(')')[0].replace("'",'')
     df1['path output']=df1['code raw'].apply(get_path_output)
-#     print(df1)
+    if test:
+        from rohan.dandage.io_dfs import to_table
+        to_table(df1,'test/notebook2packagescript.tsv')
     df1['parameter output']=df1['path output'].apply(lambda x: basenamenoext(x)+'p')
     def get_paths_input(s):
         s='\n'.join([line for line in s.split('\n') if not line.startswith('#')])

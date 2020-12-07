@@ -25,7 +25,7 @@ import pandas as pd
 import numpy as np
 import sys
 import logging
-from rohan.dandage.io_fun import add_method_to_class
+from rohan.dandage import add_method_to_class
 from rohan.global_imports import rd
 
 ## log
@@ -621,19 +621,19 @@ def read_table(p,params_read_csv={}):
     if isinstance(p,list) or '*' in p:
         return read_manytables(p)
     if len(params_read_csv.keys())!=0:
-        return del_Unnamed(pd.read_csv(p,**params_read_csv))        
+        return drop_unnamedcol(pd.read_csv(p,**params_read_csv))        
     else:
         if p.endswith('.tsv') or p.endswith('.tab'):
-            return del_Unnamed(pd.read_csv(p,sep='\t'))
+            return drop_unnamedcol(pd.read_csv(p,sep='\t'))
         elif p.endswith('.csv'):
-            return del_Unnamed(pd.read_csv(p,sep=','))
+            return drop_unnamedcol(pd.read_csv(p,sep=','))
         elif p.endswith('.pqt') or p.endswith('.parquet'):
-            return del_Unnamed(read_table_pqt(p))
+            return drop_unnamedcol(read_table_pqt(p))
         else: 
             logging.error(f'unknown extension {p}')
                         
 def read_table_pqt(p):
-    return del_Unnamed(pd.read_parquet(p,engine='fastparquet'))
+    return drop_unnamedcol(pd.read_parquet(p,engine='fastparquet'))
 
 def read_manytables(ps,axis=0,
                     params_read_csv={},
@@ -650,7 +650,8 @@ def read_manytables(ps,axis=0,
     return df2
 
 ## save table
-def to_table(df,p,test=False,**kws):
+def to_table(df,p,test=False,
+             groupby=None,**kws):
     if is_interactive_notebook(): test=True
 #     from rohan.dandage.io_strs import make_pathable_string
 #     p=make_pathable_string(p)
@@ -658,6 +659,8 @@ def to_table(df,p,test=False,**kws):
         p=p.replace(' ','_')
     else:
         logging.warning('probably working on google drive; space/s left in the path.')
+    if not groupby is None:
+        to_manytables(df,p,groupby)
     if not df.index.name is None:
         df=df.reset_index()
     if not exists(dirname(p)) and dirname(p)!='':
@@ -786,6 +789,8 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
     df1=df1.drop(cols_del,axis=1)
     return df1
 
+
+
 @pd.api.extensions.register_dataframe_accessor("log")
 class log:
     def __init__(self, pandas_obj):
@@ -793,6 +798,9 @@ class log:
     def dropna(self,**kws):
         from rohan.dandage.io_dfs import log_apply
         return log_apply(self._obj,fun='dropna',**kws)
+    def drop_duplicates(self,**kws):
+        from rohan.dandage.io_dfs import log_apply
+        return log_apply(self._obj,fun='drop_duplicates',**kws)    
     def pivot(self,**kws):
         from rohan.dandage.io_dfs import log_apply
         return log_apply(self._obj,fun='pivot',**kws)
@@ -808,3 +816,6 @@ class log:
     def unstack(self,**kws):
         from rohan.dandage.io_dfs import log_apply
         return log_apply(self._obj,fun='unstack',**kws)
+    def merge(self,**kws):
+        from rohan.dandage.io_dfs import log_apply
+        return log_apply(self._obj,fun='merge',**kws)

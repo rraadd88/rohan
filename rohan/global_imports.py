@@ -46,6 +46,8 @@ print("pwd=abspath('.');logplotp=f'log_{basename(pwd)}.log';get_ipython().run_li
 import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+# alias
+info=logging.info
 
 from tqdm import tqdm#,notebook
 from rohan.dandage.io_sys import is_interactive_notebook
@@ -57,7 +59,3 @@ else:
 from pandarallel import pandarallel
 pandarallel.initialize(nb_workers=6,progress_bar=True)
 print("pandarallel.initialize(nb_workers=6,progress_bar=True)")
-
-# load methods 
-# from rohan.dandage import log
-# log()

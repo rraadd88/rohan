@@ -75,6 +75,17 @@ def protein_id2transcript_id(protein_id,ensembl):
     else:
         return np.nan    
 
+def is_protein_coding(x,ensembl):
+    try:
+        g=ensembl.gene_by_id(x)
+    except:
+        return 'gene id not found'
+    return g.is_protein_coding
+def get_gene_name(x,ensembl):
+    try:
+        return ensembl.gene_name_of_gene_id(x)
+    except:
+        return np.nan
 #restful api    
 import requests, sys    
 def ensembl_rest(id_,function,headers={'target_taxon':'9606',
