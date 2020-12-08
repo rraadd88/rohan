@@ -3,9 +3,6 @@ import numpy as np
 import scipy as sc
 import logging
 
-def df2corrmean(df):
-    return df.corr(method='spearman').replace(1,np.nan).mean().mean()
-
 from scipy.stats import spearmanr,pearsonr
 def get_spearmanr(x,y):
     t=sc.stats.spearmanr(x,y,nan_policy='omit')
@@ -42,6 +39,16 @@ def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
 #             outstr=True):
 #     return get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
 #             outstr=False):    
+
+def corr(df,
+         method='spearman',
+         ):
+    df1=df.corr(method=method).rd.fill_diagonal(filler=np.nan)
+    df2=df1.melt(ignore_index=False)
+    col=df2.index.name
+    df2=df2.rename(columns={col:col+' 2',
+                            'value':method}).reset_index()
+    return df2
 
 def corrdfs(df1,df2,method):
     """

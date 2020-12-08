@@ -30,9 +30,9 @@ from rohan.global_imports import rd
 
 ## log
 def log_apply(df, fun, *args, **kwargs):
-    logging.info(f'shape changed from {df.shape}', )
+    logging.info(f'{fun}: shape changed from {df.shape}', )
     df1 = getattr(df, fun)(*args, **kwargs)
-    logging.info(f'shape changed to   {df1.shape}')
+    logging.info(f'{fun}: shape changed to   {df1.shape}')
     return df1
 
 ## delete unneeded columns
@@ -328,19 +328,26 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
     else:
         return dmap2lin(df1).rename(columns={'value':col_out})[col_out].dropna()
 
+## nans:
+@add_method_to_class(rd)
+def check_na_percentage(df):
+    return (df.isnull().sum()/df.agg(len))*100
+
 ## duplicates:
 @add_method_to_class(rd)
-def check_duplicates(df,cols):
+def check_duplicated(df,cols):
     if df.duplicated(subset=cols).any():
         logging.error('duplicates in the table!')  
         return True
     else:
         False
         
-def get_mappings_between_columns(df,cols):
+@add_method_to_class(rd)        
+def check_mappings(df,cols):
     """
     identify duplicates within columns
     """
+    import itertools
     d={}
     for t in list(itertools.permutations(cols,2)):
         d[t]=df.groupby(t[0])[t[1]].nunique().value_counts()
@@ -619,17 +626,38 @@ def make_ids_sorted(df,cols,ids_have_equal_length):
         return np.apply_along_axis(get_ids_sorted, 1, df.loc[:,cols].values)
     else:
         df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
-        
+
+
+## merge/map ids
+@add_method_to_class(rd)
+def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
+    """
+    :params df: target
+    :params df2: sources. labels in colgroupby 
+    """
+    order_subsets=df[colgroupby].unique() if colgroupby is None else order_subsets
+    dn2df={}
+    for k in order_subsets:
+        dn2df[k]=df.merge(df2.groupby(colgroupby).get_group(k),
+                       on=col_mergeon,
+#                        how='inner',suffixes=[' Broad',''],
+                     **kws_merge)
+        dn2df[k]['merged on']=col_mergeon
+        df=df.loc[~df[col_mergeon].isin(dn2df[k][col_mergeon]),:]
+        logging.info(df[col_mergeon].nunique())
+    df3=pd.concat(dn2df,axis=0,names=[colgroupby]).reset_index(drop=True)
+    return df3,df
+
 ## tables io
 def dict2df(d,colkey='key',colvalue='value'):
     return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
 
-def read_table(p,params_read_csv={}):
+def read_table(p,params_read_csv={},**kws_manytables):
     """
     'decimal':'.'
     """
     if isinstance(p,list) or '*' in p:
-        return read_manytables(p)
+        return read_manytables(p,**kws_manytables)
     if len(params_read_csv.keys())!=0:
         return drop_unnamedcol(pd.read_csv(p,**params_read_csv))        
     else:
@@ -645,23 +673,33 @@ def read_table(p,params_read_csv={}):
 def read_table_pqt(p):
     return drop_unnamedcol(pd.read_parquet(p,engine='fastparquet'))
 
-def read_manytables(ps,axis=0,
-                    params_read_csv={},
-                    params_concat={},
-                    fast=False,
-                   ):
-    logging.warning(f'concat axis = {axis}')
+def apply_on_paths(ps,func,
+                    fast=False, 
+                   drop_index=False,
+                  ):
+    def read_table_(df):
+        return read_table(df.iloc[0,:]['path'])
     if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
     df1=pd.DataFrame({'path':ps})
     df2=getattr(df1.groupby('path',as_index=True),
-                        f"{'parallel' if fast else 'progress'}_apply"
-               )(lambda df: read_table(df.iloc[0,:]['path']))
+                            f"{'parallel' if fast else 'progress'}_apply"
+               )(lambda df: func(read_table_(df)))
+    if drop_index:
+        df2=df2.reset_index(drop=True)
+    return df2
+
+def read_manytables(ps,
+                    fast=False,
+                    drop_index=True,
+                   ):
+    df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index)
     return df2
 
 ## save table
-def to_table(df,p,test=False,
-             groupby=None,**kws):
+def to_table(df,p,
+             groupby=None,
+             test=False,**kws):
     if is_interactive_notebook(): test=True
 #     from rohan.dandage.io_strs import make_pathable_string
 #     p=make_pathable_string(p)
@@ -669,12 +707,13 @@ def to_table(df,p,test=False,
         p=p.replace(' ','_')
     else:
         logging.warning('probably working on google drive; space/s left in the path.')
-    if not groupby is None:
-        to_manytables(df,p,groupby)
     if not df.index.name is None:
         df=df.reset_index()
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
+    if not groupby is None:
+        to_manytables(df,p,groupby)
+        return
     if p.endswith('.tsv') or p.endswith('.tab'):
         df.to_csv(p,sep='\t')
         if test:
@@ -799,7 +838,20 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
     df1=df1.drop(cols_del,axis=1)
     return df1
 
-
+def merge_subset(df,colsubset,subset,cols_value,
+                          on,how='left',suffixes=['','.1'],
+                          **kws_merge):
+    """
+    merge a subset from a linear df, sideways
+    """
+    if isinstance(on,str): on=[on]
+    return df.loc[(df[colsubset]!=subset),:].merge(
+                                            df.loc[(df[colsubset]==subset),on+cols_value],
+                                          on=on,
+                                          how=how, 
+                                        suffixes=suffixes,
+                                          **kws_merge,
+                                            )
 
 @pd.api.extensions.register_dataframe_accessor("log")
 class log:
@@ -811,6 +863,9 @@ class log:
     def drop_duplicates(self,**kws):
         from rohan.dandage.io_dfs import log_apply
         return log_apply(self._obj,fun='drop_duplicates',**kws)    
+    def drop(self,**kws):
+        from rohan.dandage.io_dfs import log_apply
+        return log_apply(self._obj,fun='drop',**kws)    
     def pivot(self,**kws):
         from rohan.dandage.io_dfs import log_apply
         return log_apply(self._obj,fun='pivot',**kws)
@@ -826,6 +881,3 @@ class log:
     def unstack(self,**kws):
         from rohan.dandage.io_dfs import log_apply
         return log_apply(self._obj,fun='unstack',**kws)
-    def merge(self,**kws):
-        from rohan.dandage.io_dfs import log_apply
-        return log_apply(self._obj,fun='merge',**kws)
