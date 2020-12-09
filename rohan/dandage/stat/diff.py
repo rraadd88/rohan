@@ -23,6 +23,26 @@ def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_contro
                                       linebreak=False) for k in subset2metrics}
     return subset2metrics
 
+def get_pval(df,
+             colsubset='subset',colvalue='value',
+             subsets=None):
+    """
+    for linear dfs
+    """
+    if subsets is None:
+        subsets=df[colsubset].unique()
+    if len(subset)!=2:
+        logging.error('need only 2 subsets')
+        return
+    try:
+        return sc.stats.mannwhitneyu(
+        df.loc[(df[colsubset]==subsets[0]),colvalue],
+        df.loc[(df[colsubset]==subsets[1]),colvalue],
+            alternative='two-sided')
+    except:
+        return np.nan,np.nan
+
+
 def get_ratio_sorted(a,b):
     l=sorted([a,b])
     if l[1]!=0:
