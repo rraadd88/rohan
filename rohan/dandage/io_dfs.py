@@ -108,23 +108,26 @@ def map2lin(df, var_name_index='index',
 
 ## paired dfs
 @add_method_to_class(rd)
-def unpair_df(df,cols_df1,cols_df2,cols_common,replace_suffix):
-    from rohan.dandage.io_strs import replacelist
-    dfs=[]
-    for cols in [cols_df1,cols_df2]:
-        df_=df[cols+cols_common]
-        df_=df_.rename(columns=dict(zip(df_.columns,replacelist(df_.columns,replace_suffix))))
-        dfs.append(df_)
-    dfout=dfs[0].append(dfs[1])
-    return dfout
+def melt_to_pair(df,
+                suffixes=['gene1','gene2'],
+                ):
+    cols_common=[c for c in df if not any([s in c for s in suffixes])]
+    dn2df={}
+    for s in suffixes:
+        cols=[c for c in df if s in c]
+        dn2df[s]=df.loc[:,cols_common+cols].rename(columns={c:c.replace(s,'') for c in cols})
+    df1=pd.concat(dn2df,axis=0,names=['suffix']).reset_index(0)
+    return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1})
 ### alias
-melt_dfpair=unpair_df
+unpair_df=melt_to_pair
 
 @add_method_to_class(rd)
 def merge_dfs_paired_with_unpaireds(dfpair,df,
-                        left_ons=['gene1 name','gene2 name'],
-                        right_on='gene name',right_ons_common=[],
-                        suffixes=[' gene1',' gene2'],how='left',dryrun=False, test=False,
+                        left_ons=['gene1 id','gene2 id'],
+                        right_on='gene id',right_ons_common=[],
+                        suffixes=[' gene1',' gene2'],how='left',
+                                    dryrun=False, 
+                                    test=False,
                                    **kws_merge):
     """
     :param right_ons_common: columns to merge the right ones. eg. cell line
@@ -178,6 +181,16 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
                  **kws_merge)
     if test:
         logging.info('> dfpair_merge2 columns');logging.info(dfpair_merge2.columns.tolist())
+
+    cols_same_right_on=[f"{right_on}{s}" for s in suffixes]
+    cols_same_right_ons_common=[f"{c}{s}" for c in right_ons_common for s in suffixes]
+    cols_same=list(np.ravel(list(zip(left_ons,cols_same_right_on))))+cols_same_right_ons_common
+    cols_del=cols_same_right_on+cols_same_right_ons_common[1::2]
+    if all([all(dfpair_merge2[c1]==dfpair_merge2[c2]) for c1,c2 in np.reshape(cols_same,(int(len(cols_same)/2),2))]):
+        if test:
+            logging.info('merged correctly')
+        dfpair_merge2=dfpair_merge2.drop(cols_del,axis=1)
+        dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)))
     return dfpair_merge2
 ### alias    
 merge_dfpairwithdf=merge_dfs_paired_with_unpaireds
@@ -410,7 +423,7 @@ def dfswapcols(df,cols):
 #     return df
 
 @add_method_to_class(rd)
-def groupby_sort(df,col_groupby,col_sortby,
+def groupby_sort_values(df,col_groupby,col_sortby,
                  subset=None,
                  col_subset=None,
                  func='mean',ascending=True):
@@ -428,100 +441,120 @@ def groupby_sort(df,col_groupby,col_sortby,
                                 df2.sort_values(col_sortby,
                                                 ascending=ascending)[col_groupby])
 #         return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
-sort_values_groupby=groupby_sort
+sort_values_groupby=groupby_sort_values
 
 @add_method_to_class(rd)
-def sort_by_column_pairs_many_categories(df,
-    preffixes=['gene','protein'],
-    suffixes=[1,2],
-    test=False,
-    ):
-    """
-    append reciprocal
-    """
-    from rohan.dandage.io_strs import replacemany
-    kws={i:[f"{s}{i}" for s in preffixes] for i in suffixes}
-    replaces={i:{s:s.replace(str(i),str(suffixes[0] if i==suffixes[1] else suffixes[1])) for s in kws[i]} for i in kws}
-    renames={c:replacemany(c,replaces[1]) if any([s in c for s in kws[1]]) else replacemany(c,replaces[2]) if any([s in c for s in kws[2]]) else c for c in df.columns}
-    if test:
-        logging.info('renames',renames)
-    df1=dellevelcol(pd.concat({False:df,
-                      True:df.rename(columns=renames)},names=['is reciprocal']).reset_index())
-    if 'index' in df1:
-        df1=df1.drop(['index'],axis=1)
-    return df1
-def apply_sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
-                                    test=False):
-    """
-    Apply
-    Checks if values in pair of columns is sorted.
-    
-    Numbers are sorted in ascending order.
-    
-    :returns : True if sorted else 
-    """
-    if categories is None:
-        if x[f'{colvalue} {suffixes[0]}'] < x[f'{colvalue} {suffixes[1]}']:
-            return True
-        else:
-            return False            
-    else:
-        if test:
-            logging.info([x[f'{colvalue} {suffixes[0]}'],x[f'{colvalue} {suffixes[1]}']],
-              categories,
-              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
-                            x[f'{colvalue} {suffixes[1]}']==categories[1]]),
-              getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
-                            x[f'{colvalue} {suffixes[1]}']==categories[0]]))
-        if categories[0]!=categories[1]:
-            if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
-                                x[f'{colvalue} {suffixes[1]}']==categories[1]]):
-                return True
-            elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
-                                  x[f'{colvalue} {suffixes[1]}']==categories[0]]):
-                return False
-            else:
-                return np.nan        
-        else:
-            return True            
+def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
+                            suffixes=['gene1','gene2'], # no spaces
+                            ):
+    suffixes=[s.replace(' ','') for s in suffixes]
+    dn2df={}
+    # keys: (equal, to be sorted)
+    dn2df[(False,False)]=df.loc[(df[cols_sortby[0]]<df[cols_sortby[1]]),:]
+    dn2df[(False,True)]=df.loc[(df[cols_sortby[0]]>df[cols_sortby[1]]),:]
+    dn2df[(True,False)]=df.loc[(df[cols_sortby[0]]==df[cols_sortby[1]]),:]
+    dn2df[(True,True)]=df.loc[(df[cols_sortby[0]]==df[cols_sortby[1]]),:]
+    ## rename columns of of to be sorted
+    rename={c:c.replace(suffixes[0],suffixes[1]) if (suffixes[0] in c) else c.replace(suffixes[1],suffixes[0]) if (suffixes[1] in c) else c for c in df}
+    for k in [True, False]:
+        dn2df[(k,True)]=dn2df[(k,True)].rename(columns=rename)
         
-@add_method_to_class(rd)
-def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
-    """
-    sort values in pair of columns and sort the index accordingly.
-    """
-    suffix2cols={s:sorted(df.filter(like=s).columns.tolist()) for s in suffixes}
-    if len(suffix2cols[suffixes[0]])!=len(suffix2cols[suffixes[1]]):
-        logging.error("df should contain paired columns")
-        logging.info(suffix2cols)
-        return 
-    from rohan.dandage.io_sets import list2intersection
-    if len(list2intersection(list(suffix2cols.values())))!=0:
-        logging.error("df should contain non-overlapping paired columns")
-        logging.info(suffix2cols)
-        return 
-#     df['fsorted {colvalue}']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: apply_sorted_column_pair(x,colvalue=colvalue,
-#                                                                                                       suffixes=suffixes,
-#                                                                                                       categories=categories,
-#                                                                                                       how=how,test=test),axis=1)
-    df[f'sorted {colvalue}']=((df[f'{colvalue}{suffixes[0]}']==categories[0]) & (df[f'{colvalue}{suffixes[1]}']==categories[1]))
-    if test:
-        logging.info(df.shape)
-#     df=df.dropna(subset=[f'sorted {colvalue}'])
-#     df[f'sorted {colvalue}']=df[f'sorted {colvalue}'].astype(bool)
-    if test:
-        logging.info(df.shape)
-    df1,df2=df.loc[df[f'sorted {colvalue}'],:],df.loc[~df[f'sorted {colvalue}'],:]
-    # rename cols of df2 (not sorted) 
-    rename=dict(zip(suffix2cols[suffixes[0]]+suffix2cols[suffixes[1]],
-             suffix2cols[suffixes[1]]+suffix2cols[suffixes[0]]))
-    if test:
-        logging.info(rename)
-    df2=df2.rename(columns=rename)
-    df3=df1.append(df2)
-    if test:
-        logging.info(df1.shape,df2.shape,df3.shape)
-    return df3#.drop([f'sorted {colvalue}'],axis=1)
+    df1=pd.concat(dn2df,names=['equal','sorted']).reset_index([0,1])
+    logging.info(df1.groupby(['equal','sorted']).size())
+    return df1
+
+# @add_method_to_class(rd)
+# def sort_by_column_pairs_many_categories(df,
+#     preffixes=['gene','protein'],
+#     suffixes=[1,2],
+#     test=False,
+#     ):
+#     """
+#     append reciprocal
+#     """
+#     from rohan.dandage.io_strs import replacemany
+#     kws={i:[f"{s}{i}" for s in preffixes] for i in suffixes}
+#     replaces={i:{s:s.replace(str(i),str(suffixes[0] if i==suffixes[1] else suffixes[1])) for s in kws[i]} for i in kws}
+#     renames={c:replacemany(c,replaces[1]) if any([s in c for s in kws[1]]) else replacemany(c,replaces[2]) if any([s in c for s in kws[2]]) else c for c in df.columns}
+#     if test:
+#         logging.info('renames',renames)
+#     df1=dellevelcol(pd.concat({False:df,
+#                       True:df.rename(columns=renames)},names=['is reciprocal']).reset_index())
+#     if 'index' in df1:
+#         df1=df1.drop(['index'],axis=1)
+#     return df1
+# def apply_sorted_column_pair(x,colvalue,suffixes,categories=None,how='all',
+#                                     test=False):
+#     """
+#     Apply
+#     Checks if values in pair of columns is sorted.
+    
+#     Numbers are sorted in ascending order.
+    
+#     :returns : True if sorted else 
+#     """
+#     if categories is None:
+#         if x[f'{colvalue} {suffixes[0]}'] < x[f'{colvalue} {suffixes[1]}']:
+#             return True
+#         else:
+#             return False            
+#     else:
+#         if test:
+#             logging.info([x[f'{colvalue} {suffixes[0]}'],x[f'{colvalue} {suffixes[1]}']],
+#               categories,
+#               getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+#                             x[f'{colvalue} {suffixes[1]}']==categories[1]]),
+#               getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+#                             x[f'{colvalue} {suffixes[1]}']==categories[0]]))
+#         if categories[0]!=categories[1]:
+#             if getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[0],
+#                                 x[f'{colvalue} {suffixes[1]}']==categories[1]]):
+#                 return True
+#             elif getattr(np,how)([x[f'{colvalue} {suffixes[0]}']==categories[1],
+#                                   x[f'{colvalue} {suffixes[1]}']==categories[0]]):
+#                 return False
+#             else:
+#                 return np.nan        
+#         else:
+#             return True            
+        
+# @add_method_to_class(rd)
+# def sort_by_column_pairs(df,colvalue,suffixes,categories=None,how='all',test=False,fast=True): 
+#     """
+#     sort values in pair of columns and sort the index accordingly.
+#     """
+#     suffix2cols={s:sorted(df.filter(like=s).columns.tolist()) for s in suffixes}
+#     if len(suffix2cols[suffixes[0]])!=len(suffix2cols[suffixes[1]]):
+#         logging.error("df should contain paired columns")
+#         logging.info(suffix2cols)
+#         return 
+#     from rohan.dandage.io_sets import list2intersection
+#     if len(list2intersection(list(suffix2cols.values())))!=0:
+#         logging.error("df should contain non-overlapping paired columns")
+#         logging.info(suffix2cols)
+#         return 
+# #     df['fsorted {colvalue}']=getattr(df,'parallel_apply' if fast else 'apply')(lambda x: apply_sorted_column_pair(x,colvalue=colvalue,
+# #                                                                                                       suffixes=suffixes,
+# #                                                                                                       categories=categories,
+# #                                                                                                       how=how,test=test),axis=1)
+#     df[f'sorted {colvalue}']=((df[f'{colvalue}{suffixes[0]}']==categories[0]) & (df[f'{colvalue}{suffixes[1]}']==categories[1]))
+#     if test:
+#         logging.info(df.shape)
+# #     df=df.dropna(subset=[f'sorted {colvalue}'])
+# #     df[f'sorted {colvalue}']=df[f'sorted {colvalue}'].astype(bool)
+#     if test:
+#         logging.info(df.shape)
+#     df1,df2=df.loc[df[f'sorted {colvalue}'],:],df.loc[~df[f'sorted {colvalue}'],:]
+#     # rename cols of df2 (not sorted) 
+#     rename=dict(zip(suffix2cols[suffixes[0]]+suffix2cols[suffixes[1]],
+#              suffix2cols[suffixes[1]]+suffix2cols[suffixes[0]]))
+#     if test:
+#         logging.info(rename)
+#     df2=df2.rename(columns=rename)
+#     df3=df1.append(df2)
+#     if test:
+#         logging.info(df1.shape,df2.shape,df3.shape)
+#     return df3#.drop([f'sorted {colvalue}'],axis=1)
 
 # quantile bins
 @add_method_to_class(rd)
@@ -675,16 +708,26 @@ def read_table_pqt(p):
 
 def apply_on_paths(ps,func,
                     fast=False, 
-                   drop_index=False,
+                   drop_index=True,
+                   read_path=False,
+                   **kws,
                   ):
-    def read_table_(df):
-        return read_table(df.iloc[0,:]['path'])
+    def read_table_(df,read_path=False):
+        p=df.iloc[0,:]['path']
+        if read_path:
+            return p
+        else:
+            return read_table(p)
     if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
+    if len(ps)==0:
+        logging.error('no paths found')
+        return
     df1=pd.DataFrame({'path':ps})
     df2=getattr(df1.groupby('path',as_index=True),
                             f"{'parallel' if fast else 'progress'}_apply"
-               )(lambda df: func(read_table_(df)))
+               )(lambda df: func(read_table_(df,read_path=read_path),
+                                 **kws))
     if drop_index:
         df2=df2.reset_index(drop=True)
     return df2
