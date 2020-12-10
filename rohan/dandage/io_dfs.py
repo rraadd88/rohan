@@ -122,7 +122,7 @@ def melt_to_pair(df,
 unpair_df=melt_to_pair
 
 @add_method_to_class(rd)
-def merge_dfs_paired_with_unpaireds(dfpair,df,
+def merge_paired(dfpair,df,
                         left_ons=['gene1 id','gene2 id'],
                         right_on='gene id',right_ons_common=[],
                         suffixes=[' gene1',' gene2'],how='left',
@@ -192,9 +192,9 @@ def merge_dfs_paired_with_unpaireds(dfpair,df,
         dfpair_merge2=dfpair_merge2.drop(cols_del,axis=1)
         dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)))
     return dfpair_merge2
-### alias    
-merge_dfpairwithdf=merge_dfs_paired_with_unpaireds
-
+### alias to be deprecated   
+merge_dfpairwithdf=merge_paired
+merge_dfs_paired_with_unpaireds=merge_paired
 
 ## symmetric dfs eg. submaps    
 @add_method_to_class(rd)
@@ -275,7 +275,11 @@ def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
 
 ## GROUPBY
 # aggregate dataframes
-def get_group(groups,i=0):return groups.get_group(list(groups.groups.keys())[i])
+def get_group(groups,i=None,):
+    if not i is None: 
+        return groups.get_group(list(groups.groups.keys())[i])
+    else:
+        return groups.get_group(groups.size().sort_values(ascending=False).index.tolist()[0])
         
 @add_method_to_class(rd)
 def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
@@ -353,7 +357,7 @@ def check_duplicated(df,cols):
         logging.error('duplicates in the table!')  
         return True
     else:
-        False
+        return False
         
 @add_method_to_class(rd)        
 def check_mappings(df,cols):

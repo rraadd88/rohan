@@ -78,25 +78,44 @@ def plot_barh_stacked_percentage(dplot,col_annot,
     ax.set(xlim=[0,100],xlabel='%')
     return ax
 
-def plot_bar_intersections(dplot,cols,col_index):
+def plot_bar_intersections(dplot,cols,col_index,
+                            min_intersections=5,
+                            figsize=[5,5],text_width=5,
+                            sort_by='cardinality',
+                            sort_categories_by=None,#'cardinality',
+                            element_size=40,
+                            facecolor='gray',
+                            totals=False,
+                            **kws,
+                          ):
     """
     upset
     """
-    dplot=dplot.dropna(subset=[col_index]).drop_duplicates(subset=[col_index])
-    ds=dplot.groupby(cols).agg({col_index:lambda x: len(np.unique(x))})[col_index]
+    if not isinstance(col_index,str): 
+        logging.error('co_index needs to be a string')
+        return
+    dplot=dplot.log.dropna(subset=[col_index]).log.drop_duplicates(subset=[col_index])
+    ds=dplot.groupby(cols).agg({col_index:'nunique'})[col_index]
     ds=ds/len(dplot[col_index].unique())*100
     # from rohan.dandage.io_strs import linebreaker
     # ds.index.names=[linebreaker(s,break_pt=25) for s in ds.index.names]
     import upsetplot as up
-    fig=plt.figure(figsize=[10,10])
-    d=up.plot(ds[ds>1],
-            sort_by='cardinality',
-           sort_categories_by=None,
-             element_size=40,
-              facecolor='gray',
+#     fig=plt.figure()
+    d=up.plot(ds,
+              figsize=figsize,
+              text_width=text_width,
+            sort_by=sort_by,
+            sort_categories_by=sort_categories_by,
+              facecolor=facecolor,element_size=element_size,
+              **kws,
              ) 
-    d['totals'].set_visible(False)
-    d['intersections'].set(ylabel=f'{col_index}s %')
+    d['totals'].set_visible(totals)
+    if totals:
+        d['totals'].set(ylim=d['totals'].get_ylim()[::-1],
+                       xlabel='%')
+    d['intersections'].set(ylabel=f'{col_index}s %',
+                          xlim=[-0.5,min_intersections-0.5],
+                          )
     d['intersections'].get_children()[0].set_color("#f55f5f")
     d['intersections'].text(-0.25,ds.max(),f"{ds.max():.1f}%",
                             ha='left',va='bottom',color="#f55f5f")    
