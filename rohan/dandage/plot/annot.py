@@ -249,3 +249,16 @@ def annot_subsets(dplot,colx,colsubsets,
             ax.scatter(X,Y,label=subset,color=subset2color[subset],**params_scatter)
             ax.text(ax.get_xlim()[1],y,subset,ha='left')
     return ax
+
+def plot_errorbar(ax, xdata, ydata, caps="  ",color='lightgray'):
+    import matplotlib as mpl
+    line = ax.add_line(mpl.lines.Line2D(xdata, ydata,color=color))
+    anno_args = {
+        'ha': 'center',
+        'va': 'center',
+        'size': 24,
+        'color': line.get_color()
+    }
+    a0 = ax.annotate(caps[0], xy=(xdata[0], ydata[0]), **anno_args)
+    a1 = ax.annotate(caps[1], xy=(xdata[1], ydata[1]), **anno_args)
+    return ax

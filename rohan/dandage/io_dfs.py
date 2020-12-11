@@ -82,12 +82,19 @@ def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
         logging.warning([k for k in d if not k in df])
     return df1
 
+## conversion
+def convert_to_bools(df,col):
+    for s in df[col].unique():
+        df[f"{col} {s}"]=df[col]==s
+    return df
+
 ## reshape df
+@add_method_to_class(rd)
 def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
     """
     dmap: ids in index and columns 
     idxn,coln of dmap -> 1st and 2nd col
-    TODO: deprecate. use map2lin instead.
+    TODO: deprecate. use melt(ignore_index=False) instead.
     """
 #     df.columns.name=coln
     if isinstance(df.index,pd.MultiIndex):
@@ -103,12 +110,15 @@ def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
 def map2lin(df, var_name_index='index',
          var_name_col='column',
          value_name='value',):
+    """
+    TODO: deprecate. use melt(ignore_index=False) instead.
+    """
     return dmap2lin(df,idxn=var_name,coln=var_name_col,colvalue_name=value_name)
     
 
 ## paired dfs
 @add_method_to_class(rd)
-def melt_to_pair(df,
+def melt_paired(df,
                 suffixes=['gene1','gene2'],
                 ):
     cols_common=[c for c in df if not any([s in c for s in suffixes])]
@@ -119,7 +129,8 @@ def melt_to_pair(df,
     df1=pd.concat(dn2df,axis=0,names=['suffix']).reset_index(0)
     return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1})
 ### alias
-unpair_df=melt_to_pair
+@add_method_to_class(rd)
+unpair_df=melt_paired
 
 @add_method_to_class(rd)
 def merge_paired(dfpair,df,
@@ -425,6 +436,17 @@ def dfswapcols(df,cols):
 #     df=df.sort_values(by=f'_{col}')
 #     df=df.drop([f'_{col}'],axis=1)
 #     return df
+
+@add_method_to_class(rd)
+def groupby_agg_merge(df,col_groupby,col_aggby,
+                      funs=['mean'],
+                      ascending=True):
+    if subset is None:
+        df1=gs.agg({col_sortby:getattr(np,func)}).reset_index()
+        df2=df.merge(df1,
+                on=col_groupby,how='inner',suffixes=['',f' per {col_groupby}'])
+        logging.warning(f'column added to df: {col_sortby} per {col_groupby}')
+        return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
 
 @add_method_to_class(rd)
 def groupby_sort_values(df,col_groupby,col_sortby,
