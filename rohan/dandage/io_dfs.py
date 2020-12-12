@@ -129,7 +129,7 @@ def melt_paired(df,
     df1=pd.concat(dn2df,axis=0,names=['suffix']).reset_index(0)
     return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1})
 ### alias
-@add_method_to_class(rd)
+# @add_method_to_class(rd)
 unpair_df=melt_paired
 
 @add_method_to_class(rd)
@@ -288,9 +288,12 @@ def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
 # aggregate dataframes
 def get_group(groups,i=None,):
     if not i is None: 
-        return groups.get_group(list(groups.groups.keys())[i])
+        dn=list(groups.groups.keys())[i]
     else:
-        return groups.get_group(groups.size().sort_values(ascending=False).index.tolist()[0])
+        dn=groups.size().sort_values(ascending=False).index.tolist()[0]
+    df=groups.get_group(dn)
+    df.name=dn
+    return df
         
 @add_method_to_class(rd)
 def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
@@ -735,6 +738,7 @@ def read_table_pqt(p):
 def apply_on_paths(ps,func,
                     fast=False, 
                    drop_index=True,
+                   fun_rename_path=None,
                    read_path=False,
                    **kws,
                   ):
@@ -744,6 +748,8 @@ def apply_on_paths(ps,func,
             return p
         else:
             return read_table(p)
+    if not fun_rename_path is None:
+        drop_index=False
     if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
     if len(ps)==0:
@@ -754,15 +760,18 @@ def apply_on_paths(ps,func,
                             f"{'parallel' if fast else 'progress'}_apply"
                )(lambda df: func(read_table_(df,read_path=read_path),
                                  **kws))
-    if drop_index:
-        df2=df2.reset_index(drop=True)
+    df2=df2.reset_index(drop=drop_index)
+    if not fun_rename_path is None:
+        rename={p:fun_rename_path(p) for p in df2['path'].unique()}
+        df2['path']=df2['path'].map(rename)
     return df2
 
 def read_manytables(ps,
                     fast=False,
                     drop_index=True,
+                    **kws,
                    ):
-    df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index)
+    df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,**kws)
     return df2
 
 ## save table

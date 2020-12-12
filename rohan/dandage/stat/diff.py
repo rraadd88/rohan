@@ -63,6 +63,8 @@ def get_pval(df,
     """
     either colsubset or subsets are needed 
     """
+    if not (colvalue in df) or (colsubset in df):
+        logging.error(f"colvalue or colsubset not found in df: {colvalue} or {colsubset}")
     if subsets is None:
         subsets=df[colsubset].unique()
     if len(subsets)!=2:
