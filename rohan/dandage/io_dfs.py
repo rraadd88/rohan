@@ -286,11 +286,12 @@ def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
 
 ## GROUPBY
 # aggregate dataframes
-def get_group(groups,i=None,):
+def get_group(groups,i=None,verbose=True):
     if not i is None: 
         dn=list(groups.groups.keys())[i]
     else:
         dn=groups.size().sort_values(ascending=False).index.tolist()[0]
+    logging.info(dn)
     df=groups.get_group(dn)
     df.name=dn
     return df
