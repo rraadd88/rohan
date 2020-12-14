@@ -2,7 +2,7 @@ from rohan.global_imports import *
 from rohan.dandage.plot.colors import *
 from rohan.dandage.plot.annot import *
 from rohan.dandage.plot.ax_ import *
-from rohan.dandage.io_fun import add_method_to_class
+from rohan.dandage import add_method_to_class
 
 @add_method_to_class(rd)
 def plot_dists(dplot,colx,coly,colindex,order,
@@ -256,7 +256,7 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
     import inspect
     return [locals()[arg] for arg in inspect.getargspec(plot_dist_comparison).args]
 
-from rohan.dandage.plot.colors import reset_legend_colors
+@add_method_to_class(rd)
 def hist_annot(dplot,colx,
                colssubsets=[],
                bins=100,
@@ -268,6 +268,7 @@ def hist_annot(dplot,colx,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
                xlim=None,
                 ax=None):
+    from rohan.dandage.plot.colors import reset_legend_colors
     if not xlim is None:
         logging.warning('colx adjusted to xlim')
         dplot.loc[(dplot[colx]<xlim[0]),colx]=xlim[0]
@@ -328,12 +329,14 @@ def plot_gaussianmixture(g,x,ax=None):
     ax.plot(x,mix_pdf.ravel(), c='lightgray')
     ax.plot(x,two_pdfs[0]*weights[0], c='gray')
     ax.plot(x,two_pdfs[1]*weights[1], c='gray')
-    print('weights',weights)
-    idxs=get_intersection_locations(y1=two_pdfs[0],y2=two_pdfs[1],test=False,x=x)
+    logging.info(f'weights {weights}')
+    idxs=get_intersection_locations(y1=two_pdfs[0]*weights[0],
+                                    y2=two_pdfs[1]*weights[1],
+                                    test=False,x=x)
     x_intersections=x[idxs]
 #     x_intersections=get_intersection_of_gaussians(means[0][0],stds[0][0],
 #                                                   means[1][0],stds[1][0],)
-    print('intersections',x_intersections)
+    logging.info(f'intersections {x_intersections}')
     ms=sorted([means[0][0],means[1][0]])
     coff=[i for i in x_intersections if i>ms[0] and i<ms[1]][0]
     ax.axvline(coff,color='k')

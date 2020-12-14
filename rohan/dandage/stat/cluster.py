@@ -125,8 +125,9 @@ def get_clusters_optimum(X,n_clusters=range(2,11),
 def cluster_1d(ds,n_clusters,clf_type='gmm',
                random_state=88,
                  test=False,
-                return_coff=False,
-                  return_ax=False,
+               returns=['df','coff','ax'],
+#                 return_coff=False,
+#                   return_ax=False,
               **kws_clf):
     from rohan.dandage.plot.dist import plot_gaussianmixture    
     x=ds.to_numpy()
@@ -136,7 +137,7 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
         clf = GaussianMixture(n_components=n_clusters,)
     elif clf_type.lower()=='kmeans':
         from sklearn.cluster import KMeans
-        clf=KMeans(n_clusters=n_clusters,**kws_kmeans).fit(X,)
+        clf=KMeans(n_clusters=n_clusters,**kws_clf).fit(X,)
     else:
         raise ValueError(clf_type)
     ## fit and predic
@@ -153,8 +154,20 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
         if clf_type=='gmm':
             ax,coff=plot_gaussianmixture(g=clf,x=x,ax=ax)
         else:
-            df.groupby('label').apply(lambda df: ax.axvline(df['value'].min(),label=df.name,
-                                                       color='b'))
-            df.groupby('label').apply(lambda df: ax.axvline(df['value'].max(),label=df.name,
-                                                       color='k'))
-    return ax if return_ax else coff if return_coff else df
+            coffs=df.groupby('label')['value'].agg(min).values
+            for c in coffs:
+                if  c > df['value'].quantile(0.05) and c < df['value'].quantile(0.95):
+                    coff=c
+                    break
+            logging.info(f"coff:{c}; selected from {coffs}")
+            ax.axvline(coff,color='k')
+            ax.text(coff,ax.get_ylim()[1],f"{coff:.1f}",ha='center',va='bottom')            
+    d={'df':df}
+    for k in returns:
+        d[k]=locals()[k]
+
+#     if 'coff' in returns:
+#         d['coff']=coff
+#     if 'ax' in returns:
+#         d['ax']=coff
+    return d 

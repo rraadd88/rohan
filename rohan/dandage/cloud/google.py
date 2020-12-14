@@ -1,3 +1,4 @@
+import pandas as pd
 """
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 """
@@ -199,24 +200,25 @@ def get_comments(fileid,fields='comments/quotedFileContent/value,comments/conten
                 replies:
                     []
     """
-    def apply_(service,**kws_list)
-        comments = service.comments().list(**kws_list).execute()
+    def apply_(service,fileId,fields,**kws_list):
+        comments = service.comments().list(fileId=fileId,fields=fields,**kws_list).execute()
         df1=pd.DataFrame(pd.concat({di:pd.Series({k:d[k] for k in d}) for di,d in enumerate(comments['comments'])},
                  axis=0)).reset_index().rename(columns={'level_0':'comment #',
                                                         'level_1':'key',0:'value'})
         df1['value']=df1['value'].apply(lambda x: ','.join(x.values()) if isinstance(x,dict) else x)
         df1=df1.set_index(['comment #','key'])
         df1=df1.unstack(1).droplevel(0,1)
-        df1['link']=df1['id'].apply(lambda x: f"https://drive.google.com/file/d/{fileid}/edit?disco={x}")
+        df1['link']=df1['id'].apply(lambda x: f"https://drive.google.com/file/d/{fileId}/edit?disco={x}")
         df1=df1.rename(columns={'content':'comment',
                            'quotedFileContent':'text'}).drop(['id'],axis=1)
+        return df1
     service=get_service()    
-    if not isinstance(fileid,str):
+    if isinstance(fileid,str):
         fileid=[fileid]
-    df1=pd.concat([apply_(service,fileId=fileid,
+    df1=pd.concat({k:apply_(service,fileId=k,
                     #fields='comments',
                      fields=fields,# nextPageToken',
                      includeDeleted='false',
-                     pageSize=100) for k in fileid],
+                     pageSize=100) for k in fileid},
              axis=0)
     return df1
