@@ -59,33 +59,46 @@ def get_col2metrics(df,colxs,coly,method='mannwhitneyu',alternative='two-sided')
 def get_pval(df,
              colvalue='value',
              colsubset='subset',
+             colvalue_bool=False,
              subsets=None):
     """
     either colsubset or subsets are needed 
     """
-    if not (colvalue in df) or (colsubset in df):
+    if not ((colvalue in df) and (colsubset in df)):
         logging.error(f"colvalue or colsubset not found in df: {colvalue} or {colsubset}")
     if subsets is None:
         subsets=df[colsubset].unique()
     if len(subsets)!=2:
         logging.error('need only 2 subsets')
         return
-    try:
-        return sc.stats.mannwhitneyu(
-        df.loc[(df[colsubset]==subsets[0]),colvalue],
-        df.loc[(df[colsubset]==subsets[1]),colvalue],
-            alternative='two-sided')
-    except:
-        return np.nan,np.nan
-
+    else:
+        df=df.loc[df[colsubset].isin(subsets),:]
+    if colvalue_bool and df[colvalue].dtype==bool:
+        df[colsubset]=df[colsubset]==subsets[0]
+    if colvalue_bool and not df[colvalue].dtype==bool:        
+        logging.warning(f"colvalue_bool {colvalue} is not bool")
+        return
+    if not colvalue_bool:
+        try:
+            return sc.stats.mannwhitneyu(
+            df.loc[(df[colsubset]==subsets[0]),colvalue],
+            df.loc[(df[colsubset]==subsets[1]),colvalue],
+                alternative='two-sided')
+        except:
+            return np.nan,np.nan
+    else:
+        ct=pd.crosstab(df[colvalue],df[colsubset])
+        if ct.shape==(2,2):
+            return sc.stats.fisher_exact(ct)
+        
 def get_stats(df1=None,
-             colvalue='value',
-             colsubset='subset',
+              colsubset='subset',
+              colvalue='value',
               subsets=None,
-            cols_subsets=['subset1', 'subset2'],
+              cols_subsets=['subset1', 'subset2'],
               df2=None,
-              stats=[np.mean,np.median,np.std,len],
-              debug=True,
+              stats=[np.mean,np.median,np.var]+[len],
+              debug=False,
              ):
     """
     :params df2: pairs of comparisons between subsets
@@ -96,9 +109,13 @@ def get_stats(df1=None,
         np.random.seed(88)
         df1=pd.concat({s:pd.Series([np.random.uniform(0,si+1) for _ in range((si+1)*10)]) for si,s in enumerate(subsets)},
                  axis=0).reset_index(0).rename(columns={'level_0':'subset',0:'value'})
-
+        
+    if not ((colvalue in df1) and (colsubset in df1)):
+        logging.error(f"colvalue or colsubset not found in df: {colvalue} or {colsubset}")
+        return
     if subsets is None:
-        subsets=df1[colsubset].unique()    
+        subsets=df1[colsubset].unique()
+    colvalue_bool=df1[colvalue].dtype==bool
     if df2 is None:
         import itertools
         df2=pd.DataFrame([t for t in list(itertools.permutations(subsets,2))])
@@ -106,10 +123,14 @@ def get_stats(df1=None,
     df2=df2.groupby(cols_subsets).apply(lambda df: get_pval(df1,colvalue=colvalue,
                                                             colsubset=colsubset,
                                                             subsets=df.name,
-                                                           )).apply(pd.Series).rename(columns={0:'stat (MWU test)',1:'P (MWU test)'}).reset_index()
+                                                            colvalue_bool=colvalue_bool,
+                                                           )).apply(pd.Series)
+    df2=df2.rename(columns={0:f"stat ({'MWU' if not colvalue_bool else 'FE'} test)",
+                            1:f"P ({'MWU' if not colvalue_bool else 'FE'} test)",
+                            }).reset_index()
     from rohan.dandage.io_dfs import merge_paired
     df3=merge_paired(df2,
-        df=df1.groupby([colsubset])['value'].agg(stats).reset_index(),
+        df=df1.groupby([colsubset])[colvalue].agg(stats if not colvalue_bool else [sum,len]).reset_index(),
         left_ons=cols_subsets,
         right_on=colsubset,
         right_ons_common=[],

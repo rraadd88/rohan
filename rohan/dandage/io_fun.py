@@ -6,6 +6,9 @@ from rohan.dandage.io_sets import sort_list_by_list
 import logging
 from rohan.dandage.io_dict import read_dict,to_dict
 
+import pandas as pd
+pd.options.mode.chained_assignment = None
+
 # auto scripts
 def notebook2packagescript(notebookp,test=False):
     from rohan.dandage.io_sets import unique
@@ -36,13 +39,14 @@ def notebook2packagescript(notebookp,test=False):
     def get_path_output(s):
         s='\n'.join([line for line in s.split('\n') if not line.startswith('#')])
         for f in ['to_table','to_dict']:
-            if f in s:
+            if f in s and not 'to_dict()' in s:
                 return s.split(f)[1].split(',')[1].split(')')[0].replace("'",'')
-    df1['path output']=df1['code raw'].apply(get_path_output)
+    df1.loc[:,'path output']=df1['code raw'].apply(get_path_output)
+    df1=df1.log.dropna(subset=['path output'])
     if test:
         from rohan.dandage.io_dfs import to_table
         to_table(df1,'test/notebook2packagescript.tsv')
-    df1['parameter output']=df1['path output'].apply(lambda x: basenamenoext(x)+'p')
+    df1.loc[:,'parameter output']=df1['path output'].apply(lambda x: basenamenoext(x)+'p')
     def get_paths_input(s):
         s='\n'.join([line for line in s.split('\n') if not line.startswith('#')])
         paths=[]
@@ -50,9 +54,9 @@ def notebook2packagescript(notebookp,test=False):
             if f in s:
                 paths.append(s.split(f)[1].split(',')[0].split(')')[0].replace("'",''))
         return paths
-    df1['paths input']=df1['code raw'].apply(get_paths_input)
-    df1['parameters input']=df1['paths input'].apply(lambda x: [basenamenoext(s)+'p' for s in x])
-    df1['parameters']=df1.apply(lambda x: ['cfg']+x['parameters input']+[x['parameter output']],axis=1)
+    df1.loc[:,'paths input']=df1['code raw'].apply(get_paths_input)
+    df1.loc[:,'parameters input']=df1['paths input'].apply(lambda x: [basenamenoext(s)+'p' for s in x])
+    df1.loc[:,'parameters']=df1.apply(lambda x: ['cfg']+x['parameters input']+[x['parameter output']],axis=1)
     if any(df1['parameters'].apply(lambda x: len(unique(x))!=len(x))):
         logging.error(f'{notebookp}: duplicate parametter/s')
     if df1['path output'].apply(lambda x: basename(dirname(x))).unique().shape[0]!=1:
@@ -61,8 +65,8 @@ def notebook2packagescript(notebookp,test=False):
         if df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')!=basename(notebookp).split('_v')[0]:
             logging.error(f"{notebookp}: output directory should match notebook directory. {df1['path output'].apply(lambda x: basename(dirname(x))).unique()[0].replace('data','')}!={basename(notebookp).split('_v')[0]}")
 
-    df1['function name']=df1.apply(lambda x: f"get{x.name:02d}_{x['parameter output']}",axis=1)
-    df1['function line']=df1.apply(lambda x: f"def {x['function name']}({','.join(x['parameters'])}):",axis=1)
+    df1.loc[:,'function name']=df1.apply(lambda x: f"get{x.name:02d}_{x['parameter output']}",axis=1)
+    df1.loc[:,'function line']=df1.apply(lambda x: f"def {x['function name']}({','.join(x['parameters'])}):",axis=1)
 
     def get_code(x):
         from rohan.dandage.io_strs import replacemany
@@ -71,7 +75,7 @@ def notebook2packagescript(notebookp,test=False):
         code=replacemany(code,dict(zip([f"'{s}'" for s in x['paths input']],x['parameters input'])))
         code=x['function line']+'\n'+'    '+code.replace('\n','\n    ')
         return code.replace('\n    \n    ','\n    ')
-    df1['code']=df1.apply(get_code,axis=1)
+    df1.loc[:,'code']=df1.apply(get_code,axis=1)
 
     code='from rohan.global_imports import *\n'+'\n\n'.join(df1['code'].tolist())
     if not test:

@@ -457,6 +457,7 @@ def groupby_sort_values(df,col_groupby,col_sortby,
                  subset=None,
                  col_subset=None,
                  func='mean',ascending=True):
+    gs=df.groupby(col_groupby)
     if subset is None:
         df1=gs.agg({col_sortby:getattr(np,func)}).reset_index()
         df2=df.merge(df1,
@@ -688,7 +689,7 @@ def make_ids_sorted(df,cols,ids_have_equal_length):
     if ids_have_equal_length:
         return np.apply_along_axis(get_ids_sorted, 1, df.loc[:,cols].values)
     else:
-        df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
+        return df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
 
 
 ## merge/map ids
@@ -741,6 +742,7 @@ def apply_on_paths(ps,func,
                    drop_index=True,
                    fun_rename_path=None,
                    read_path=False,
+                   progress_bar=True,
                    **kws,
                   ):
     def read_table_(df,read_path=False):
@@ -757,8 +759,10 @@ def apply_on_paths(ps,func,
         logging.error('no paths found')
         return
     df1=pd.DataFrame({'path':ps})
+    if fast and not progress_bar:
+        progress_bar=True
     df2=getattr(df1.groupby('path',as_index=True),
-                            f"{'parallel' if fast else 'progress'}_apply"
+                            f"{'parallel' if fast else 'progress'}_apply" if progress_bar else "apply"
                )(lambda df: func(read_table_(df,read_path=read_path),
                                  **kws))
     df2=df2.reset_index(drop=drop_index)

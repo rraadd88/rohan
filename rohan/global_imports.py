@@ -51,11 +51,15 @@ info=logging.info
 
 from tqdm import tqdm#,notebook
 from rohan.dandage.io_sys import is_interactive_notebook
+
 if not is_interactive_notebook:
     tqdm.pandas()
 else:
     from tqdm import notebook
     notebook.tqdm().pandas()
+# from tqdm.autonotebook import tqdm
+# tqdm.pandas()
+
 from pandarallel import pandarallel
 pandarallel.initialize(nb_workers=6,progress_bar=True)
 print("pandarallel.initialize(nb_workers=6,progress_bar=True)")
