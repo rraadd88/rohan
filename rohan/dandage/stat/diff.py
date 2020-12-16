@@ -56,6 +56,14 @@ def get_col2metrics(df,colxs,coly,method='mannwhitneyu',alternative='two-sided')
     return d    
 
 ## for linear dfs
+def get_demo_data():
+    subsets=list('abcd')
+    np.random.seed(88)
+    df1=pd.concat({s:pd.Series([np.random.uniform(0,si+1) for _ in range((si+1)*100)]) for si,s in enumerate(subsets)},
+             axis=0).reset_index(0).rename(columns={'level_0':'subset',0:'value'})
+    df1['bool']=df1['value']>df1['value'].quantile(0.5)
+    return df1
+
 def get_pval(df,
              colvalue='value',
              colsubset='subset',
@@ -91,25 +99,20 @@ def get_pval(df,
         if ct.shape==(2,2):
             return sc.stats.fisher_exact(ct)
         
-def get_stats(df1=None,
-              colsubset='subset',
-              colvalue='value',
+def get_stat(df1,
+              colsubset,
+              colvalue,
               subsets=None,
               cols_subsets=['subset1', 'subset2'],
               df2=None,
               stats=[np.mean,np.median,np.var]+[len],
-              debug=False,
+#               debug=False,
              ):
     """
+    Either MWU or FE
     :params df2: pairs of comparisons between subsets
     either colsubset or subsets are needed 
-    """
-    if debug:
-        subsets=list('abcd')
-        np.random.seed(88)
-        df1=pd.concat({s:pd.Series([np.random.uniform(0,si+1) for _ in range((si+1)*10)]) for si,s in enumerate(subsets)},
-                 axis=0).reset_index(0).rename(columns={'level_0':'subset',0:'value'})
-        
+    """        
     if not ((colvalue in df1) and (colsubset in df1)):
         logging.error(f"colvalue or colsubset not found in df: {colvalue} or {colsubset}")
         return
@@ -141,16 +144,66 @@ def get_stats(df1=None,
     #     **kws_merge,
     )
     return df3
+def get_stats(df1,
+              colsubset,
+              cols_value,
+              subsets=None,
+              cols_subsets=['subset1', 'subset2'],
+              df2=None,
+              stats=[np.mean,np.median,np.var],
+              changeby="",
+              **kws_get_stats):
+    """
+    # if both mean and median are high
+    changeby=""
+    """
+    stats=[s for s in stats if not s in [sum,len]]
+    dn2df={}
+    for colvalue in cols_value:
+        dn2df[colvalue]=get_stat(df1,
+                      colsubset=colsubset,
+                      colvalue=colvalue,
+                      subsets=subsets,
+                      cols_subsets=cols_subsets,
+                      df2=df2,
+                      stats=stats,
+                      **kws_get_stats,
+                     ).set_index(cols_subsets)
+    df3=pd.concat(dn2df,
+          ignore_index=False,
+          join='outer',axis=1)
+    df3=df3.droplevel(0,axis=1).reset_index()
+    for s in ['mean','median']:
+        df3[f'difference between {s} (subset1-subset2)']=df3[f'{s} subset1']-df3[f'{s} subset2']
+    df3.loc[(df3.loc[:,df3.filter(like=f'difference between {changeby}').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
+    df3.loc[(df3.loc[:,df3.filter(like=f'difference between {changeby}').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
+    df3['change']=df3['change'].fillna('ns')        
+    return df3
 
-def get_change(df1):
+def get_change(df1,alpha=0.025):
     from statsmodels.stats.multitest import multipletests
     for test in ['MWU','FE']:
         if not f'P ({test} test)' in df1:
             continue
         df1[f'change is significant ({test} test, FDR corrected)'],df1[f'P ({test} test, FDR corrected)'],df1[f'{test} alphacSidak'],df1[f'{test} alphacBonf']=multipletests(df1[f'P ({test} test)'],
-                                                             alpha=0.05, method='fdr_bh',
+                                                             alpha=alpha, method='fdr_bh',
                                                             is_sorted=False,returnsorted=False)
         #     info(f"corrected alpha alphacSidak={alphacSidak},alphacBonf={alphacBonf}")
         df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],f'significant change ({test} test)']=df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],'change']
         df1[f'significant change ({test} test)']=df1[f'significant change ({test} test)'].fillna('ns')
+    return df1
+
+def annotate_difference(df1,cols_subset_comparison,cols_index,
+                       ):
+    cols_subset=['subset1','subset2']
+    df1.rd.check_duplicated(params['cols_index']+cols_subset)
+    for s in ['mean','median']:
+        df1[f'{s} difference (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
+    df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
+    df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
+    df1['change']=df1['change'].fillna('ns')
+    df1=df1.groupby(cols_subset+params['cols_subset_comparison']).progress_apply(get_change)
+#     info(df1['change is significant (MWU test, FDR corrected)'].value_counts())
+    # df1['change'].value_counts()
+    # df1['significant change'].value_counts()
     return df1
