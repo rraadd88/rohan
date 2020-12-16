@@ -141,3 +141,16 @@ def get_stats(df1=None,
     #     **kws_merge,
     )
     return df3
+
+def get_change(df1):
+    from statsmodels.stats.multitest import multipletests
+    for test in ['MWU','FE']:
+        if not f'P ({test} test)' in df1:
+            continue
+        df1[f'change is significant ({test} test, FDR corrected)'],df1[f'P ({test} test, FDR corrected)'],df1[f'{test} alphacSidak'],df1[f'{test} alphacBonf']=multipletests(df1[f'P ({test} test)'],
+                                                             alpha=0.05, method='fdr_bh',
+                                                            is_sorted=False,returnsorted=False)
+        #     info(f"corrected alpha alphacSidak={alphacSidak},alphacBonf={alphacBonf}")
+        df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],f'significant change ({test} test)']=df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],'change']
+        df1[f'significant change ({test} test)']=df1[f'significant change ({test} test)'].fillna('ns')
+    return df1
