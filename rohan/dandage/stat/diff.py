@@ -151,12 +151,9 @@ def get_stats(df1,
               cols_subsets=['subset1', 'subset2'],
               df2=None,
               stats=[np.mean,np.median,np.var],
-              changeby="",
               **kws_get_stats):
-    """
-    # if both mean and median are high
-    changeby=""
-    """
+    from rohan.dandage.io_dfs import to_table
+    to_table(df1,'test/get_stats.tsv')
     stats=[s for s in stats if not s in [sum,len]]
     dn2df={}
     for colvalue in cols_value:
@@ -173,37 +170,44 @@ def get_stats(df1,
           ignore_index=False,
           join='outer',axis=1)
     df3=df3.droplevel(0,axis=1).reset_index()
-    for s in ['mean','median']:
-        df3[f'difference between {s} (subset1-subset2)']=df3[f'{s} subset1']-df3[f'{s} subset2']
-    df3.loc[(df3.loc[:,df3.filter(like=f'difference between {changeby}').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
-    df3.loc[(df3.loc[:,df3.filter(like=f'difference between {changeby}').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
-    df3['change']=df3['change'].fillna('ns')        
     return df3
 
-def get_change(df1,alpha=0.025):
+def get_significant_changes(df1,alpha=0.025,
+                            changeby="",
+                           ):
+    """
+    groupby to get the comparable groups 
+    # if both mean and median are high
+    changeby=""
+    """    
+    for s in ['mean','median']:
+        df1[f'difference between {s} (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
+    df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
+    df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
+    df1['change']=df1['change'].fillna('ns')
     from statsmodels.stats.multitest import multipletests
     for test in ['MWU','FE']:
         if not f'P ({test} test)' in df1:
             continue
         df1[f'change is significant ({test} test, FDR corrected)'],df1[f'P ({test} test, FDR corrected)'],df1[f'{test} alphacSidak'],df1[f'{test} alphacBonf']=multipletests(df1[f'P ({test} test)'],
-                                                             alpha=alpha, method='fdr_bh',
-                                                            is_sorted=False,returnsorted=False)
+                                                               alpha=alpha, method='fdr_bh',
+                                                               is_sorted=False,returnsorted=False)
         #     info(f"corrected alpha alphacSidak={alphacSidak},alphacBonf={alphacBonf}")
         df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],f'significant change ({test} test)']=df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],'change']
         df1[f'significant change ({test} test)']=df1[f'significant change ({test} test)'].fillna('ns')
     return df1
 
-def annotate_difference(df1,cols_subset_comparison,cols_index,
-                       ):
-    cols_subset=['subset1','subset2']
-    df1.rd.check_duplicated(params['cols_index']+cols_subset)
-    for s in ['mean','median']:
-        df1[f'{s} difference (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
-    df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
-    df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
-    df1['change']=df1['change'].fillna('ns')
-    df1=df1.groupby(cols_subset+params['cols_subset_comparison']).progress_apply(get_change)
-#     info(df1['change is significant (MWU test, FDR corrected)'].value_counts())
-    # df1['change'].value_counts()
-    # df1['significant change'].value_counts()
-    return df1
+# def annotate_difference(df1,cols_subset_comparison,cols_index,
+#                        ):
+#     cols_subset=['subset1','subset2']
+#     df1.rd.check_duplicated(params['cols_index']+cols_subset)
+#     for s in ['mean','median']:
+#         df1[f'{s} difference (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
+#     df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
+#     df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
+#     df1['change']=df1['change'].fillna('ns')
+#     df1=df1.groupby(cols_subset+params['cols_subset_comparison']).progress_apply(get_change)
+# #     info(df1['change is significant (MWU test, FDR corrected)'].value_counts())
+#     # df1['change'].value_counts()
+#     # df1['significant change'].value_counts()
+#     return df1
