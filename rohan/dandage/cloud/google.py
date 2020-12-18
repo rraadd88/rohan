@@ -204,13 +204,14 @@ def get_comments(fileid,fields='comments/quotedFileContent/value,comments/conten
         comments = service.comments().list(fileId=fileId,fields=fields,**kws_list).execute()
         df1=pd.DataFrame(pd.concat({di:pd.Series({k:d[k] for k in d}) for di,d in enumerate(comments['comments'])},
                  axis=0)).reset_index().rename(columns={'level_0':'comment #',
-                                                        'level_1':'key',0:'value'})
+                                                        'level_1':'key',
+                                                        0:'value'})
         df1['value']=df1['value'].apply(lambda x: ','.join(x.values()) if isinstance(x,dict) else x)
         df1=df1.set_index(['comment #','key'])
         df1=df1.unstack(1).droplevel(0,1)
         df1['link']=df1['id'].apply(lambda x: f"https://drive.google.com/file/d/{fileId}/edit?disco={x}")
         df1=df1.rename(columns={'content':'comment',
-                           'quotedFileContent':'text'}).drop(['id'],axis=1)
+                                'quotedFileContent':'text'}).drop(['id'],axis=1)
         return df1
     service=get_service()    
     if isinstance(fileid,str):
