@@ -16,12 +16,21 @@ def get_service(service_name='drive',access_limit=True,client_config=None):
     'sheets':{
         'scope':'https://www.googleapis.com/auth/spreadsheets',
         'build':'sheets',
-        'version': 'v4'}}
+        'version': 'v4',},
+    'customsearch':{
+        'build':'customsearch',
+        'version': 'v1',
+        'scope':'https://www.googleapis.com/auth/cse',
+    },
+    }
     if client_config is None:
         from getpass import getpass
         client_config=eval(getpass())
     from googleapiclient.discovery import build
     from google_auth_oauthlib.flow import InstalledAppFlow
+#     SCOPES=[]
+#     if 'scope' in service_name2params[service_name]:
+#     SCOPES = SCOPES.append([service_name2params[service_name]['scope']])
     SCOPES = [service_name2params[service_name]['scope']]
     if not access_limit:
         SCOPES = [s.replace('.readonly','') for s in SCOPES]
@@ -177,7 +186,9 @@ class slides():
 #         zip(page_ids)
 
 
-def get_comments(fileid,fields='comments/quotedFileContent/value,comments/content,comments/id'):
+def get_comments(fileid,
+                 fields='comments/quotedFileContent/value,comments/content,comments/id',
+                service=None):
     """
     fields: comments/
                 kind:
@@ -213,7 +224,7 @@ def get_comments(fileid,fields='comments/quotedFileContent/value,comments/conten
         df1=df1.rename(columns={'content':'comment',
                                 'quotedFileContent':'text'}).drop(['id'],axis=1)
         return df1
-    service=get_service()    
+    if service is None: service=get_service()    
     if isinstance(fileid,str):
         fileid=[fileid]
     df1=pd.concat({k:apply_(service,fileId=k,
@@ -223,3 +234,19 @@ def get_comments(fileid,fields='comments/quotedFileContent/value,comments/conten
                      pageSize=100) for k in fileid},
              axis=0)
     return df1
+
+def search(query,results=1,
+           service=None,
+           **kws_search):
+    """
+    :params query: exact terms
+    """
+    if service is None: service=get_service("customsearch")
+    # https://developers.google.com/custom-search/v1/reference/rest/v1/cse/list
+    return service.cse().list(
+      exactTerms=query,
+      cx='46377b0459c06e668',
+      num=results,
+        **kws_search
+    ).execute()
+#     res
