@@ -1,6 +1,8 @@
 from rohan.global_imports import *
 from rohan.dandage.stat.cluster import get_clusters
-def corpus2clusters(corpus, index,params_clustermap={'vmin':0,'vmax':1,'figsize':[6,6]}):
+def corpus2clusters(corpus, index,
+                    test=False,
+                    params_clustermap={'vmin':0,'vmax':1,'figsize':[6,6]}):
     """
     Cluster a list of strings.
     
@@ -14,13 +16,14 @@ def corpus2clusters(corpus, index,params_clustermap={'vmin':0,'vmax':1,'figsize'
                 index=index,
                 columns=index,
                 )
-    clustergrid=sns.clustermap(df,**params_clustermap
-    #                                method='complete', metric='canberra',
-                                  )
-    dclusters=get_clusters(clustergrid,axis=0,criterion='maxclust',clusters_fraction=0.25)
-    return dclusters
-
-def extract_text_from_pdf(pdf_path,pages=None):
+    if test:
+        clustergrid=sns.clustermap(df,**params_clustermap
+        #                                method='complete', metric='canberra',
+                                      )
+        dclusters=get_clusters(clustergrid,axis=0,criterion='maxclust',clusters_fraction=0.25)
+        return dclusters
+    return df
+def pdf_to_text(pdf_path,pages=None):
     """
     This function extracts text from pdf file and return text as string.
     :param pdf_path: path to pdf file.

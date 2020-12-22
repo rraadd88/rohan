@@ -41,7 +41,10 @@ def get_service(service_name='drive',access_limit=True,client_config=None):
 
 get_service_drive=get_service
     
-def list_files_in_folder(service,folderid,filetype=None,test=False):
+def list_files_in_folder(service,folderid,
+                         filetype=None,
+                         fileext=None,                         
+                         test=False):
     filetype2mimetype={"audio":"application/vnd.google-apps.audio", #
     "document":"application/vnd.google-apps.document", #Google Docs
     "drive":"application/vnd.google-apps.drive-sdk", #3rd party shortcut
@@ -70,6 +73,8 @@ def list_files_in_folder(service,folderid,filetype=None,test=False):
     else:
         if test:
             print(name2id)
+    if not fileext is None:
+        name2id={k:name2id[k] for k in name2id if k.endswith(fileext)}
     return name2id
 
 def download_file(service,fileid,filetypes,outp,test=False):
@@ -250,3 +255,39 @@ def search(query,results=1,
         **kws_search
     ).execute()
 #     res
+
+def get_search_strings(text,num=5,test=False):
+    lines=text.split("\n")
+    lines=sorted(lines, key=len)[::-1][:num+2]
+    if test: print(lines)
+    cs=[sum([c.isalpha() for c in s])/len(s) for s in lines]
+    lines=[x for _,x in sorted(zip(cs,lines))][::-1][:num]
+    if test: print(lines)
+    return lines
+
+def get_metadata_of_paper(file_id,service_drive,service_search):
+    content = service_drive.files().get_media(fileId=file_id).execute()
+
+    # %run ../rohan/dandage/io_text.py
+    from rohan.dandage.io_text import pdf_to_text
+    text=pdf_to_text(pdf_path=content,
+                          pages=[2,3])
+    # %run ../rohan/dandage/cloud/google.py
+    queries=get_search_strings(text,num=3,test=False)
+
+    # %run ../rohan/dandage/cloud/google.py
+    for query in queries:
+        res=search(query=query,results=1,
+                   service=service_search,
+        #            **kws_search
+              )
+        try:
+            title=res['items'][0]['pagemap']['metatags'][0]['og:title']
+        except:
+            title=[d['htmlTitle'] for d in res['items']][0]
+        from scholarly import scholarly
+        d=scholarly.search_pubs(title)
+        try:
+            return next(d)
+        except:
+            continue
