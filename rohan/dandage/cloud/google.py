@@ -258,36 +258,59 @@ def search(query,results=1,
 
 def get_search_strings(text,num=5,test=False):
     lines=text.split("\n")
+    lines=[s.split('.')[0].split(';')[0].strip() for s in lines]    
     lines=sorted(lines, key=len)[::-1][:num+2]
+    import unicodedata
+    lines=[unicodedata.normalize("NFKD", s).strip() for s in lines]
     if test: print(lines)
     cs=[sum([c.isalpha() for c in s])/len(s) for s in lines]
     lines=[x for _,x in sorted(zip(cs,lines))][::-1][:num]
     if test: print(lines)
     return lines
 
-def get_metadata_of_paper(file_id,service_drive,service_search):
-    content = service_drive.files().get_media(fileId=file_id).execute()
-
-    # %run ../rohan/dandage/io_text.py
-    from rohan.dandage.io_text import pdf_to_text
-    text=pdf_to_text(pdf_path=content,
-                          pages=[2,3])
+def get_metadata_of_paper(file_id,service_drive,service_search,
+                          metadata=None,
+                          force=False,
+                         test=False):
+    import numpy as np
+    if metadata is None: 
+        metadata={'queries':np.nan,
+                                  'titles':np.nan,
+                                  'data':np.nan}
+    else:
+        if (not pd.isnull(metadata['data'])) and (not force):
+            return metadata        
+    if pd.isnull(metadata['queries']) or force:
+        content = service_drive.files().get_media(fileId=file_id).execute()
+        # %run ../rohan/dandage/io_text.py
+        from rohan.dandage.io_text import pdf_to_text
+        text=pdf_to_text(pdf_path=content,
+                              pages=[2,3])
+        # %run ../rohan/dandage/cloud/google.py
+        metadata['queries']=get_search_strings(text,num=3,test=False)
+    if test: print(metadata['queries'])
     # %run ../rohan/dandage/cloud/google.py
-    queries=get_search_strings(text,num=3,test=False)
-
-    # %run ../rohan/dandage/cloud/google.py
-    for query in queries:
-        res=search(query=query,results=1,
-                   service=service_search,
-        #            **kws_search
-              )
-        try:
-            title=res['items'][0]['pagemap']['metatags'][0]['og:title']
-        except:
-            title=[d['htmlTitle'] for d in res['items']][0]
-        from scholarly import scholarly
-        d=scholarly.search_pubs(title)
-        try:
-            return next(d)
-        except:
-            continue
+    if pd.isnull(metadata['titles']) or force:
+        metadata['titles']=[]
+        for k in metadata['queries']:
+            res=search(query=k,results=1,
+                       service=service_search,
+            #            **kws_search
+                  )
+            if not 'items' in res:
+                continue
+            try:
+                title=res['items'][0]['pagemap']['metatags'][0]['og:title']
+            except:
+                title=[d['htmlTitle'] for d in res['items']][0]
+            metadata['titles'].append(title)
+    if test: print(metadata['titles'])
+    if pd.isnull(metadata['data']) or force:
+        for k in metadata['titles']:
+            from scholarly import scholarly
+            d=scholarly.search_pubs(k)
+            try:
+                metadata['data']=next(d)
+            except:
+                continue
+    return metadata
