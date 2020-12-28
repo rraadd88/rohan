@@ -32,3 +32,4 @@ rohan/dandage/figs/data/
 test/jupnbuks/
 test/*
 !test/test_install.py
+var/*

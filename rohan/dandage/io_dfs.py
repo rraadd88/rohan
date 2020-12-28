@@ -61,15 +61,29 @@ def drop_levelcol(df):
 dellevelcol=drop_levelcol
 
 @add_method_to_class(rd)
-def clean(df):
+def clean(df,cols=[]):
     """
     Deletes temporary columns
     :param df: pandas dataframe
     """
-    cols_del=df.filter(regex="^(?:index|level|Unnamed|_).*$").columns.tolist()+df.filter(regex="^.*(?:\.1)$").columns.tolist()
-    logging.warning(f"dropped columns: {', '.join(cols_del)}")
-    return df.drop(cols_del,axis=1)
+    cols_del=df.filter(regex="^(?:index|level|Unnamed|chunk|_).*$").columns.tolist()+df.filter(regex="^.*(?:\.1)$").columns.tolist()+cols
+    if len(cols_del)!=0:
+        logging.warning(f"dropped columns: {', '.join(cols_del)}")
+        return df.drop(cols_del,axis=1)
+    else:
+        return df
+@add_method_to_class(rd)
+def compress(df1,coff_categories=20,test=False):
+    if test: ini=df1.memory_usage().sum()
+    ds=df1.select_dtypes('object').nunique()
+    for c in ds[ds<=coff_categories].index:
+        df1[c]=df1[c].astype('category')
+    if test: logging.info(f"compression={((ini-df1.memory_usage().sum())/ini)*100:.1f}%")
+    return df1
 
+@add_method_to_class(rd)
+def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_compress)
+    
 #filter df
 @add_method_to_class(rd)
 def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
@@ -716,7 +730,7 @@ def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
 def dict2df(d,colkey='key',colvalue='value'):
     return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
 
-def read_table(p,params_read_csv={},**kws_manytables):
+def read_table(p,params_read_csv={},**kws_manytables,):
     """
     'decimal':'.'
     """
@@ -736,7 +750,10 @@ def read_table(p,params_read_csv={},**kws_manytables):
                         
 def read_table_pqt(p):
     return drop_unnamedcol(pd.read_parquet(p,engine='fastparquet'))
-
+def read_ps(ps):
+    if isinstance(ps,str) and '*' in ps:
+        ps=glob(ps)
+    return ps
 def apply_on_paths(ps,func,
                     fast=False, 
                    drop_index=True,
@@ -753,8 +770,7 @@ def apply_on_paths(ps,func,
             return read_table(p)
     if not fun_rename_path is None:
         drop_index=False
-    if isinstance(ps,str) and '*' in ps:
-        ps=glob(ps)
+    ps=read_ps(ps)
     if len(ps)==0:
         logging.error('no paths found')
         return
@@ -774,11 +790,17 @@ def apply_on_paths(ps,func,
 def read_manytables(ps,
                     fast=False,
                     drop_index=True,
+                    to_dict=False,
+                    params_read_csv={},
                     **kws,
                    ):
-    df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,**kws)
-    return df2
-
+    if not to_dict:
+        df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,**kws)
+        return df2
+    else:
+        return {p:read_table(p,
+                             params_read_csv=params_read_csv) for p in read_ps(ps)}
+    
 ## save table
 def to_table(df,p,
              groupby=None,
@@ -856,7 +878,23 @@ def to_excel(sheetname2df,datap,append=False):
             sheetname2df[sn].to_excel(writer,startrow=startrow)  
             startrow+=len(sheetname2df[sn])+2
     writer.save()
-            
+
+## append
+def append_dfs(dfs,cols_index=None,cols_value=None):
+    from rohan.dandage.io_sets import list2intersection,unique
+    if cols_index is None: cols_index=list(list2intersection([list(df) for df in dfs]))
+    if cols_value is None: cols_value=[[c for c in df if not c in cols_index] for df in dfs]
+    coli2cols={i:list(cols) for i,cols in enumerate(list(zip(*cols_value)))}
+    for i in coli2cols:
+        dtypes=unique([dfs[dfi][col].dtype for dfi,col in enumerate(coli2cols[i])])
+        if len(dtypes)!=1:
+            logging.error('the dtypes of columns should match')   
+        dtype=dtypes[0]
+        if dtype.startswith('float') or dtype.startswith('int'):
+            renameto='value'
+        df1=pd.concat({col:dfs[dfi].rename(columns={col:renameto}).loc[:,cols_index+[renameto]] for dfi,col in enumerate(coli2cols[i])},axis=0,names=['variable']).reset_index(level=0)
+    return df1
+
 ## merge dfs
 def merge_dfs(dfs,how='left',suffixes=['','_'],
               test=False,fast=False,drop_duplicates=True,
