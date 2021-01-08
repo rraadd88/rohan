@@ -13,7 +13,10 @@ pd.options.mode.chained_assignment = None
 def notebook2packagescript(notebookp,test=False):
     from rohan.dandage.io_sets import unique
     import pandas as pd
-    d1=read_dict(notebookp,fmt='json')
+    print(notebookp)
+    d1=read_dict(notebookp,fmt='json',encoding="utf8")
+    if len(d1['cells'])==0:
+        return
     funs=[]
     fun=''
     for di,d in enumerate(d1['cells']):
@@ -400,6 +403,7 @@ def git_notebooks(packagen,packagep,notebooksdp=None):
     df1=df1.sort_index().reset_index()
     from rohan.dandage.io_fun import notebook2packagescript
     df1['script text']=df1['notebook path'].apply(notebook2packagescript)
+    df1=df1.log.dropna(subset=['script text'])
     df1['script path']=df1['step name'].apply(lambda x: f"{packagescriptsp}/curate{x}.py")
     def write_script(x):
         with open(x['script path'],'w') as f: 

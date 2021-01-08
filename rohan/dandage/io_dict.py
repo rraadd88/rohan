@@ -42,8 +42,8 @@ def to_yaml(d,p):
     with open(p,'w') as f:
         yaml.safe_dump(d,f)
         
-def read_json(path_to_file):
-    with open(path_to_file) as p:
+def read_json(path_to_file,encoding=None):
+    with open(path_to_file,encoding=encoding) as p:
         return json.load(p)
 def to_json(data,p):
     with open(p, 'w') as outfile:
@@ -53,11 +53,11 @@ def read_pickle(p):
     return pickle.load(open(p,
                'rb'))
 
-def read_dict(p,fmt=''):
+def read_dict(p,fmt='',**kws):
     if p.endswith('.yml') or p.endswith('.yaml') or fmt=='yml' or fmt=='yaml':
         return read_yaml(p)
     elif p.endswith('.json') or fmt=='json':
-        return read_json(p)
+        return read_json(p,**kws)
     elif p.endswith('.pickle'):
         d = read_pickle(p)
     elif p.endswith('.joblib'):
