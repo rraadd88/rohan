@@ -735,7 +735,8 @@ def read_table(p,params_read_csv={},**kws_manytables,):
     'decimal':'.'
     """
     if isinstance(p,list) or '*' in p:
-        return read_manytables(p,**kws_manytables)
+        return read_manytables(p,params_read_csv=params_read_csv,
+                               **kws_manytables)
     if len(params_read_csv.keys())!=0:
         return drop_unnamedcol(pd.read_csv(p,**params_read_csv))        
     else:
@@ -760,6 +761,7 @@ def apply_on_paths(ps,func,
                    fun_rename_path=None,
                    read_path=False,
                    progress_bar=True,
+                   params_read_csv={},
                    **kws,
                   ):
     def read_table_(df,read_path=False):
@@ -767,7 +769,7 @@ def apply_on_paths(ps,func,
         if read_path:
             return p
         else:
-            return read_table(p)
+            return read_table(p,params_read_csv=params_read_csv,)
     if not fun_rename_path is None:
         drop_index=False
     ps=read_ps(ps)
@@ -795,7 +797,9 @@ def read_manytables(ps,
                     **kws,
                    ):
     if not to_dict:
-        df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,**kws)
+        df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,
+                           params_read_csv=params_read_csv,
+                           **kws)
         return df2
     else:
         return {p:read_table(p,
