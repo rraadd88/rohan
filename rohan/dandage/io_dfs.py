@@ -604,7 +604,14 @@ def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
 # quantile bins
 @add_method_to_class(rd)
 def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
-    df[f"{colx} qbin"]=pd.qcut(df[colx],bins,duplicates='drop')    
+    """
+    get_stats_by_bins(df,colx,coly,fun,bins=4)
+    """
+    from rohan.dandage.stat.transform import get_qbins
+    df[f"{colx} qbin midpoint"]=get_qbins(ds=df[colx],
+                                          bins=bins,
+                                          value='mid')
+#     qcut(df[colx],bins,duplicates='drop')    
     if colgroupby is None:
         colgroupby='del'
         df[colgroupby]='del'
@@ -622,15 +629,22 @@ def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
 # subsets
 from rohan.dandage.io_sets import dropna
 @add_method_to_class(rd)
-def get_intersectionsbysubsets(df,cols_fracby2vals,cols_subset,col_ids,params_qcut={'q':10,'duplicates':'drop'}):
+def get_intersectionsbysubsets(df,cols_fracby2vals,
+                               cols_subset,
+                               col_ids,
+                               bins
+#                                params_qcut={'bins':10},
+                              ):
     """
     cols_fracby:
     cols_subset:
     """
+    from rohan.dandage.stat.transform import get_qbins
     for coli,col in enumerate(cols_subset):
         if is_col_numeric(df[col]):
             try:
-                df[f"{col} bin"]=pd.qcut(df[col],**params_qcut)
+                df[f"{col} bin"]=get_qbins(ds=df[col],bins=bins,value='mid')
+#                 qcut(df[col],**params_qcut)
             except:
                 logging.info(col)
             cols_subset[coli]=f"{col} bin"

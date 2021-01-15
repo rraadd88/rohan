@@ -68,7 +68,8 @@ def get_pval(df,
              colvalue='value',
              colsubset='subset',
              colvalue_bool=False,
-             subsets=None):
+             subsets=None,
+            test=False):
     """
     either colsubset or subsets are needed 
     """
@@ -97,6 +98,9 @@ def get_pval(df,
     else:
         ct=pd.crosstab(df[colvalue],df[colsubset])
         if ct.shape==(2,2):
+            ct=ct.sort_index(axis=0,ascending=False).sort_index(axis=1,ascending=False)
+            if test:
+                print(ct)
             return sc.stats.fisher_exact(ct)
         
 def get_stat(df1,
@@ -152,8 +156,8 @@ def get_stats(df1,
               df2=None,
               stats=[np.mean,np.median,np.var],
               **kws_get_stats):
-    from rohan.dandage.io_dfs import to_table
-    to_table(df1,'test/get_stats.tsv')
+#     from rohan.dandage.io_dfs import to_table
+#     to_table(df1,'test/get_stats.tsv')
     stats=[s for s in stats if not s in [sum,len]]
     dn2df={}
     for colvalue in cols_value:

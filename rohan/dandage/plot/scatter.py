@@ -196,13 +196,14 @@ def plot_scatter_agg(dplot,colgroupby,colx,coly,
                      ax=None):
     ax=plt.subplot() if ax is None else ax
     from rohan.dandage.stat.variance import confidence_interval_95
-    dplot2=dplot.groupby('sector name').agg({k:[np.median,confidence_interval_95] for k in [colx,coly]})
+    dplot2=dplot.groupby(colgroupby).agg({k:[np.median,confidence_interval_95] for k in [colx,coly]})
     dplot2.columns=coltuples2str(dplot2.columns)
     dplot2=dplot2.reset_index()
-    dplot2.apply(lambda x: ax.errorbar(**params_errorbar,
+    dplot2.apply(lambda x: ax.errorbar(x=colx,y=coly,
+                                       **params_errorbar,
                 ),axis=1)
-    ax.set_xlabel(params_errorbar['x'])
-    ax.set_ylabel(params_errorbar['y'])
+#     ax.set_xlabel(params_errorbar['x'])
+#     ax.set_ylabel(params_errorbar['y'])
     ax.legend(**params_legend)
     return ax
         
