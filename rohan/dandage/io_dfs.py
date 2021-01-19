@@ -389,10 +389,12 @@ def check_duplicated(df,cols):
         return False
         
 @add_method_to_class(rd)        
-def check_mappings(df,cols):
+def check_mappings(df,cols=None):
     """
     identify duplicates within columns
     """
+    if cols is None:
+        cols=df.columns.tolist()
     import itertools
     d={}
     for t in list(itertools.permutations(cols,2)):
@@ -454,6 +456,15 @@ def dfswapcols(df,cols):
 #     df=df.sort_values(by=f'_{col}')
 #     df=df.drop([f'_{col}'],axis=1)
 #     return df
+
+## apply_agg
+# @add_method_to_class(rd)
+def agg_by_order(x,order):
+    # damaging > other non-conserving > other conserving
+    for k in order:
+        if k in x.values:
+            return k
+#     return none
 
 @add_method_to_class(rd)
 def groupby_agg_merge(df,col_groupby,col_aggby,
@@ -919,7 +930,7 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
               sort=True,
               **params_merge):
     """
-    TODO: use reduce(lambda df1,df2: pd.merge(df1,df2,on='genes id',how='inner'), dfs)
+    
     """
     from rohan.dandage.io_sets import list2intersection,flatten
     if isinstance(dfs,dict):
@@ -939,39 +950,29 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
     # sort largest first
     if test:
         logging.info(params_merge)
-        logging.info('size',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
+        d={dfi:[len(df)] for dfi,df in enumerate(dfs)}
+        logging.info(f'size: {d}')
     dfi2cols_value={dfi:df.select_dtypes([int,float]).columns.tolist() for dfi,df in enumerate(dfs)}
     cols_common=list(np.unique(params_merge['on']+list(list2intersection(dfi2cols_value.values()))))
     dfi2cols_value={k:list(set(dfi2cols_value[k]).difference(cols_common)) for k in dfi2cols_value}
     dfis_duplicates=[dfi for dfi in dfi2cols_value if len(dfs[dfi])!=len(dfs[dfi].loc[:,cols_common].drop_duplicates())]
     if test:
-        logging.info('cols_common',cols_common)
-        logging.info('dfi2cols_value',dfi2cols_value)
-        logging.info('duplicates in dfs',dfis_duplicates)
+        logging.info(f'cols_common: {cols_common}',)
+        logging.info(f'dfi2cols_value: {dfi2cols_value}',)
+        logging.info(f'duplicates in dfs: {dfis_duplicates}',)
     for dfi in dfi2cols_value:
         if (dfi in dfis_duplicates) and drop_duplicates:
             dfs[dfi]=drop_duplicates_by_agg(dfs[dfi],cols_common,dfi2cols_value[dfi],fast=fast)
-#         else:
-#             dfs[dfi]=dfi2cols_value[dfi]
     if sort:
-        logging.info('size agg',{dfi:[len(df)] for dfi,df in enumerate(dfs)})
+        d={dfi:[len(df)] for dfi,df in enumerate(dfs)}
+        logging.info(f"size agg: {d}")
         from rohan.dandage.io_dict import sort_dict
-        sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(params_merge['on']))] for dfi,df in enumerate(dfs)},0)
-        logging.info('size dedup',sorted_indices_by_size)
+        sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(subset=params_merge['on']))] for dfi,df in enumerate(dfs)},0)
+        logging.info(f'size dedup: {sorted_indices_by_size}')
         sorted_indices_by_size=list(sorted_indices_by_size.keys())#[::-1]
         dfs=[dfs[i] for i in sorted_indices_by_size]
     from functools import reduce
     df1=reduce(lambda df1,df2: pd.merge(df1,df2,**params_merge), dfs)
-#     for dfi,df in enumerate(dfs):
-#         if dfi==0:
-#             df1=df.copy()
-#         else:
-#             if test:
-#                 logging.info(df1.columns)
-#                 logging.info(df.columns)
-#             df1=pd.merge(df1, df, )
-#         logging.info(dfi,':',df1.shape,'; ',)
-#     logging.info('')
     cols_std=[f"{c} var" for c in flatten(list(dfi2cols_value.values())) if f"{c} var" in df1]
     cols_del=[c for c in cols_std if df1[c].isnull().all()]
     df1=df1.drop(cols_del,axis=1)
