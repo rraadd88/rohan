@@ -226,7 +226,7 @@ def str_split(strng, sep, pos):
     strng = strng.split(sep)
     return sep.join(strng[:pos]), sep.join(strng[pos:])
 
-def str2dict(s): return dict(item.split("=") for item in s.split(";"))
+
 
 def str_ranges2list(s,func=int,range_marker='-',sep=',',replace=['[',']']):
     s=replacemany(s,replace)
@@ -238,6 +238,7 @@ def str2urlformat(s):
     return urllib.parse.quote_plus(s)
 
 # dict
+# def str2dict(s): return dict(item.split("=") for item in s.split(";"))
 def str2dict(s,sep=';',sep_equal='='):
     """
     thanks to https://stackoverflow.com/a/186873/3521099

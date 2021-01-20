@@ -1,5 +1,24 @@
 from rohan.global_imports import *
 from rohan.dandage.stat.cluster import get_clusters
+    
+def get_header(path,comment='#',lineno=None):
+    import re
+    file = open(path, "r")
+    lines=[]
+    for i,line in enumerate(file):
+        if not comment is None:
+            if re.search(f"^{comment}.*", line):
+                lines.append(line)
+            else:
+                break
+            if lineno is None:
+                return lines
+            else:
+                return lines[lineno]
+        else:
+            if i==lineno:
+                return line
+
 def corpus2clusters(corpus, index,
                     test=False,
                     params_clustermap={'vmin':0,'vmax':1,'figsize':[6,6]}):

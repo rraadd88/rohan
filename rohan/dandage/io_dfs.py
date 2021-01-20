@@ -755,9 +755,20 @@ def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
 def dict2df(d,colkey='key',colvalue='value'):
     return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
 
+from rohan.dandage.io_text import get_header
+
 def read_table(p,params_read_csv={},**kws_manytables,):
     """
     'decimal':'.'
+    
+    examples:
+    ext='.vcf|vcf.gz'
+    read_table(p,
+               params_read_csv=dict(
+               #compression='gzip',
+               sep='\t',comment='#',header=None,
+               names=replacemany(get_header(path,comment='#',lineno=-1),['#','\n'],'').split('\t'))
+               )
     """
     if isinstance(p,list) or '*' in p:
         return read_manytables(p,params_read_csv=params_read_csv,
@@ -765,12 +776,24 @@ def read_table(p,params_read_csv={},**kws_manytables,):
     if len(params_read_csv.keys())!=0:
         return drop_unnamedcol(pd.read_csv(p,**params_read_csv))        
     else:
-        if p.endswith('.tsv') or p.endswith('.tab'):
-            return drop_unnamedcol(pd.read_csv(p,sep='\t'))
+        if any(p.endswith(ext) for ext in ['.tsv','.tsv.gz','.tab']):
+            return drop_unnamedcol(pd.read_csv(p,sep='\t',
+                                              compression='gzip' if p.endswith('.gz') else None,
+                                              ))
         elif p.endswith('.csv'):
-            return drop_unnamedcol(pd.read_csv(p,sep=','))
+            return drop_unnamedcol(pd.read_csv(p,sep=',',
+                                              compression='gzip' if p.endswith('.gz') else None,
+                                              ))
         elif p.endswith('.pqt') or p.endswith('.parquet'):
             return drop_unnamedcol(read_table_pqt(p))
+        elif p.endswith('.vcf') or p.endswith('.vcf.gz'):
+            from rohan.dandage.io_strs import replacemany
+            return read_table(p,
+                       params_read_csv=dict(
+                       compression='gzip' if p.endswith('.vcf.gz') else None,
+                       sep='\t',comment='#',header=None,
+                       names=replacemany(get_header(path=p,comment='#',lineno=-1),['#','\n'],'').split('\t'))
+                       )            
         else: 
             logging.error(f'unknown extension {p}')
                         
