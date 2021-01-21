@@ -96,6 +96,10 @@ def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
         logging.warning([k for k in d if not k in df])
     return df1
 
+def filter_dfs_inner(dfs,col,how='inner'):
+    l=list(list2intersection([df[col].tolist() for df in dfs]))
+    return [df.loc[(df[col].isin(l)),:] for df in dfs]
+
 ## conversion
 def convert_to_bools(df,col):
     for s in df[col].unique():
@@ -780,7 +784,7 @@ def read_table(p,params_read_csv={},**kws_manytables,):
             return drop_unnamedcol(pd.read_csv(p,sep='\t',
                                               compression='gzip' if p.endswith('.gz') else None,
                                               ))
-        elif p.endswith('.csv'):
+        elif any(p.endswith(ext) for ext in ['.csv','.csv.gz']):
             return drop_unnamedcol(pd.read_csv(p,sep=',',
                                               compression='gzip' if p.endswith('.gz') else None,
                                               ))
@@ -788,11 +792,12 @@ def read_table(p,params_read_csv={},**kws_manytables,):
             return drop_unnamedcol(read_table_pqt(p))
         elif p.endswith('.vcf') or p.endswith('.vcf.gz'):
             from rohan.dandage.io_strs import replacemany
-            return read_table(p,
-                       params_read_csv=dict(
+            return pd.read_table(p,
+#                        params_read_csv=dict(
                        compression='gzip' if p.endswith('.vcf.gz') else None,
                        sep='\t',comment='#',header=None,
-                       names=replacemany(get_header(path=p,comment='#',lineno=-1),['#','\n'],'').split('\t'))
+                       names=replacemany(get_header(path=p,comment='#',lineno=-1),['#','\n'],'').split('\t'),
+#                                 )
                        )            
         else: 
             logging.error(f'unknown extension {p}')

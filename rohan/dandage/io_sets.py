@@ -5,6 +5,11 @@ import numpy as np
 import pandas as pd
 import logging
 
+def nunion(l1,l2):
+    return len(set(l1) | set(l2))
+def nintersection(l1,l2):
+    return len(set(l1) & set(l2))
+
 def list2intersection(l):
     return reduce(np.intersect1d, (l))
 def list2union(l):
