@@ -475,6 +475,14 @@ def agg_by_order(x,order):
         if k in x.values:
             return k
 def agg_by_order_counts(x,order):
+    """
+    demo:
+    df=pd.DataFrame({'a1':['a','b','c','a','b','c','d'],
+    'b1':['a1','a1','a1','b1','b1','b1','b1'],})
+    df.groupby('b1').apply(lambda df : agg_by_order_counts(x=df['a1'],
+                                                   order=['b','c','a'],
+                                                   ))
+    """    
     ds=x.value_counts()
     ds[x.name]=agg_by_order(x,order)
     return ds.to_frame('').T
@@ -965,7 +973,12 @@ def append_dfs(dfs,cols_index=None,cols_value=None):
     return df1
 
 ## merge dfs
-def merge_dfs(dfs,how='left',suffixes=['','_'],
+def merge_dfs(dfs,
+             **params_merge):
+    from functools import reduce
+    return reduce(lambda df1,df2: pd.merge(df1,df2,**params_merge), dfs)
+
+def merge_dfs_auto(dfs,how='left',suffixes=['','_'],
               test=False,fast=False,drop_duplicates=True,
               sort=True,
               **params_merge):
@@ -1011,8 +1024,9 @@ def merge_dfs(dfs,how='left',suffixes=['','_'],
         logging.info(f'size dedup: {sorted_indices_by_size}')
         sorted_indices_by_size=list(sorted_indices_by_size.keys())#[::-1]
         dfs=[dfs[i] for i in sorted_indices_by_size]
-    from functools import reduce
-    df1=reduce(lambda df1,df2: pd.merge(df1,df2,**params_merge), dfs)
+#     from functools import reduce
+#     df1=reduce(lambda df1,df2: pd.merge(df1,df2,**params_merge), dfs)
+    df1=merge_dfs(dfs,**params_merge)
     cols_std=[f"{c} var" for c in flatten(list(dfi2cols_value.values())) if f"{c} var" in df1]
     cols_del=[c for c in cols_std if df1[c].isnull().all()]
     df1=df1.drop(cols_del,axis=1)
