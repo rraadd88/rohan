@@ -86,22 +86,28 @@ def notebook2packagescript(notebookp,test=False):
     else:
         return code,df1
     
-def notebook2script(notebookp, scriptp=None,keep_comments=True):
+def notebook2script(notebookp, 
+#                     scriptp=None,
+                    keep_comments=True):
     """
     blind convert
     """
-    if scriptp is None:
-        scriptp=notebookp.replace('.ipynb','.py')
+    logging.info(basename(notebookp))
+#     if scriptp is None:
+#         scriptp=notebookp.replace('.ipynb','.py')
     import nbformat
     from nbconvert import PythonExporter
     nb = nbformat.read(notebookp, nbformat.NO_CONVERT)
     exporter = PythonExporter()
     source, meta = exporter.from_notebook_node(nb)
+    lines=source.split('\n')
+    lines=[s for s in lines if (isinstance(s,str) and s!='' and len(s)<1000)]
     if not keep_comments:
-        source=[s for s in source if not s.startswith('#')]
-    with open(scriptp, 'w+') as fh:
-        fh.writelines(source)
-    return scriptp
+        lines=[s for s in lines if not s.startswith('#')]
+    return '\n'.join(lines).encode('ascii', 'ignore').decode('ascii')
+#     with open(scriptp, 'w+') as fh:
+#         fh.writelines(source)
+#     return scriptp
 
 import re
 def sort_stepns(l):
@@ -392,7 +398,10 @@ def git_commit(repop):
         commit_changes(repo)
     print('git-committed')
         
-def git_notebooks(packagen,packagep,notebooksdp=None):
+def git_notebooks(packagen,packagep,notebooksdp=None,validate=False,test=False):
+    """
+    :params validate: validate if functions are formatted correctly. 
+    """
     packagescriptsp=f"{packagep}/{packagen}"
     if notebooksdp is None:
         notebooksdp=f'{packagescriptsp}/notebooks'
@@ -401,11 +410,15 @@ def git_notebooks(packagen,packagep,notebooksdp=None):
     df1=pd.DataFrame(pd.Series({(basename(p)).split('_v')[0]:p for p in sorted(glob(f'{notebooksdp}/*ipynb'))[::-1]},name='notebook path'))
     df1.index.name='step name'
     df1=df1.sort_index().reset_index()
-    from rohan.dandage.io_fun import notebook2packagescript
-    df1['script text']=df1['notebook path'].apply(notebook2packagescript)
+    if validate:
+        from rohan.dandage.io_fun import notebook2packagescript
+        df1['script text']=df1['notebook path'].progress_apply(lambda x: notebook2packagescript(x,validate=validate,test=test))
+    else:
+        df1['script text']=df1['notebook path'].progress_apply(lambda x: notebook2script(x))
     df1=df1.log.dropna(subset=['script text'])
     df1['script path']=df1['step name'].apply(lambda x: f"{packagescriptsp}/curate{x}.py")
     def write_script(x):
+#         print(x['script text'])
         with open(x['script path'],'w') as f: 
             f.write(x['script text'])
     _=df1.apply(write_script,axis=1)

@@ -97,6 +97,7 @@ def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
     return df1
 
 def filter_dfs_inner(dfs,col,how='inner'):
+    from rohan.dandage.io_sets import list2intersection
     l=list(list2intersection([df[col].tolist() for df in dfs]))
     return [df.loc[(df[col].isin(l)),:] for df in dfs]
 
@@ -105,6 +106,12 @@ def convert_to_bools(df,col):
     for s in df[col].unique():
         df[f"{col} {s}"]=df[col]==s
     return df
+
+## conversion to type
+@add_method_to_class(rd)
+def to_dict(df,cols):
+    if not df.rd.check_duplicated([cols[0]]):
+        return df.set_index(cols[0])[cols[1]].to_dict()
 
 ## reshape df
 @add_method_to_class(rd)
@@ -462,13 +469,15 @@ def dfswapcols(df,cols):
 #     return df
 
 ## apply_agg
-# @add_method_to_class(rd)
 def agg_by_order(x,order):
     # damaging > other non-conserving > other conserving
     for k in order:
         if k in x.values:
             return k
-#     return none
+def agg_by_order_counts(x,order):
+    ds=x.value_counts()
+    ds[x.name]=agg_by_order(x,order)
+    return ds.to_frame('').T
 
 @add_method_to_class(rd)
 def groupby_agg_merge(df,col_groupby,col_aggby,
@@ -761,12 +770,15 @@ def dict2df(d,colkey='key',colvalue='value'):
 
 from rohan.dandage.io_text import get_header
 
-def read_table(p,params_read_csv={},**kws_manytables,):
+def read_table(p,
+               params_read_csv={},
+               ext=None,
+               **kws_manytables,):
     """
     'decimal':'.'
     
     examples:
-    ext='.vcf|vcf.gz'
+    s='.vcf|vcf.gz'
     read_table(p,
                params_read_csv=dict(
                #compression='gzip',
@@ -780,15 +792,15 @@ def read_table(p,params_read_csv={},**kws_manytables,):
     if len(params_read_csv.keys())!=0:
         return drop_unnamedcol(pd.read_csv(p,**params_read_csv))        
     else:
-        if any(p.endswith(ext) for ext in ['.tsv','.tsv.gz','.tab']):
+        if any([(p.endswith(s) or s==ext) for s in ['.tsv','.tsv.gz','.tab','.txt']]):
             return drop_unnamedcol(pd.read_csv(p,sep='\t',
                                               compression='gzip' if p.endswith('.gz') else None,
                                               ))
-        elif any(p.endswith(ext) for ext in ['.csv','.csv.gz']):
+        elif any([(p.endswith(s) or s==ext) for s in ['.csv','.csv.gz']]):
             return drop_unnamedcol(pd.read_csv(p,sep=',',
                                               compression='gzip' if p.endswith('.gz') else None,
                                               ))
-        elif p.endswith('.pqt') or p.endswith('.parquet'):
+        elif any([(p.endswith(s) or s==ext) for s in ['.pqt','.parquet']]):#p.endswith('.pqt') or p.endswith('.parquet'):
             return drop_unnamedcol(read_table_pqt(p))
         elif p.endswith('.vcf') or p.endswith('.vcf.gz'):
             from rohan.dandage.io_strs import replacemany
@@ -860,7 +872,7 @@ def read_manytables(ps,
     
 ## save table
 def to_table(df,p,
-             groupby=None,
+             colgroupby=None,
              test=False,**kws):
     if is_interactive_notebook(): test=True
 #     from rohan.dandage.io_strs import make_pathable_string
@@ -873,8 +885,8 @@ def to_table(df,p,
         df=df.reset_index()
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
-    if not groupby is None:
-        to_manytables(df,p,groupby)
+    if not colgroupby is None:
+        to_manytables(df,p,colgroupby)
         return
     if p.endswith('.tsv') or p.endswith('.tab'):
         df.to_csv(p,sep='\t')
@@ -887,9 +899,9 @@ def to_table(df,p,
     else: 
         logging.error(f'unknown extension {p}')
         
-def to_manytables(df,p,groupby):
+def to_manytables(df,p,colgroupby):
     outd,ext=splitext(p)
-    df.groupby(groupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if not isinstance(x.name, tuple) else '/'.join(x.name)}{ext}"))
+    df.groupby(colgroupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if not isinstance(x.name, tuple) else '/'.join(x.name)}{ext}"))
     
 def to_table_pqt(df,p,**kws_pqt):
     if len(df.index.names)>1:
