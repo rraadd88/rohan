@@ -144,7 +144,8 @@ def byte2str(b):
         
 
 # find
-def findall(s,substring,outends=False,outstrs=False):
+def findall(s,substring,outends=False,outstrs=False,
+           suffixlen=0):
     import re
     finds=list(re.finditer(substring, s))
     if outends or outstrs:
@@ -152,7 +153,7 @@ def findall(s,substring,outends=False,outstrs=False):
         if not outstrs:
             return locs
         else:
-            return [s[l[0]:l[1]] for l in locs]
+            return [s[l[0]:l[1]+suffixlen] for l in locs]
     else:
         return [a.start() for a in finds]
         

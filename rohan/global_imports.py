@@ -86,5 +86,5 @@ else:
 # tqdm.pandas()
 
 from pandarallel import pandarallel
-pandarallel.initialize(nb_workers=6,progress_bar=True)
-print("pandarallel.initialize(nb_workers=6,progress_bar=True)")
+pandarallel.initialize(nb_workers=4,progress_bar=True)
+print("pandarallel.initialize(nb_workers=4,progress_bar=True)")

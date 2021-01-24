@@ -373,13 +373,13 @@ def scriptp2modules(pyp):
     return [s.split('def ')[1].split('(')[0] for s in lines if s.startswith('def ')]
 
 
-def git_commit(repop):
+def git_commit(repop,suffix_message=''):
     from git import Repo
     repo=Repo(repop)
     def commit_changes(repo):
         """if any"""
         repo.git.add(update=True)
-        repo.index.commit('auto-update')
+        repo.index.commit('auto-update'+suffix_message)
 
     if len(repo.untracked_files)!=0:
         from rohan.dandage import input_binary
@@ -393,7 +393,7 @@ def git_commit(repop):
                 commit_changes(repo)
             else:
                 repo.git.add(eval(input('list of files in py syntax:')))
-        repo.index.commit('manual-update')
+        repo.index.commit('manual-update'+suffix_message)
     else:
         commit_changes(repo)
     print('git-committed')
@@ -422,5 +422,5 @@ def git_notebooks(packagen,packagep,notebooksdp=None,validate=False,test=False):
         with open(x['script path'],'w') as f: 
             f.write(x['script text'])
     _=df1.apply(write_script,axis=1)
-    git_commit(packagep)
+    git_commit(packagep,suffix_message='' if not validate else ' (not validated)')
     return df1

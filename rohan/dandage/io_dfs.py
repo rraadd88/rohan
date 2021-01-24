@@ -484,6 +484,7 @@ def agg_by_order_counts(x,order):
                                                    ))
     """    
     ds=x.value_counts()
+    ds=ds.add_prefix(f"{x.name}=")
     ds[x.name]=agg_by_order(x,order)
     return ds.to_frame('').T
 
