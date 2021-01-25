@@ -96,9 +96,15 @@ def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
         logging.warning([k for k in d if not k in df])
     return df1
 
-def filter_dfs_inner(dfs,col,how='inner'):
-    from rohan.dandage.io_sets import list2intersection
-    l=list(list2intersection([df[col].tolist() for df in dfs]))
+def filter_dfs(dfs,col,how='inner'):
+    from rohan.dandage.io_sets import list2intersection,list2union
+    if how=='inner':
+        l=list(list2intersection([df[col].tolist() for df in dfs]))
+    elif how=='outer':
+        l=list(list2union([df[col].tolist() for df in dfs]))
+    else:
+        raise ValueError("")
+    logging.info(f"len({col})={len(l)}")
     return [df.loc[(df[col].isin(l)),:] for df in dfs]
 
 ## conversion
@@ -387,8 +393,10 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
 
 ## nans:
 @add_method_to_class(rd)
-def check_na_percentage(df):
-    return (df.isnull().sum()/df.agg(len))*100
+def check_na_percentage(df,cols=None):
+    if cols is None:
+        cols=df.columns.tolist()
+    return (df.loc[:,cols].isnull().sum()/df.loc[:,cols].agg(len))*100
 
 ## duplicates:
 @add_method_to_class(rd)
@@ -471,6 +479,9 @@ def dfswapcols(df,cols):
 ## apply_agg
 def agg_by_order(x,order):
     # damaging > other non-conserving > other conserving
+    if len(x)==1:
+#         print(x.values)
+        return list(x.values)[0]
     for k in order:
         if k in x.values:
             return k
