@@ -20,6 +20,9 @@ def get_corr_bootstrapped(x,y,method='spearman',ci_type='max'):
 
 def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
             outstr=False):
+    """
+    between vectors
+    """
     from rohan.dandage.plot.annot import pval2annot
     if bootstrapped:
         r,ci=get_corr_bootstrapped(x,y,method=method,ci_type=ci_type)
@@ -43,6 +46,9 @@ def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
 def corr(df,
          method='spearman',
          ):
+    """
+    :returns: linear 
+    """
     df1=df.corr(method=method).rd.fill_diagonal(filler=np.nan)
     df2=df1.melt(ignore_index=False)
     col=df2.index.name
@@ -63,7 +69,8 @@ def corrdfs(df1,df2,method):
         logging.warning('intersection of index is used for correlations')
     dcorr=pd.DataFrame(columns=df1.columns,index=df2.columns)
     dpval=pd.DataFrame(columns=df1.columns,index=df2.columns)
-    for c1 in df1:
+    from tqdm import tqdm
+    for c1 in tqdm(df1.columns):
         for c2 in df2:
             if method=='spearman':
                 dcorr.loc[c2,c1],dpval.loc[c2,c1]=get_spearmanr(df1[c1],df2[c2],)
