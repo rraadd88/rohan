@@ -78,25 +78,35 @@ def plot_barh_stacked_percentage(dplot,col_annot,
     ax.set(xlim=[0,100],xlabel='%')
     return ax
 
-def plot_bar_intersections(dplot,cols,col_index,
+def plot_bar_intersections(dplot,cols=None,col_index=None,
                             min_intersections=5,
-                            figsize=[5,5],text_width=5,
+                            figsize=[5,5],text_width=22,
                             sort_by='cardinality',
                             sort_categories_by=None,#'cardinality',
                             element_size=40,
                             facecolor='gray',
                             totals=False,
+                            test=False,
                             **kws,
                           ):
     """
     upset
     """
-    if not isinstance(col_index,str): 
-        logging.error('co_index needs to be a string')
-        return
-    dplot=dplot.log.dropna(subset=[col_index]).log.drop_duplicates(subset=[col_index])
-    ds=dplot.groupby(cols).agg({col_index:'nunique'})[col_index]
-    ds=ds/len(dplot[col_index].unique())*100
+    if isinstance(dplot,pd.DataFrame):
+        assert(isinstance(col_index,str))
+        assert(all(dplot.loc[:,cols].dtypes=='bool'))
+#         dplot=dplot.log.dropna(subset=[col_index]).log.drop_duplicates(subset=[col_index])
+#         ds=dplot.groupby(cols).agg({col_index:'nunique'})[col_index]
+#         ds=ds/len(dplot[col_index].unique())*100
+        df1=dplot.melt(id_vars=col_index,
+                  value_vars=cols)
+        if test:print(df1.shape,end='')
+        df1=df1.loc[df1['value'],:]
+        if test:print(df1.shape)
+        ds=df1.rd.check_intersections('variable','paralog pair')
+    elif isinstance(dplot,pd.Series):
+        ds=dplot.copy()
+    ds=(ds/ds.sum())*100
     # from rohan.dandage.io_strs import linebreaker
     # ds.index.names=[linebreaker(s,break_pt=25) for s in ds.index.names]
     import upsetplot as up

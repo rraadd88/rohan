@@ -419,7 +419,24 @@ def check_mappings(df,cols=None):
     for t in list(itertools.permutations(cols,2)):
         d[t]=df.groupby(t[0])[t[1]].nunique().value_counts()
     return pd.concat(d,axis=0,ignore_index=False,names=['from','to','map to']).to_frame('map from').sort_index().reset_index(-1).loc[:,['map from','map to']]
-        
+
+@add_method_to_class(rd)        
+def check_intersections(df,colgroupby=None,colvalue=None,plot=False):
+    if isinstance(df,dict):
+        df=dict2df(df)
+        colgroupby='key'
+        colvalue='value'
+    if df.rd.check_duplicated([colgroupby,colvalue]):
+        df=df.log.drop_duplicates(subset=[colgroupby,colvalue])
+    df['_value']=True
+    df1=df.pivot(index=colvalue,columns=colgroupby,values='_value').fillna(False)
+    ds=df1.groupby(df1.columns.to_list()).size() 
+    if plot:
+        from rohan.dandage.plot.bar import plot_bar_intersections
+        return plot_bar_intersections(dplot=ds)
+    else:
+        return ds
+    
 ## drop duplicates by aggregating the dups
 @add_method_to_class(rd)
 def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False):
@@ -786,6 +803,7 @@ def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
 
 ## tables io
 def dict2df(d,colkey='key',colvalue='value'):
+    d={k:d[k] if isinstance(d[k],list) else list(d[k]) for k in d}
     return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
 
 from rohan.dandage.io_text import get_header
