@@ -421,7 +421,7 @@ def check_mappings(df,cols=None):
     return pd.concat(d,axis=0,ignore_index=False,names=['from','to','map to']).to_frame('map from').sort_index().reset_index(-1).loc[:,['map from','map to']]
 
 @add_method_to_class(rd)        
-def check_intersections(df,colgroupby=None,colvalue=None,plot=False):
+def check_intersections(df,colgroupby=None,colvalue=None,plot=False,**kws_plot):
     if isinstance(df,dict):
         df=dict2df(df)
         colgroupby='key'
@@ -430,10 +430,10 @@ def check_intersections(df,colgroupby=None,colvalue=None,plot=False):
         df=df.log.drop_duplicates(subset=[colgroupby,colvalue])
     df['_value']=True
     df1=df.pivot(index=colvalue,columns=colgroupby,values='_value').fillna(False)
-    ds=df1.groupby(df1.columns.to_list()).size() 
+    ds=df1.groupby(df1.columns.to_list()).size()
     if plot:
         from rohan.dandage.plot.bar import plot_bar_intersections
-        return plot_bar_intersections(dplot=ds)
+        return plot_bar_intersections(dplot=ds,colvalue=colvalue,**kws_plot)
     else:
         return ds
     

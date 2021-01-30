@@ -78,7 +78,7 @@ def plot_barh_stacked_percentage(dplot,col_annot,
     ax.set(xlim=[0,100],xlabel='%')
     return ax
 
-def plot_bar_intersections(dplot,cols=None,col_index=None,
+def plot_bar_intersections(dplot,cols=None,colvalue=None,
                             min_intersections=5,
                             figsize=[5,5],text_width=22,
                             sort_by='cardinality',
@@ -93,12 +93,12 @@ def plot_bar_intersections(dplot,cols=None,col_index=None,
     upset
     """
     if isinstance(dplot,pd.DataFrame):
-        assert(isinstance(col_index,str))
+        assert(isinstance(colvalue,str))
         assert(all(dplot.loc[:,cols].dtypes=='bool'))
-#         dplot=dplot.log.dropna(subset=[col_index]).log.drop_duplicates(subset=[col_index])
-#         ds=dplot.groupby(cols).agg({col_index:'nunique'})[col_index]
-#         ds=ds/len(dplot[col_index].unique())*100
-        df1=dplot.melt(id_vars=col_index,
+#         dplot=dplot.log.dropna(subset=[colvalue]).log.drop_duplicates(subset=[colvalue])
+#         ds=dplot.groupby(cols).agg({colvalue:'nunique'})[colvalue]
+#         ds=ds/len(dplot[colvalue].unique())*100
+        df1=dplot.melt(id_vars=colvalue,
                   value_vars=cols)
         if test:print(df1.shape,end='')
         df1=df1.loc[df1['value'],:]
@@ -106,12 +106,12 @@ def plot_bar_intersections(dplot,cols=None,col_index=None,
         ds=df1.rd.check_intersections('variable','paralog pair')
     elif isinstance(dplot,pd.Series):
         ds=dplot.copy()
-    ds=(ds/ds.sum())*100
+    ds2=(ds/ds.sum())*100
     # from rohan.dandage.io_strs import linebreaker
     # ds.index.names=[linebreaker(s,break_pt=25) for s in ds.index.names]
     import upsetplot as up
 #     fig=plt.figure()
-    d=up.plot(ds,
+    d=up.plot(ds2,
               figsize=figsize,
               text_width=text_width,
             sort_by=sort_by,
@@ -123,10 +123,14 @@ def plot_bar_intersections(dplot,cols=None,col_index=None,
     if totals:
         d['totals'].set(ylim=d['totals'].get_ylim()[::-1],
                        xlabel='%')
-    d['intersections'].set(ylabel=f'{col_index}s %',
+    d['intersections'].set(ylabel=f'{colvalue}s %',
                           xlim=[-0.5,min_intersections-0.5],
                           )
     d['intersections'].get_children()[0].set_color("#f55f5f")
-    d['intersections'].text(-0.25,ds.max(),f"{ds.max():.1f}%",
+    d['intersections'].text(-0.25,ds2.max(),f"{ds2.max():.1f}%",
                             ha='left',va='bottom',color="#f55f5f")    
+    d['intersections'].text(d['intersections'].get_xlim()[1],
+                            d['intersections'].get_ylim()[1],
+                            f"total {colvalue}s\n={ds.sum()}",
+                            ha='right',va='bottom',color="lightgray")
     return d
