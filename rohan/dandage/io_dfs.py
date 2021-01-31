@@ -86,7 +86,7 @@ def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_co
     
 #filter df
 @add_method_to_class(rd)
-def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
+def filter_rows(df,d,sign='==',logic='and',test=False):
     qry = f' {logic} '.join([f"`{k}` {sign} '{v}'" for k,v in d.items()])
     df1=df.query(qry)
     if test:
@@ -95,6 +95,8 @@ def filter_rows_bydict(df,d,sign='==',logic='and',test=False):
         logging.warning('may be some column names are wrong..')
         logging.warning([k for k in d if not k in df])
     return df1
+
+filter_rows_bydict=filter_rows
 
 def filter_dfs(dfs,col,how='inner'):
     from rohan.dandage.io_sets import list2intersection,list2union
