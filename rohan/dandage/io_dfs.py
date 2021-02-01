@@ -61,6 +61,17 @@ def drop_levelcol(df):
 dellevelcol=drop_levelcol
 
 @add_method_to_class(rd)
+def flatten_columns(df):
+    df.columns=coltuples2str(df.columns)
+    return df
+
+@add_method_to_class(rd)
+def rename_byreplace(df,replaces,**kws):
+    from rohan.dandage.io_strs import replacemany
+    df.columns=[replacemany(c,replaces,**kws) for c in df]
+    return df
+
+@add_method_to_class(rd)
 def clean(df,cols=[]):
     """
     Deletes temporary columns
@@ -378,6 +389,17 @@ def split_rows(df,collist,rowsep=None):
     return dellevelcol(df.set_index([c for c in df if c!=collist])[collist].apply(pd.Series).stack().reset_index().rename(columns={0:collist}))        
 ### alias
 meltlistvalues=split_rows
+
+## apply
+@add_method_to_class(rd)
+def apply_as_map(df,index,columns,values,
+                 fun,**kws):
+    """
+    :params fun: map to map
+    """
+    df1=df.pivot(index=index,columns=columns,values=values)
+    df2=fun(df1,**kws)
+    return df2.melt(ignore_index=False,value_name=values).reset_index()
 
 @add_method_to_class(rd)
 def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
@@ -862,9 +884,9 @@ def read_ps(ps):
     return ps
 def apply_on_paths(ps,func,
                     fast=False, 
+                   read_path=False,
                    drop_index=True,
                    fun_rename_path=None,
-                   read_path=False,
                    progress_bar=True,
                    params_read_csv={},
                    **kws,
@@ -888,8 +910,10 @@ def apply_on_paths(ps,func,
                             f"{'parallel' if fast else 'progress'}_apply" if progress_bar else "apply"
                )(lambda df: func(read_table_(df,read_path=read_path),
                                  **kws))
-    df2=df2.reset_index(drop=drop_index)
+    df2=df2.rd.clean().reset_index(drop=drop_index).rd.clean()
     if not fun_rename_path is None:
+        if fun_rename_path=='basenamenoext':
+            fun_rename_path=basenamenoext
         rename={p:fun_rename_path(p) for p in df2['path'].unique()}
         df2['path']=df2['path'].map(rename)
     return df2
