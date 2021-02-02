@@ -11,8 +11,7 @@ def get_spearmanr(x,y):
     t=sc.stats.spearmanr(x,y,nan_policy='omit')
     return t.correlation,float(t.pvalue)
 def get_pearsonr(x,y):
-    t=sc.stats.pearsonr(x,y)
-    return t.correlation,float(t.pvalue)
+    return sc.stats.pearsonr(x,y)
 
 def get_corr_bootstrapped(x,y,method='spearman',ci_type='max'):
     from rohan.dandage.stat.ml import get_cvsplits

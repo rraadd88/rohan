@@ -317,13 +317,14 @@ def pointplot_groupbyedgecolor(data,ax=None,**kws_pointplot):
 
 def plot_gaussianmixture(g,x,ax=None):
     from rohan.dandage.stat.solve import get_intersection_locations
-    f = x.reshape(-1,1)
     weights = g.weights_
     means = g.means_
     covars = g.covariances_
-#     plt.hist(f, bins=100, histtype='bar', density=True, ec='red', alpha=0.5)
-    x.sort()
     stds=np.sqrt(covars).ravel().reshape(2,1)
+    
+    f = x.reshape(-1,1)
+    x.sort()
+#     plt.hist(f, bins=100, histtype='bar', density=True, ec='red', alpha=0.5)
     two_pdfs = sc.stats.norm.pdf(np.array([x,x]), means, stds)
     mix_pdf = np.matmul(weights.reshape(1,2), two_pdfs)
     ax.plot(x,mix_pdf.ravel(), c='lightgray')

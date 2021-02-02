@@ -63,3 +63,34 @@ def agg_paired_values(a,b,sort=True,logscaled=False):
     else:
         d['ratio']=b/a
     return d
+
+
+def get_stats_paired(x,y):
+    """
+    classify 2d distributions
+    
+    :params x: (pd.Series)
+    :params y: (pd.Series)
+    """
+    ## escape duplicate value inputs
+    if ((x.nunique()/len(x))<0.5) or ((y.nunique()/len(y))<0.5):
+        return
+    d={}
+    d['n']=len(x)
+    from rohan.dandage.stat.corr import get_spearmanr,get_pearsonr
+    d['$r_s$'],d['P ($r_s$)']=get_spearmanr(x,y)
+    d['linear regression slope'],d['linear regression y-intercept'],d['$r_p$'],d['P ($r_p$)'],d['linear regression stderr']=sc.stats.linregress(x,y)
+#     shape of distributions
+    for k,a in zip(['x','y'],[x,y]):
+        from rohan.dandage.stat.cluster import cluster_1d
+        d2=cluster_1d(ds=a,
+                   n_clusters=2,
+                    returns=['clf'],             
+                       clf_type='gmm',
+                   random_state=88,
+#                    test=True,
+                        )    
+        d[f'{k} peak1 weight'],d[f'{k} peak2 weight'] = d2['clf'].weights_.flatten()
+        d[f'{k} peak1 mean'],d[f'{k} peak2 mean'] = d2['clf'].means_.flatten()
+        d[f'{k} peak1 std'],d[f'{k} peak2 std']=np.sqrt(d2['clf'].covariances_).ravel().reshape(2,1).flatten()    
+    return pd.Series(d)

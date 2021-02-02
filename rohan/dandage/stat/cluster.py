@@ -129,7 +129,6 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
 #                 return_coff=False,
 #                   return_ax=False,
               **kws_clf):
-    from rohan.dandage.plot.dist import plot_gaussianmixture    
     x=ds.to_numpy()
     X=x.reshape(-1,1)
     if clf_type.lower()=='gmm':
@@ -145,6 +144,7 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
     
     df=pd.DataFrame({'value':x,
     'label':labels==1})
+    
     if test:
         plt.figure(figsize=[2.5,2.5])
         ax=plt.subplot()
@@ -152,6 +152,7 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
                          histtype='step',
                          ax=ax)
         if clf_type=='gmm':
+            from rohan.dandage.plot.dist import plot_gaussianmixture    
             ax,coff=plot_gaussianmixture(g=clf,x=x,ax=ax)
         else:
             coffs=df.groupby('label')['value'].agg(min).values
@@ -163,6 +164,11 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
             ax.axvline(coff,color='k')
             ax.text(coff,ax.get_ylim()[1],f"{coff:.1f}",ha='center',va='bottom')            
     d={'df':df}
+#     if clf_type=='gmm':    
+#         weights = clf.weights_
+#         means = clf.means_
+#         covars = clf.covariances_
+#         stds=np.sqrt(covars).ravel().reshape(2,1)
     for k in returns:
         d[k]=locals()[k]
 

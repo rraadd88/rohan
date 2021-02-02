@@ -519,6 +519,9 @@ def dfswapcols(df,cols):
 
 ## apply_agg
 def agg_by_order(x,order):
+    """
+    TODO: convert categories to numbers and take min
+    """
     # damaging > other non-conserving > other conserving
     if len(x)==1:
 #         print(x.values)
@@ -863,7 +866,7 @@ def read_table(p,
                                               compression='gzip' if p.endswith('.gz') else None,
                                               ))
         elif any([(p.endswith(s) or s==ext) for s in ['.pqt','.parquet']]):#p.endswith('.pqt') or p.endswith('.parquet'):
-            return drop_unnamedcol(read_table_pqt(p))
+            return read_table_pqt(p)
         elif p.endswith('.vcf') or p.endswith('.vcf.gz'):
             from rohan.dandage.io_strs import replacemany
             return pd.read_table(p,
@@ -877,7 +880,7 @@ def read_table(p,
             logging.error(f'unknown extension {p}')
                         
 def read_table_pqt(p):
-    return drop_unnamedcol(pd.read_parquet(p,engine='fastparquet'))
+    return pd.read_parquet(p,engine='fastparquet').rd.clean()
 def read_ps(ps):
     if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
