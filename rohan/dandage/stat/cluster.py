@@ -153,7 +153,9 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
                          ax=ax)
         if clf_type=='gmm':
             from rohan.dandage.plot.dist import plot_gaussianmixture    
-            ax,coff=plot_gaussianmixture(g=clf,x=x,ax=ax)
+            ax,coff=plot_gaussianmixture(g=clf,x=x,
+                                         n_clusters=n_clusters,
+                                         ax=ax)
         else:
             coffs=df.groupby('label')['value'].agg(min).values
             for c in coffs:
@@ -171,7 +173,6 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
 #         stds=np.sqrt(covars).ravel().reshape(2,1)
     for k in returns:
         d[k]=locals()[k]
-
 #     if 'coff' in returns:
 #         d['coff']=coff
 #     if 'ax' in returns:

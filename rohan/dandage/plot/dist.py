@@ -315,22 +315,27 @@ def pointplot_groupbyedgecolor(data,ax=None,**kws_pointplot):
     ax.legend(bbox_to_anchor=[1,1])
     return ax
 
-def plot_gaussianmixture(g,x,ax=None):
+def plot_gaussianmixture(g,x,
+                         n_clusters=2,
+                         ax=None):
     from rohan.dandage.stat.solve import get_intersection_locations
     weights = g.weights_
     means = g.means_
     covars = g.covariances_
-    stds=np.sqrt(covars).ravel().reshape(2,1)
+    stds=np.sqrt(covars).ravel().reshape(n_clusters,1)
     
     f = x.reshape(-1,1)
     x.sort()
 #     plt.hist(f, bins=100, histtype='bar', density=True, ec='red', alpha=0.5)
     two_pdfs = sc.stats.norm.pdf(np.array([x,x]), means, stds)
-    mix_pdf = np.matmul(weights.reshape(1,2), two_pdfs)
+    mix_pdf = np.matmul(weights.reshape(1,n_clusters), two_pdfs)
     ax.plot(x,mix_pdf.ravel(), c='lightgray')
-    ax.plot(x,two_pdfs[0]*weights[0], c='gray')
-    ax.plot(x,two_pdfs[1]*weights[1], c='gray')
+    _=[ax.plot(x,two_pdfs[i]*weights[i], c='gray') for i in range(n_clusters)]
+#     ax.plot(x,two_pdfs[1]*weights[1], c='gray')
     logging.info(f'weights {weights}')
+    if n_clusters!=2:
+        coff=None
+        return ax,coff
     idxs=get_intersection_locations(y1=two_pdfs[0]*weights[0],
                                     y2=two_pdfs[1]*weights[1],
                                     test=False,x=x)
