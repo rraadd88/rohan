@@ -746,6 +746,20 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,
     return df
 
 @add_method_to_class(rd)
+def get_chunks(df1,colindex,colvalue,bins=10,value='right')
+    """
+    based on other df
+    bins=int(np.ceil(df2.memory_usage().sum()/0.1e9))
+    """
+    from rohan.dandage.stat.transform import get_qbins
+    d1=get_qbins(df1.set_index(colindex)[colvalue],
+                 bins=bins,
+                 value=value)
+    df1['chunk']=df1[colindex].map(d1)
+    df1['chunk']=df1['chunk'].astype(int)
+    return df1['chunk']
+
+@add_method_to_class(rd)
 def get_colsubset2stats(dannot,colssubset=None):
     if colssubset is None:
         colssubset=dannot_stats.columns
