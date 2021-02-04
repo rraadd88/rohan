@@ -57,3 +57,4 @@ def compare_bools_jaccard_df(df):
                 dmetrics.loc[c1,c2]=dmetrics.loc[c2,c1]
     return dmetrics
 
+def classify_bools(l): return 'both' if all(l) else 'either' if any(l) else 'neither'

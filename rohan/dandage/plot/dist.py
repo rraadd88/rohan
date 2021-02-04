@@ -317,7 +317,9 @@ def pointplot_groupbyedgecolor(data,ax=None,**kws_pointplot):
 
 def plot_gaussianmixture(g,x,
                          n_clusters=2,
-                         ax=None):
+                         ax=None,
+                         test=False,
+                        ):
     from rohan.dandage.stat.solve import get_intersection_locations
     weights = g.weights_
     means = g.means_
@@ -342,9 +344,14 @@ def plot_gaussianmixture(g,x,
     x_intersections=x[idxs]
 #     x_intersections=get_intersection_of_gaussians(means[0][0],stds[0][0],
 #                                                   means[1][0],stds[1][0],)
-    logging.info(f'intersections {x_intersections}')
+    if test: logging.info(f'intersections {x_intersections}')
     ms=sorted([means[0][0],means[1][0]])
-    coff=[i for i in x_intersections if i>ms[0] and i<ms[1]][0]
+#     print(ms)
+#     print(x_intersections)    
+    if len(x_intersections)>1:
+        coff=[i for i in x_intersections if i>ms[0] and i<ms[1]][0]
+    else:
+        coff=x_intersections[0]
     ax.axvline(coff,color='k')
     ax.text(coff,ax.get_ylim()[1],f"{coff:.1f}",ha='center',va='bottom')
     return ax,coff

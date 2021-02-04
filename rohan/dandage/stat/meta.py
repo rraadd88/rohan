@@ -73,7 +73,14 @@ def get_stats_paired(x,y):
     :params y: (pd.Series)
     """
     ## escape duplicate value inputs
+    if len(x)!=len(y):
+#         logging.error("len(x)!=len(y)")
+        return
+    if len(x)<5:
+#         logging.error("at least 5 data points needed.")
+        return
     if ((x.nunique()/len(x))<0.5) or ((y.nunique()/len(y))<0.5):
+#         logging.error("half or more duplicate values.")        
         return
     d={}
     d['n']=len(x)
