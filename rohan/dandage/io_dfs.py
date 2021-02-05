@@ -98,7 +98,8 @@ def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_co
 #filter df
 @add_method_to_class(rd)
 def filter_rows(df,d,sign='==',logic='and',test=False):
-    qry = f' {logic} '.join([f"`{k}` {sign} '{v}'" for k,v in d.items()])
+    assert(all([isinstance(d[k],(str,list)) for k in d]))
+    qry = f" {logic} ".join([f"`{k}` {sign} "+(f"'{v}'" if isinstance(v,str) else f"{v}") for k,v in d.items()])
     df1=df.query(qry)
     if test:
         logging.info(df1.loc[:,list(d.keys())].drop_duplicates())
@@ -444,16 +445,23 @@ def check_mappings(df,cols=None):
         d[t]=df.groupby(t[0])[t[1]].nunique().value_counts()
     return pd.concat(d,axis=0,ignore_index=False,names=['from','to','map to']).to_frame('map from').sort_index().reset_index(-1).loc[:,['map from','map to']]
 
+@add_method_to_class(rd)
+def to_map_binary(df,colgroupby=None,colvalue=None):
+    colgroupby=[colgroupby] if isinstance(colgroupby,str) else colgroupby
+    colvalue=[colvalue] if isinstance(colvalue,str) else colvalue
+    if df.rd.check_duplicated(colgroupby+colvalue):
+        df=df.log.drop_duplicates(subset=colgroupby+colvalue)
+    df['_value']=True
+    df1=df.pivot(index=colvalue,columns=colgroupby,values='_value').fillna(False)
+    return df1
+
 @add_method_to_class(rd)        
 def check_intersections(df,colgroupby=None,colvalue=None,plot=False,**kws_plot):
     if isinstance(df,dict):
         df=dict2df(df)
         colgroupby='key'
         colvalue='value'
-    if df.rd.check_duplicated([colgroupby,colvalue]):
-        df=df.log.drop_duplicates(subset=[colgroupby,colvalue])
-    df['_value']=True
-    df1=df.pivot(index=colvalue,columns=colgroupby,values='_value').fillna(False)
+    df1=to_map_binary(df,colgroupby=colgroupby,colvalue=colvalue)
     ds=df1.groupby(df1.columns.to_list()).size()
     if plot:
         from rohan.dandage.plot.bar import plot_bar_intersections
@@ -746,7 +754,7 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,
     return df
 
 @add_method_to_class(rd)
-def get_chunks(df1,colindex,colvalue,bins=10,value='right')
+def get_chunks(df1,colindex,colvalue,bins=10,value='right'):
     """
     based on other df
     bins=int(np.ceil(df2.memory_usage().sum()/0.1e9))
