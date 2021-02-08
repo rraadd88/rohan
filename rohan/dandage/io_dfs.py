@@ -759,6 +759,10 @@ def get_chunks(df1,colindex,colvalue,bins=10,value='right'):
     based on other df
     bins=int(np.ceil(df2.memory_usage().sum()/0.1e9))
     """
+    if bins==0:
+        df1['chunk']=bins
+        logging.warning("bins=0, so chunks=1")
+        return df1['chunk']
     from rohan.dandage.stat.transform import get_qbins
     d1=get_qbins(df1.set_index(colindex)[colvalue],
                  bins=bins,
