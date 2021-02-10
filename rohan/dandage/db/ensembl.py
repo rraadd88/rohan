@@ -40,6 +40,13 @@ def enst2ensp(id,ensembl):
     except:
         return np.nan    
     
+def enst2ensg(id,ensembl):
+    try:
+        t=ensembl.transcript_by_id(id)
+        return t.gene_id
+    except:
+        return np.nan 
+    
 def ensp2enst(id,ensembl):
     try:
         return ensembl.transcript_id_of_protein_id(id)

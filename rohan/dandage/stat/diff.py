@@ -96,13 +96,15 @@ def get_pval(df,
         except:
             return np.nan,np.nan
     else:
+#         df.to_csv('test/get_pval_bool.tsv',sep='\t')
         ct=pd.crosstab(df[colvalue],df[colsubset])
         if ct.shape==(2,2):
             ct=ct.sort_index(axis=0,ascending=False).sort_index(axis=1,ascending=False)
             if test:
                 print(ct)
             return sc.stats.fisher_exact(ct)
-        
+        else:
+            return np.nan,np.nan            
 def get_stat(df1,
               colsubset,
               colvalue,
@@ -127,6 +129,9 @@ def get_stat(df1,
         import itertools
         df2=pd.DataFrame([t for t in list(itertools.permutations(subsets,2))])
         df2.columns=cols_subsets
+#     print(df2.columns)
+#     print(df2.shape)
+#     print(df2.groupby(cols_subsets).size())
     df2=df2.groupby(cols_subsets).apply(lambda df: get_pval(df1,colvalue=colvalue,
                                                             colsubset=colsubset,
                                                             subsets=df.name,
@@ -182,7 +187,7 @@ def get_significant_changes(df1,alpha=0.025,
     """
     groupby to get the comparable groups 
     # if both mean and median are high
-    changeby=""
+    :param changeby: "" if check for change by both mean and median
     """    
     for s in ['mean','median']:
         df1[f'difference between {s} (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
@@ -215,3 +220,5 @@ def get_significant_changes(df1,alpha=0.025,
 #     # df1['change'].value_counts()
 #     # df1['significant change'].value_counts()
 #     return df1
+
+from rohan.dandage.plot.diff import plot_stats_diff

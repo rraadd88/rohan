@@ -82,6 +82,7 @@ def map_ids_request_in_batches(queries,frm='ACC',to='ENSEMBL_PRO_ID',
         test=test)
         range2df[ini]=dgeneids
     if len(range2df.keys())!=0:
+#         print(range2df)
         return pd.concat(range2df,axis=0).drop_duplicates()
     else:
         return pd.DataFrame(columns=[frm,to])        
