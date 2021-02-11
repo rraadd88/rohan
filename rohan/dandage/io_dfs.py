@@ -754,17 +754,18 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,
     return df
 
 @add_method_to_class(rd)
-def get_chunks(df1,colindex,colvalue,bins=10,value='right'):
+def get_chunks(df1,colindex,colvalue,bins=None,value='right'):
     """
     based on other df
-    bins=int(np.ceil(df2.memory_usage().sum()/0.1e9))
     """
     if bins==0:
         df1['chunk']=bins
         logging.warning("bins=0, so chunks=1")
         return df1['chunk']
+    bins=int(np.ceil(df1.memory_usage().sum()/1e9))
+    df2=df1.loc[:,[colindex,colvalue]].drop_duplicates()
     from rohan.dandage.stat.transform import get_qbins
-    d1=get_qbins(df1.set_index(colindex)[colvalue],
+    d1=get_qbins(df2.set_index(colindex)[colvalue],
                  bins=bins,
                  value=value)
     df1['chunk']=df1[colindex].map(d1)
@@ -979,7 +980,7 @@ def to_table(df,p,
     if not exists(dirname(p)) and dirname(p)!='':
         makedirs(dirname(p),exist_ok=True)
     if not colgroupby is None:
-        to_manytables(df,p,colgroupby)
+        to_manytables(df,p,colgroupby,**kws)
         return
     if p.endswith('.tsv') or p.endswith('.tab'):
         df.to_csv(p,sep='\t')
@@ -992,7 +993,10 @@ def to_table(df,p,
     else: 
         logging.error(f'unknown extension {p}')
         
-def to_manytables(df,p,colgroupby):
+def to_manytables(df,p,colgroupby,**kws_get_chunks):
+    if colgroupby=='chunk':
+        df1[colgroupby]=get_chunks(df1=df,bins=None,value='right',
+                                  **kws_get_chunks)
     outd,ext=splitext(p)
     df.groupby(colgroupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if not isinstance(x.name, tuple) else '/'.join(x.name)}{ext}"))
     

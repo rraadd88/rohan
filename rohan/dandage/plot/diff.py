@@ -3,6 +3,7 @@ from rohan.global_imports import *
 def plot_stats_diff(df2,
                     col_comparison=None,  
                     cols_subset=None,
+                    q_values=False,
                       ax=None, fig=None):
     """
     :params df2: output of `get_stats`
@@ -39,16 +40,27 @@ def plot_stats_diff(df2,
     # df3.apply(lambda x: ax.scatter([x['mean-std'],x['mean+std']],
     #                             [x['y']+(-0.1 if x['ylabel'].startswith(x['subset']) else 0.1),x['y']+(-0.1 if x['ylabel'].startswith(x['subset']) else 0.1)],
     #                            color='lightgray'),axis=1)
-    _=df3.apply(lambda x: ax.plot([x[f"{params['x']}-std"],x[f"{params['x']}+std"]],
+    _=df3.apply(lambda x: ax.plot([min([x[f"{params['x']}-std"],x[f"{params['x']}+std"]]),
+                                   max([x[f"{params['x']}-std"],x[f"{params['x']}+std"]])],
                                 [x['y']+(-0.1 if x[params['y']].startswith(x['subset']) else 0.1),x['y']+(-0.1 if x[params['y']].startswith(x['subset']) else 0.1)],
                                 color='lightgray'),axis=1)
     w=(ax.get_xlim()[1]-ax.get_xlim()[0])
-    for i,k in enumerate(['MWU','FE']):
+    cols_pvalues=['P (MWU test)', 'P (FE test)']
+    if q_values:
+        cols_pvalues+=['P (MWU test, FDR corrected)','P (FE test, FDR corrected)']
+    for i,c in enumerate(cols_pvalues):
+        if not c in df3:
+            continue
         posx=ax.get_xlim()[0]+w+(w*(i*0.3))
         ax.text(posx,
-                ax.get_ylim()[1],f'P {k}',
+                ax.get_ylim()[1],
+                f"{'p' if not 'corrected' in c else 'q'} {get_bracket(c).split(' ')[0]}",
                )
-        df3.drop_duplicates(subset=['y',f'P ({k} test)']).apply(lambda x: ax.text(posx,x['y'],f"{x[f'P ({k} test)']:1.1e}",
-                                                                                 color='gray') ,axis=1)
-    ax.legend(bbox_to_anchor=[2,1])
-    return ax
+        df3.drop_duplicates(subset=['y',c]).apply(lambda x: ax.text(posx,x['y'],
+                                                                    pval2annot(x[c], alternative='two-sided', alpha=None, fmt='<', linebreak=False).replace('P',''),
+#                                                                     f"{x[c]:1.1e}",
+                                                                    color='gray') ,axis=1)
+    ax.legend(bbox_to_anchor=[len(cols_pvalues),1])
+    return df3
+
+# P (MWU test, FDR corrected)
