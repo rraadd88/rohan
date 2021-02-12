@@ -33,7 +33,7 @@ def plot_stats_diff(df2,
                  ax=ax)
     from rohan.dandage.plot.ax_ import get_ticklabel2position
     df3['y']=df3[params['y']].map(get_ticklabel2position(ax, axis='y'))
-    df3['std']=df3['var'].apply(np.sqrt)
+    df3['std']=df3['var'].astype(float).apply(np.sqrt)
     df3[f"{params['x']}+std"]=df3[params['x']]+df3['std']
     df3[f"{params['x']}-std"]=df3[params['x']]-df3['std']
     ## TODO make scatter using apply
@@ -61,6 +61,6 @@ def plot_stats_diff(df2,
 #                                                                     f"{x[c]:1.1e}",
                                                                     color='gray') ,axis=1)
     ax.legend(bbox_to_anchor=[len(cols_pvalues),1])
-    return df3
+    return ax
 
 # P (MWU test, FDR corrected)

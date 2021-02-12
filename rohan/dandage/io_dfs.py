@@ -110,16 +110,27 @@ def filter_rows(df,d,sign='==',logic='and',test=False):
 
 filter_rows_bydict=filter_rows
 
-def filter_dfs(dfs,col,how='inner'):
-    from rohan.dandage.io_sets import list2intersection,list2union
-    if how=='inner':
-        l=list(list2intersection([df[col].tolist() for df in dfs]))
-    elif how=='outer':
-        l=list(list2union([df[col].tolist() for df in dfs]))
-    else:
-        raise ValueError("")
-    logging.info(f"len({col})={len(l)}")
-    return [df.loc[(df[col].isin(l)),:] for df in dfs]
+def filter_dfs(dfs,cols,how='inner'):
+    """
+    
+    """
+    def apply_(dfs,col,how):
+        from rohan.dandage.io_sets import list2intersection,list2union
+        if how=='inner':
+            l=list(list2intersection([df[col].tolist() for df in dfs]))
+        elif how=='outer':
+            l=list(list2union([df[col].tolist() for df in dfs]))
+        else:
+            raise ValueError("")
+        logging.info(f"len({col})={len(l)}")
+        return [df.loc[(df[col].isin(l)),:] for df in dfs]
+    if isinstance(cols,str):
+        cols=[cols]
+    # sort columns by nunique
+    cols=dfs[0].loc[:,cols].nunique().sort_values().index.tolist()
+    for c in cols:
+        dfs=apply_(dfs=dfs,col=c,how=how)
+    return dfs
 
 ## conversion
 def convert_to_bools(df,col):
@@ -129,10 +140,14 @@ def convert_to_bools(df,col):
 
 ## conversion to type
 @add_method_to_class(rd)
-def to_dict(df,cols):
+def to_dict(df,cols,drop_duplicates=False):
+    if drop_duplicates:
+        df=df.loc[:,cols].drop_duplicates()
     if not df.rd.check_duplicated([cols[0]]):
         return df.set_index(cols[0])[cols[1]].to_dict()
-
+    else:
+        return df.groupby(cols[0])[cols[1]].unique().to_dict()        
+        
 ## reshape df
 @add_method_to_class(rd)
 def dmap2lin(df,idxn='index',coln='column',colvalue_name='value'):
@@ -461,7 +476,10 @@ def check_intersections(df,colgroupby=None,colvalue=None,plot=False,**kws_plot):
         df=dict2df(df)
         colgroupby='key'
         colvalue='value'
-    df1=to_map_binary(df,colgroupby=colgroupby,colvalue=colvalue)
+    if not colgroupby is None:
+        df1=to_map_binary(df,colgroupby=colgroupby,colvalue=colvalue)
+    else:
+        df1=df.copy()
     ds=df1.groupby(df1.columns.to_list()).size()
     if plot:
         from rohan.dandage.plot.bar import plot_bar_intersections
@@ -588,6 +606,10 @@ sort_values_groupby=groupby_sort_values
 def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
                             suffixes=['gene1','gene2'], # no spaces
                             ):
+    """
+    sorts in ascending order. 
+    `sorted` means values are sorted because gene1>gene2. 
+    """
     suffixes=[s.replace(' ','') for s in suffixes]
     dn2df={}
     # keys: (equal, to be sorted)
