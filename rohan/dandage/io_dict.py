@@ -101,7 +101,7 @@ def groupby_value(d):
 def convert_tuplekeys2nested(d1): return {k1:{k[1]:d1[k] for k in d1 if k1 in k} for k1 in np.unique([k[0] for k in d1])}
 
 def flip_dict(d):
-    if all([isinstance(s,str) for s in d.values()]):
+    if all([not isinstance(s,list) for s in d.values()]):
         if len(np.unique(d.keys()))!=len(np.unique(d.values())):
             logging.error('values should be unique to flip the dict')
             return

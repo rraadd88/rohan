@@ -72,12 +72,14 @@ def rename_byreplace(df,replaces,**kws):
     return df
 
 @add_method_to_class(rd)
-def clean(df,cols=[]):
+def clean(df,cols=[],drop_constants=False):
     """
     Deletes temporary columns
     :param df: pandas dataframe
     """
     cols_del=df.filter(regex="^(?:index|level|Unnamed|chunk|_).*$").columns.tolist()+df.filter(regex="^.*(?:\.1)$").columns.tolist()+cols
+    if drop_constants:
+        cols_del+=df1.nunique().loc[lambda x: x==1].index.tolist()    
     if len(cols_del)!=0:
         logging.warning(f"dropped columns: {', '.join(cols_del)}")
         return df.drop(cols_del,axis=1)
