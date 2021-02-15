@@ -1,15 +1,15 @@
 from rohan.global_imports import *
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
 
 def get_model_summary(model):
     df_=model.summary().tables[0]
     return df_.loc[:,[0,1]].append(df_.loc[:,[2,3]].rename(columns={2:0,3:1})).rename(columns={0:'index',1:'value'}).append(dmap2lin(model.summary().tables[1]),sort=True)
 def run_lr_test(data,formula,covariate,col_group,params_model={'reml':False}):
-    import statsmodels.formula.api as smf
-    from scipy import stats
-    stats.chisqprob = lambda chisq, df: stats.chi2.sf(chisq, df)
+    sc.stats.chisqprob = lambda chisq, df: sc.stats.chi2.sf(chisq, df)
     def get_lrtest(llmin, llmax):
         stat = 2 * (llmax - llmin)
-        pval = stats.chisqprob(stat, 1)
+        pval = sc.stats.chisqprob(stat, 1)
         return stat, pval        
     data=data.dropna()
     # without covariate
@@ -45,7 +45,10 @@ def plot_residuals_versus_fitted(model):
 
 def plot_residuals_verusus_groups(model):
     fig = plt.figure(figsize = (5, 3))
-    ax = sns.boxplot(x = model.model.groups, y = model.resid)
+    ax = sns.pointplot(x = model.model.groups, 
+                       y = model.resid,
+                      ci='sd',
+                      join=False)
     ax.set_ylabel("residuals")
     ax.set_xlabel("groups")
     return ax

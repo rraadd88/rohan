@@ -362,7 +362,7 @@ def plot_normal(x):
     ax = sns.distplot(x, hist = True, 
                       kde_kws = {"shade" : True, "lw": 1, }, 
                       fit = sc.stats.norm,
-                      label='residual',
+                      label='residuals',
                      )
     ax.set_title("SW test "+pval2annot(sc.stats.shapiro(x)[1],alpha=0.05,fmt='<',linebreak=False))
     ax.legend()
