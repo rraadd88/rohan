@@ -22,4 +22,5 @@ dependencies:
     - xlrd
     - argh
     - gitpython
+    - statsmodels
 #     - pingouin

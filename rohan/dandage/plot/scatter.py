@@ -377,3 +377,15 @@ def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) z
 #     if not label is None:
 #         ax.set_title(label)
     return ax
+
+def plot_qq(x):    
+    import statsmodels.api as sm
+    fig = plt.figure(figsize = [3, 3])
+    ax = plt.subplot()
+    sm.qqplot(x, dist = sc.stats.norm, 
+              line = 's', 
+              ax=ax)
+    ax.set_title("SW test "+pval2annot(sc.stats.shapiro(x)[1],alpha=0.05,fmt='<',linebreak=False))
+    from rohan.dandage.plot.ax_ import set_equallim
+    ax=set_equallim(ax)
+    return ax

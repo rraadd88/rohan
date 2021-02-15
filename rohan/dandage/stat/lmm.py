@@ -30,3 +30,29 @@ def run_lr_test(data,formula,covariate,col_group,params_model={'reml':False}):
     dres=delunnamedcol(pd.concat({False:get_model_summary(modelf),
     True:get_model_summary(modelf_covariate)},axis=0,names=['covariate included','Unnamed']).reset_index())
     return stat, pval,dres
+
+def plot_residuals_versus_fitted(model):
+    """
+    RVF: residuals versus fitted values
+    """
+    fig = plt.figure(figsize = (5, 3))
+    ax = sns.scatterplot(y = model.resid, x = model.fittedvalues,alpha=0.2)
+    ax.set_xlabel("fitted")
+    ax.set_ylabel("residuals")
+    l = sm.stats.diagnostic.het_white(model.resid, model.model.exog)
+    ax.set_title("LM test "+pval2annot(l[1],alpha=0.05,fmt='<',linebreak=False)+", FE test "+pval2annot(l[3],alpha=0.05,fmt='<',linebreak=False))    
+    return ax
+
+def plot_residuals_verusus_groups(model):
+    fig = plt.figure(figsize = (5, 3))
+    ax = sns.boxplot(x = model.model.groups, y = model.resid)
+    ax.set_ylabel("residuals")
+    ax.set_xlabel("groups")
+    return ax
+def plot_model_sanity(model):
+    from rohan.dandage.plot.scatter import plot_qq 
+    from rohan.dandage.plot.dist import plot_normal 
+    plot_normal(x=model.resid)
+    plot_qq(x=model.resid)
+    plot_residuals_versus_fitted(model)
+    plot_residuals_verusus_groups(model)

@@ -11,6 +11,7 @@ seaborn>=0.8
 fastparquet
 pandarallel
 xlrd
+statsmodels
 # pingouin
 argh
 gitpython

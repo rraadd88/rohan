@@ -355,3 +355,15 @@ def plot_gaussianmixture(g,x,
     ax.axvline(coff,color='k')
     ax.text(coff,ax.get_ylim()[1],f"{coff:.1f}",ha='center',va='bottom')
     return ax,coff
+
+def plot_normal(x):
+    import statsmodels.api as sm
+    fig = plt.figure(figsize = [3, 3])
+    ax = sns.distplot(x, hist = True, 
+                      kde_kws = {"shade" : True, "lw": 1, }, 
+                      fit = sc.stats.norm,
+                      label='residual',
+                     )
+    ax.set_title("SW test "+pval2annot(sc.stats.shapiro(x)[1],alpha=0.05,fmt='<',linebreak=False))
+    ax.legend()
+    return ax

@@ -33,3 +33,4 @@ test/jupnbuks/
 test/*
 !test/test_install.py
 var/*
+_test*
