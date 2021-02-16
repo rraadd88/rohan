@@ -100,6 +100,7 @@ def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_co
 #filter df
 @add_method_to_class(rd)
 def filter_rows(df,d,sign='==',logic='and',test=False):
+    logging.info(df.shape)
     assert(all([isinstance(d[k],(str,list)) for k in d]))
     qry = f" {logic} ".join([f"`{k}` {sign} "+(f"'{v}'" if isinstance(v,str) else f"{v}") for k,v in d.items()])
     df1=df.query(qry)
@@ -108,6 +109,7 @@ def filter_rows(df,d,sign='==',logic='and',test=False):
     if len(df1)==0:
         logging.warning('may be some column names are wrong..')
         logging.warning([k for k in d if not k in df])
+    logging.info(df1.shape)
     return df1
 
 filter_rows_bydict=filter_rows
@@ -442,7 +444,9 @@ def check_na_percentage(df,cols=None):
 
 ## duplicates:
 @add_method_to_class(rd)
-def check_duplicated(df,cols):
+def check_duplicated(df,cols=None):
+    if cols is None:
+        cols=df.columns
     if df.duplicated(subset=cols).any():
         logging.error('duplicates in the table!')  
         return True
@@ -462,6 +466,33 @@ def check_mappings(df,cols=None):
         d[t]=df.groupby(t[0])[t[1]].nunique().value_counts()
     return pd.concat(d,axis=0,ignore_index=False,names=['from','to','map to']).to_frame('map from').sort_index().reset_index(-1).loc[:,['map from','map to']]
 
+@add_method_to_class(rd)
+def get_mappings(df1,cols=None,keep='1:1'):
+    """
+    validate by df1.rd.check_mappings(cols)
+    """
+    if cols is None:
+        cols=df1.columns.tolist()
+    if df1.rd.check_duplicated(cols):
+        df1=df1.loc[:,cols].log.drop_duplicates()
+    d1={'1:1':df1.copy(),
+       }
+    if keep!='1:1':
+        d1['not']=pd.DataFrame()
+    import itertools
+#     for t in list(itertools.permutations(cols,2)):
+    for c in cols:
+        d1['1:1']=d1['1:1'].groupby(c).filter(lambda df: len(df)==1)
+        if keep!='1:1':
+            d1['not']=d1['not'].append(df1.copy().groupby(c).filter(lambda df: len(df)!=1))
+    if keep=='1:1':
+        logging.info(df1.shape)
+        logging.info(d1['1:1'].shape)
+        return d1['1:1']
+    else:
+        assert(len(df1)==len(d1['1:1'])+len(d1['not']))
+        return pd.concat(d1,axis=1,names=['mapping']).reset_index()
+    
 @add_method_to_class(rd)
 def to_map_binary(df,colgroupby=None,colvalue=None):
     colgroupby=[colgroupby] if isinstance(colgroupby,str) else colgroupby
@@ -887,7 +918,8 @@ def dict2df(d,colkey='key',colvalue='value'):
 from rohan.dandage.io_text import get_header
 
 def read_table(p,
-               params_read_csv={},
+               params={},
+               params_read_csv={}, # deprecate
                ext=None,
                **kws_manytables,):
     """
@@ -902,26 +934,29 @@ def read_table(p,
                names=replacemany(get_header(path,comment='#',lineno=-1),['#','\n'],'').split('\t'))
                )
     """
-    if isinstance(p,list) or '*' in p:
-        return read_manytables(p,params_read_csv=params_read_csv,
-                               **kws_manytables)
+    ## deprecate params_read_csv
     if len(params_read_csv.keys())!=0:
-        return drop_unnamedcol(pd.read_csv(p,**params_read_csv))        
+        params=params_read_csv.copy()
+    if isinstance(p,list) or '*' in p:
+        return read_manytables(p,params=params,
+                               **kws_manytables)
+    if len(params.keys())!=0 and not 'columns' in params:
+        return pd.read_csv(p,**params).rd.clean()
     else:
         if any([(p.endswith(s) or s==ext) for s in ['.tsv','.tsv.gz','.tab','.txt']]):
-            return drop_unnamedcol(pd.read_csv(p,sep='\t',
+            return pd.read_csv(p,sep='\t',
                                               compression='gzip' if p.endswith('.gz') else None,
-                                              ))
+                                              ).rd.clean()
         elif any([(p.endswith(s) or s==ext) for s in ['.csv','.csv.gz']]):
-            return drop_unnamedcol(pd.read_csv(p,sep=',',
+            return pd.read_csv(p,sep=',',
                                               compression='gzip' if p.endswith('.gz') else None,
-                                              ))
+                                              ).rd.clean()
         elif any([(p.endswith(s) or s==ext) for s in ['.pqt','.parquet']]):#p.endswith('.pqt') or p.endswith('.parquet'):
-            return read_table_pqt(p)
+            return read_table_pqt(p,**params)
         elif p.endswith('.vcf') or p.endswith('.vcf.gz'):
             from rohan.dandage.io_strs import replacemany
             return pd.read_table(p,
-#                        params_read_csv=dict(
+#                        params=dict(
                        compression='gzip' if p.endswith('.vcf.gz') else None,
                        sep='\t',comment='#',header=None,
                        names=replacemany(get_header(path=p,comment='#',lineno=-1),['#','\n'],'').split('\t'),
@@ -930,8 +965,8 @@ def read_table(p,
         else: 
             logging.error(f'unknown extension {p}')
                         
-def read_table_pqt(p):
-    return pd.read_parquet(p,engine='fastparquet').rd.clean()
+def read_table_pqt(p,**kws):
+    return pd.read_parquet(p,engine='fastparquet',**kws).rd.clean()
 def read_ps(ps):
     if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
@@ -942,7 +977,7 @@ def apply_on_paths(ps,func,
                    drop_index=True,
                    fun_rename_path=None,
                    progress_bar=True,
-                   params_read_csv={},
+                   params={},
                    **kws,
                   ):
     def read_table_(df,read_path=False):
@@ -950,7 +985,7 @@ def apply_on_paths(ps,func,
         if read_path:
             return p
         else:
-            return read_table(p,params_read_csv=params_read_csv,)
+            return read_table(p,params=params,)
     if not fun_rename_path is None:
         drop_index=False
     ps=read_ps(ps)
@@ -976,17 +1011,17 @@ def read_manytables(ps,
                     fast=False,
                     drop_index=True,
                     to_dict=False,
-                    params_read_csv={},
+                    params={},
                     **kws,
                    ):
     if not to_dict:
         df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,
-                           params_read_csv=params_read_csv,
+                           params=params,
                            **kws)
         return df2
     else:
         return {p:read_table(p,
-                             params_read_csv=params_read_csv) for p in read_ps(ps)}
+                             params=params) for p in read_ps(ps)}
     
 ## save table
 def to_table(df,p,
