@@ -79,7 +79,7 @@ def clean(df,cols=[],drop_constants=False):
     """
     cols_del=df.filter(regex="^(?:index|level|Unnamed|chunk|_).*$").columns.tolist()+df.filter(regex="^.*(?:\.1)$").columns.tolist()+cols
     if drop_constants:
-        cols_del+=df1.nunique().loc[lambda x: x==1].index.tolist()    
+        cols_del+=df.nunique().loc[lambda x: x==1].index.tolist()    
     if len(cols_del)!=0:
         logging.warning(f"dropped columns: {', '.join(cols_del)}")
         return df.drop(cols_del,axis=1)
@@ -492,6 +492,20 @@ def get_mappings(df1,cols=None,keep='1:1'):
     else:
         assert(len(df1)==len(d1['1:1'])+len(d1['not']))
         return pd.concat(d1,axis=1,names=['mapping']).reset_index()
+
+# def get_rate(df1,cols1,cols2):
+#     return df1.groupby(cols1).apply(lambda df: len(df.loc[:,cols2].drop_duplicates()))
+# def get_rate_bothways(df,cols1,cols2,stat=None):
+#     if isinstance(cols1,str):
+#         cols1=[cols1]
+#     if isinstance(cols2,str):
+#         cols1=[cols2]
+#     if not stat is None:
+#         return pd.Series({f"{' '.join(cs2)} count {stat} per {' '.join(cs1)}" :getattr(get_rate(df,cols1=cs1,cols2=cs2,),stat)() for cs1, cs2 in [[cols1,cols2],[cols2,cols1]]})
+#     else:
+#         return pd.concat({f"{' '.join(cs2)} count per {' '.join(cs1)}" :get_rate(df,cols1=cs1,cols2=cs2,) for cs1, cs2 in [[cols1,cols2],[cols2,cols1]]},
+#                          names=['rate'],
+#                         axis=0)
     
 @add_method_to_class(rd)
 def to_map_binary(df,colgroupby=None,colvalue=None):

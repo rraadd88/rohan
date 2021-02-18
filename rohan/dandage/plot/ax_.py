@@ -1,7 +1,8 @@
 from rohan.global_imports import * 
 def rename_ticklabels(ax,axis,rename):
     k=f"{axis}ticklabels"
-    return ax.set(k=[rename[t.get_text()] for t in getattr(ax,f"get_{k}")()])
+    _=getattr(ax,f"set_{k}")([rename[t.get_text()] for t in getattr(ax,f"get_{k}")()])
+    return ax
 
 def get_ticklabel2position(ax,axis='x'):
     return dict(zip([t.get_text() for t in getattr(ax,f'get_{axis}ticklabels')()],
