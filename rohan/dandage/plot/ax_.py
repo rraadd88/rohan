@@ -1,4 +1,9 @@
 from rohan.global_imports import * 
+
+## ticklabels
+
+from rohan.dandage.plot.colors import color_ticklabels
+
 def rename_ticklabels(ax,axis,rename):
     k=f"{axis}ticklabels"
     _=getattr(ax,f"set_{k}")([rename[t.get_text()] for t in getattr(ax,f"get_{k}")()])
@@ -8,7 +13,7 @@ def get_ticklabel2position(ax,axis='x'):
     return dict(zip([t.get_text() for t in getattr(ax,f'get_{axis}ticklabels')()],
                   getattr(ax,f"{axis}axis").get_ticklocs()))
      
-def format_ticklabels(ax,axes=['x','y'],n=4,fmt=None):
+def format_ticklabels(ax,axes=['x','y'],n=None,fmt=None):
     if isinstance(n,int):
         n={'x':n,
            'y':n}
@@ -16,11 +21,15 @@ def format_ticklabels(ax,axes=['x','y'],n=4,fmt=None):
         fmt={'x':fmt,
            'y':fmt}
     for axis in axes:
-        getattr(ax,axis+'axis').set_major_locator(plt.MaxNLocator(n[axis]))
+        if not n is None:        
+            getattr(ax,axis+'axis').set_major_locator(plt.MaxNLocator(n[axis]))
         if not fmt is None:
             getattr(ax,axis+'axis').set_major_formatter(plt.FormatStrFormatter(fmt[axis]))
+        for tick in getattr(ax,f'get_{axis}ticklabels')():
+            tick.set_fontname("Monospace")
     return ax
 
+## lims
 def set_equallim(ax,diagonal=False,
                  params_format_ticklabels=dict(axes=['x','y'],n=4,fmt='%.2f'),
                 difference=None):
@@ -207,9 +216,6 @@ def set_logo(imp,ax,
     else:
         print(width, height,aspect_ratio,size/(height*2))
     return axins
-
-
-from rohan.dandage.plot.colors import color_ticklabels
 
 def set_logo_circle(ax=None,facecolor='white',edgecolor='gray',test=False):
     ax=plt.subplot() if ax is None else ax

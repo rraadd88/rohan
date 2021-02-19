@@ -952,7 +952,11 @@ def read_table(p,
     if len(params_read_csv.keys())!=0:
         params=params_read_csv.copy()
     if isinstance(p,list) or '*' in p:
-        return read_manytables(p,params=params,
+        if '*' in p:
+            ps=glob(p)
+            if exists(p.replace('/*','')):
+                logging.warning(f"exists: {p.replace('/*','')}")
+        return read_manytables(ps,params=params,
                                **kws_manytables)
     if len(params.keys())!=0 and not 'columns' in params:
         return pd.read_csv(p,**params).rd.clean()
@@ -1028,6 +1032,9 @@ def read_manytables(ps,
                     params={},
                     **kws,
                    ):
+    """
+    :params ps: list
+    """       
     if not to_dict:
         df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,
                            params=params,

@@ -60,6 +60,11 @@ def savefig(plotp,
             savepdf=False,
             normalise_path=True,
             dpi=500):
+    if not isinstance(plotp,str):
+        ax=plotp
+        plotp=f"plot/{ax.get_xlabel()} {ax.get_ylabel()} {ax.get_title()} {ax.legend_.get_title().get_text()}.png"
+        if exists(plotp):
+            logging.warning(f"overwritting: {plotp}")
     if normalise_path:
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
