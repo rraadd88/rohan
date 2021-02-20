@@ -69,11 +69,3 @@ def rescale(a,mn=None):
         a=a*(1-mn)
         a=1-a        
     return a
-
-def format_number_human(num):
-    magnitude = 0
-    while abs(num) >= 1000:
-        magnitude += 1
-        num /= 1000.0
-    # add more suffixes if you need them
-    return '%.0f%s' % (num, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])

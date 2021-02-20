@@ -255,5 +255,15 @@ def str2dict(s,sep=';',sep_equal='='):
 
 # TODO: deprecate
 # from rohan.dandage.io_sys import get_logger,get_datetime,get_time
-from rohan.dandage.io_nums import str2num,str2nums,format_number_human
+from rohan.dandage.io_nums import str2num,str2nums#,format_number_human
 # from rohan.dandage.io_dict import str2dict
+def num2str(num,magnitude=False):
+    if not magnitude:
+        return f"{num:.1e}" if num>100 else f"{num}"
+    else:
+        magnitude = 0
+        while abs(num) >= 1000:
+            magnitude += 1
+            num /= 1000.0
+        # add more suffixes if you need them
+        return '%.0f%s' % (num, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])

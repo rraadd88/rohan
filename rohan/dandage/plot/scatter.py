@@ -33,9 +33,9 @@ def plot_scatter(dplot,colx,coly,colz=None,
             trendline_method='poly',
             stat_method="spearman",
             bootstrapped=False,
-            params_plot={},
             cmap='Reds',label_colorbar=None,
             gridsize=25,
+            params_plot={},
             params_plot_trendline={},
             params_set_label={},
             ax=None,):
@@ -49,14 +49,18 @@ def plot_scatter(dplot,colx,coly,colz=None,
     stat_method = [stat_method] if isinstance(stat_method,str) else stat_method
     
     dplot=dplot.dropna(subset=[colx,coly]+[] if colz is None else [colz],how='any')
+    
     if colz is None and kind in ['hexbin']:
         colz='count'
         dplot[colz]=1
+    if colz in dplot:
+        params_plot['C']=colz
+        params_plot['reduce_C_function']=len if colz=='count' else params_plot['reduce_C_function'] if 'reduce_C_function' in params_plot else np.mean        
+        params_plot['gridsize']=params_plot['gridsize'] if 'gridsize' in params_plot else gridsize
+        params_plot['cmap']=params_plot['cmap'] if 'cmap' in params_plot else cmap
+        print(params_plot)
     ax=dplot.plot(kind=kind, x=colx, y=coly, 
-        C=colz,
-        reduce_C_function=len if colz=='count' else params_plot['reduce_C_function'] if 'reduce_C_function' in params_plot else np.mean,
-        gridsize=params_plot['gridsize'] if 'gridsize' in params_plot else gridsize,
-        cmap=params_plot['cmap'] if 'cmap' in params_plot else cmap,
+#         C=colz,
         ax=ax,
         **params_plot,
         )
@@ -72,7 +76,7 @@ def plot_scatter(dplot,colx,coly,colz=None,
         from rohan.dandage.stat.corr import get_corr
         ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],
                                        bootstrapped=bootstrapped,
-                                       outstr=True),
+                                       outstr=True,n=True),
                     **params_set_label)
     from rohan.dandage.plot.colors import saturate_color
     plot_trendline(dplot,colx,coly,

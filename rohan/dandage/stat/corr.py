@@ -21,11 +21,13 @@ def get_corr_bootstrapped(x,y,method='spearman',ci_type='max'):
     return np.mean(rs), get_ci(rs,ci_type=ci_type)
 
 def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
+             n=False,
             outstr=False):
     """
     between vectors
     """
     from rohan.dandage.plot.annot import pval2annot
+    from rohan.dandage.io_strs import num2str
     if bootstrapped:
         r,ci=get_corr_bootstrapped(x,y,method=method,ci_type=ci_type)
         _,p=globals()[f"get_{method}r"](x, y)
@@ -38,8 +40,7 @@ def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
         if not outstr:
             return r,p
         else:
-            return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"
-        
+            return f"$r_{method[0]}$={r:.2f}\n{pval2annot(p,fmt='<',linebreak=False)}"+('' if not n else f"\nn="+num2str(num=len(x),magnitude=False))        
 # def get_corr_str(x,y,method='spearman',bootstrapped=False,ci_type='max',
 #             outstr=True):
 #     return get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
