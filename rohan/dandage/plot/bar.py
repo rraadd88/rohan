@@ -85,12 +85,20 @@ def plot_bar_intersections(dplot,cols=None,colvalue=None,
                             sort_categories_by=None,#'cardinality',
                             element_size=40,
                             facecolor='gray',
+                            bari_annot=0,
                             totals=False,
                             test=False,
                             **kws,
                           ):
     """
     upset
+    sort_by:{‘cardinality’, ‘degree’}
+    If ‘cardinality’, subset are listed from largest to smallest. If ‘degree’, they are listed in order of the number of categories intersected.
+
+    sort_categories_by:{‘cardinality’, None}
+    Whether to sort the categories by total cardinality, or leave them in the provided order.
+
+    Ref: https://upsetplot.readthedocs.io/en/stable/api.html
     """
     if isinstance(dplot,pd.DataFrame):
         assert(isinstance(colvalue,str))
@@ -126,9 +134,14 @@ def plot_bar_intersections(dplot,cols=None,colvalue=None,
     d['intersections'].set(ylabel=f'{colvalue}s %',
                           xlim=[-0.5,min_intersections-0.5],
                           )
-    d['intersections'].get_children()[0].set_color("#f55f5f")
-    d['intersections'].text(-0.25,ds2.max(),f"{ds2.max():.1f}%",
-                            ha='left',va='bottom',color="#f55f5f")    
+    d['intersections'].get_children()[bari_annot].set_color("#f55f5f")
+    if sort_by=='cardinality':
+        y=ds2.max()
+    elif sort_by=='degree':
+        y=ds2.loc[tuple([True for i in ds2.index.names])]
+    print(sort_by,y)
+    d['intersections'].text(-0.25,y,f"{y:.1f}%",
+                            ha='left',va='bottom',color="#f55f5f",zorder=10)    
     d['intersections'].text(d['intersections'].get_xlim()[1],
                             d['intersections'].get_ylim()[1],
                             f"total {colvalue}s\n={ds.sum()}",

@@ -405,7 +405,7 @@ def split_rows(df,collist,rowsep=None):
     param colsyn: col containing tuples of synonymns 
     """
     if not rowsep is None:
-        df.loc[:,colsyn]=df.loc[:,colsyn].apply(lambda x : x.split(rowsep))
+        df.loc[:,collist]=df.loc[:,collist].apply(lambda x : x.split(rowsep))
     return dellevelcol(df.set_index([c for c in df if c!=collist])[collist].apply(pd.Series).stack().reset_index().rename(columns={0:collist}))        
 ### alias
 meltlistvalues=split_rows
@@ -491,7 +491,7 @@ def get_mappings(df1,cols=None,keep='1:1'):
         return d1['1:1']
     else:
         assert(len(df1)==len(d1['1:1'])+len(d1['not']))
-        return pd.concat(d1,axis=1,names=['mapping']).reset_index()
+        return pd.concat(d1,axis=0,names=['mapping']).reset_index()
 
 # def get_rate(df1,cols1,cols2):
 #     return df1.groupby(cols1).apply(lambda df: len(df.loc[:,cols2].drop_duplicates()))
@@ -518,15 +518,20 @@ def to_map_binary(df,colgroupby=None,colvalue=None):
     return df1
 
 @add_method_to_class(rd)        
-def check_intersections(df,colgroupby=None,colvalue=None,plot=False,**kws_plot):
+def check_intersections(df,colgroupby=None,colvalue=None,
+                        plot=False,**kws_plot):
     if isinstance(df,dict):
         df=dict2df(df)
         colgroupby='key'
         colvalue='value'
-    if not colgroupby is None:
+#     if isinstance(colgroupby,list):
+#         ds=df.groupby(colgroupby).size()
+#     el
+    if isinstance(colgroupby,str):
         df1=to_map_binary(df,colgroupby=colgroupby,colvalue=colvalue)
     else:
-        df1=df.copy()
+        assert(not df.rd.check_duplicated([colvalue]+colgroupby))
+        df1=df.set_index(colvalue).loc[:,colgroupby]
     ds=df1.groupby(df1.columns.to_list()).size()
     if plot:
         from rohan.dandage.plot.bar import plot_bar_intersections
@@ -930,10 +935,9 @@ def dict2df(d,colkey='key',colvalue='value'):
     return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
 
 from rohan.dandage.io_text import get_header
-
 def read_table(p,
                params={},
-               params_read_csv={}, # deprecate
+#                params_read_csv={}, # deprecate
                ext=None,
                **kws_manytables,):
     """
@@ -949,8 +953,8 @@ def read_table(p,
                )
     """
     ## deprecate params_read_csv
-    if len(params_read_csv.keys())!=0:
-        params=params_read_csv.copy()
+#     if len(params_read_csv.keys())!=0:
+#         params=params_read_csv.copy()
     if isinstance(p,list) or '*' in p:
         if '*' in p:
             ps=glob(p)
@@ -961,30 +965,43 @@ def read_table(p,
     if len(params.keys())!=0 and not 'columns' in params:
         return pd.read_csv(p,**params).rd.clean()
     else:
-        if any([(p.endswith(s) or s==ext) for s in ['.tsv','.tsv.gz','.tab','.txt']]):
-            return pd.read_csv(p,sep='\t',
-                                              compression='gzip' if p.endswith('.gz') else None,
-                                              ).rd.clean()
-        elif any([(p.endswith(s) or s==ext) for s in ['.csv','.csv.gz']]):
-            return pd.read_csv(p,sep=',',
-                                              compression='gzip' if p.endswith('.gz') else None,
-                                              ).rd.clean()
-        elif any([(p.endswith(s) or s==ext) for s in ['.pqt','.parquet']]):#p.endswith('.pqt') or p.endswith('.parquet'):
-            return read_table_pqt(p,**params)
-        elif p.endswith('.vcf') or p.endswith('.vcf.gz'):
+        params={}
+        if ext is None:
+            ext=basename(p).split('.',1)[1]
+            
+        if any([s==ext for s in ['pqt','parquet']]):#p.endswith('.pqt') or p.endswith('.parquet'):
+            return pd.read_parquet(p,engine='fastparquet',**params).rd.clean()
+        
+        params['compression']='gzip' if ext.endswith('.gz') else 'zip' if ext.endswith('.zip') else None
+        
+        if not params['compression'] is None:
+            ext=ext.split('.',1)[0]
+            
+        if any([s==ext for s in ['tsv','tab','txt']]):
+            params['sep']='\t'
+        elif any([s==ext for s in ['csv']]):
+            params['sep']=','            
+        elif ext=='vcf':
             from rohan.dandage.io_strs import replacemany
-            return pd.read_table(p,
-#                        params=dict(
-                       compression='gzip' if p.endswith('.vcf.gz') else None,
-                       sep='\t',comment='#',header=None,
-                       names=replacemany(get_header(path=p,comment='#',lineno=-1),['#','\n'],'').split('\t'),
-#                                 )
-                       )            
+            params.update(dict(sep='\t',
+                               comment='#',
+                               header=None,
+                               names=replacemany(get_header(path=p,comment='#',lineno=-1),['#','\n'],'').split('\t'),
+                              ))
+        elif ext=='gpad':
+            params.update(dict(
+                  sep='\t',
+                  names=['DB','DB Object ID','Qualifier','GO ID','DB:Reference(s) (|DB:Reference)','Evidence Code','With (or) From',
+                         'Interacting taxon ID','Date','Assigned by','Annotation Extension','Annotation Properties'],
+                 comment='!',
+                 ))
         else: 
-            logging.error(f'unknown extension {p}')
-                        
-def read_table_pqt(p,**kws):
-    return pd.read_parquet(p,engine='fastparquet',**kws).rd.clean()
+            logging.error(f'unknown extension {ext} in {p}')
+#         print(params)
+        return pd.read_table(p,
+                  **params,
+                   ).rd.clean()
+             
 def read_ps(ps):
     if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
