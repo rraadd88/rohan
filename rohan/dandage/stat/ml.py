@@ -312,7 +312,7 @@ def get_feature_importances(estimatorn2grid_search,
             value_name='importance',
            )
     df2=dellevelcol(pd.concat(dn2df,axis=0,names=['estimator name']).reset_index())
-    from rohan.dandage.stat.norm import rescale
+    from rohan.dandage.stat.transform import rescale
     def apply_(df):
         df['importance rescaled']=rescale(df['importance'])
         df['importance rank']=len(df)-df['importance'].rank()

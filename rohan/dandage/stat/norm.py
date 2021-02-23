@@ -55,7 +55,7 @@ def norm_by_gaussian_kde(values):
     kernel = stats.gaussian_kde(values)
     return Series({k: np.log(kernel.integrate_box_1d(-1e4, v) / kernel.integrate_box_1d(v, 1e4)) for k, v in values.to_dict().items()})
 
-from rohan.dandage.io_nums import rescale
+from rohan.dandage.stat.transform import rescale
 
 ## z-scores
 def zscore(ds): 
