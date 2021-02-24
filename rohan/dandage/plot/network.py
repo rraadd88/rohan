@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from rohan.dandage.io_dfs import *
 import networkx as nx
 
@@ -96,4 +97,126 @@ def plot_phylogeny(tree,organismname2id,
     _=dplot.apply(lambda x: plot_img(x['organism id'],ax,x['y bbox'],
                                      **params_set_logo),axis=1)
     print(dplot['organism id'].tolist())
+    return ax
+
+def plot_ppi_overlap(
+    df1,
+    colsource='key',
+    coltarget='value',
+    annot_targets=False,
+    annot_perc=True,
+#     linewidth=None,#'linewidth'|dict,
+#     linestyle=None,#'linestyle'|dict,
+    # constants
+    x_source=0,
+    x_target=1,
+    # arc
+    r=5,
+    xoff=1,
+    colors=None,
+    kws_source={'s':500},
+    kws_within=None,
+    test=False,
+    ax=None,
+    ):
+    """
+    d1={'P1': list(range(10)),
+        'P2': list(range(5,15,1)),}
+    TODO: more than 2 sources
+    """
+    def get_demo():
+        colsource='key'
+        coltarget='value'
+        df1={'P1': list(range(5)),
+            'P2': list(range(2,8,1)),}
+        df1={k:[str(i) for i in df1[k]] for k in df1}
+        df1=dict2df(df1,colkey=colsource, colvalue=coltarget)
+        df1['linewidth']=np.linspace(1,4,len(df1))
+        df1['linestyle']=df1[colsource].map({'P1':'--','P2':'-'})
+        return df1
+    from rohan.dandage.plot.colors import mix_colors,get_colors_default,saturate_color
+    
+    if isinstance(df1,dict):
+        df1={k:[str(i) for i in df1[k]] for k in df1}
+        df1=dict2df(df1,colkey=colsource, colvalue=coltarget)
+    df1=df1.log.drop_duplicates()
+    nodes_source=df1[colsource].unique()
+    df1.loc[:,'target type']=df1[colsource]
+    df1.loc[df1[coltarget].isin(df1.pivot(index=coltarget,columns=colsource,values=coltarget).dropna().index),'target type']='&'
+
+    df1.loc[:,'x_target']=x_target
+    d2=dict(zip(df1[coltarget].unique(),range(len(df1[coltarget].unique()))[::-1]))    
+    df1.loc[:,'y_target']=df1[coltarget].map(d2)
+
+    from rohan.dandage.stat.transform import rescale
+    df1.loc[:,'y_target']=rescale(df1['y_target'], 
+                            range1=[df1['y_target'].min(),
+                                    df1['y_target'].max()], 
+                            range2=[-1,1])
+
+    df1.loc[:,'x_target']=np.sqrt(r-df1['y_target']**2)+xoff
+    df1.loc[:,'x_target annot']=np.sqrt(r*1.2-df1['y_target']**2)+xoff
+    
+    if colors is None:        
+        colors=get_colors_default()[:len(nodes_source)]
+    node_type2color=dict(zip(nodes_source,colors))
+    if len(np.unique(colors))!=1:
+        node_type2color['&']=mix_colors(list(node_type2color.values()))
+    else:
+        node_type2color['&']=saturate_color(np.unique(colors)[0],2)
+    if ax is None:
+        _,ax=plt.subplots(figsize=[3,3],
+                     )
+    df1.groupby(['target type']).apply(lambda df: df.plot.scatter(x='x_target',y='y_target',
+                        s=10,
+                         fc=node_type2color[df.name],
+#                         fc='w',
+                         zorder=2,
+                         ax=ax))
+    if annot_targets:
+        df1.apply(lambda x: ax.text(x=x['x_target'],y=x['y_target'],
+                                    s=x['value'],
+                                    ha='left',
+                                    va='center',
+                         color=node_type2color[x['target type']],
+                         zorder=2,
+                                   ),
+                 axis=1)
+        annot_perc=False
+    else:
+        df1.groupby(['target type']).apply(lambda df: df.sort_values('y_target').plot(x='x_target annot',
+                                                              y='y_target',
+                                                              color=node_type2color[df.name],
+                                                              legend=False,
+                                                            zorder=2,
+                                                            ax=ax,
+                             ))        
+    if annot_perc:
+        df1.groupby(['target type']).apply(lambda df: ax.text(x=df['x_target annot'].max(),
+                                                              y=df['y_target'].mean(),
+                                                              s=f"{(len(df)/len(df1))*100:.0f}%",
+                                    ha='left',
+                                    va='center',
+                                    color=node_type2color[df.name],
+                             zorder=2,
+                             ))        
+    from rohan.dandage.stat.transform import rescale
+    source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4])))
+    for source in source2y:
+        ax.scatter([x_source],[source2y[source]],color=node_type2color[source],
+                   zorder=2,
+                  **kws_source)
+        ax.text(x_source,source2y[source],s=source,zorder=2,va='center',ha='center')
+        df1.loc[((df1[colsource]==source)),:].apply(lambda x: ax.plot([x_source,x['x_target']],[source2y[source],x['y_target']],
+                                                 color=node_type2color[source],
+                                                  zorder=1,
+                                                  linestyle='-' if not 'linestyle' in x else x['linestyle'],
+                                                  linewidth=1 if not 'linewidth' in x else x['linewidth'],
+                                                 ),
+                                axis=1)
+    if not kws_within is None:
+        ax.plot([x_source,x_source],source2y.values(),zorder=1,
+                **kws_within)
+    ax.set(xlim=[-0.75,r])
+    if not test: ax.axis('off')
     return ax

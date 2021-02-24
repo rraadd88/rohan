@@ -30,10 +30,16 @@ from rohan.global_imports import rd
 
 ## log
 def log_apply(df, fun, *args, **kwargs):
-    logging.info(f'{fun}: shape changed from {df.shape}', )
-    df1 = getattr(df, fun)(*args, **kwargs)
-    logging.info(f'{fun}: shape changed to   {df1.shape}')
-    return df1
+    """
+    """
+    d1={}
+    d1['from']=df.shape
+    df = getattr(df, fun)(*args, **kwargs)
+    d1['to  ']=df.shape
+    if d1['from']!=d1['to  ']:
+        for k in d1:
+            logging.info(f'{fun}: shape changed {k} {d1[k]}')
+    return df
 
 ## delete unneeded columns
 @add_method_to_class(rd)
@@ -137,10 +143,28 @@ def filter_dfs(dfs,cols,how='inner'):
     return dfs
 
 ## conversion
-def convert_to_bools(df,col):
+@add_method_to_class(rd)
+def get_bools(df,col):
+    """
+    prefer pd.get_dummies
+    """
     for s in df[col].unique():
         df[f"{col} {s}"]=df[col]==s
     return df
+
+@add_method_to_class(rd)
+def agg_bools(df1,cols):
+    """
+    reverse pd.get_dummies
+    
+    :params df1: bools
+    """
+    col='+'.join(cols)
+#     print(df1.loc[:,cols].T.sum())
+    assert(all(df1.loc[:,cols].T.sum()==1))
+    for c in cols:
+        df1.loc[df1[c],col]=c
+    return df1[col]
 
 ## conversion to type
 @add_method_to_class(rd)

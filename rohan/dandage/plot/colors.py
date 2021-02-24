@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import numpy as np
 import itertools
 import seaborn as sns
 import pandas as pd
@@ -58,9 +61,23 @@ def saturate_color(color, amount=0.5):
     c = colorsys.rgb_to_hls(*mc.to_rgb(c))
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import numpy as np
+def mix_colors(d):
+    """
+    Ref: https://stackoverflow.com/a/61488997/3521099
+    """
+    if isinstance(d,list):
+        d={k:1.0 for k in d}
+    d={k.replace('#',''):d[k] for k in d}
+    d_items = sorted(d.items())
+    tot_weight = sum(d.values())
+    red = int(sum([int(k[:2], 16)*v for k, v in d_items])/tot_weight)
+    green = int(sum([int(k[2:4], 16)*v for k, v in d_items])/tot_weight)
+    blue = int(sum([int(k[4:6], 16)*v for k, v in d_items])/tot_weight)
+    zpad = lambda x: x if len(x)==2 else '0' + x
+    c=zpad(hex(red)[2:]) + zpad(hex(green)[2:]) + zpad(hex(blue)[2:])
+    return f"#{c}"
+
+
 def get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100):
     if isinstance(cmap,str):
         cmap=plt.get_cmap(cmap)
