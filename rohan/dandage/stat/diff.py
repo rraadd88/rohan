@@ -129,7 +129,6 @@ def get_stat(df1,
         import itertools
         df2=pd.DataFrame([t for t in list(itertools.permutations(subsets,2))])
         df2.columns=cols_subsets
-#     print(df2.columns)
 #     print(df2.shape)
 #     print(df2.groupby(cols_subsets).size())
     df2=df2.groupby(cols_subsets).apply(lambda df: get_pval(df1,colvalue=colvalue,
@@ -159,30 +158,39 @@ def get_stats(df1,
               subsets=None,
               cols_subsets=['subset1', 'subset2'],
               df2=None,
-              stats=[np.mean,np.median,np.var],
+              stats=[np.mean,np.median,np.var,len],
               **kws_get_stats):
 #     from rohan.dandage.io_dfs import to_table
 #     to_table(df1,'test/get_stats.tsv')
-    stats=[s for s in stats if not s in [sum,len]]
+#     stats=[s for s in stats if not s in [sum,len]]
+    from tqdm import tqdm
     dn2df={}
-    for colvalue in cols_value:
-        dn2df[colvalue]=get_stat(df1,
-                      colsubset=colsubset,
-                      colvalue=colvalue,
-                      subsets=subsets,
-                      cols_subsets=cols_subsets,
-                      df2=df2,
-                      stats=stats,
-                      **kws_get_stats,
-                     ).set_index(cols_subsets)
+    for colvalue in tqdm(cols_value):
+        df1_=df1.dropna(subset=[colsubset,colvalue])
+        if len(df1_[colsubset].unique())>1:
+            dn2df[colvalue]=get_stat(df1_,
+                          colsubset=colsubset,
+                          colvalue=colvalue,
+                          subsets=subsets,
+                          cols_subsets=cols_subsets,
+                          df2=df2,
+                          stats=stats,
+                          **kws_get_stats,
+                         ).set_index(cols_subsets)
+        else:
+            logging.warning(f"not processed: {colvalue}; probably because of dropna")
     df3=pd.concat(dn2df,
           ignore_index=False,
-          join='outer',axis=1)
-    df3=df3.droplevel(0,axis=1).reset_index()
+#           join='outer',
+                  axis=0,
+                 names=['variable'])
+#     df3=df3.droplevel(0,axis=1)
+    df3=df3.reset_index()
     return df3
 
 def get_significant_changes(df1,alpha=0.025,
                             changeby="",
+                            fdr=True,
                            ):
     """
     groupby to get the comparable groups 
@@ -190,7 +198,8 @@ def get_significant_changes(df1,alpha=0.025,
     :param changeby: "" if check for change by both mean and median
     """    
     for s in ['mean','median']:
-        df1[f'difference between {s} (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
+        if f'{s} subset1' in df1:
+            df1[f'difference between {s} (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
     df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
     df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
     df1['change']=df1['change'].fillna('ns')
@@ -198,12 +207,15 @@ def get_significant_changes(df1,alpha=0.025,
     for test in ['MWU','FE']:
         if not f'P ({test} test)' in df1:
             continue
-        df1[f'change is significant ({test} test, FDR corrected)'],df1[f'P ({test} test, FDR corrected)'],df1[f'{test} alphacSidak'],df1[f'{test} alphacBonf']=multipletests(df1[f'P ({test} test)'],
-                                                               alpha=alpha, method='fdr_bh',
-                                                               is_sorted=False,returnsorted=False)
+        if fdr:
+            df1[f'change is significant ({test} test, FDR corrected)'],df1[f'P ({test} test, FDR corrected)'],df1[f'{test} alphacSidak'],df1[f'{test} alphacBonf']=multipletests(df1[f'P ({test} test)'],
+                                                                   alpha=alpha, method='fdr_bh',
+                                                                   is_sorted=False,returnsorted=False)
+        else:
+            df1[f'change is significant ({test} test)']=df1[f'P ({test} test)']<alpha
         #     info(f"corrected alpha alphacSidak={alphacSidak},alphacBonf={alphacBonf}")
-        df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],f'significant change ({test} test)']=df1.loc[df1[f'change is significant ({test} test, FDR corrected)'],'change']
-        df1[f'significant change ({test} test)']=df1[f'significant change ({test} test)'].fillna('ns')
+        df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],f"significant change ({test} test)"]=df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],'change']
+        df1[f"significant change ({test} test)"]=df1[f"significant change ({test} test)"].fillna('ns')
     return df1
 
 # def annotate_difference(df1,cols_subset_comparison,cols_index,

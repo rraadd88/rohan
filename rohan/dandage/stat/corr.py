@@ -197,3 +197,24 @@ def get_partial_corrs(df,xs,ys,method='spearman',splits=5):
         if f"{c}_covar" in df1:
             df1[f"{c}_covar"]=df1[f"{c}_covar"].apply(eval)
     return df1.reset_index()
+
+
+def check_collinearity(df3,threshold=0.7):
+    df4=df3.corr(method='spearman')
+    # df4=df4.applymap(abs)
+    from rohan.dandage.io_dfs import get_offdiagonal_values
+    df5=get_offdiagonal_values(df4.copy())
+    df6=df5.melt(ignore_index=False).dropna().reset_index()
+    df6['value']=df6['value'].apply(abs)
+    df6['is collinear']=df6['value'].apply(lambda x: x>=threshold)
+    perc=(df6['is collinear'].sum()/len(df6))*100
+    if perc==0:
+        logging.info(f"% collinear vars: {perc}")
+        return
+    logging.info(f"% collinear vars: {perc}")
+    df6=df6.loc[(df6['is collinear']),:]
+    #     %run ../../../../rohan/rohan/dandage/stat/network.py
+    from rohan.dandage.stat.network import get_subgraphs
+    df7=get_subgraphs(df6.loc[df6['is collinear'],:],'index','variable')
+    df7=df7.groupby('subnetwork name').agg({'node name':list}).reset_index()
+    return df7.groupby('subnetwork name').apply(lambda df: df6.apply(lambda x: x['value'] if len(set([x['index'],x['variable']]) - set(df['node name'].tolist()[0]))==0 else np.nan,axis=1).min()).sort_values(ascending=False)

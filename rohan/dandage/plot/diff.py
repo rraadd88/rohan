@@ -4,7 +4,8 @@ def plot_stats_diff(df2,
                     coly=None,
 #                     colcomparison=None,  
                     cols_subset=None,
-                    q_values=False,
+                    tests=['MWU','FE'],
+                    show_q=True,
                     palette=None,
                       ax=None, fig=None):
     """
@@ -17,12 +18,12 @@ def plot_stats_diff(df2,
         cols_subset=['subset1','subset2']
 #     if colcomparison_ is None:
     colcomparison_='comparison\n(n1,n2)'
-    df2[colcomparison_]=df2.apply(lambda x: f"{x[cols_subset[0]]} vs {x[cols_subset[1]]}\n({x['len subset1']},{x['len subset2']})",axis=1)
+    df2[colcomparison_]=df2.apply(lambda x: f"{x[cols_subset[0]]} vs {x[cols_subset[1]]}\n({int(x['len subset1'])},{int(x['len subset2'])})",axis=1)
     if not coly is None or df2.rd.check_duplicated([colcomparison_]):
         if coly is None:
             coly=(df2.nunique()==len(df2)).loc[lambda x:x].index.tolist()[0]
         colcomparison=f'{coly}\n(n1,n2)'
-        df2[colcomparison]=df2.apply(lambda x: f"{x[coly]}\n({x['len subset1']},{x['len subset2']})",axis=1)
+        df2[colcomparison]=df2.apply(lambda x: f"{x[coly]}\n({int(x['len subset1'])},{int(x['len subset2'])})",axis=1)
 #         df2[colcomparison]=df2[colcomparison]+df2[coly]
     else:
         colcomparison=colcomparison_
@@ -46,8 +47,8 @@ def plot_stats_diff(df2,
                   dodge=0.2,
                  ax=ax)
     from rohan.dandage.plot.ax_ import color_ticklabels
-    df2.loc[(df2['significant change (MWU test)']=='ns'),'color yticklabel']='lightgray'
-    df2.loc[(df2['significant change (MWU test)']!='ns'),'color yticklabel']='gray'
+    df2.loc[(df2['significant change (MWU test)' if 'significant change (MWU test)' in df2 else 'change']=='ns'),'color yticklabel']='lightgray'
+    df2.loc[(df2['significant change (MWU test)' if 'significant change (MWU test)' in df2 else 'change']!='ns'),'color yticklabel']='gray'
     ax=color_ticklabels(ax, ticklabel2color=df2.loc[:,[params['y'],'color yticklabel']].drop_duplicates().rd.to_dict([params['y'],'color yticklabel']),
                         axis='y')
     
@@ -80,12 +81,15 @@ def plot_stats_diff(df2,
                                 color=palette[0] if x[colcomparison_].startswith(x['subset']) else palette[1],
                                  ),axis=1)
     w=(ax.get_xlim()[1]-ax.get_xlim()[0])
-    cols_pvalues=['P (MWU test)', 'P (FE test)']
-    if q_values:
-        cols_pvalues+=['P (MWU test, FDR corrected)','P (FE test, FDR corrected)']
-    for i,c in enumerate(cols_pvalues):
-        if not c in df3:
+    cols_pvalues=[]
+    for k in tests:
+        if f'P ({k} test, FDR corrected)' in df3 and show_q:
+            cols_pvalues.append(f'P ({k} test, FDR corrected)')
+        elif f'P ({k} test)' in df3:
+            cols_pvalues.append(f'P ({k} test)')
+        else:
             continue
+    for i,c in enumerate(cols_pvalues):
         if df3[c].isnull().all():
             logging.error(f"all null for {c}")
             continue
@@ -102,5 +106,3 @@ def plot_stats_diff(df2,
     from rohan.dandage.plot.ax_ import format_ticklabels
     ax=format_ticklabels(ax=ax)
     return ax
-
-# P (MWU test, FDR corrected)

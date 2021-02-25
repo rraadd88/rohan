@@ -144,12 +144,19 @@ def filter_dfs(dfs,cols,how='inner'):
 
 ## conversion
 @add_method_to_class(rd)
-def get_bools(df,col):
+def get_bools(df,cols,drop=False):
     """
     prefer pd.get_dummies
     """
-    for s in df[col].unique():
-        df[f"{col} {s}"]=df[col]==s
+    for c in cols:
+        df_=pd.get_dummies(df[c],
+                                  prefix=c,
+                                  prefix_sep=": ",
+                                  dummy_na=False)
+        df_=df_.replace(1,True).replace(0,False)
+        df=df.join(df_)
+        if drop:
+            df=df.drop([c],axis=1)
     return df
 
 @add_method_to_class(rd)
