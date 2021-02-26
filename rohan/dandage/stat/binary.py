@@ -60,4 +60,4 @@ def compare_bools_jaccard_df(df):
 def classify_bools(l): return 'both' if all(l) else 'either' if any(l) else 'neither'
 
 ## agg
-def perc(x): return sum(x)/len(x)
+def perc(x): return (sum(x)/len(x))*100

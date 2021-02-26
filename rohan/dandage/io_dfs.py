@@ -996,7 +996,8 @@ def read_table(p,
     if len(params.keys())!=0 and not 'columns' in params:
         return pd.read_csv(p,**params).rd.clean()
     else:
-        params={}
+        if len(params.keys())==0:
+            params={}
         if ext is None:
             ext=basename(p).split('.',1)[1]
             

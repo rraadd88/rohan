@@ -197,12 +197,12 @@ def get_significant_changes(df1,alpha=0.025,
     # if both mean and median are high
     :param changeby: "" if check for change by both mean and median
     """    
-    for s in ['mean','median']:
-        if f'{s} subset1' in df1:
+    if any([f'{s} subset1' in df1 for s in ['mean','median']]) :
+        for s in ['mean','median']:
             df1[f'difference between {s} (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
-    df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
-    df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
-    df1['change']=df1['change'].fillna('ns')
+        df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
+        df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
+        df1['change']=df1['change'].fillna('ns')
     from statsmodels.stats.multitest import multipletests
     for test in ['MWU','FE']:
         if not f'P ({test} test)' in df1:
@@ -214,8 +214,9 @@ def get_significant_changes(df1,alpha=0.025,
         else:
             df1[f'change is significant ({test} test)']=df1[f'P ({test} test)']<alpha
         #     info(f"corrected alpha alphacSidak={alphacSidak},alphacBonf={alphacBonf}")
-        df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],f"significant change ({test} test)"]=df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],'change']
-        df1[f"significant change ({test} test)"]=df1[f"significant change ({test} test)"].fillna('ns')
+        if test!='FE':
+            df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],f"significant change ({test} test)"]=df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],'change']
+            df1[f"significant change ({test} test)"]=df1[f"significant change ({test} test)"].fillna('ns')
     return df1
 
 # def annotate_difference(df1,cols_subset_comparison,cols_index,
