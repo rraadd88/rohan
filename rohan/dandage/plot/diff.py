@@ -96,7 +96,7 @@ def plot_stats_diff(df2,
         posx=ax.get_xlim()[0]+w+(w*(i*0.3))
         ax.text(posx,
                 ax.get_ylim()[1],
-                f"{'P' if not 'corrected' in c else 'Q'} {get_bracket(c).split(' ')[0]}",
+                f"P {get_bracket(c).split(' ')[0]}",
                )
         df3.drop_duplicates(subset=['y',c]).apply(lambda x: ax.text(posx,x['y'],
                                                                     pval2annot(x[c], alternative='two-sided', alpha=None, fmt='<', linebreak=False).replace('P',''),
