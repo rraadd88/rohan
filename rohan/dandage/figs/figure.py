@@ -53,18 +53,31 @@ def labelplots(fig,axes,xoff=0,yoff=0,
         label2ax[label].text(*axi2xy[axi],f"{label}",
                              transform=fig.transFigure,
                              **params_text)    
-        
+def ax2plotp(ax,plotp='plot/plot_'):
+    """
+    :params plotp: preffix
+    """
+    if not isinstance(plotp,str):
+        for k in ['get_xlabel','get_ylabel','get_title','legend_']: 
+            if hasattr(ax,k):
+                if k!='legend_':
+                    plotp=f"{plotp}_"+getattr(ax,k)
+                else:
+                    plotp=f"{plotp}_"+ax.legend_.get_title().get_text()
+            plotp=f"{plotp}.png"
+        if exists(plotp):
+            logging.warning(f"overwritting: {plotp}")
+    else:
+        return ax
+
 def savefig(plotp,
             tight_layout=True,
             fmts=['png','svg'],
             savepdf=False,
             normalise_path=True,
             dpi=500):
-    if not isinstance(plotp,str):
-        ax=plotp
-        plotp=f"plot/{ax.get_xlabel()} {ax.get_ylabel()} {ax.get_title()} {ax.legend_.get_title().get_text()}.png"
-        if exists(plotp):
-            logging.warning(f"overwritting: {plotp}")
+#         from rohan.dandage.plot.ax_ import ax2plotp
+    plotp=ax2plotp(plotp)
     if normalise_path:
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    

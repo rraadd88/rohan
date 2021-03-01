@@ -57,25 +57,35 @@ def plot_value_counts(df,col,logx=False,
 #     _=[ax.text(1,y,f"{s:.0f}%",va='center') for y,s in enumerate(dplot_.iloc[0,:])]
 #     return ax
 
-def plot_barh_stacked_percentage(dplot,col_annot,
+def plot_barh_stacked_percentage(df1,coly,colannot,
                      color=None,
-                     yoff=0.3,
+                     yoff=0,
                      ax=None,
                      ):
+    """
+    :params dplot: values sum to 100% in rows
+    :params coly: yticklabels, e.g. retained and dropped 
+    :params colannot: col to annot
+    """
     from rohan.dandage.plot.ax_ import get_ticklabel2position
     from rohan.dandage.plot.colors import get_colors_default
     if color is None:
         color=get_colors_default()[0]
     ax=plt.subplot() if ax is None else ax
-    ax=dplot.plot.barh(stacked=True,ax=ax)
+    df2=df1.set_index(coly).apply(lambda x: (x/sum(x))*100, axis=1)
+    ax=df2.plot.barh(stacked=True,ax=ax)
     ticklabel2position=get_ticklabel2position(ax,'y')
-    _=dplot.reset_index().apply(lambda x: ax.text(0,
-                                                  ticklabel2position[x['index']]-yoff,
-                                                  f"{x[col_annot]:.1f}%",ha='left',va='top',
-                                                 color=color),
+    from rohan.dandage.plot.colors import saturate_color
+    _=df2.reset_index().apply(lambda x: ax.text(0,
+                                                  ticklabel2position[x[coly]]-yoff,
+                                                  f"{x[colannot]:.1f}%",ha='left',va='center',
+                                                 color=saturate_color(color,2),
+                                               ),
                                 axis=1)
-    ax.legend(bbox_to_anchor=[1,1],title=dplot.columns.name)
-    ax.set(xlim=[0,100],xlabel='%')
+    ax.legend(bbox_to_anchor=[1,1],title=df1.columns.name)
+    d1=df1.set_index(coly).T.sum().to_dict()
+    ax.set(xlim=[0,100],xlabel='%',
+          yticklabels=[f"{t.get_text()}\n(total={d1[t.get_text()]})" for t in ax.get_yticklabels()])
     return ax
 
 def plot_bar_intersections(dplot,cols=None,colvalue=None,
@@ -131,7 +141,7 @@ def plot_bar_intersections(dplot,cols=None,colvalue=None,
     if totals:
         d['totals'].set(ylim=d['totals'].get_ylim()[::-1],
                        xlabel='%')
-    d['intersections'].set(ylabel=f'{colvalue}s %',
+    d['intersections'].set(ylabel=f"{colvalue}s %\n(total={ds.sum()})",
                           xlim=[-0.5,min_intersections-0.5],
                           )
     d['intersections'].get_children()[bari_annot].set_color("#f55f5f")
@@ -142,8 +152,8 @@ def plot_bar_intersections(dplot,cols=None,colvalue=None,
     print(sort_by,y)
     d['intersections'].text(-0.25,y,f"{y:.1f}%",
                             ha='left',va='bottom',color="#f55f5f",zorder=10)    
-    d['intersections'].text(d['intersections'].get_xlim()[1],
-                            d['intersections'].get_ylim()[1],
-                            f"total {colvalue}s\n={ds.sum()}",
-                            ha='right',va='bottom',color="lightgray")
+#     d['intersections'].text(d['intersections'].get_xlim()[1],
+#                             d['intersections'].get_ylim()[1],
+#                             f"total {colvalue}s\n={ds.sum()}",
+#                             ha='right',va='bottom',color="lightgray")
     return d
