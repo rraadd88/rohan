@@ -57,16 +57,16 @@ def ax2plotp(ax,plotp='plot/plot_'):
     """
     :params plotp: preffix
     """
-    if not isinstance(plotp,str):
+    if not isinstance(ax,str):
         for k in ['get_xlabel','get_ylabel','get_title','legend_']: 
             if hasattr(ax,k):
                 if k!='legend_':
-                    plotp=f"{plotp}_"+getattr(ax,k)
+                    plotp=f"{plotp}_"+getattr(ax,k)()
                 else:
-                    plotp=f"{plotp}_"+ax.legend_.get_title().get_text()
+                    if not ax.legend_ is None:
+                        plotp=f"{plotp}_"+ax.legend_.get_title().get_text()
             plotp=f"{plotp}.png"
-        if exists(plotp):
-            logging.warning(f"overwritting: {plotp}")
+        return plotp
     else:
         return ax
 
@@ -78,6 +78,8 @@ def savefig(plotp,
             dpi=500):
 #         from rohan.dandage.plot.ax_ import ax2plotp
     plotp=ax2plotp(plotp)
+    if exists(plotp):
+        logging.warning(f"overwritting: {plotp}")    
     if normalise_path:
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    

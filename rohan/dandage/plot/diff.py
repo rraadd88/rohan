@@ -21,13 +21,15 @@ def plot_stats_diff(df2,
     df2[colcomparison_]=df2.apply(lambda x: f"{x[cols_subset[0]]} vs {x[cols_subset[1]]}\n({int(x['len subset1'])},{int(x['len subset2'])})",axis=1)
     if not coly is None or df2.rd.check_duplicated([colcomparison_]):
         if coly is None:
-            coly=(df2.nunique()==len(df2)).loc[lambda x:x].index.tolist()[0]
+            coly=(df2.select_dtypes([object]).nunique()==len(df2)).loc[lambda x:x].index.tolist()[0]
         colcomparison=f'{coly}\n(n1,n2)'
         df2[colcomparison]=df2.apply(lambda x: f"{x[coly]}\n({int(x['len subset1'])},{int(x['len subset2'])})",axis=1)
 #         df2[colcomparison]=df2[colcomparison]+df2[coly]
     else:
         colcomparison=colcomparison_
+    print(colcomparison)
     assert(not df2.rd.check_duplicated([colcomparison]))
+    
     df2=df2.sort_values(by='difference between mean (subset1-subset2)',ascending=False)
     
     if palette is None:
