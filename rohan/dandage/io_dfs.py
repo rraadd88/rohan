@@ -72,10 +72,16 @@ def flatten_columns(df):
     return df
 
 @add_method_to_class(rd)
-def rename_byreplace(df,replaces,**kws):
+def renameby_replace(df,replaces,**kws):
     from rohan.dandage.io_strs import replacemany
     df.columns=[replacemany(c,replaces,**kws) for c in df]
     return df
+
+@add_method_to_class(rd)
+def drop_constants(df):
+    cols_del=df.nunique().loc[lambda x: x==1].index.tolist()
+    logging.warning(f"dropped columns: {', '.join(cols_del)}")
+    return df.drop(cols_del,axis=1)
 
 @add_method_to_class(rd)
 def clean(df,cols=[],drop_constants=False):
@@ -85,7 +91,7 @@ def clean(df,cols=[],drop_constants=False):
     """
     cols_del=df.filter(regex="^(?:index|level|Unnamed|chunk|_).*$").columns.tolist()+df.filter(regex="^.*(?:\.1)$").columns.tolist()+cols
     if drop_constants:
-        cols_del+=df.nunique().loc[lambda x: x==1].index.tolist()    
+        df=df.rd.drop_constants()
     if len(cols_del)!=0:
         logging.warning(f"dropped columns: {', '.join(cols_del)}")
         return df.drop(cols_del,axis=1)
@@ -105,7 +111,9 @@ def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_co
     
 #filter df
 @add_method_to_class(rd)
-def filter_rows(df,d,sign='==',logic='and',test=False):
+def filter_rows(df,d,sign='==',logic='and',
+                drop_constants=False,
+                test=False):
     logging.info(df.shape)
     assert(all([isinstance(d[k],(str,list)) for k in d]))
     qry = f" {logic} ".join([f"`{k}` {sign} "+(f"'{v}'" if isinstance(v,str) else f"{v}") for k,v in d.items()])
@@ -116,6 +124,8 @@ def filter_rows(df,d,sign='==',logic='and',test=False):
         logging.warning('may be some column names are wrong..')
         logging.warning([k for k in d if not k in df])
     logging.info(df1.shape)
+    if drop_constants:
+        df1=df1.rd.drop_constants()
     return df1
 
 filter_rows_bydict=filter_rows
@@ -524,6 +534,32 @@ def get_mappings(df1,cols=None,keep='1:1'):
         assert(len(df1)==len(d1['1:1'])+len(d1['not']))
         return pd.concat(d1,axis=0,names=['mapping']).reset_index()
 
+@add_method_to_class(rd)
+def filterby_mappings(df1,cols=None,maps=['1:1'],test=False):
+    """
+    :cols :
+    """
+    d1={}
+    d1['from']=df1.shape
+    
+    if cols is None:
+        cols=df1.columns.tolist()
+    assert(len(cols)==2)
+    if df1.rd.check_duplicated(cols):
+        df1=df1.loc[:,cols].log.drop_duplicates()
+    if isinstance(maps,str):
+        maps=[maps]
+    if '1:m' in maps or '1:1' in maps:
+        df1=df1.loc[(df1[cols[0]].isin(df1[cols[0]].value_counts().loc[lambda x: x==1].index)),:]
+    if 'm:1' in maps or '1:1' in maps:
+        df1=df1.loc[(df1[cols[1]].isin(df1[cols[1]].value_counts().loc[lambda x: x==1].index)),:]
+    if test: logging.info(df1.rd.check_mappings())
+
+    d1['to  ']=df1.shape
+    if d1['from']!=d1['to  ']:
+        for k in d1:
+            logging.info(f'shape changed {k} {d1[k]}')        
+    return df1
 # def get_rate(df1,cols1,cols2):
 #     return df1.groupby(cols1).apply(lambda df: len(df.loc[:,cols2].drop_duplicates()))
 # def get_rate_bothways(df,cols1,cols2,stat=None):
@@ -939,7 +975,26 @@ def make_ids_sorted(df,cols,ids_have_equal_length):
     else:
         return df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
 
+@add_method_to_class(rd)    
+def split_ids(df1,col):
+    df=df1[col].str.split('--',expand=True)
+    for i in range(len(df.columns)):
+        df1[f"{col} {i+1}"]=df[i]
+    return df1
 
+@add_method_to_class(rd)
+def sort_ids_paired(df1,cols=['g1','g2'],col=None):
+    if col is None:
+        col=f"{cols[0].split('1')[0]}s id"
+    ## combine id
+    df1[col]=make_ids_sorted(df1,cols,ids_have_equal_length=True)
+    ## drop dups
+    df1=df1.drop(cols,axis=1).log.drop_duplicates()
+    ## split id
+#     if any(df1[cols[0]]==df1[cols[1]]):
+#         df1['homomeric interaction']=df1[cols[0]]==df1[cols[1]]
+    return df1
+    
 ## merge/map ids
 @add_method_to_class(rd)
 def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
@@ -991,6 +1046,8 @@ def read_table(p,
             ps=glob(p)
             if exists(p.replace('/*','')):
                 logging.warning(f"exists: {p.replace('/*','')}")
+        if isinstance(p,list):
+            ps=p
         return read_manytables(ps,params=params,
                                **kws_manytables)
     if len(params.keys())!=0 and not 'columns' in params:

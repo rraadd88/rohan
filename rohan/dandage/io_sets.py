@@ -15,6 +15,10 @@ def list2intersection(l):
 def list2union(l):
 #     return np.unique(np.ravel(l))
     return merge_unique_dropna(l)
+
+def union(l):return reduce(np.union1d, (l))
+def intersect(l):return reduce(np.intersect1d, (l))
+
 # lists mostly for agg
 def dropna(x):
     x_=[]

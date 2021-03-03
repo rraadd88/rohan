@@ -26,7 +26,7 @@ def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_contro
 
 def get_ratio_sorted(a,b):
     l=sorted([a,b])
-    if l[1]!=0:
+    if l[0]!=0 and l[1]!=0:
         return l[1]/l[0]
 
 def diff(a,b,absolute=True): 

@@ -139,11 +139,17 @@ def plot_ppi_overlap(
     if isinstance(df1,dict):
         df1={k:[str(i) for i in df1[k]] for k in df1}
         df1=dict2df(df1,colkey=colsource, colvalue=coltarget)
+    ## label data
     df1=df1.log.drop_duplicates()
     nodes_source=df1[colsource].unique()
     df1.loc[:,'target type']=df1[colsource]
     df1.loc[df1[coltarget].isin(df1.pivot(index=coltarget,columns=colsource,values=coltarget).dropna().index),'target type']='&'
-
+    ## sort targets 
+    df1=pd.concat([df1.loc[df1['target type']==nodes_source[0],:],
+                df1.loc[df1['target type']=='&',:],
+                df1.loc[df1['target type']==nodes_source[1],:]],
+                 axis=0)
+    ## positions
     df1.loc[:,'x_target']=x_target
     d2=dict(zip(df1[coltarget].unique(),range(len(df1[coltarget].unique()))[::-1]))    
     df1.loc[:,'y_target']=df1[coltarget].map(d2)
@@ -192,9 +198,10 @@ def plot_ppi_overlap(
                                                             ax=ax,
                              ))        
     if annot_perc:
+        total_targets=df1[coltarget].unique().shape[0]
         df1.groupby(['target type']).apply(lambda df: ax.text(x=df['x_target annot'].max(),
                                                               y=df['y_target'].mean(),
-                                                              s=f"{(len(df)/len(df1))*100:.0f}%",
+                                                              s=f"{(len(df[coltarget].unique())/total_targets)*100:.0f}%",
                                     ha='left',
                                     va='center',
                                     color=node_type2color[df.name],
