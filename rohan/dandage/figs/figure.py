@@ -65,7 +65,7 @@ def ax2plotp(ax,plotp='plot/plot_'):
                 else:
                     if not ax.legend_ is None:
                         plotp=f"{plotp}_"+ax.legend_.get_title().get_text()
-            plotp=f"{plotp}.png"
+        plotp=f"{plotp}.png"
         return plotp
     else:
         return ax

@@ -11,9 +11,14 @@ def get_spray(n,center=[0,0],width=1,random_state=8):
     return df
 
 def plot_fitland(xys,ns=None,widths=None,
-                 params_cbar={},params_spray={'random_state':8},
+#                  params_cbar={},
+                 params_spray={'random_state':8},
+                 cmap='coolwarm',
+                 shade_lowest=True,
                  fig=None,ax=None,labelsize=None,
-                 test=False):
+                 test=False,
+                 **kws_kdeplot,
+                 ):
     if fig is None:
         fig=plt.figure(figsize=[3,2.75])
     if ax is None:
@@ -28,11 +33,12 @@ def plot_fitland(xys,ns=None,widths=None,
         df=df.append(df_)
     if not test:
         ax1=sns.kdeplot(df.x, df.y,
-                         cmap="coolwarm", 
+                         cmap=cmap,#"coolwarm", 
+                        shade_lowest=shade_lowest,
                     shade=True, 
-                    shade_lowest=True,
                     ax=ax,
-                    **params_cbar,
+#                     **params_cbar,
+                    **kws_kdeplot,
                    )
         ax1.figure.axes[-1].yaxis.label.set_size(labelsize)
     else:

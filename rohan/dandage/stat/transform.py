@@ -49,22 +49,24 @@ def rescale(a, range1=None, range2=[0,1]):
     delta2 = range2[1] - range2[0]
     return (delta2 * (a - range1[0]) / delta1) + range2[0]
 
-def get_bins(ds,bins,value='mid'):
+def get_bins(ds,bins,value='mid',error='raise'):
     logging.warning('assuming 1:1 mapping between index and values')
     i=len(ds.unique())/len(ds)
     if i!=1:
         logging.warning(f'fraction of unique values={i}')
     if i<0.1:
         logging.error(f'many duplicated values.')
-        return 
+        if error=='raise':
+            return 
     return pd.cut(ds,bins,duplicates='drop').apply(lambda x: getattr(x,value)).astype(float).to_dict()
 
-def get_qbins(ds,bins,value='mid'):
+def get_qbins(ds,bins,value='mid',error='raise'):
     logging.warning('assuming 1:1 mapping between index and values')
     i=len(ds.unique())/len(ds)
     if i!=1:
         logging.warning(f'fraction of unique values={i}')
     if i<0.1:
         logging.error(f'use get_bins instead. many duplicated values.')
-        return 
+        if error=='raise':
+            return 
     return pd.qcut(ds,bins,duplicates='drop').apply(lambda x: getattr(x,value)).astype(float).to_dict()

@@ -173,7 +173,7 @@ def plot_ppi_overlap(
     if ax is None:
         _,ax=plt.subplots(figsize=[3,3],
                      )
-    df1.groupby(['target type']).apply(lambda df: df.plot.scatter(x='x_target',y='y_target',
+    df1.dropna(subset=[coltarget]).groupby(['target type']).apply(lambda df: df.plot.scatter(x='x_target',y='y_target',
                         s=10,
                          fc=node_type2color[df.name],
 #                         fc='w',
@@ -198,8 +198,8 @@ def plot_ppi_overlap(
                                                             ax=ax,
                              ))        
     if annot_perc:
-        total_targets=df1[coltarget].unique().shape[0]
-        df1.groupby(['target type']).apply(lambda df: ax.text(x=df['x_target annot'].max(),
+        total_targets=df1.dropna(subset=[coltarget])[coltarget].unique().shape[0]
+        df1.dropna(subset=[coltarget]).groupby(['target type']).apply(lambda df: ax.text(x=df['x_target annot'].max(),
                                                               y=df['y_target'].mean(),
                                                               s=f"{(len(df[coltarget].unique())/total_targets)*100:.0f}%",
                                     ha='left',
@@ -214,7 +214,7 @@ def plot_ppi_overlap(
                    zorder=2,
                   **kws_source)
         ax.text(x_source,source2y[source],s=source,zorder=2,va='center',ha='center')
-        df1.loc[((df1[colsource]==source)),:].apply(lambda x: ax.plot([x_source,x['x_target']],[source2y[source],x['y_target']],
+        df1.loc[((df1[colsource]==source)),:].dropna(subset=[coltarget]).apply(lambda x: ax.plot([x_source,x['x_target']],[source2y[source],x['y_target']],
                                                  color=node_type2color[source],
                                                   zorder=1,
                                                   linestyle='-' if not 'linestyle' in x else x['linestyle'],
