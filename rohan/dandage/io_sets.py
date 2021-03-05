@@ -1,23 +1,18 @@
 ## Also includes list, np vectors and tuple things
 import itertools
-from functools import reduce
 import numpy as np
 import pandas as pd
 import logging
 
-def nunion(l1,l2):
-    return len(set(l1) | set(l2))
-def nintersection(l1,l2):
-    return len(set(l1) & set(l2))
-
-def list2intersection(l):
-    return reduce(np.intersect1d, (l))
-def list2union(l):
-#     return np.unique(np.ravel(l))
-    return merge_unique_dropna(l)
-
+from functools import reduce
 def union(l):return reduce(np.union1d, (l))
-def intersect(l):return reduce(np.intersect1d, (l))
+def intersection(l):return reduce(np.intersect1d, (l))
+
+def list2union(l): return union(l)
+def list2intersection(l): return intersection(l)    
+
+def nunion(l): return len(union(l))
+def nintersection(l): return len(intersection(l))
 
 # lists mostly for agg
 def dropna(x):
@@ -32,20 +27,20 @@ def unique(l,drop=None):
     if drop is not None:
         l=[s for s in l if s!=drop]
     return list(np.unique(l))
+def nunique(l,**kws): return len(unique(l,**kws))
+
+def unique_dropna(l): return dropna(unique(l,drop='nan'))
+def unique_dropna_str(l,sep='; '): return tuple2str(dropna(unique(l,drop='nan')),sep=sep)
+def merge_unique_dropna(l): return dropna(unique(list(itertools.chain(*l)),drop='nan'))
+
 
 def list_value_counts(l):return dict(zip(*np.unique(l, return_counts=True)))
-
 def tuple2str(tup,sep='; '): 
     if not isinstance(tup,list):
         tup=tuple(tup)
     tup=[str(s) for s in tup]
     tup=sep.join(list(tup))
     return tup
-
-def unique_dropna(l): return dropna(unique(l,drop='nan'))
-def unique_dropna_str(l,sep='; '): return tuple2str(dropna(unique(l,drop='nan')),sep=sep)
-
-def merge_unique_dropna(l): return dropna(unique(list(itertools.chain(*l)),drop='nan'))
 def list2str(x):
     x=list(x)
     if len(x)>1:
@@ -53,7 +48,6 @@ def list2str(x):
         return x
     else:
         return x[0]
-
 
 def flatten(l):
     return list(np.hstack(np.array(l)))

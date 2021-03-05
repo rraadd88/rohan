@@ -42,7 +42,7 @@ def to_yaml(d,p):
     with open(p,'w') as f:
         yaml.safe_dump(d,f)
         
-def read_json(path_to_file,encoding=None):
+def read_json(path_to_file,encoding=None):    
     with open(path_to_file,encoding=encoding) as p:
         return json.load(p)
 def to_json(data,p):
@@ -58,6 +58,10 @@ def read_dict(p,fmt='',**kws):
         return read_yaml(p)
     elif p.endswith('.json') or fmt=='json':
         return read_json(p,**kws)
+    elif p.startswith('https'):
+        from urllib.request import urlopen
+        return json.load(urlopen(p))
+#         return read_json(p,**kws)    
     elif p.endswith('.pickle'):
         d = read_pickle(p)
     elif p.endswith('.joblib'):
