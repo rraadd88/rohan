@@ -95,6 +95,11 @@ def sort_legends(ax,sort_order=None,**kws):
     if sort_order is None:
         handles,labels = zip(*sorted(zip(handles,labels), key=lambda t: t[1]))
     else:
+        if all([isinstance(i,str) for i in sort_order]):
+            sort_order=[labels.index(s) for s in sort_order]
+        if not all([isinstance(i,int) for i in sort_order]):
+            logging.error("sort_order should contain all integers")
+            return
         handles,labels =[handles[idx] for idx in sort_order],[labels[idx] for idx in sort_order]
     ax.legend(handles, labels,**kws)
     return ax

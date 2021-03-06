@@ -145,6 +145,8 @@ def plot_ppi_overlap(
     df1.loc[:,'target type']=df1[colsource]
     df1.loc[df1[coltarget].isin(df1.pivot(index=coltarget,columns=colsource,values=coltarget).dropna().index),'target type']='&'
     ## sort targets 
+    if 'linewidth' in df1:
+        df1=df1.groupby('target type',as_index=False).apply(lambda df: df.sort_values('linewidth'))
     df1=pd.concat([df1.loc[df1['target type']==nodes_source[0],:],
                 df1.loc[df1['target type']=='&',:],
                 df1.loc[df1['target type']==nodes_source[1],:]],

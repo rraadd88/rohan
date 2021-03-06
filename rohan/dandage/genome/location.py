@@ -10,9 +10,13 @@ def get_chr_loc_type(l,ignore=['MT']):
         return 'same'
     
 def get_location_relative(k1,k2,ensembl,test=False):
-    x={f'gene{i+1}': ensembl.locus_of_gene_id(k).to_dict() for i,k in enumerate([k1,k2])}
-    if test: print(x)
     d1={}
+    try:
+        x={f'gene{i+1}': ensembl.locus_of_gene_id(k).to_dict() for i,k in enumerate([k1,k2])}
+    except:
+        logging.warning(f"ids not found: {k1}|{k2}")
+        return d1
+    if test: print(x)
     d1['chromosomes']=get_chr_loc_type([x['gene1']['contig'],x['gene2']['contig']])
     if d1['chromosomes']=='same':
         if x['gene1']['strand']==x['gene2']['strand']:

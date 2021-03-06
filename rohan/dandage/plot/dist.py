@@ -367,3 +367,42 @@ def plot_normal(x):
     ax.set_title("SW test "+pval2annot(sc.stats.shapiro(x)[1],alpha=0.05,fmt='<',linebreak=False))
     ax.legend()
     return ax
+
+def pointplot_join_hues(df1,x,y,hue,hues,
+                        order,hue_order,
+                        dodge,
+                        cmap='Reds',
+                        ax=None,
+                        **kws_pointplot):
+    if ax is None:_,ax=plt.subplots(figsize=[3,3])
+    df1.groupby([hues]).apply(lambda df2: sns.pointplot(data=df2,
+                                                        x=x,y=y,hue=hue,hues=hues,
+                                                        order=order,hue_order=hue_order,
+                                                        dodge=dodge,
+                                                      **kws_pointplot,
+                                                       zorder=5,
+                                                      ax=ax,
+                                                     ))
+    # ax.legend()
+    from rohan.dandage.plot.ax_ import get_ticklabel2position,sort_legends
+    df1['y']=df1[y].map(get_ticklabel2position(ax,axis='y'))
+    df1['hue']=df1[hue].map(dict(zip(hue_order,[-1,1])))*dodge*0.5
+    df1['y hue']=df1['y']+df1['hue']
+
+    df2=df1.pivot(index=[y,hues],
+                columns=[hue,],
+                values=[x,'y hue','y','hue'],
+                ).reset_index()#.rd.flatten_columns()
+    from rohan.dandage.plot.colors import get_val2color
+    df2['color'],_=get_val2color(df2[hues],vmin=-0.2,cmap=cmap)
+    df2['label']=df2[hues].apply(lambda x: f"{hues}{x:.1f}")
+    # x=df2.iloc[0,:]
+#     return df2
+    _=df2.groupby([hues,'color']).apply(lambda df2: df2.apply(lambda x1: ax.plot(x1[x],x1['y hue'],
+                                                           color=df2.name[1],
+                                                           label=x1['label'].tolist()[0] if x1[y].tolist()[0]==order[0] else None,
+                                                           zorder=1,
+                                                           ),axis=1))
+    sort_legends(ax, sort_order=hue_order+sorted(df2['label'].unique()),
+                bbox_to_anchor=[1,1])
+    return ax
