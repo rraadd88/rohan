@@ -102,7 +102,91 @@ def fit_power_law(xdata,ydata,yerr=None,pinit = [1.5, -1.5],axes=None):
     ax.set_xlabel('# of degrees (log scale)')
     ax.set_ylabel('frequency (log scale)')
     ax.legend()
-    
+
+def fit_gauss_bimodal(data,bins=50,expected=(1,.2,250,2,.2,125),test=False):
+    #
+#     expected=(1,.2,250,2,.2,125)
+#     data=concatenate((normal(1,.2,5000),normal(2,.2,2500)))
+    from scipy.optimize import curve_fit
+    def gauss(x,mu,sigma,A):
+        return A*np.exp(-(x-mu)**2/2/sigma**2)
+    def bimodal(x,mu1,sigma1,A1,mu2,sigma2,A2):
+        return gauss(x,mu1,sigma1,A1)+gauss(x,mu2,sigma2,A2)
+    y,x=np.histogram(data, bins=bins,density=True)
+    x=(x[:-1] + x[1:]) / 2
+    params,cov=curve_fit(bimodal,x,y,expected)
+    sigma=np.sqrt(np.diag(cov))
+    if test:
+        plt.figure()
+        _=plt.hist(data,bins,alpha=.3,label='data',density=True)
+        plt.plot(x,bimodal(x,*params),color='red',lw=3,label='model')
+        plt.legend()
+    return params,sigma
+
+## 2D
+def get_grid(x,y,z=None,
+               off=0,
+               grids=100,
+               method='linear',
+               test=False,
+               **kws):
+    xoff=(np.max(x)-np.min(x))*off
+    yoff=(np.max(y)-np.min(y))*off    
+    xi=np.linspace(np.min(x)-xoff,np.max(x)+xoff,grids)
+    yi=np.linspace(np.min(y)-yoff,np.max(y)+yoff,grids)
+
+    X,Y= np.meshgrid(xi,yi)
+    if z is None:
+        return X,Y
+    else:
+        Z = sc.interpolate.griddata((x, y), z, (X, Y),
+                                    method=method,
+                                    fill_value=min(z),
+                                   )
+        return X,Y,Z
+def fit_gaussian2d(x,y,z,
+                   grid=True,
+                grids=20,
+                method='linear',
+                   off=0,
+                rescalez=True,):
+    if grid:
+        xg,yg,zg=get_grid(x,y,z,
+                        grids=grids,
+                        method=method)    
+    else:
+        xg,yg,zg=x,y,z
+    from astropy.modeling import models,fitting
+    if rescalez:
+        from rohan.dandage.stat.transform import rescale
+        range1=(np.min(zg),np.max(zg))
+        zg_=rescale(a=zg, range1=range1, range2=[0, 1])
+    else:
+        zg_=zg
+    m1 = models.Gaussian2D(
+        amplitude=np.max(zg_),
+        x_mean=np.mean(xg), y_mean=np.mean(yg), 
+#       x_stddev=np.std(xg), y_stddev=np.std(yg), 
+#       theta=0.
+        cov_matrix=np.cov(np.vstack([xg.flatten(), yg.flatten()])),
+        fixed={'x_mean':True,'y_mean':True},
+        bounds={'amplitude':(np.min(zg),np.max(zg))}
+    )
+#     z = m1(x, y)
+    fitr = fitting.LevMarLSQFitter()
+    mf1 = fitr(m1,xg,yg,zg_)
+    if grid and off!=0:
+        xg,yg=get_grid(x,y,
+                        grids=grids,
+                        method=method,
+                      off=off)        
+    zg_hat_=mf1(xg,yg)   
+    if rescalez:
+        zg_hat=rescale(a=zg_hat_, range1=[0,1], range2=range1)    
+    else:
+        zg_hat=zg_hat_
+    return xg,yg,zg,zg_hat  
+
 def fit_2d_distribution_kde(x, y, bandwidth, 
                             xmin=None,xmax=None,xbins=100j, 
                             ymin=None,ymax=None,ybins=100j, 
@@ -142,22 +226,3 @@ def fit_2d_distribution_kde(x, y, bandwidth,
                  'title':f"bandwidth{bandwidth}_bins{xbins}"})
     return xx, yy, zz    
 
-def fit_gauss_bimodal(data,bins=50,expected=(1,.2,250,2,.2,125),test=False):
-    #
-#     expected=(1,.2,250,2,.2,125)
-#     data=concatenate((normal(1,.2,5000),normal(2,.2,2500)))
-    from scipy.optimize import curve_fit
-    def gauss(x,mu,sigma,A):
-        return A*np.exp(-(x-mu)**2/2/sigma**2)
-    def bimodal(x,mu1,sigma1,A1,mu2,sigma2,A2):
-        return gauss(x,mu1,sigma1,A1)+gauss(x,mu2,sigma2,A2)
-    y,x=np.histogram(data, bins=bins,density=True)
-    x=(x[:-1] + x[1:]) / 2
-    params,cov=curve_fit(bimodal,x,y,expected)
-    sigma=np.sqrt(np.diag(cov))
-    if test:
-        plt.figure()
-        _=plt.hist(data,bins,alpha=.3,label='data',density=True)
-        plt.plot(x,bimodal(x,*params),color='red',lw=3,label='model')
-        plt.legend()
-    return params,sigma

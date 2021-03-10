@@ -44,7 +44,7 @@ def glog(x,l = 2):
 
 def rescale(a, range1=None, range2=[0,1]):
     if range1 is None:
-        range1=[min(a),max(a)]
+        range1=[np.min(a),np.max(a)]
     delta1 = range1[1] - range1[0]
     delta2 = range2[1] - range2[0]
     return (delta2 * (a - range1[0]) / delta1) + range2[0]

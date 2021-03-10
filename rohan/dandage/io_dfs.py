@@ -903,13 +903,16 @@ def get_chunks(df1,colindex,colvalue,bins=None,value='right'):
         df1['chunk']=bins
         logging.warning("bins=0, so chunks=1")
         return df1['chunk']
-    bins=int(np.ceil(df1.memory_usage().sum()/1e9))
+    elif bins is None:
+        bins=int(np.ceil(df1.memory_usage().sum()/1e9))
     df2=df1.loc[:,[colindex,colvalue]].drop_duplicates()
     from rohan.dandage.stat.transform import get_bins
     d1=get_bins(df2.set_index(colindex)[colvalue],
                  bins=bins,
                  value=value,
                 error='ignore')
+    d1={k:int(d1[k]) for k in d1}
+    assert(nunique(d1.values())==len(d1.values()))
     df1['chunk']=df1[colindex].map(d1)
     df1['chunk']=df1['chunk'].astype(int)
     return df1['chunk']
@@ -1181,8 +1184,11 @@ def to_table(df,p,
         logging.error(f'unknown extension {p}')
         
 def to_manytables(df,p,colgroupby,**kws_get_chunks):
+    """
+    :colvalue: if colgroupby=='chunk'
+    """
     if colgroupby=='chunk':
-        df[colgroupby]=get_chunks(df1=df,bins=None,value='right',
+        df[colgroupby]=get_chunks(df1=df,value='right',
                                   **kws_get_chunks)
     outd,ext=splitext(p)
     df.groupby(colgroupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if not isinstance(x.name, tuple) else '/'.join(x.name)}{ext}"))
