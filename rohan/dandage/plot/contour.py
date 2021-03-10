@@ -55,57 +55,6 @@ def get_grid3d(x,y,z,interp):
     zi = griddata(x, y, z, xi, yi, interp=interp)
     return xi,yi,zi
     
-# def plot_contourf(x,y,z,contourlevels=15,xlabel=None,ylabel=None,
-#                 scatter=False,contour=False,
-#                 annot_fit_land=True,
-#                 streamlines=False,
-#                 cmap="coolwarm",cbar=True,cbar_label="",
-#                 cbar_ax_pos=[0.55, 0.3, 0.035, 0.5],
-#                 a=0.5,vmin=None,vmax=None,interp='linear',#'nn',
-#                 xlog=False,test=False,
-#                 fig=None,ax=None,plot_fh=None):
-#     xi,yi,zi=get_grid3d(x,y,z,interp)
-#     if ax==None: 
-#         ax=plt.subplot(121)
-#     if vmax==None: 
-#         vmax=abs(zi).max()
-#     if vmin==None: 
-#         vmin=abs(zi).min()
-#     if contour:
-#         CS = ax.contour(xi, yi, zi, contourlevels, linewidths=0.5, colors='k',alpha=a)
-#     CS = ax.contourf(xi, yi, zi, contourlevels, 
-#                       cmap=cmap,
-#                       vmax=vmax, vmin=vmin)
-
-#     if streamlines:
-#         dy, dx = np.gradient(zi) # Flow goes down gradient (thus -zi)
-#         if test:
-#             print([np.shape(xi),np.shape(yi)])
-#             print([np.shape(dx),np.shape(dy)])
-#         ax.streamplot(xi, yi, dx, dy, color='k', density=0.5,
-#                          linewidth=1,minlength=0.05,arrowsize=1.5)
-#     if cbar:
-#         colorbar_ax =fig.add_axes(cbar_ax_pos) #[left, bottom, width, height]
-#         colorbar_ax2=fig.colorbar(CS, cax=colorbar_ax,extend='both',
-# #                                  boundaries=[-1,0,1]
-#                                  )
-#         colorbar_ax2.set_label(cbar_label)
-#         clim=[-1,1]
-#         colorbar_ax2.set_clim(clim[0],clim[1])
-#     # plot data points.
-#     if scatter:
-#         ax.scatter(x, y, marker='o', c='b', s=5, zorder=10)
-#     if annot_fit_land:
-#         labels=["$F:cB$","$F:B$","$cF:cB$","$cF:B$"]
-#         if xlog:
-#             x=x/1.61
-#         ax=annot_corners(labels,x,y,ax,fontsize=15)
-#     ax.set_xlabel(xlabel)
-#     ax.set_ylabel(ylabel)
-#     if plot_fh!=None:
-#         fig.savefig(plot_fh,format="pdf")
-#     return ax  
-
 from rohan.dandage.plot.colors import get_cmap_subset,saturate_color
 from rohan.dandage.plot.ax_ import set_colorbar,grid
 def plot_contourf(x,y,z,test=False,ax=None,fig=None,
@@ -173,3 +122,22 @@ def annot_contourf(colx,coly,colz,dplot,annot,ax=None,fig=None,vmin=0.2,vmax=1):
                         ax.text(x,y,f" {s}",color=saturate_color(c,1.1),weight = 'bold',va='top' if va_top else 'bottom')
                         va_top=False if va_top else True #flip
     return fig,ax
+
+def plot_contourf_fitted(fun,
+                         ax=None,
+                         test=False,
+                         levels=5,zorder=1,
+                         cmap='Reds',
+                 **kws_fitting,):
+    xg,yg,zg,zg_hat=fun(**kws_fitting)
+    if test:
+        plt.figure()
+        plt.contourf(xg,yg,zg,levels=levels)
+        plt.colorbar()
+        
+    if ax is None:
+        _,ax=plt.subplots(figsize=[3,3])        
+    ax=ax.contourf(xg,yg,zg_hat,
+                levels=levels,cmap=cmap,
+                  zorder=zorder)
+    return ax

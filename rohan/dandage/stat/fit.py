@@ -149,7 +149,8 @@ def fit_gaussian2d(x,y,z,
                 grids=20,
                 method='linear',
                    off=0,
-                rescalez=True,):
+                rescalez=True,
+                  test=False):
     if grid:
         xg,yg,zg=get_grid(x,y,z,
                         grids=grids,
@@ -161,8 +162,17 @@ def fit_gaussian2d(x,y,z,
         from rohan.dandage.stat.transform import rescale
         range1=(np.min(zg),np.max(zg))
         zg_=rescale(a=zg, range1=range1, range2=[0, 1])
+        
+#         from sklearn.preprocessing import MinMaxScaler
+#         scaler = MinMaxScaler()
+#         scaler.fit(zg)
+#         zg_ = scaler.transform(zg)
+        if test:
+            print(np.min(zg),np.max(zg),zg.shape)        
+            print(np.min(zg_),np.max(zg_),zg_.shape)                
     else:
         zg_=zg
+        
     m1 = models.Gaussian2D(
         amplitude=np.max(zg_),
         x_mean=np.mean(xg), y_mean=np.mean(yg), 
@@ -170,7 +180,7 @@ def fit_gaussian2d(x,y,z,
 #       theta=0.
         cov_matrix=np.cov(np.vstack([xg.flatten(), yg.flatten()])),
         fixed={'x_mean':True,'y_mean':True},
-        bounds={'amplitude':(np.min(zg),np.max(zg))}
+        bounds={'amplitude':(np.min(zg_),np.max(zg_))}
     )
 #     z = m1(x, y)
     fitr = fitting.LevMarLSQFitter()
@@ -180,9 +190,16 @@ def fit_gaussian2d(x,y,z,
                         grids=grids,
                         method=method,
                       off=off)        
-    zg_hat_=mf1(xg,yg)   
+    zg_hat_=mf1(xg,yg)
+    print(mf1.theta)
     if rescalez:
         zg_hat=rescale(a=zg_hat_, range1=[0,1], range2=range1)    
+        # for inverse transformation
+#         zg_hat = scaler.inverse_transform(zg_hat_)
+        if test:
+            print(np.min(zg_hat_),np.max(zg_hat_),zg_hat_.shape)        
+            print(np.min(zg_hat),np.max(zg_hat),zg_hat.shape)        
+#         print(range1)
     else:
         zg_hat=zg_hat_
     return xg,yg,zg,zg_hat  
