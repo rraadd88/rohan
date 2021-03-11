@@ -144,6 +144,7 @@ def get_grid(x,y,z=None,
                                     fill_value=min(z),
                                    )
         return X,Y,Z
+    
 def fit_gaussian2d(x,y,z,
                    grid=True,
                 grids=20,

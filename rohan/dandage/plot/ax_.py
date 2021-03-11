@@ -46,6 +46,24 @@ def set_equallim(ax,diagonal=False,
     ax=format_ticklabels(ax,**params_format_ticklabels)
     return ax
 
+def get_axlims(X,Y,space=0.2,equal=False):
+    try:
+        xmin=np.min(X)
+        xmax=np.max(X)
+    except:
+        print(X)
+    xlen=xmax-xmin
+    ymin=np.min(Y)
+    ymax=np.max(Y)
+    ylen=ymax-ymin
+    xlim=(xmin-space*xlen,xmax+space*xlen)
+    ylim=(ymin-space*ylen,ymax+space*ylen)
+    if not equal:
+        return xlim,ylim
+    else:
+        lim=[np.min([xlim[0],ylim[0]]),np.max([xlim[1],ylim[1]])]
+        return lim,lim
+    
 def grid(ax,axis=None):
     w,h=ax.figure.get_size_inches()
     if w/h>=1.1 or axis=='y' or axis=='both':
