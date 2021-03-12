@@ -76,6 +76,7 @@ def grid(ax,axis=None):
 
 def set_legend_custom(ax,
                      legend2param,param='color',lw=1,
+                      markerfacecolor=True,
                       size=10,color='k',
                      params_legend={}):
     from matplotlib.lines import Line2D
@@ -83,12 +84,12 @@ def set_legend_custom(ax,
                        marker='o',
                        color='none',
                        markeredgecolor=(color if param!='color' else legend2param[k]), 
-                       markerfacecolor=(color if param!='color' else legend2param[k]),
+                       markerfacecolor=(color if param!='color' else legend2param[k]) if not markerfacecolor is None else 'none',
                        markersize=(size if param!='size' else legend2param[k]),
                        label=k,
                        lw=(lw if param!='lw' else legend2param[k]),
                        linestyle='',
-                      ) for k in legend2param]
+                      ) for k in legend2param]    
     ax.legend(handles=legend_elements,
               **params_legend)
     return ax

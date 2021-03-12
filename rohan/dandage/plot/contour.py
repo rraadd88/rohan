@@ -5,14 +5,26 @@ from rohan.dandage.plot.colors import get_cmap_subset,saturate_color
 from rohan.dandage.plot.ax_ import set_colorbar,grid
 
 def plot_contourf(x,y,z,
+                  # coutourf
+                  levels=None,
+                  contourf_remove_lowest=False,
+                  # grid
                   method='linear',
+                  grids=50,
                   params_grid={},
+                  # fit
                   fun=None,
                   params_fun={},
-                grids=50,
+                  # scatter
+                  scatter=True,
+                  params_scatter=dict(
+                                    s=1,
+                                    ),
+                  # cbar
                 cbar=True,
                 params_cbar={'bbox_to_anchor':(1.01, 0.2, 0.5, 0.8),},
                 zlabel='z',
+                  # ax
                 params_ax={'xlabel':'x','ylabel':'y'},
                 ax=None,fig=None,
                 figsize=[3,3],
@@ -29,11 +41,22 @@ def plot_contourf(x,y,z,
     
     fig=plt.figure(figsize=figsize) if fig is None else fig
     ax=plt.subplot() if ax is None else ax
-    ax_pc=ax.contourf(xg,yg,zg,int(grids/5),**kws_contourf)
-    if test:
-        ax.scatter(xg,yg)        
+#     ax1=ax.contourf(xg,yg,zg,
+#                       levels=int(grids/5) if levels is None else levels,
+#                       **kws_contourf)
+    ax1=ax.contour(xg,yg,zg,
+                      levels=int(grids/5) if levels is None else levels,
+                      **kws_contourf)
+    if contourf_remove_lowest:
+        for coll in ax1.collections:
+            coll.remove()
+            break    
+    if scatter:
+        ax.scatter(x=x,y=y,
+                   color='k',
+                   **params_scatter,
+                   zorder=2)
     ax.set(**params_ax)
     if cbar:
-        fig=set_colorbar(fig,ax,ax_pc,label=zlabel,**params_cbar)
-    ax=grid(ax,axis='both')
-    return fig,ax
+        fig=set_colorbar(fig,ax,ax1,label=zlabel,**params_cbar)
+    return fig,ax,ax1

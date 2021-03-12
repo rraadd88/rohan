@@ -90,7 +90,7 @@ def cut_cmap(cmap, vmin=0.0, vmax=1.0, n=100):return get_cmap_subset(cmap, vmin=
 import matplotlib
 def get_ncolors(n,cmap='Spectral'):
     cmap = matplotlib.cm.get_cmap(cmap)
-    colors=[cmap(i) for i in np.arange(n)/n]
+    colors=[cmap(i) for i in np.arange(1,n+1,1)/n]
     return colors
 
 # legends
