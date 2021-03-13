@@ -74,6 +74,13 @@ def grid(ax,axis=None):
         ax.xaxis.grid(color='gray', linestyle='dashed')
     return ax
 
+def append_legends(ax, labels,handles,**kws):
+    h1, l1 = ax.get_legend_handles_labels()
+    ax.legend(handles=h1+handles,
+              labels=l1+labels,
+              **params_legend)
+    return ax
+
 def set_legend_custom(ax,
                      legend2param,param='color',lw=1,
                       markerfacecolor=True,
@@ -89,7 +96,7 @@ def set_legend_custom(ax,
                        label=k,
                        lw=(lw if param!='lw' else legend2param[k]),
                        linestyle='',
-                      ) for k in legend2param]    
+                      ) for k in legend2param]   
     ax.legend(handles=legend_elements,
               **params_legend)
     return ax

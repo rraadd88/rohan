@@ -6,6 +6,26 @@ from rohan.dandage.io_strs import make_pathable_string
 #rasterized=True
 # sns scatter_kws={'s':5, 'alpha':0.3, 'rasterized':True}
 
+# stats
+def annot_stats(dplot,colx,coly,colz,
+            stat_method=[],
+            bootstrapped=False,
+            params_set_label={},
+            ax=None):
+    stat_method = [stat_method] if isinstance(stat_method,str) else stat_method
+    from rohan.dandage.plot.ax_ import set_label
+    if 'mlr' in stat_method:
+        from rohan.dandage.stat.poly import get_mlr_2_str
+        ax=set_label(ax,label=get_mlr_2_str(dplot,colz,[colx,coly]),
+                    title=True,params={'loc':'left'})
+    if 'spearman' in stat_method or 'pearson' in stat_method:
+        from rohan.dandage.stat.corr import get_corr
+        ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],
+                                       bootstrapped=bootstrapped,
+                                       outstr=True,n=True),
+                    **params_set_label)
+    return ax
+
 def plot_trendline(dplot,colx,coly,
                     params_plot={'color':'r','linestyle':'solid','lw':2},
                     poly=False,lowess=True,
