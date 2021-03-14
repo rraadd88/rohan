@@ -224,18 +224,23 @@ def map2lin(df, var_name_index='index',
 ## paired dfs
 @add_method_to_class(rd)
 def melt_paired(df,
-                suffixes=['gene1','gene2'],
+                cols_index=None,
+                suffixes=None,
                 ):
+    if suffixes is None and not cols_index is None:
+        from rohan.dandage.io_strs import get_suffix
+        suffixes=get_suffix(*cols_index)
+    assert(not any([all([s in c for s in suffixes]) for c in df]))
     cols_common=[c for c in df if not any([s in c for s in suffixes])]
     dn2df={}
     for s in suffixes:
         cols=[c for c in df if s in c]
         dn2df[s]=df.loc[:,cols_common+cols].rename(columns={c:c.replace(s,'') for c in cols})
     df1=pd.concat(dn2df,axis=0,names=['suffix']).reset_index(0)
-    return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1})
+    return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1}).rename(columns={'':'id'})
 ### alias
 # @add_method_to_class(rd)
-unpair_df=melt_paired
+# unpair_df=melt_paired
 
 @add_method_to_class(rd)
 def merge_paired(dfpair,df,
@@ -261,7 +266,9 @@ def merge_paired(dfpair,df,
 #     merge2side2cols={1:{'left':[]}}
 #     merge2side2cols[1]['left']=left_ons[0]+right_ons_common
 #     merge2side2cols[1]['right']=right_on+right_ons_common
-    
+
+    d1={}
+    d1['from']=dfpair.shape
     # force suffixes                        
     df1=df.copy()
     df1.columns=df1.columns+suffixes[0]
@@ -307,6 +314,10 @@ def merge_paired(dfpair,df,
             logging.info('merged correctly')
         dfpair_merge2=dfpair_merge2.drop(cols_del,axis=1)
         dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)))
+        
+    d1['to  ']=dfpair_merge2.shape        
+    for k in d1:
+        logging.info(f'df shape changed {k} {d1[k]}')
     return dfpair_merge2
 ### alias to be deprecated   
 merge_dfpairwithdf=merge_paired

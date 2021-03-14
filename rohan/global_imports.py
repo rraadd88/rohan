@@ -50,7 +50,7 @@ class rd:
 
 from rohan.dandage.io_dfs import *
 from rohan.dandage.io_dict import *
-from rohan.dandage.io_strs import get_bracket, replacemany, make_pathable_string
+from rohan.dandage.io_strs import get_bracket, replacemany, make_pathable_string,get_suffix,get_prefix
 from rohan.dandage.io_sets import *
 
 # paths

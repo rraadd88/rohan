@@ -201,9 +201,30 @@ def get_bracket(s,l='(',r=')'):
 ## split
 def get_prefix(string,sep):
     return re.match(f"(.*?){sep}",string).group()[:-1]
-def get_suffix(string,sep):
-    return ' '.join(string.split(sep)[1:])
 
+def align(s1,s2,
+          prefix=False,
+          suffix=False,
+          common=True):
+    """
+    test:
+    [
+    get_prefix(source,target,common=False),
+    get_prefix(source,target,common=True),
+    get_suffix(source,target,common=False),
+    get_suffix(source,target,common=True),]
+    """
+    
+    for i,t in enumerate(zip(list(s1),list(s2))):
+        if t[0]!=t[1]:
+            break
+    if common:
+        return [s1[:i],s2[:i]] if prefix else [s1[i+1:],s2[i+1:]] 
+    else:
+        return [s1[:i+1],s2[:i+1]] if prefix else [s1[i:],s2[i:]] 
+def get_prefix(s1,s2,common=False): return align(s1,s2,prefix=True,common=common)
+def get_suffix(s1,s2,common=False): return align(s1,s2,suffix=True,common=common)
+    
 ## filenames 
 def strlist2one(l,label=''):
     # find unique prefix

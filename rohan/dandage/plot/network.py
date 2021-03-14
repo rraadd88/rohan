@@ -1,8 +1,10 @@
-import matplotlib.pyplot as plt
-from rohan.dandage.io_dfs import *
-import networkx as nx
+from rohan.global_imports import *
+# import matplotlib.pyplot as plt
+# from rohan.dandage.io_dfs import *
+
 
 def plot_ppi(dplot,params,ax=None):
+    import networkx as nx
     ax=plt.subplot() if ax is None else ax
     # plot
     g=nx.from_pandas_edgelist(dplot, **params['params_from_pandas_edgelist'])
@@ -229,3 +231,83 @@ def plot_ppi_overlap(
     ax.set(xlim=[-0.75,r])
     if not test: ax.axis('off')
     return ax
+
+def plot_minimize_nested_blockmodel_dl(df1,
+                                        eid='genes id',
+#                                         vid='id',
+                                       ep2col={},vp2col={},
+                                        source='gene1 id',
+                                        target='gene2 id',
+                                        cmap='RdBu',
+            output_size=(300, 300),
+            vertex_pen_width=0,
+            vertex_font_family='sans',                                       
+                                       **kws_draw,
+                                      ):
+    """
+    plt.switch_backend("cairo")
+    mplfig=ax[1,0]
+    https://graph-tool.skewed.de/static/doc/draw.html#contents
+    """
+#     from rohan.dandage.io_strs import replacemany,get_prefix,get_suffix
+    def get_dtype(df3,vps):
+        d2=df3.loc[:,vps].dtypes.to_dict()
+        d2={k:replacemany(d2[k].name,['64','32'],'') for k in d2}
+        d2={k: 'string' if d2[k]=='object' else d2[k] for k in d2}
+        cols_list=df3.iloc[0,:].apply(lambda x: isinstance(x,list)).loc[lambda x: x].index
+        for c in cols_list:
+            d2[c]='vector<double>'
+        return d2
+    eps=list(ep2col.values())
+    vps=list(vp2col.values())
+    # edges
+    d1=get_dtype(df1,eps)
+    # vertices
+    l1=list(np.unique(df1.loc[:,[source, target]].values.flatten()))
+    d0=dict(zip(l1,range(len(l1))))
+    df2=df1.rd.melt_paired(suffixes=get_prefix(source,target,common=False))#.rename(columns={'':'id'})
+    vid=get_suffix(source,target,common=True)[0].replace(' ','')
+    info(f"vid={vid}")
+    df2['index']=df2[vid].map(d0)
+    df3=df2.drop(['suffix',eid]+eps,axis=1).log.drop_duplicates(subset=[vid])
+    # assert(not df3.rd.check_duplicated(cols))
+    df3=df3.set_index('index').sort_index()
+    # vps=[c for c in df3 if c!=vid]
+    vps=df3.columns.tolist()
+    d2=get_dtype(df3,vps)
+    # graph set up
+    import matplotlib
+
+    import graph_tool.all as gt
+    g = gt.Graph(directed=False)
+    for c in d1:
+        g.ep[c] = g.new_ep(d1[c])
+    g.add_edge_list(df1.loc[:,[source,target]+eps].values,
+                   hashed=True, hash_type='string',
+                    # catch
+                   eprops=[g.ep[c] for c in eps])
+    for c in d2:
+        g.vertex_properties[c] = g.new_vertex_property(d2[c]) # family name as vertex label
+        for i in list(g.vertex_index):
+            g.vertex_properties[c][g.vertex(i)] = df3[c][i]
+    state = gt.minimize_nested_blockmodel_dl(g,
+                                             B_min=2
+                                            )
+    return state.draw(
+            layout='radial',
+            hide=10,
+            vcmap=matplotlib.cm.get_cmap(cmap),
+            output_size=output_size,#(300, 300),
+            vertex_pen_width=vertex_pen_width,#0,
+            vertex_font_family=vertex_font_family,#'sans',
+#             vertex_fill_color=g.vp[vcolor], 
+#             vertex_text=g.vp[vtext], 
+#             vertex_size=10,
+#             #vertex_size=gt.prop_to_size(g.vp.wealth, mi=5, ma=20), 
+#             edge_pen_width=3,#g.ep[ewidth],
+    #         mplfig=ax,
+    #      output='plot/network_graph_tool_complex.svg'
+              **kws_draw,
+              **{k:g.ep[ep2col[k]] for k in ep2col},
+              **{k:g.vp[vp2col[k]] for k in vp2col}
+    )
