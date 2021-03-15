@@ -233,23 +233,32 @@ def plot_ppi_overlap(
     return ax
 
 def plot_minimize_nested_blockmodel_dl(df1,
-                                        eid='genes id',
-#                                         vid='id',
-                                       ep2col={},vp2col={},
                                         source='gene1 id',
                                         target='gene2 id',
-                                        cmap='RdBu',
+#                                         vid='id',
+                                       ep2col={},vp2col={},
+#                                         eid=None,
+                                        vcmap='RdBu',
+                                       valpha=0.5,
+                                       ecmap=None,
+                                       ealpha=0.5,
             output_size=(300, 300),
             vertex_pen_width=0,
-            vertex_font_family='sans',                                       
+                                       vertex_text_position=6.25,
+            vertex_font_family='sans',            
+                                       params_blockmodel={},
                                        **kws_draw,
                                       ):
     """
+    B_min=2
     plt.switch_backend("cairo")
     mplfig=ax[1,0]
     https://graph-tool.skewed.de/static/doc/draw.html#contents
     """
 #     from rohan.dandage.io_strs import replacemany,get_prefix,get_suffix
+    eid='eid'
+    df1[eid]=range(len(df1))
+    
     def get_dtype(df3,vps):
         d2=df3.loc[:,vps].dtypes.to_dict()
         d2={k:replacemany(d2[k].name,['64','32'],'') for k in d2}
@@ -276,7 +285,7 @@ def plot_minimize_nested_blockmodel_dl(df1,
     vps=df3.columns.tolist()
     d2=get_dtype(df3,vps)
     # graph set up
-    import matplotlib
+    from matplotlib import cm 
 
     import graph_tool.all as gt
     g = gt.Graph(directed=False)
@@ -291,14 +300,19 @@ def plot_minimize_nested_blockmodel_dl(df1,
         for i in list(g.vertex_index):
             g.vertex_properties[c][g.vertex(i)] = df3[c][i]
     state = gt.minimize_nested_blockmodel_dl(g,
-                                             B_min=2
+                                             **params_blockmodel,
                                             )
-    return state.draw(
+    vcmap=cm.get_cmap(vcmap) if isinstance(vcmap,str) else vcmap
+    if ecmap is None:
+        ecmap=vcmap
+    state.draw(
             layout='radial',
             hide=10,
-            vcmap=matplotlib.cm.get_cmap(cmap),
+            vcmap=(vcmap,valpha),
+            ecmap=(ecmap,ealpha),
             output_size=output_size,#(300, 300),
             vertex_pen_width=vertex_pen_width,#0,
+            vertex_text_position=vertex_text_position,
             vertex_font_family=vertex_font_family,#'sans',
 #             vertex_fill_color=g.vp[vcolor], 
 #             vertex_text=g.vp[vtext], 
@@ -311,3 +325,5 @@ def plot_minimize_nested_blockmodel_dl(df1,
               **{k:g.ep[ep2col[k]] for k in ep2col},
               **{k:g.vp[vp2col[k]] for k in vp2col}
     )
+    plt.axis('off')
+    return df1,df3

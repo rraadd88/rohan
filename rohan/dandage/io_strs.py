@@ -279,7 +279,7 @@ def str2dict(s,sep=';',sep_equal='='):
 from rohan.dandage.io_nums import str2num,str2nums#,format_number_human
 # from rohan.dandage.io_dict import str2dict
 def num2str(num,magnitude=False,
-           coff=1000):
+           coff=10000):
     if not magnitude:
         return f"{num:.1e}" if num>coff else f"{num}"
     else:

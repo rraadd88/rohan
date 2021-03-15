@@ -83,12 +83,18 @@ def append_legends(ax, labels,handles,**kws):
 
 def set_legend_custom(ax,
                      legend2param,param='color',lw=1,
+                      marker='o',
                       markerfacecolor=True,
                       size=10,color='k',
                      params_legend={}):
+    """
+    Ref: 
+    https://matplotlib.org/stable/api/markers_api.html
+    http://www.cis.jhu.edu/~shanest/mpt/js/mathjax/mathjax-dev/fonts/Tables/STIX/STIX/All/All.html
+    """
     from matplotlib.lines import Line2D
     legend_elements=[Line2D([0], [0],
-                       marker='o',
+                       marker=marker,
                        color='none',
                        markeredgecolor=(color if param!='color' else legend2param[k]), 
                        markerfacecolor=(color if param!='color' else legend2param[k]) if not markerfacecolor is None else 'none',
@@ -130,6 +136,13 @@ def sort_legends(ax,sort_order=None,**kws):
     ax.legend(handles, labels,**kws)
     return ax
 
+# legends
+def reset_legend_colors(ax):
+    leg=plt.legend()
+    for lh in leg.legendHandles: 
+        lh.set_alpha(1)
+#         lh._legmarker.set_alpha(1)
+    return ax
 
 def set_colorbar(fig,ax,ax_pc,label,bbox_to_anchor=(0.05, 0.5, 1, 0.45),
                 orientation="vertical",):

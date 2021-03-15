@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import logging
 
+from rohan.dandage.io_strs import *
+
 def add_corner_labels(fig,pos,xoff=0,yoff=0,test=False,kw_text={}):
     import string
     label2pos=dict(zip(string.ascii_uppercase[:len(pos)],pos))
@@ -154,6 +156,9 @@ def annot_heatmap(ax,dannot,
             else:
                 ax.text(ytli+0.5+yoff,xtli+0.5+xoff,dannot.loc[xtl,ytl],**kws_text,ha='center')                
     return ax
+
+# stats 
+def perc_label(a,b): return f"{(a/b)*100:.0f}% ({num2str(a)}/{num2str(b)})"
 
 from rohan.dandage.io_nums import is_numeric
 def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False

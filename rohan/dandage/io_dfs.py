@@ -227,6 +227,9 @@ def melt_paired(df,
                 cols_index=None,
                 suffixes=None,
                 ):
+    """
+    TODO: assert whether melted
+    """
     if suffixes is None and not cols_index is None:
         from rohan.dandage.io_strs import get_suffix
         suffixes=get_suffix(*cols_index)
@@ -316,8 +319,9 @@ def merge_paired(dfpair,df,
         dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)))
         
     d1['to  ']=dfpair_merge2.shape        
-    for k in d1:
-        logging.info(f'df shape changed {k} {d1[k]}')
+    if d1['from']!=d1['to  ']:
+        for k in d1:
+            logging.info(f'shape changed {k} {d1[k]}')
     return dfpair_merge2
 ### alias to be deprecated   
 merge_dfpairwithdf=merge_paired
