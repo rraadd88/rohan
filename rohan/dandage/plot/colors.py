@@ -56,9 +56,10 @@ def get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100):
     return new_cmap
 def cut_cmap(cmap, vmin=0.0, vmax=1.0, n=100):return get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100)
 
-def get_ncolors(n,cmap='Spectral'):
-    cmap = cm.get_cmap(cmap)
-    colors=[cmap(i) for i in np.arange(1,n+1,1)/n]
+def get_ncolors(n,cmap='Spectral',ceil=False):
+    if isinstance(cmap,str):
+        cmap = cm.get_cmap(cmap)
+    colors=[cmap(i) for i in np.arange(1 if ceil else 0,n+(1 if ceil else 0),1)/n]
     return colors
               
 def get_val2color(ds,vmin=None,vmax=None,cmap='Reds'):
