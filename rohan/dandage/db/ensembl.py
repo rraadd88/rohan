@@ -88,12 +88,16 @@ def protein_id2transcript_id(protein_id,ensembl):
     else:
         return np.nan    
 
-def is_protein_coding(x,ensembl):
+def is_protein_coding(x,ensembl,geneid=True):
     try:
-        g=ensembl.gene_by_id(x)
+        if geneid:
+            g=ensembl.gene_by_id(x)
+        else:
+            g=ensembl.transcript_by_id(x)
     except:
         return 'gene id not found'
     return g.is_protein_coding
+
 def get_gene_name(x,ensembl):
     try:
         return ensembl.gene_name_of_gene_id(x)
