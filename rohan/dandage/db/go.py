@@ -98,6 +98,7 @@ def slim_goterms(queries,interval=500,subset='generic'):
 #     cols_gpad=['DB','DB Object ID','Qualifier','GO ID','DB:Reference(s) (|DB:Reference)','Evidence Code','With (or) From','Interacting taxon ID','Date','Assigned by','Annotation Extension','Annotation Properties']
 #     df1=pd.read_table(outp,
 #                   names=cols_gpad,
+# header=None,
 #                  comment='!',
 #                  **params_read_table
 #                  )

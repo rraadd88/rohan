@@ -286,6 +286,7 @@ def dannots2dalignbed2dannotsagg(cfg):
         gff_renamed_cols=[c+' annotation' if c in set(bed_colns).intersection(gff_colns) else c for c in gff_colns]
         dannots=pd.read_csv(cfg['annotationsbedp'],sep='\t',
                    names=bed_colns+gff_renamed_cols,
+                            header=None,
                            low_memory=False)
         dannots=del_Unnamed(dannots)
 

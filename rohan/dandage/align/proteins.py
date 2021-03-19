@@ -99,6 +99,8 @@ def align_blast(subjectfap,queryfaps,test=False,outdp='.'):
     return [abspath(f"{outdp}/{basenamenoext(queryfap)}.m8") for queryfap in queryfaps]        
 def read_m8(m8p):
     m8_cols=['query', 'subject', '% identity', 'alignment length', '# of mistmatches', 'gap openings', 'query start', 'query end', 'subject start', 'subject end', 'E-value', 'bit score']
-    dblast=pd.read_table(m8p,names=m8_cols)
+    dblast=pd.read_table(m8p,names=m8_cols,
+                         header=None,
+                        )
     return dblast
 

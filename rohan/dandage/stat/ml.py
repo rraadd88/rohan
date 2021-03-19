@@ -599,7 +599,7 @@ def many_models(df=None,colxs=None,coly=None,colidx=None,
         # load dataset
         url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv"
         names = ['preg', 'plas', 'pres', 'skin', 'test', 'mass', 'pedi', 'age', 'class']
-        df = pd.read_csv(url, names=names)
+        df = pd.read_csv(url, names=names,header=None,)
         array = df.values
         X = array[:,0:8]
         Y = array[:,8]

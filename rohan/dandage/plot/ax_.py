@@ -31,8 +31,9 @@ def format_ticklabels(ax,axes=['x','y'],n=None,fmt=None):
 
 ## lims
 def set_equallim(ax,diagonal=False,
-                 params_format_ticklabels=dict(axes=['x','y'],n=4,fmt='%.2f'),
-                difference=None):
+                 difference=None,
+                 **kws_format_ticklabels,
+                ):
     min_,max_=np.min([ax.get_xlim()[0],ax.get_ylim()[0]]),np.max([ax.get_xlim()[1],ax.get_ylim()[1]])
     if diagonal:
         ax.plot([min_,max_],[min_,max_],':',color='gray',zorder=5)
@@ -40,10 +41,10 @@ def set_equallim(ax,diagonal=False,
         off=np.sqrt(difference**2+difference**2)
         ax.plot([min_+off ,max_+off],[min_,max_],':',color='gray',zorder=5)        
         ax.plot([min_-off ,max_-off],[min_,max_],':',color='gray',zorder=5)        
-    ax.set_xticks(ax.get_yticks())
+    ax=format_ticklabels(ax,**kws_format_ticklabels)
     ax.set_xlim(min_,max_)
     ax.set_ylim(min_,max_)
-    ax=format_ticklabels(ax,**params_format_ticklabels)
+#     ax.set_xticks(ax.get_yticks())
     return ax
 
 def get_axlims(X,Y,space=0.2,equal=False):

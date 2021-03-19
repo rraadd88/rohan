@@ -3,45 +3,7 @@ import pandas as pd
 from Bio import SeqIO,SeqRecord
 from rohan.dandage.io_dfs import *
 
-def get_sequence(queries,fap=None,fmt='fasta',
-            organism_taxid=9606,
-                 test=False):
-    """
-    http://www.ebi.ac.uk/Tools/dbfetch/dbfetch?db=uniprotkb&id=P14060+P26439&format=fasta&style=raw&Retrieve=Retrieve
-    https://www.uniprot.org/uniprot/?format=fasta&organism=9606&query=O75116+O75116+P35548+O14944+O14944
-    """
-    url = 'http://www.ebi.ac.uk/Tools/dbfetch/dbfetch'
-    params = {
-    'id':' '.join(queries),
-    'db':'uniprotkb',
-    'organism':organism_taxid,    
-    'format':fmt,
-    'style':'raw',
-    'Retrieve':'Retrieve',
-    }
-    response = requests.get(url, params=params)
-    if test:
-        print(response.url)
-    if response.ok:
-        if not fap is None:
-            with open(fap,'w') as f:
-                f.write(response.text)
-            return fap
-        else:
-            return response.text            
-    else:
-        print('Something went wrong ', response.status_code) 
-
-def get_sequence_batch(queries,fap,interval=1000,params_get_sequence={'organism_taxid':9606,}):
-    text=''
-    for ini,end in zip(range(0,len(queries)-1,interval),range(interval,len(queries)-1+interval,interval)):
-        print(f"{ini}-{end}",end=' ')
-        text_=get_sequence(queries=queries[ini:end],**params_get_sequence
-                          )
-        text=f"{text}\n{text_}"
-    with open(fap,'w') as f:
-        f.write(text)
-    return fap
+# map ids
 
 def map_ids_request(queries,frm='ACC',to='ENSEMBL_PRO_ID',
         organism_taxid=9606,
@@ -140,6 +102,66 @@ def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
             logging.error(f"conversion from {intermediate} to {to} failed")
         return df1.merge(df2,on=intermediate,how='left').drop([intermediate],axis=1).dropna()        
         
+def geneid2proteinid(df,frm='ENSEMBLGENOME_ID',to='ENSEMBLGENOME_PRO_ID',interval=400):
+    rename={frm:'gene id',to:'protein id'}
+    organism_id=str(df['organism id'].unique()[0])
+    df_1=map_ids_batch(
+        queries=df['gene id'].tolist(),
+        interval=interval,
+        params_map_ids={'frm': frm, 'to': 'ACC',
+                        'organism_taxid':organism_id,'test':True,},
+    )
+    if len(df_1)==0:
+        print(organism_id)
+        return #df_1.rename(columns=rename)
+    df_2=map_ids_batch(
+        queries=df_1['ACC'].unique().tolist(),
+        interval=interval,
+        params_map_ids={'frm': 'ACC', 'to': to,
+                        'organism_taxid':organism_id,'test':True},
+    )
+    return df_1.merge(df_2,on='ACC',how='left').drop_duplicates(subset=[frm,to]).rename(columns=rename)    
+
+## sequence 
+def get_sequence(queries,fap=None,fmt='fasta',
+            organism_taxid=9606,
+                 test=False):
+    """
+    http://www.ebi.ac.uk/Tools/dbfetch/dbfetch?db=uniprotkb&id=P14060+P26439&format=fasta&style=raw&Retrieve=Retrieve
+    https://www.uniprot.org/uniprot/?format=fasta&organism=9606&query=O75116+O75116+P35548+O14944+O14944
+    """
+    url = 'http://www.ebi.ac.uk/Tools/dbfetch/dbfetch'
+    params = {
+    'id':' '.join(queries),
+    'db':'uniprotkb',
+    'organism':organism_taxid,    
+    'format':fmt,
+    'style':'raw',
+    'Retrieve':'Retrieve',
+    }
+    response = requests.get(url, params=params)
+    if test:
+        print(response.url)
+    if response.ok:
+        if not fap is None:
+            with open(fap,'w') as f:
+                f.write(response.text)
+            return fap
+        else:
+            return response.text            
+    else:
+        print('Something went wrong ', response.status_code) 
+
+def get_sequence_batch(queries,fap,interval=1000,params_get_sequence={'organism_taxid':9606,}):
+    text=''
+    for ini,end in zip(range(0,len(queries)-1,interval),range(interval,len(queries)-1+interval,interval)):
+        print(f"{ini}-{end}",end=' ')
+        text_=get_sequence(queries=queries[ini:end],**params_get_sequence
+                          )
+        text=f"{text}\n{text_}"
+    with open(fap,'w') as f:
+        f.write(text)
+    return fap
 
 from rohan.dandage.io_sys import runbashcmd
 def uniproitid2seq(id,fap='tmp.fasta'):
@@ -204,6 +226,8 @@ def normalise_uniprot_fasta(fap,test=True):
     ids2seqs2fasta(id2seq,faoutp)
     return faoutp
 
+## sequence features
+
 # from rohan.global_imports import *
 # from rohan.dandage.io_dict import to_dict,read_dict
 
@@ -241,7 +265,8 @@ def uniprotid2features(uniprotid,databasep='data/database',force=False,out_dict=
         from io import StringIO
         df1=delunnamedcol(pd.read_table(StringIO(responseBody),comment='#',
                       names=[
-                             'end','Unnamed1','Unnamed2','Unnamed3','feature description']))
+                             'end','Unnamed1','Unnamed2','Unnamed3','feature description'],
+                                       header=None,))
         df1.index.names=['uniprot id','db','feature type','start']
         df1=df1.reset_index()
         dfs.append(df1)
@@ -269,22 +294,3 @@ def uniprotids2features(queries,databasep='data/database',fast=False,force=False
                                                                                                                                      force=force,out_dict=False))
     return df2
 
-def geneid2proteinid(df,frm='ENSEMBLGENOME_ID',to='ENSEMBLGENOME_PRO_ID',interval=400):
-    rename={frm:'gene id',to:'protein id'}
-    organism_id=str(df['organism id'].unique()[0])
-    df_1=map_ids_batch(
-        queries=df['gene id'].tolist(),
-        interval=interval,
-        params_map_ids={'frm': frm, 'to': 'ACC',
-                        'organism_taxid':organism_id,'test':True,},
-    )
-    if len(df_1)==0:
-        print(organism_id)
-        return #df_1.rename(columns=rename)
-    df_2=map_ids_batch(
-        queries=df_1['ACC'].unique().tolist(),
-        interval=interval,
-        params_map_ids={'frm': 'ACC', 'to': to,
-                        'organism_taxid':organism_id,'test':True},
-    )
-    return df_1.merge(df_2,on='ACC',how='left').drop_duplicates(subset=[frm,to]).rename(columns=rename)    
