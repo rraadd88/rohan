@@ -53,7 +53,8 @@ def labelplots(fig,axes,xoff=0,yoff=0,
         label2ax[label].text(*axi2xy[axi],f"{label}",
                              transform=fig.transFigure,
                              **params_text)    
-def ax2plotp(ax,plotp='plot/plot_'):
+def ax2plotp(ax,plotp='plot/plot_',
+             suffix=''):
     """
     :params plotp: preffix
     """
@@ -65,7 +66,7 @@ def ax2plotp(ax,plotp='plot/plot_'):
                 else:
                     if not ax.legend_ is None:
                         plotp=f"{plotp}_"+ax.legend_.get_title().get_text()
-        plotp=f"{plotp}.png"
+        plotp=f"{plotp}{suffix}.png"
         return plotp
     else:
         return ax
@@ -75,9 +76,10 @@ def savefig(plotp,
             fmts=['png','svg'],
             savepdf=False,
             normalise_path=True,
-            dpi=500):
+            dpi=500,
+           **kws_ax2plotp):
 #         from rohan.dandage.plot.ax_ import ax2plotp
-    plotp=ax2plotp(plotp)
+    plotp=ax2plotp(plotp,**kws_ax2plotp)
     if exists(plotp):
         logging.warning(f"overwritting: {plotp}")    
     if normalise_path:
