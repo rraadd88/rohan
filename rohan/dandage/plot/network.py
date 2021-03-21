@@ -101,10 +101,42 @@ def plot_phylogeny(tree,organismname2id,
     print(dplot['organism id'].tolist())
     return ax
 
+def plot_ppi_overlap_label_data(df1,colsource,coltarget,nodes_source=None):
+    """
+    TODO: calculate overlap when sources>=3
+    """
+#     df1.loc[:,'target type']=df1[colsource]
+#     df1.loc[df1[coltarget].isin(df1.pivot(index=coltarget,columns=colsource,values=coltarget).dropna().index),'target type']='&'
+#     ## sort targets 
+#     if 'linewidth' in df1:
+#         df1=df1.groupby('target type',as_index=False).apply(lambda df: df.sort_values('linewidth'))
+#     df2=pd.concat([df1.loc[df1['target type']==nodes_source[0],:],
+#                 df1.loc[df1['target type']=='&',:],
+#                 df1.loc[df1['target type']==nodes_source[1],:]],
+#                  axis=0)
+#     assert(len(df1)==len(df2))
+#     return df2
+    if df1.rd.check_duplicated(cols=[colsource,coltarget]):
+        df1=df1.log.drop_duplicates(subset=[colsource,coltarget])
+    if nodes_source is None:
+        nodes_source=df1[colsource].unique()
+    nodes_source=list(df1[colsource].unique())
+    df=df1.pivot(index=coltarget,columns=colsource,values=coltarget)
+    df['target type']=df.apply(lambda x: '&'.join(sorted(list(x.dropna().keys()))) if len(x.dropna().keys())!=1  else list(x.dropna().keys())[0],axis=1)
+    df2=df.melt(id_vars='target type').dropna(subset=['value'])
+    assert(len(df1)==len(df2))
+    df2=df1.merge(df2,
+             on=[colsource,coltarget],
+             how='inner')
+    assert(len(df1)==len(df2))
+    df2=df2.sort_values(by=['target type'])
+    return df2
+
 def plot_ppi_overlap(
     df1,
     colsource='key',
     coltarget='value',
+    show_subsets=True,
     annot_targets=False,
     annot_perc=True,
 #     linewidth=None,#'linewidth'|dict,
@@ -136,23 +168,16 @@ def plot_ppi_overlap(
         df1['linewidth']=np.linspace(1,4,len(df1))
         df1['linestyle']=df1[colsource].map({'P1':'--','P2':'-'})
         return df1
-    from rohan.dandage.plot.colors import mix_colors,get_colors_default,saturate_color
+
     
+    from rohan.dandage.plot.colors import mix_colors,get_colors_default,saturate_color
     if isinstance(df1,dict):
         df1={k:[str(i) for i in df1[k]] for k in df1}
         df1=dict2df(df1,colkey=colsource, colvalue=coltarget)
-    ## label data
-    df1=df1.log.drop_duplicates()
+    df1=df1.log.drop_duplicates(subset=[colsource,coltarget])
     nodes_source=df1[colsource].unique()
-    df1.loc[:,'target type']=df1[colsource]
-    df1.loc[df1[coltarget].isin(df1.pivot(index=coltarget,columns=colsource,values=coltarget).dropna().index),'target type']='&'
-    ## sort targets 
-    if 'linewidth' in df1:
-        df1=df1.groupby('target type',as_index=False).apply(lambda df: df.sort_values('linewidth'))
-    df1=pd.concat([df1.loc[df1['target type']==nodes_source[0],:],
-                df1.loc[df1['target type']=='&',:],
-                df1.loc[df1['target type']==nodes_source[1],:]],
-                 axis=0)
+    ## label data
+    df1=plot_ppi_overlap_label_data(df1,colsource,coltarget,nodes_source)
     ## positions
     df1.loc[:,'x_target']=x_target
     d2=dict(zip(df1[coltarget].unique(),range(len(df1[coltarget].unique()))[::-1]))    
@@ -170,10 +195,13 @@ def plot_ppi_overlap(
     if colors is None:        
         colors=get_colors_default()[:len(nodes_source)]
     node_type2color=dict(zip(nodes_source,colors))
-    if len(np.unique(colors))!=1:
-        node_type2color['&']=mix_colors(list(node_type2color.values()))
-    else:
-        node_type2color['&']=saturate_color(np.unique(colors)[0],2)
+    for k in df1['target type'].unique():
+        if not "&" in k:
+            continue
+        if len(np.unique(colors))!=1:
+            node_type2color[k]=mix_colors([node_type2color[k1] for k1 in k.split('&')])
+        else:
+            node_type2color[k]=saturate_color(np.unique(colors)[0],2)
     if ax is None:
         _,ax=plt.subplots(figsize=[3,3],
                      )
@@ -192,8 +220,10 @@ def plot_ppi_overlap(
                          zorder=2,
                                    ),
                  axis=1)
+        ## OVERRIDE
         annot_perc=False
-    else:
+        show_subsets=False
+    if show_subsets:
         df1.groupby(['target type']).apply(lambda df: df.sort_values('y_target').plot(x='x_target annot',
                                                               y='y_target',
                                                               color=node_type2color[df.name],
@@ -212,7 +242,9 @@ def plot_ppi_overlap(
                              zorder=2,
                              ))        
     from rohan.dandage.stat.transform import rescale
-    source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4])))
+#     print(np.arange(len(nodes_source)))
+#     print(rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4]))
+    source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),range1=None,range2=[0.4,-0.4])))
     for source in source2y:
         ax.scatter([x_source],[source2y[source]],color=node_type2color[source],
                    zorder=2,
@@ -226,7 +258,8 @@ def plot_ppi_overlap(
                                                  ),
                                 axis=1)
     if not kws_within is None:
-        ax.plot([x_source,x_source],source2y.values(),zorder=1,
+        ax.plot(np.repeat(x_source,len(source2y.values())),
+                source2y.values(),zorder=1,
                 **kws_within)
     ax.set(xlim=[-0.75,r])
     if not test: ax.axis('off')
@@ -247,6 +280,7 @@ def plot_minimize_nested_blockmodel_dl(df1,
                                        vertex_text_position=6.25,
             vertex_font_family='sans',            
                                        params_blockmodel={},
+                                       test=False,
                                        **kws_draw,
                                       ):
     """
@@ -263,12 +297,14 @@ def plot_minimize_nested_blockmodel_dl(df1,
         d2=df3.loc[:,vps].dtypes.to_dict()
         d2={k:replacemany(d2[k].name,['64','32'],'') for k in d2}
         d2={k: 'string' if d2[k]=='object' else d2[k] for k in d2}
-        cols_list=df3.iloc[0,:].apply(lambda x: isinstance(x,list)).loc[lambda x: x].index
+        cols_list=df3.iloc[0,:].apply(lambda x: isinstance(x,(tuple,list))).loc[lambda x: x].index
         for c in cols_list:
             d2[c]='vector<double>'
         return d2
     eps=list(ep2col.values())
     vps=list(vp2col.values())
+    if test:
+        print(vps)
     # edges
     d1=get_dtype(df1,eps)
     # vertices
@@ -325,5 +361,5 @@ def plot_minimize_nested_blockmodel_dl(df1,
               **{k:g.ep[ep2col[k]] for k in ep2col},
               **{k:g.vp[vp2col[k]] for k in vp2col}
     )
-    plt.axis('off')
+    if not test: plt.axis('off')
     return df1,df3

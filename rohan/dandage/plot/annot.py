@@ -158,7 +158,7 @@ def annot_heatmap(ax,dannot,
     return ax
 
 # stats 
-def perc_label(a,b): return f"{(a/b)*100:.0f}% ({num2str(a)}/{num2str(b)})"
+def perc_label(a,b,bracket=True): return f"{(a/b)*100:.0f}%"+(f" ({num2str(a)}/{num2str(b)})" if bracket else "")
 
 from rohan.dandage.io_nums import is_numeric
 def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False

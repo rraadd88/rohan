@@ -500,7 +500,9 @@ def check_na_percentage(df,cols=None):
 
 ## duplicates:
 @add_method_to_class(rd)
-def check_duplicated(df,cols=None):
+def check_duplicated(df,cols=None,subset=None):
+    if not cols is None and not subset is None: logging.error(f"cols and subset are alias, both cannot be used.")        
+    if cols is None and not subset is None: cols=subset        
     if cols is None:
         cols=df.columns
     if df.duplicated(subset=cols).any():
