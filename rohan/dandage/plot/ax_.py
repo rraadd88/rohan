@@ -308,11 +308,16 @@ def set_label_colorbar(ax,label):
                 a.set_ylabel(label)
                 break
     return ax
-def set_label(ax,label,title=False,params={'x':0,'y':1,'ha':'left','va':'top'}):
+def set_label(ax,label,title=False,
+              x=0,y=1,ha='left',va='top',
+              **kws,
+             ):
     if title:
         ax.set_title(label)
     else:
-        ax.text(s=label,transform=ax.transAxes,**params)
+        ax.text(s=label,transform=ax.transAxes,
+                x=x,y=y,ha=ha,va=va,
+                **kws)
     return ax
 
 # metrics
