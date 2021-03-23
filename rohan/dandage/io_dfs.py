@@ -1376,4 +1376,4 @@ class log:
         return log_apply(self._obj,fun='unstack',**kws)
     def merge(self,**kws):
         from rohan.dandage.io_dfs import log_apply
-        return log_apply(self._obj,fun='unstack',**kws)
+        return log_apply(self._obj,fun='merge',**kws)

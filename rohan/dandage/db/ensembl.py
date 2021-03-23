@@ -10,19 +10,20 @@
 # reference_assemblies={
 #     'R64-1-1': (92, 92),
 # }),release=92)
+from rohan.global_imports import *
 import numpy as np
 import pandas as pd
 import logging
 import requests, sys
 
 #pyensembl faster
-def ensg2genename(id,ensembl):
+def gid2gname(id,ensembl):
     try:
         return ensembl.gene_name_of_gene_id(id)
     except:
         return np.nan
 
-def genename2ensg(name,ensembl):
+def gname2gid(name,ensembl):
     try:
         names=ensembl.gene_ids_of_gene_name(name)
         if len(names)>1:
@@ -33,27 +34,27 @@ def genename2ensg(name,ensembl):
     except:
         return np.nan
     
-def enst2ensp(id,ensembl):
+def tid2pid(id,ensembl):
     try:
         t=ensembl.transcript_by_id(id)
         return t.protein_id
     except:
         return np.nan    
     
-def enst2ensg(id,ensembl):
+def tid2gid(id,ensembl):
     try:
         t=ensembl.transcript_by_id(id)
         return t.gene_id
     except:
         return np.nan 
     
-def ensp2enst(id,ensembl):
+def pid2tid(id,ensembl):
     try:
         return ensembl.transcript_id_of_protein_id(id)
     except:
         return np.nan    
     
-def ensg2dnaseq(id,ensembl):
+def gid2dnaseq(id,ensembl):
     try:
         g=ensembl.gene_by_id(id)
         ts=g.transcripts
@@ -61,13 +62,24 @@ def ensg2dnaseq(id,ensembl):
         return ts[lens.index(max(lens))].id, ts[lens.index(max(lens))].protein_sequence
     except:
         return np.nan,np.nan     
-def enst2prtseq(id,ensembl):
+def tid2prtseq(id,ensembl):
     try:
         t=ensembl.transcript_by_id(id)
         return t.protein_sequence
     except:
-        return np.nan        
-def enst2cdsseq(id,ensembl):
+        return np.nan
+def pid2prtseq(id,ensembl,
+               length=False):
+    try:
+        t=ensembl.protein_sequence(id)
+        if not length:
+            return t
+        else:
+            return len(t)            
+    except:
+        return np.nan    
+    
+def tid2cdsseq(id,ensembl):
     try:
         t=ensembl.transcript_by_id(id)
         return t.coding_sequence
@@ -82,7 +94,7 @@ def get_utr_sequence(ensembl,x,loc='five'):
         logging.warning(f"{x}: no sequence found")
         return     
     
-def protein_id2transcript_id(protein_id,ensembl):    
+def pid2tid(protein_id,ensembl):    
     if (protein_id in ensembl.protein_ids() and (not pd.isnull(protein_id))):
         return ensembl.transcript_by_protein_id(protein_id).transcript_id
     else:
@@ -98,11 +110,6 @@ def is_protein_coding(x,ensembl,geneid=True):
         return 'gene id not found'
     return g.is_protein_coding
 
-def get_gene_name(x,ensembl):
-    try:
-        return ensembl.gene_name_of_gene_id(x)
-    except:
-        return np.nan
 #restful api    
 import requests, sys    
 def ensembl_rest(id_,function,headers={'target_taxon':'9606',
@@ -112,7 +119,7 @@ def ensembl_rest(id_,function,headers={'target_taxon':'9606',
     """
     param fmt: id sequence homology
     
-    https://rest.ensembl.org/sequence/id/ENSP00000288602?content-type=application/json    
+    https://rest.ensembl.org/sequence/id/pid00000288602?content-type=application/json    
     """
     server = "https://rest.ensembl.org"
     ext = f"/{function}/id/{id_}?"
@@ -123,18 +130,55 @@ def ensembl_rest(id_,function,headers={'target_taxon':'9606',
         return r.json()            
 
     
-def gene_id2homology(gene_id,headers={'target_taxon':'9606',
-                                          "type":"paralogues",
-                                          "format":"full",
-                                          "Content-Type" : "application/json",},test=False):
-    server = "https://rest.ensembl.org"
-    ext = f"/homology/id/{gene_id}?"
-    r = requests.get(server+ext, headers=headers)
-    if test:
-        print(r.url)
-    if r.ok:
-        return r.json()
-    
+# def gene_id2homology(gene_id,headers={'target_taxon':'9606',
+#                                           "type":"paralogues",
+#                                           "format":"full",
+#                                           "Content-Type" : "application/json",},test=False):
+#     server = "https://rest.ensembl.org"
+#     ext = f"/homology/id/{gene_id}?"
+#     r = requests.get(server+ext, headers=headers)
+#     if test:
+#         print(r.url)
+#     if r.ok:
+#         return r.json()
+def geneid2homology(x='ENSG00000148584',
+                    release=100,
+                    homologytype='orthologues',
+                   outd='data/database',
+                   force=False):
+    """
+    # outp='data/database/'+replacemany(p.split(';content-type')[0],{'https://':'','?':'/',';':'/'})+'.json'
+    Ref: https://rest.ensembl.org/documentation/info/homology_ensemblgene
+    """
+    p=f"https://e{release}.rest.ensembl.org/homology/id/{x}?type={homologytype};compara=vertebrates;sequence=none;cigar_line=0;content-type=application/json;format=full"
+    outp=outp=f"{outd}/{p.replace('https://','')}.json"
+    if exists(outp) and not force:
+        return read_dict(outp)
+    else:
+        d1=read_dict(p)
+        to_dict(d1,outp)
+    return d1
+
+def proteinid2domains(x,
+                    release=100,
+                     outd='data/database',
+                     force=False):
+    """
+    """
+    p=f'https://e{release}.rest.ensembl.org/overlap/translation/{x}?content-type=application/json;species=homo_sapiens;feature=protein_feature;type=pfam'
+    outp=outp=f"{outd}/{p.replace('https://','')}.json"
+    if exists(outp) and not force:
+        d1=read_dict(outp)
+    else:
+        d1=read_dict(p)
+        to_dict(d1,outp)
+    if len(d1)==0:
+        logging.error(x)
+        return
+    #d1 is a list
+    return pd.concat([pd.DataFrame(pd.Series(d)).T for d in d1],
+                     axis=0)
+
 def ensembl_lookup(id_,headers={'target_taxon':'9606',
                                                'release':95,
                                           "format":"full",
