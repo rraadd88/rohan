@@ -73,6 +73,7 @@ def ax2plotp(ax,plotp='plot/plot_',
 
 def savefig(plotp,
             tight_layout=True,
+            bbox_inches=None, # overrides tight_layout
             fmts=['png','svg'],
             savepdf=False,
             normalise_path=True,
@@ -91,18 +92,33 @@ def savefig(plotp,
     if '.' in plotp:
         plt.savefig(plotp,
                     dpi=dpi,
-                    bbox_inches='tight' if tight_layout else None
+                    bbox_inches=bbox_inches if (not bbox_inches is None) else 'tight' if tight_layout else None
                    )
     else:
         for fmt in fmts:
             plt.savefig(f"{plotp}.{fmt}",
                         format=fmt,
                         dpi=dpi,
-                        bbox_inches='tight' if tight_layout else None)
+                        bbox_inches=bbox_inches if (not bbox_inches is None) else 'tight' if tight_layout else None)
     if not is_interactive_notebook():
         plt.clf();plt.close()
     return plotp
 
+def savelegend(plotp,legend,
+               expand=[-5,-5,5,5],
+              **kws_savefig):
+    """
+    Ref: https://stackoverflow.com/a/47749903/3521099
+    """
+    fig  = legend.figure
+    fig.canvas.draw()
+    bbox  = legend.get_window_extent()
+    bbox = bbox.from_extents(*(bbox.extents + np.array(expand)))
+    bbox = bbox.transformed(fig.dpi_scale_trans.inverted())
+    plt.axis('off')
+    return savefig(plotp,bbox_inches=bbox,
+           **kws_savefig)
+    
 def get_plot_inputs(plotp,dplot,params,outd):
     if exists(plotp):
         plotp=abspath(plotp)
@@ -117,7 +133,7 @@ def get_plot_inputs(plotp,dplot,params,outd):
     params_saved=read_dict(f"{splitext(plotp)[0]}.json" if exists(f"{splitext(plotp)[0]}.json") else f"{splitext(plotp)[0]}.yml");
     params=params_saved if params is None else {k:params[k] if k in params else params_saved[k] for k in params_saved};
     return plotp,dplot,params
-
+    
 def saveplot(dplot,
              logp,
              plotp,
