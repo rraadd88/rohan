@@ -233,6 +233,7 @@ def melt_paired(df,
     if suffixes is None and not cols_index is None:
         from rohan.dandage.io_strs import get_suffix
         suffixes=get_suffix(*cols_index)
+    # both suffixes should not be in any column name
     assert(not any([all([s in c for s in suffixes]) for c in df]))
     cols_common=[c for c in df if not any([s in c for s in suffixes])]
     dn2df={}
@@ -1125,6 +1126,22 @@ def apply_on_paths(ps,func,
                    params={},
                    **kws,
                   ):
+    """
+    :params func:
+    def apply_(p,outd='data/data_analysed',force=False):
+        outp=f"{outd}/{basenamenoext(p)}.pqt'
+        if exists(outp) and not force:
+            return
+        df01=read_table(p)
+    apply_on_paths(
+    ps=glob("data/data_analysed/*"),
+    func=apply_,
+    outd="data/data_analysed/",
+    force=True,
+    fast=False,
+    read_path=True,
+    )
+    """
     def read_table_(df,read_path=False):
         p=df.iloc[0,:]['path']
         if read_path:

@@ -152,6 +152,7 @@ def get_stat(df1,
     #     **kws_merge,
     )
     return df3
+
 def get_stats(df1,
               colsubset,
               cols_value,

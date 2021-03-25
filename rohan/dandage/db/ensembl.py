@@ -190,6 +190,7 @@ def ensembl_lookup(id_,headers={'target_taxon':'9606',
     """
     return ensembl_rest(id_,function='lookup',headers=headers,test=test)
 
+## species
 def taxid2name(k):
     server = "https://rest.ensembl.org"
     ext = f"/taxonomy/id/{k}?"
@@ -213,6 +214,37 @@ def taxname2id(k):
     else:
         logging.warning(f'no tax id found for {k}')
         return
+    
+## convert between assemblies
+# def check_release(ids):
+#     """
+#     TODO check release of ids
+#     """
+def map_ids_by_release(ids,outd,idtype='gene', force=False):
+    """
+    TODO: use `convert_coords_human_assemblies` + `pyensembl`
+    """
+    chunks=int(np.ceil(len(ids)/10000))
+    if not exists(outd+'.zip') or force:
+        makedirs(outd,exist_ok=True)
+        for i,l in enumerate(np.array_split(ids, chunks)):
+            with open(f'{outd}/{i}.txt','w') as f:
+                f.write('\n'.join(l))
+        zip_folder(outd, outd+'.zip')
+        return
+    ps=glob(f'{outd}/Results-Homo_sapiens_Tools_IDMapper_*.csv')
+    assert(chunks==len(ps))
+    df=pd.concat([read_table(p).loc[:,['Requested ID','Matched ID(s)']] for p in ps],
+             axis=0)#.log.drop_duplicates()
+    df=df.rd.get_mappings(cols=None,keep='1:1')
+    info(df.rd.check_mappings(list(df)))
+    info(f"identical ids={(sum(df['Requested ID']==df['Matched ID(s)'])/len(df))*100}%")
+    df=df.rename(columns={'Requested ID':f'{idtype} id (GRCh37)','Matched ID(s)':f'{idtype} id (GRCh38)'})
+    to_table(df,f"{outd}.tsv")
+    l=list(set(ids) - set(df[f'{idtype} id (GRCh37)']))
+    info(f"ids not mapped = {len(l)}")
+    to_table(pd.DataFrame({f'{idtype} id (GRCh37)':l}),f"{outd}/unmapped.tsv")
+    return df
 
 def convert_coords_human_assemblies(chrom,start,end,frm=38,to=37):
     import requests, sys 
