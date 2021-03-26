@@ -113,17 +113,18 @@ def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_co
 @add_method_to_class(rd)
 def filter_rows(df,d,sign='==',logic='and',
                 drop_constants=False,
-                test=False):
-    logging.info(df.shape)
+                test=False,
+                verb=True,
+               ):
+    if verb: logging.info(df.shape)    
     assert(all([isinstance(d[k],(str,list)) for k in d]))
     qry = f" {logic} ".join([f"`{k}` {sign} "+(f"'{v}'" if isinstance(v,str) else f"{v}") for k,v in d.items()])
     df1=df.query(qry)
     if test:
         logging.info(df1.loc[:,list(d.keys())].drop_duplicates())
-    if len(df1)==0:
         logging.warning('may be some column names are wrong..')
         logging.warning([k for k in d if not k in df])
-    logging.info(df1.shape)
+    if verb: logging.info(df1.shape)
     if drop_constants:
         df1=df1.rd.drop_constants()
     return df1
@@ -1120,6 +1121,7 @@ def read_ps(ps):
 def apply_on_paths(ps,func,
                     fast=False, 
                    read_path=False,
+                   filter_rows=None,
                    drop_index=True,
                    fun_rename_path=None,
                    progress_bar=True,
@@ -1142,12 +1144,16 @@ def apply_on_paths(ps,func,
     read_path=True,
     )
     """
-    def read_table_(df,read_path=False):
+    def read_table_(df,read_path=False,
+                   filter_rows=None):
         p=df.iloc[0,:]['path']
         if read_path:
             return p
         else:
-            return read_table(p,params=params,)
+            df=read_table(p,params=params,)
+            if not filter_rows is None:
+                df=df.rd.filter_rows(filter_rows)            
+            return df
     if not fun_rename_path is None:
         drop_index=False
     ps=read_ps(ps)
@@ -1159,7 +1165,7 @@ def apply_on_paths(ps,func,
         progress_bar=True
     df2=getattr(df1.groupby('path',as_index=True),
                             f"{'parallel' if fast else 'progress'}_apply" if progress_bar else "apply"
-               )(lambda df: func(read_table_(df,read_path=read_path),
+               )(lambda df: func(read_table_(df,read_path=read_path,filter_rows=filter_rows),
                                  **kws))
     df2=df2.rd.clean().reset_index(drop=drop_index).rd.clean()
     if not fun_rename_path is None:
@@ -1180,7 +1186,8 @@ def read_manytables(ps,
     :params ps: list
     """       
     if not to_dict:
-        df2=apply_on_paths(ps,func=lambda df: df,fast=fast,drop_index=drop_index,
+        df2=apply_on_paths(ps,func=lambda df: df,
+                           fast=fast,drop_index=drop_index,
                            params=params,
                            **kws)
         return df2
