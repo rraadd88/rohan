@@ -5,7 +5,7 @@ from glob import glob,iglob
 import os
 from os import makedirs
 from os.path import exists,basename,dirname,abspath,realpath
-from rohan.dandage.io_strs import make_pathable_string
+from rohan.dandage.io_strs import make_pathable_string,replacemany
 
 from shutil import copyfile
 # def copy(src, dst):copyfile(src, dst)
@@ -134,9 +134,16 @@ def read_url(url):
     myfile = f.read()
     return str(myfile)
 
-def download(url,path):
+def download(url,path=None,outd='data/database'):
+    if path is None:
+        path=replacemany(url,
+               {'https://':'',
+                'http://':'',
+               })
+        path=f"{outd}/{path}"
     import urllib.request
     makedirs(dirname(path),exist_ok=True)
     urllib.request.urlretrieve(url, path)
+    return path
 
 from rohan.dandage.io_sys import p2time
