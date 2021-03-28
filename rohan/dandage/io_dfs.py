@@ -1048,6 +1048,7 @@ def read_table(p,
                params={},
 #                params_read_csv={}, # deprecate
                ext=None,
+               test=False,
                **kws_manytables,):
     """
     'decimal':'.'
@@ -1109,7 +1110,7 @@ def read_table(p,
                  ))
         else: 
             logging.error(f'unknown extension {ext} in {p}')
-#         print(params)
+        if test: print(params)
         return pd.read_table(p,
                   **params,
                    ).rd.clean()
