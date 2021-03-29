@@ -55,3 +55,6 @@ def get_location_relative(k1,k2,ensembl,test=False):
         if d1['genes inbetween']==0:
             d1['chromosomes']='tandem'
     return d1
+
+## coords (ranges)
+from rohan.dandage.io_sts import range_overlap

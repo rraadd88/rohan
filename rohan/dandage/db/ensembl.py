@@ -111,36 +111,38 @@ def is_protein_coding(x,ensembl,geneid=True):
     return g.is_protein_coding
 
 #restful api    
-import requests, sys    
-def ensembl_rest(id_,function,headers={'target_taxon':'9606',
-                                               'release':95,
-                                          "format":"full",
-                                          "Content-Type" : "application/json",},test=False):
-    """
-    param fmt: id sequence homology
-    
-    https://rest.ensembl.org/sequence/id/pid00000288602?content-type=application/json    
-    """
-    server = "https://rest.ensembl.org"
-    ext = f"/{function}/id/{id_}?"
-    r = requests.get(server+ext, headers=headers)
-    if test:
-        print(f"{server}/{ext}?format=full;content-type=application/json")
-    if r.ok:
-        return r.json()            
+def rest(ids,function='lookup',
+                 target_taxon='9606',
+                 release='100',
+                 format_='full',
+                 test=False,
+                 **kws):
+    import requests, sys
 
+    server = "https://rest.ensembl.org"
+    ext = f"/{function}/id"
+    headers={ "Content-Type" : "application/json", "Accept" : "application/json"}
     
-# def gene_id2homology(gene_id,headers={'target_taxon':'9606',
-#                                           "type":"paralogues",
-#                                           "format":"full",
-#                                           "Content-Type" : "application/json",},test=False):
-#     server = "https://rest.ensembl.org"
-#     ext = f"/homology/id/{gene_id}?"
-#     r = requests.get(server+ext, headers=headers)
-#     if test:
-#         print(r.url)
-#     if r.ok:
-#         return r.json()
+    headers['target_taxon']=target_taxon
+    headers['release']=release
+    headers['format']=format_
+    headers.update(kws)
+    if test: print(headers)
+        
+    if isinstance(ids,str):
+        r = requests.get(server+ext+f'{ids}?', headers=headers)
+    elif isinstance(ids,list):
+        r = requests.post(server+ext, headers=headers, 
+                          data='{ "ids" : ['+', '.join([f'"{s}"' for s in ids])+' ] }')
+    else:
+        raise ValueError(f"ids should be str or list")
+    if not r.ok:
+        r.raise_for_status()
+    else:
+        decoded = r.json()
+    #     print(repr(decoded))
+        return decoded
+
 def geneid2homology(x='ENSG00000148584',
                     release=100,
                     homologytype='orthologues',
@@ -179,16 +181,7 @@ def proteinid2domains(x,
     return pd.concat([pd.DataFrame(pd.Series(d)).T for d in d1],
                      axis=0)
 
-def ensembl_lookup(id_,headers={'target_taxon':'9606',
-                                               'release':95,
-                                          "format":"full",
-                                          "Content-Type" : "application/json",},test=False):
-    """
-    prefer ensembl rest
-    to be deprecated
-    https://rest.ensembl.org/lookup/id/ENSP00000351933?target_taxon=9606;release=95;content-type=application/json    
-    """
-    return ensembl_rest(id_,function='lookup',headers=headers,test=test)
+
 
 ## species
 def taxid2name(k):
@@ -262,4 +255,31 @@ def convert_coords_human_assemblies(chrom,start,end,frm=38,to=37):
 #                 return d_['mapped']['seq_region_name'],d_['mapped']['start'],d_['mapped']['end']
                 return pd.Series(d_['mapped'])#['seq_region_name'],d_['mapped']['start'],d_['mapped']['end']
     
+## convert coords 
+def coords2geneid(x,
+                 biotype='protein_coding'):
+    # x=df02.iloc[0,:]
+    from pyensembl import EnsemblRelease
+    ensembl=EnsemblRelease(release=100)
+    contig,pos=x['Genome Location'].split(':')
+
+    start,end=[int(s) for s in pos.split('-')]
+
+    # l1=ensembl.gene_ids_at_locus
+    l1=ensembl.genes_at_locus(contig=contig,
+                              position=start, 
+                              end=end, 
+                              strand=None)
+
+    # def range_overlap(l1,l2):
+    #     return set.intersection(set(range(l1[0],l1[1]+1,1)),
+    #                             set(range(l2[0],l2[1]+1,1)))
+#     ds1=pd.Series({ 
+    d1={}
+    for g in l1:
+        if g.biotype==biotype:
+            d1[g.gene_id]=len(range_overlap([g.start,g.end],[start,end]))
+    ds1=pd.Series(d1).sort_values(ascending=False)
+    print(ds1)
+    return ds1.index[0]
     

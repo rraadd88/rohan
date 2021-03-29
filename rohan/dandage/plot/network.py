@@ -123,8 +123,11 @@ def plot_ppi_overlap_label_data(df1,colsource,coltarget,nodes_source=None):
     nodes_source=list(df1[colsource].unique())
     df=df1.pivot(index=coltarget,columns=colsource,values=coltarget)
     df['target type']=df.apply(lambda x: '&'.join(sorted(list(x.dropna().keys()))) if len(x.dropna().keys())!=1  else list(x.dropna().keys())[0],axis=1)
-    df2=df.melt(id_vars='target type').dropna(subset=['value'])
+#     print(df.columns)
+    df2=df.melt(id_vars='target type').dropna(subset=['value']).rename(columns={'value':coltarget})
     assert(len(df1)==len(df2))
+#     print(df1.iloc[0,:])
+#     print(df2.iloc[0,:])
     df2=df1.merge(df2,
              on=[colsource,coltarget],
              how='inner')
