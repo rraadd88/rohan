@@ -268,7 +268,7 @@ def hist_annot(dplot,colx,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
                xlim=None,
                 ax=None):
-    from rohan.dandage.plot.colors import reset_legend_colors
+    from rohan.dandage.plot.ax_ import reset_legend_colors
     if not xlim is None:
         logging.warning('colx adjusted to xlim')
         dplot.loc[(dplot[colx]<xlim[0]),colx]=xlim[0]

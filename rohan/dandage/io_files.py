@@ -8,6 +8,7 @@ from os.path import exists,basename,dirname,abspath,realpath
 from rohan.dandage.io_strs import make_pathable_string,replacemany
 
 from shutil import copyfile
+import logging
 # def copy(src, dst):copyfile(src, dst)
 # def cp(src, dst):copy(src, dst)
 
@@ -134,16 +135,20 @@ def read_url(url):
     myfile = f.read()
     return str(myfile)
 
-def download(url,path=None,outd='data/database'):
+def download(url,path=None,outd='data/database',
+             force=False):
     if path is None:
         path=replacemany(url,
                {'https://':'',
                 'http://':'',
                })
         path=f"{outd}/{path}"
-    import urllib.request
-    makedirs(dirname(path),exist_ok=True)
-    urllib.request.urlretrieve(url, path)
+    if not exists(path) or force:
+        import urllib.request
+        makedirs(dirname(path),exist_ok=True)
+        urllib.request.urlretrieve(url, path)
+    else:
+        logging.info(f"exists: {path}")
     return path
 
 from rohan.dandage.io_sys import p2time
