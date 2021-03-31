@@ -10,6 +10,7 @@ import itertools
 
 
 # log
+from icecream import ic
 import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

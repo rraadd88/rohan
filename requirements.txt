@@ -16,3 +16,4 @@ statsmodels
 argh
 gitpython
 adjustText
+icecream

@@ -87,3 +87,32 @@ def plot_heatmap_symmetric_twosides(df,index,columns,values1,values2):
     ax=sns.heatmap(dplot,cmap='Reds',cbar_kws={'label':f'{values1} (upper side of diagonal)\n {values2} (lower side of diagonal)'},
                ax=ax)
     return ax
+
+def plot_crosstab(df1,cols,ax=None):
+    dplot=pd.crosstab(df1[cols[0]],df1[cols[1]])
+    stat,pval=sc.stats.fisher_exact(dplot)
+
+    dplot=dplot.sort_index(ascending=False,axis=1).sort_index(ascending=False,axis=0)
+    dplot=dplot.rename(columns={True:dplot.columns.name,
+    #                       False:f'not {dplot.columns.name}',
+                               False:'not'},
+                index={True:dplot.index.name,
+    #                       False:f'not {dplot.index.name}',
+                      False:'not'},)
+
+    dplot.columns.name=None
+    dplot.index.name=None
+    if ax is None:
+        fig,ax=plt.subplots(figsize=[1.5,1.5])
+    sns.heatmap(dplot,
+               annot=True,cbar=False,
+                fmt='d',
+                square=True,
+                linewidths=0.1,
+               cmap='Reds',
+               ax=ax)
+    ax.xaxis.set_ticks_position('top')
+    # set_label(ax, label=pval, title=False, x=0, y=-0.2, ha='left', va='top', )
+    ax.set_xlabel(f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=None, fmt='<', linebreak=False),
+                 labelpad=15)
+    return ax
