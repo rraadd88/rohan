@@ -76,7 +76,7 @@ def plot_barh_stacked_percentage(df1,coly,colannot,
     ax=df2.plot.barh(stacked=True,ax=ax)
     ticklabel2position=get_ticklabel2position(ax,'y')
     from rohan.dandage.plot.colors import saturate_color
-    _=df2.reset_index().apply(lambda x: ax.text(0,
+    _=df2.reset_index().apply(lambda x: ax.text(1,
                                                   ticklabel2position[x[coly]]-yoff,
                                                   f"{x[colannot]:.1f}%",ha='left',va='center',
                                                  color=saturate_color(color,2),
@@ -85,7 +85,7 @@ def plot_barh_stacked_percentage(df1,coly,colannot,
     ax.legend(bbox_to_anchor=[1,1],title=df1.columns.name)
     d1=df1.set_index(coly).T.sum().to_dict()
     ax.set(xlim=[0,100],xlabel='%',
-          yticklabels=[f"{t.get_text()}\n(total={d1[t.get_text()]})" for t in ax.get_yticklabels()])
+          yticklabels=[f"{t.get_text()}\n(n={d1[t.get_text()]})" for t in ax.get_yticklabels()])
     return ax
 
 def plot_bar_intersections(dplot,cols=None,colvalue=None,

@@ -157,7 +157,7 @@ def plot_gene(df,label=None,params={},
 #     assert(not df.rd.check_duplicated(['protein id']))
 #     df['domains']=df['protein id'].map(df.groupby('protein id').size().to_dict())
 #     df=df.sort_values(by=['domains','protein length'],ascending=[False,False])        
-    fig,ax=plt.subplots(figsize=[1,(df['protein id'].nunique()+2)*0.3])
+    fig,ax=plt.subplots(figsize=[(df['protein length'].max()-75)/250,(df['protein id'].nunique()+2)*0.3])
     # plot_protein(df=df2.rd.filter_rows({'protein id':'ENSP00000264731'}),
     #             ax=ax)
 #     print(df['domains'].tolist())
@@ -189,37 +189,43 @@ def plot_genes_legend(df,d1):
 #     d1=df.set_index('description')['color'].dropna().drop_duplicates().to_dict()
     import matplotlib.patches as mpatches
     l1=[mpatches.Patch(color=d1[k], label=k) for k in d1]        
-    savelegend(f"plot/schem_gene_{' '.join(df['title'].unique()).replace('.',' ')}_legend.png",
-           legend=plt.legend(handles=l1,frameon=True,title='domains/motifs'),
+    savelegend(f"plot/schem_gene_{' '.join(df['protein id'].unique()).replace('.',' ')}_legend.png",
+           legend=plt.legend(handles=l1,frameon=True,title='domains/regions'),
            )
 #     df.loc[df['color'].isnull(),'color']=(0,0,0,1)
     df['color']=df['color'].fillna('k').apply(str)
-    to_table(df,f"plot/schem_gene_{' '.join(df['title'].unique()).replace('.',' ')}_legend.pqt")
+    to_table(df,f"plot/schem_gene_{' '.join(df['protein id'].unique()).replace('.',' ')}_legend.pqt")
 
 from rohan.dandage.db.ensembl import pid2prtseq,proteinid2domains
-def plot_genes_data(df1):
-    if not 'protein length' in df1:
-        from pyensembl import EnsemblRelease
-        ensembl=EnsemblRelease(release=100)
-        df1['protein length']=df1['protein id'].progress_apply(lambda x: pid2prtseq(x,ensembl,length=True))
-    df2=df1.groupby(['gene id','protein id']).progress_apply(lambda df: proteinid2domains(df.name[1])).reset_index().rd.clean()
-    if len(df2)!=0:
-        df2=df1.merge(df2,
-                     on=['gene id','protein id'],
-                     how='left',
-                     )
+def plot_genes_data(df1,custom=False,colsort=None,cmap='Spectral'):
+    if not custom:
+        if not 'protein length' in df1:
+            from pyensembl import EnsemblRelease
+            ensembl=EnsemblRelease(release=100)
+            df1['protein length']=df1['protein id'].progress_apply(lambda x: pid2prtseq(x,ensembl,length=True))
+        df2=df1.groupby(['gene id','protein id']).progress_apply(lambda df: proteinid2domains(df.name[1])).reset_index().rd.clean()
+        if len(df2)!=0:
+            df2=df1.merge(df2,
+                         on=['gene id','protein id'],
+                         how='left',
+                         )
+        else:
+            df2=df1.copy()
+            for c in ['description','type']: 
+                df2[c]=np.nan
+#     df2=df2.log.dropna(subset=['type'])
     else:
         df2=df1.copy()
-        for c in ['description','type']: 
-            df2[c]=np.nan
-#     df2=df2.log.dropna(subset=['type'])
 
     df2['start']=df2.apply(lambda x: 1 if pd.isnull(x['type']) else x['start'],axis=1)
     df2['end']=df2.apply(lambda x: x['protein length'] if pd.isnull(x['type']) else x['end'],axis=1)
     #     print(df2.columns)
     df2['domains']=df2['protein id'].map(df2.dropna(subset=['description']).groupby('protein id').size().to_dict())
     df2['domains']=df2['domains'].fillna(0)
-    df2=df2.sort_values(['gene id','domains','protein length','start'],ascending=[True,False,False,True])
+    if colsort is None:
+        df2=df2.sort_values(['gene id','domains','protein length','start'],ascending=[True,False,False,True])
+    else:
+        df2=df2.sort_values(['gene id',colsort],ascending=[True,True])        
     def gety(df):
         df['y']=(df.groupby('protein id',sort=False).ngroup()+1)*-1
         return df
@@ -227,16 +233,19 @@ def plot_genes_data(df1):
 #     df=df.sort_values(by=['domains','protein length'],ascending=[False,False])        
     
     from rohan.dandage.plot.colors import get_ncolors
-    cs=get_ncolors(n=df2['description'].nunique(), cmap='Spectral', ceil=False,
-                vmin=0.2,vmax=1)
+    cs=get_ncolors(n=df2['description'].nunique(),
+                   cmap=cmap, ceil=False,
+                   vmin=0.2,vmax=1)
     d1=dict(zip(df2['description'].dropna().unique(),
                 cs
                ))
     df2['color']=df2['description'].map(d1)
     return df2,d1
-def plot_genes(df1,
+def plot_genes(df1,custom=False,colsort=None,
+               cmap='Spectral',
                **kws_plot_gene):
-    df2,d1=plot_genes_data(df1)
+    df2,d1=plot_genes_data(df1,custom=custom,colsort=colsort,
+                          cmap=cmap)
     axs=df2.groupby('gene id').apply(plot_gene,
                                      **kws_plot_gene)
     

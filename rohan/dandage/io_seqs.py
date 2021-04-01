@@ -249,9 +249,9 @@ def translate(dnaseq,fmtout=str,tax_id=None):
     :param fmtout: format of output sequence
     """
     if isinstance(dnaseq,str): 
-        dnaseq=Seq.Seq(dnaseq,Alphabet.generic_dna)
+        dnaseq=Seq.Seq(dnaseq)
     if tax_id is None:
-        tax_id=1 # stanndard codon table. ref http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc25
+        tax_id=1 # standard codon table. ref http://biopython.org/DIST/docs/tutorial/Tutorial.html#htoc25
     prtseq=dnaseq.translate(table=tax_id)
     if fmtout is str:
         return str(prtseq)
@@ -274,6 +274,8 @@ def read_fasta(fap,key_type='id',duplicates=False):
             id2seq[getattr(seq_record,key_type)]=str(seq_record.seq)
         return id2seq
 def to_fasta(ids2seqs,fastap):
+    if not exists(dirname(fastap)) and dirname(fastap)!='':
+        makedirs(dirname(fastap),exist_ok=True)    
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id]), id) for id in ids2seqs)
     SeqIO.write(seqs, fastap, "fasta")
     return fastap
