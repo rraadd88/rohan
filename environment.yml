@@ -23,4 +23,5 @@ dependencies:
     - argh
     - gitpython
     - statsmodels
+    - icecream
 #     - pingouin
