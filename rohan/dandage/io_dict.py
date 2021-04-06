@@ -60,7 +60,10 @@ def read_dict(p,fmt='',**kws):
         return read_json(p,**kws)
     elif p.startswith('https'):
         from urllib.request import urlopen
-        return json.load(urlopen(p))
+        try:
+            return json.load(urlopen(p))
+        except:
+            print(logging.error(p))
 #         return read_json(p,**kws)    
     elif p.endswith('.pickle'):
         d = read_pickle(p)

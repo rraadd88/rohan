@@ -189,12 +189,12 @@ def plot_genes_legend(df,d1):
 #     d1=df.set_index('description')['color'].dropna().drop_duplicates().to_dict()
     import matplotlib.patches as mpatches
     l1=[mpatches.Patch(color=d1[k], label=k) for k in d1]        
-    savelegend(f"plot/schem_gene_{' '.join(df['protein id'].unique()).replace('.',' ')}_legend.png",
+    savelegend(f"plot/schem_gene_{' '.join(df['gene id'].unique()[:5]).replace('.',' ')}_legend.png",
            legend=plt.legend(handles=l1,frameon=True,title='domains/regions'),
            )
 #     df.loc[df['color'].isnull(),'color']=(0,0,0,1)
     df['color']=df['color'].fillna('k').apply(str)
-    to_table(df,f"plot/schem_gene_{' '.join(df['protein id'].unique()).replace('.',' ')}_legend.pqt")
+    to_table(df,f"plot/schem_gene_{' '.join(df['gene id'].unique()[:5]).replace('.',' ')}_legend.pqt")
 
 from rohan.dandage.db.ensembl import pid2prtseq,proteinid2domains
 def plot_genes_data(df1,custom=False,colsort=None,cmap='Spectral'):
@@ -204,6 +204,7 @@ def plot_genes_data(df1,custom=False,colsort=None,cmap='Spectral'):
             ensembl=EnsemblRelease(release=100)
             df1['protein length']=df1['protein id'].progress_apply(lambda x: pid2prtseq(x,ensembl,length=True))
         df2=df1.groupby(['gene id','protein id']).progress_apply(lambda df: proteinid2domains(df.name[1])).reset_index().rd.clean()
+        df2=df2.log.dropna(subset=['description'])
         if len(df2)!=0:
             df2=df1.merge(df2,
                          on=['gene id','protein id'],

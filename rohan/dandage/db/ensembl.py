@@ -174,6 +174,7 @@ def proteinid2domains(x,
     else:
         d1=read_dict(p)
         to_dict(d1,outp)
+    if d1 is None: return
     if len(d1)==0:
         logging.error(x)
         return
