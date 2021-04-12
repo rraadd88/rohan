@@ -101,7 +101,7 @@ def plot_phylogeny(tree,organismname2id,
     print(dplot['organism id'].tolist())
     return ax
 
-def plot_ppi_overlap_label_data(df1,colsource,coltarget,nodes_source=None):
+def plot_ppi_overlap_get_labels(df1,colsource,coltarget,nodes_source=None):
     """
     TODO: calculate overlap when sources>=3
     """
@@ -135,6 +135,48 @@ def plot_ppi_overlap_label_data(df1,colsource,coltarget,nodes_source=None):
     df2=df2.sort_values(by=['target type'])
     return df2
 
+def plot_ppi_overlap_get_positions(df1,
+    colsource='key',
+    coltarget='value',
+    # constants
+    x_source=0,
+    x_target=1,
+    # arc
+    r=5,
+    xoff=1,
+      ):
+    """
+    get positions
+    """
+    if isinstance(df1,dict):
+        df1={k:[str(i) for i in df1[k]] for k in df1}
+        df1=dict2df(df1,colkey=colsource, colvalue=coltarget)
+    df1=df1.log.drop_duplicates(subset=[colsource,coltarget])
+    nodes_source=df1[colsource].unique()
+    ## label data
+    df1=plot_ppi_overlap_get_labels(df1,colsource,coltarget,nodes_source)
+    ## positions
+    df1.loc[:,'x_target']=x_target
+    d2=dict(zip(df1[coltarget].unique(),range(len(df1[coltarget].unique()))[::-1]))    
+    df1.loc[:,'y_target']=df1[coltarget].map(d2)
+
+    from rohan.dandage.stat.transform import rescale
+    df1.loc[:,'y_target']=rescale(df1['y_target'], 
+                            range1=[df1['y_target'].min(),
+                                    df1['y_target'].max()], 
+                            range2=[-1,1])
+
+    df1.loc[:,'x_target']=np.sqrt(r-df1['y_target']**2)+xoff
+    df1.loc[:,'x_target annot']=np.sqrt(r*1.2-df1['y_target']**2)+xoff
+    ## source x y
+    from rohan.dandage.stat.transform import rescale
+#     print(np.arange(len(nodes_source)))
+#     print(rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4]))
+    source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),range1=None,range2=[0.4,-0.4])))
+    df1['x_source']=x_source
+    df1['y_source']=df1[colsource].map(source2y)
+    return df1,nodes_source
+
 def plot_ppi_overlap(
     df1,
     colsource='key',
@@ -150,6 +192,7 @@ def plot_ppi_overlap(
     # arc
     r=5,
     xoff=1,
+    ## ax
     colors=None,
     kws_source={'s':500},
     kws_within=None,
@@ -171,30 +214,19 @@ def plot_ppi_overlap(
         df1['linewidth']=np.linspace(1,4,len(df1))
         df1['linestyle']=df1[colsource].map({'P1':'--','P2':'-'})
         return df1
+    ## get positions
+    df1,nodes_source=plot_ppi_overlap_get_positions(df1,
+                                       colsource,coltarget,
+                                          # constants
+                                        x_source=x_source,
+                                        x_target=x_target,
+                                        # arc
+                                        r=r,
+                                        xoff=xoff,
 
-    
-    from rohan.dandage.plot.colors import mix_colors,get_colors_default,saturate_color
-    if isinstance(df1,dict):
-        df1={k:[str(i) for i in df1[k]] for k in df1}
-        df1=dict2df(df1,colkey=colsource, colvalue=coltarget)
-    df1=df1.log.drop_duplicates(subset=[colsource,coltarget])
-    nodes_source=df1[colsource].unique()
-    ## label data
-    df1=plot_ppi_overlap_label_data(df1,colsource,coltarget,nodes_source)
-    ## positions
-    df1.loc[:,'x_target']=x_target
-    d2=dict(zip(df1[coltarget].unique(),range(len(df1[coltarget].unique()))[::-1]))    
-    df1.loc[:,'y_target']=df1[coltarget].map(d2)
-
-    from rohan.dandage.stat.transform import rescale
-    df1.loc[:,'y_target']=rescale(df1['y_target'], 
-                            range1=[df1['y_target'].min(),
-                                    df1['y_target'].max()], 
-                            range2=[-1,1])
-
-    df1.loc[:,'x_target']=np.sqrt(r-df1['y_target']**2)+xoff
-    df1.loc[:,'x_target annot']=np.sqrt(r*1.2-df1['y_target']**2)+xoff
-    
+                                      )
+    ## colors
+    from rohan.dandage.plot.colors import mix_colors,get_colors_default,saturate_color    
     if colors is None:        
         colors=get_colors_default()[:len(nodes_source)]
     node_type2color=dict(zip(nodes_source,colors))
@@ -205,6 +237,8 @@ def plot_ppi_overlap(
             node_type2color[k]=mix_colors([node_type2color[k1] for k1 in k.split('&')])
         else:
             node_type2color[k]=saturate_color(np.unique(colors)[0],2)
+                        
+    ## plot
     if ax is None:
         _,ax=plt.subplots(figsize=[3,3],
                      )
@@ -244,16 +278,17 @@ def plot_ppi_overlap(
                                     color=node_type2color[df.name],
                              zorder=2,
                              ))        
-    from rohan.dandage.stat.transform import rescale
-#     print(np.arange(len(nodes_source)))
-#     print(rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4]))
-    source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),range1=None,range2=[0.4,-0.4])))
+#     from rohan.dandage.stat.transform import rescale
+# #     print(np.arange(len(nodes_source)))
+# #     print(rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4]))
+#     source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),range1=None,range2=[0.4,-0.4])))
+    source2y=df1.rd.to_dict([colsource,'y_source'])
     for source in source2y:
         ax.scatter([x_source],[source2y[source]],color=node_type2color[source],
                    zorder=2,
                   **kws_source)
         ax.text(x_source,source2y[source],s=source,zorder=2,va='center',ha='center')
-        df1.loc[((df1[colsource]==source)),:].dropna(subset=[coltarget]).apply(lambda x: ax.plot([x_source,x['x_target']],[source2y[source],x['y_target']],
+        df1.loc[((df1[colsource]==source)),:].dropna(subset=[coltarget]).apply(lambda x: ax.plot([x['x_source'],x['x_target']],[x['y_source'],x['y_target']],
                                                  color=node_type2color[source],
                                                   zorder=1,
                                                   linestyle='-' if not 'linestyle' in x else x['linestyle'],
