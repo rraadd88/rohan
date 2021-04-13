@@ -119,7 +119,7 @@ def rest(ids,function='lookup',
                  **kws):
     import requests, sys
 
-    server = "https://rest.ensembl.org"
+    server = f"https://e{release}.rest.ensembl.org"
     ext = f"/{function}/id"
     headers={ "Content-Type" : "application/json", "Accept" : "application/json"}
     
@@ -150,7 +150,7 @@ def geneid2homology(x='ENSG00000148584',
                    force=False):
     """
     # outp='data/database/'+replacemany(p.split(';content-type')[0],{'https://':'','?':'/',';':'/'})+'.json'
-    Ref: https://rest.ensembl.org/documentation/info/homology_ensemblgene
+    Ref: f"https://e{release}.rest.ensembl.org/documentation/info/homology_ensemblgene
     """
     p=f"https://e{release}.rest.ensembl.org/homology/id/{x}?type={homologytype};compara=vertebrates;sequence=none;cigar_line=0;content-type=application/json;format=full"
     outp=outp=f"{outd}/{p.replace('https://','')}.json"
@@ -162,7 +162,7 @@ def geneid2homology(x='ENSG00000148584',
     return d1
 
 def proteinid2domains(x,
-                    release=100,
+                    release,
                      outd='data/database',
                      force=False):
     """
@@ -186,7 +186,7 @@ def proteinid2domains(x,
 
 ## species
 def taxid2name(k):
-    server = "https://rest.ensembl.org"
+    server = f"https://e{release}.rest.ensembl.org"
     ext = f"/taxonomy/id/{k}?"
     r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
     if not r.ok:
@@ -196,7 +196,7 @@ def taxid2name(k):
     return decoded['scientific_name']
 
 def taxname2id(k):
-    server = "https://rest.ensembl.org"
+    server = f"https://e{release}.rest.ensembl.org"
     ext = f"/taxonomy/name/{k}?"
     r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
     if not r.ok or r.status_code==400:
@@ -209,40 +209,11 @@ def taxname2id(k):
         logging.warning(f'no tax id found for {k}')
         return
     
-## convert between assemblies
-# def check_release(ids):
-#     """
-#     TODO check release of ids
-#     """
-def map_ids_by_release(ids,outd,idtype='gene', force=False):
-    """
-    TODO: use `convert_coords_human_assemblies` + `pyensembl`
-    """
-    chunks=int(np.ceil(len(ids)/10000))
-    if not exists(outd+'.zip') or force:
-        makedirs(outd,exist_ok=True)
-        for i,l in enumerate(np.array_split(ids, chunks)):
-            with open(f'{outd}/{i}.txt','w') as f:
-                f.write('\n'.join(l))
-        zip_folder(outd, outd+'.zip')
-        return
-    ps=glob(f'{outd}/Results-Homo_sapiens_Tools_IDMapper_*.csv')
-    assert(chunks==len(ps))
-    df=pd.concat([read_table(p).loc[:,['Requested ID','Matched ID(s)']] for p in ps],
-             axis=0)#.log.drop_duplicates()
-    df=df.rd.get_mappings(cols=None,keep='1:1')
-    info(df.rd.check_mappings(list(df)))
-    info(f"identical ids={(sum(df['Requested ID']==df['Matched ID(s)'])/len(df))*100}%")
-    df=df.rename(columns={'Requested ID':f'{idtype} id (GRCh37)','Matched ID(s)':f'{idtype} id (GRCh38)'})
-    to_table(df,f"{outd}.tsv")
-    l=list(set(ids) - set(df[f'{idtype} id (GRCh37)']))
-    info(f"ids not mapped = {len(l)}")
-    to_table(pd.DataFrame({f'{idtype} id (GRCh37)':l}),f"{outd}/unmapped.tsv")
-    return df
-
-def convert_coords_human_assemblies(chrom,start,end,frm=38,to=37):
+## convert between assemblies    
+def convert_coords_human_assemblies(release,chrom,start,end,
+                                    frm=38,to=37):
     import requests, sys 
-    server = "http://rest.ensembl.org"
+    server = f"https://e{release}.rest.ensembl.org"
     ext = f"/map/human/GRCh{frm}/{chrom}:{start}..{end}:1/GRCh{to}?"
     r = requests.get(server+ext, headers={ "Content-Type" : "application/json"})
     if not r.ok:
@@ -283,4 +254,110 @@ def coords2geneid(x,
     ds1=pd.Series(d1).sort_values(ascending=False)
     print(ds1)
     return ds1.index[0]
-    
+
+## idmapper
+def read_idmapper_(s,ini,end,sep=', '):
+    d1=dict(data=[x.split(sep) for x in s.split('\n')[1:]],
+            columns=s.split('\n')[0].split(sep),)
+    if np.shape(d1['data'])[1]!=np.shape(d1['columns'])[0]:
+        if np.shape(d1['data'])[0]==1:
+            k='New stable ID'
+            return {f'{k} release={ini}':d1['data'][0][0],
+                    f'{k} release={end}':d1['data'][0][1],
+                   }
+        else:
+            print(s)
+#         d1['columns']=d1['columns'][:np.shape(d1['data'])[1]]
+    df1=pd.DataFrame(**d1)
+    df1['Release']=df1['Release'].astype(float)
+    df1=df1.sort_values('Release')
+    def get_dict(df1,i):
+        df_=df1.loc[(df1['Release']<=i),:].tail(1)
+        if len(df_)!=0:
+            x=df_.iloc[0,:]
+        else:
+            x=df1.loc[(df1['Release']>=i),:].head(1).iloc[0,:]
+#             print(x)
+            x=x.drop(['New stable ID','Release','Mapping score'],axis=0)
+            x=x.rename(index={'Old stable ID':'New stable ID'},axis=0)
+        if 'Old stable ID' in x.index:
+            x=x.drop(['Old stable ID'],axis=0)
+        x=x.add_suffix(f', release={i}')
+        return x.to_dict()
+#         {f'{k} release={i}':df1.loc[(df1['Release']>=i),:].head(1).iloc[0,:][k] for i in [ini,end] for k in ['Old stable ID','Release','Mapping score']}
+    d2=get_dict(df1,ini)
+    d3=get_dict(df1,end)
+#     d2={f"{k} release" for k in d2}
+    d2.update(d3)
+    return d2
+
+def read_idmapper(outd=None,ini=75,
+                    end=100,
+                 ids=None):
+    """
+    :params ps: glob(f'{outd}/*.idmapper.txt')
+    """
+    ps=glob(f'{outd}/*.idmapper.txt')
+    outp=f"{outd}/{ini}_{end}.tsv"
+    if exists(outp) and not force:
+        return read_table(outp)
+    l1=[]
+    for p in ps:
+        lines=open(p,'r').read().split('\n\n')
+        df2=pd.DataFrame([read_idmapper_(s,ini,end) for s in tqdm(lines) if '\n' in s])
+        l1.append(df2)
+    df3=pd.concat(l1,axis=0)
+    for i in [ini,end]:
+        df3[f'gene id, release={i}']=df3[f'New stable ID, release={i}'].str.split('.',expand=True)[0]
+    info(f"retired ids={sum(~((df3[f'gene id, release={ini}']!='<retired>') & (df3[f'gene id, release={end}']!='<retired>')))}")
+    df3=df3.loc[((df3[f'gene id, release={ini}']!='<retired>') & (df3[f'gene id, release={end}']!='<retired>')),:]
+    if not ids is None:
+        assert(len(set(df3[f'gene id, release={ini}'].tolist()) - set(ids))==0)
+    to_table(df3,outp)
+    ic(outp)
+    return df3
+
+def check_release(ids,release,p):
+    """
+    :params ids:
+    :params p: database  
+    """
+    read_table(p)
+    return 
+
+# to be deprecated
+def read_idmapper_results(ps):
+    """
+    :params ps:glob(f'{outd}/Results-Homo_sapiens_Tools_IDMapper_*.csv')
+    Note: deprecated becase, it maps to the latest release.
+    """
+    return pd.concat([read_table(p).loc[:,['Requested ID','Matched ID(s)']] for p in ps],
+             axis=0)#.log.drop_duplicates()
+
+## idmapper results
+def map_ids_by_release(ids,outd,idtype='gene', force=False):
+    """
+    uses idmapper
+    TODO: use `convert_coords_human_assemblies` + `pyensembl`
+    Note: deprecated becase, it maps to the latest release.
+    """
+    chunks=int(np.ceil(len(ids)/10000))
+    if not exists(outd+'.zip') or force:
+        makedirs(outd,exist_ok=True)
+        for i,l in enumerate(np.array_split(ids, chunks)):
+            with open(f'{outd}/{i}.txt','w') as f:
+                f.write('\n'.join(l))
+        zip_folder(outd, outd+'.zip')
+        return
+    ps=glob(f'{outd}/Results-Homo_sapiens_Tools_IDMapper_*.csv')
+    assert(chunks==len(ps))
+    df=read_idmapper_results(ps)
+    df=df.rd.get_mappings(cols=None,keep='1:1')
+    info(df.rd.check_mappings(list(df)))
+    info(f"identical ids={(sum(df['Requested ID']==df['Matched ID(s)'])/len(df))*100}%")
+    df=df.rename(columns={'Requested ID':f'{idtype} id (GRCh37)','Matched ID(s)':f'{idtype} id (GRCh38)'})
+    to_table(df,f"{outd}.tsv")
+    l=list(set(ids) - set(df[f'{idtype} id (GRCh37)']))
+    info(f"ids not mapped = {len(l)}")
+    to_table(pd.DataFrame({f'{idtype} id (GRCh37)':l}),f"{outd}/unmapped.tsv")
+    return df    

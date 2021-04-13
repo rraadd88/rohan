@@ -6,9 +6,10 @@ channels:
 dependencies:
   - biopython>=1.71
   - numpy
-  - python=3.6.5
+  - python=3.7
   - setuptools=39.2.0
   - pyyaml
+  - pip
   - pip:
     - matplotlib>=2.2
     - requests==2.19.1

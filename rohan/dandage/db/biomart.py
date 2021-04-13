@@ -1,10 +1,10 @@
 from rohan.dandage.io_dfs import *
 
-def query(attributes=None,
+def query(release,
+          attributes=None,
           filters=None,
             databasep='data/database',
             dataset_name='hsapiens_gene_ensembl',
-            serverp='http://www.ensembl.org',
             force=False,
              **kws_query,):
     """
@@ -18,8 +18,11 @@ def query(attributes=None,
     TODO: restrict to a ensembl release version
     """
     from pybiomart import Server,Dataset
+    if release==100:
+        serverp='http://apr2020.archive.ensembl.org', #100        
     server = Server(host=serverp)
-    release=server['ENSEMBL_MART_ENSEMBL'].display_name.split(' ')[-1]
+    assert(release==int(server['ENSEMBL_MART_ENSEMBL'].display_name.split(' ')[-1]))
+#     release=server['ENSEMBL_MART_ENSEMBL'].display_name.split(' ')[-1]
     logging.info(f"{dataset_name} version: {release} is used")
     dataset = Dataset(name=dataset_name,host='http://www.ensembl.org')
     if attributes is None:
