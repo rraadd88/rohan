@@ -11,6 +11,8 @@ import itertools
 
 # log
 from icecream import ic
+ic.configureOutput(prefix='INFO:icrm:')
+
 import logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

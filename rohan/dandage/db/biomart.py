@@ -1,4 +1,8 @@
 from rohan.dandage.io_dfs import *
+release2preffix={100:'apr2020',
+                101:'aug2020',
+                102:'nov2020',
+                103:'feb2021',}
 
 def query(release,
           attributes=None,
@@ -16,15 +20,14 @@ def query(release,
              }
 
     TODO: restrict to a ensembl release version
-    """
+    """    
     from pybiomart import Server,Dataset
-    if release==100:
-        serverp='http://apr2020.archive.ensembl.org', #100        
+    serverp=f"http://{release2preffix[release]}.archive.ensembl.org"       
     server = Server(host=serverp)
     assert(release==int(server['ENSEMBL_MART_ENSEMBL'].display_name.split(' ')[-1]))
 #     release=server['ENSEMBL_MART_ENSEMBL'].display_name.split(' ')[-1]
     logging.info(f"{dataset_name} version: {release} is used")
-    dataset = Dataset(name=dataset_name,host='http://www.ensembl.org')
+    dataset = Dataset(name=dataset_name,host=serverp)
     if attributes is None:
         to_table(dataset.list_attributes(),'test/biomart_attributes.tsv')
         logging.info("choose the attributes from: test/biomart_attributes.tsv")

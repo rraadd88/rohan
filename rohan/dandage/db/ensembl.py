@@ -293,11 +293,13 @@ def read_idmapper_(s,ini,end,sep=', '):
 
 def read_idmapper(outd=None,ini=75,
                     end=100,
-                 ids=None):
+                 ids=None,force=False,
+                 idtype='gene'):
     """
     :params ps: glob(f'{outd}/*.idmapper.txt')
     """
     ps=glob(f'{outd}/*.idmapper.txt')
+    ic(ps)
     outp=f"{outd}/{ini}_{end}.tsv"
     if exists(outp) and not force:
         return read_table(outp)
@@ -308,22 +310,28 @@ def read_idmapper(outd=None,ini=75,
         l1.append(df2)
     df3=pd.concat(l1,axis=0)
     for i in [ini,end]:
-        df3[f'gene id, release={i}']=df3[f'New stable ID, release={i}'].str.split('.',expand=True)[0]
-    info(f"retired ids={sum(~((df3[f'gene id, release={ini}']!='<retired>') & (df3[f'gene id, release={end}']!='<retired>')))}")
-    df3=df3.loc[((df3[f'gene id, release={ini}']!='<retired>') & (df3[f'gene id, release={end}']!='<retired>')),:]
+        df3[f'{idtype} id, release={i}']=df3[f'New stable ID, release={i}'].str.split('.',expand=True)[0]
+    info(f"retired ids={sum(~((df3[f'{idtype} id, release={ini}']!='<retired>') & (df3[f'{idtype} id, release={end}']!='<retired>')))}")
+    df3=df3.loc[((df3[f'{idtype} id, release={ini}']!='<retired>') & (df3[f'{idtype} id, release={end}']!='<retired>')),:]
     if not ids is None:
-        assert(len(set(df3[f'gene id, release={ini}'].tolist()) - set(ids))==0)
-    to_table(df3,outp)
+        assert(len(set(df3[f'{idtype} id, release={ini}'].tolist()) - set(ids))==0)
+    df3=df3.loc[:,[f'{idtype} id, release={ini}',
+                   f'{idtype} id, release={end}']].rd.get_mappings(keep='m:m')
+    info(df3['mapping'].value_counts())
+    to_table(df3,outp,colgroupby='mapping')
     ic(outp)
     return df3
 
-def check_release(ids,release,p):
+def check_release(ids,release,p,
+                 ):
     """
     :params ids:
     :params p: database  
     """
-    read_table(p)
-    return 
+    idtype=basename(dirname(dirname(p)))
+    l2=read_table(p)[f'{idtype} id, release={release}'].tolist()
+    ic(jaccard_index(ids,l2))
+    return len(set(l2) - set(ids))==0
 
 # to be deprecated
 def read_idmapper_results(ps):

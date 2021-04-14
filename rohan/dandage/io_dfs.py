@@ -1207,6 +1207,9 @@ def to_table(df,p,
         p=p.replace(' ','_')
     else:
         logging.warning('probably working on google drive; space/s left in the path.')
+    if len(basename(p))>100:
+        p=f"{dirname(p)}/{basename(p)[:95]}_{basename(p)[-4:]}"
+        logging.warning(f"p shortened to {p}")
     if not df.index.name is None:
         df=df.reset_index()
     if not exists(dirname(p)) and dirname(p)!='':
@@ -1218,7 +1221,7 @@ def to_table(df,p,
         df.to_csv(p,sep='\t')
         if test:
             logging.info(p)
-    elif p.endswith('.pqt') or p.endswith('.parquet'):
+    elif p.endswith('.pqt'):
         to_table_pqt(df,p,**kws)
         if test:
             logging.info(p)
