@@ -322,7 +322,9 @@ def read_idmapper(outd=None,ini=75,
     ic(outp)
     return df3
 
-def check_release(ids,release,p,
+def check_release(ids,
+                  p,
+                  releases=[75,100],
                  ):
     """
     :params ids:
@@ -330,8 +332,9 @@ def check_release(ids,release,p,
     """
     idtype=basename(dirname(dirname(p)))
     l2=read_table(p)[f'{idtype} id, release={release}'].tolist()
-    ic(jaccard_index(ids,l2))
-    return len(set(l2) - set(ids))==0
+    ic([len(set(l2) - set(ids)),len(set(ids) - set(l2))])
+    jaccard_index(ids,l2)[0]
+    return 
 
 # to be deprecated
 def read_idmapper_results(ps):

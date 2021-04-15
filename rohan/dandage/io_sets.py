@@ -137,5 +137,5 @@ def sort_list_by_list(l,byl): return [x for x,_ in sorted(zip(l,byl))]
 
 ## ranges
 def range_overlap(l1,l2):
-    return set.intersection(set(range(l1[0],l1[1]+1,1)),
-                            set(range(l2[0],l2[1]+1,1)))
+    return list(set.intersection(set(range(l1[0],l1[1]+1,1)),
+                            set(range(l2[0],l2[1]+1,1))))
