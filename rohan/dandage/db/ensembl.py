@@ -331,10 +331,14 @@ def check_release(ids,
     :params p: database  
     """
     idtype=basename(dirname(dirname(p)))
-    l2=read_table(p)[f'{idtype} id, release={release}'].tolist()
-    ic([len(set(l2) - set(ids)),len(set(ids) - set(l2))])
-    jaccard_index(ids,l2)[0]
-    return 
+    df1=read_table(p)
+    d1={}
+    for k in releases:
+        l2=df1[f'{idtype} id, release={k}'].tolist()
+        ic([k,len(set(l2) - set(ids)),len(set(ids) - set(l2))])
+        d1[k]=jaccard_index(ids,l2)[0]
+    ic(d1)
+    return releases[0] if d1[releases[0]]>d1[releases[1]] else releases[1]
 
 # to be deprecated
 def read_idmapper_results(ps):

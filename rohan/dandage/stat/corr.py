@@ -106,25 +106,15 @@ def corr_between(df1,df2,method):
                 dcorr.loc[c2,c1],dpval.loc[c2,c1]=get_spearmanr(df1[c1],df2[c2],)
             elif method=='pearson':
                 dcorr.loc[c2,c1],dpval.loc[c2,c1]=get_pearsonr(df1[c1],df2[c2],)                
-#     if not df1.columns.name is None:
-#         dcorr.columns.name=df1.columns.name
-#         dpval.columns.name=df1.columns.name
-#     if not df2.columns.name is None:
-#         dcorr.index.name=df2.columns.name
-#         dpval.index.name=df2.columns.name
-#     return dcorr,dpval
     dn2df={f'$r_{method[0]}$':dcorr,
           f'P ($r_{method[0]}$)':dpval,}
     dn2df={k:dn2df[k].melt(ignore_index=False) for k in dn2df}
     df3=pd.concat(dn2df,
              axis=0,
-#               names=['variable','sample1 id'],
-             )#.reset_index()#.rename(columns={'call line id':'call line2 id'})        
+             )
     df3=df3.rename(columns={df1.columns.name:df1.columns.name+'2'}
               ).reset_index(1).rename(columns={df1.columns.name:df1.columns.name+'1'})
-#     print(,df1.index.name)
     df3.index.name='variable correlation'
-#     print(df3.head(1))
     return df3.reset_index()
 
 @add_method_to_class(rd)
@@ -161,6 +151,70 @@ def corrdfs(df1,df2,
 # def get_spearmanr_str(x,y):    
 #     r,p=get_spearmanr(x,y)
 #     return get_correlation_str(r,p)
+
+## apply on paths
+def get_corr_within(p,
+           colmut,
+           colindex,
+           colsample,
+           colvalue,
+           colgroupby,
+           force=False,
+           **kws_replacemany):
+    from rohan.dandage.io_strs import replacemany
+    from rohan.dandage.io_files import dirname,basename,basenamenoext,exists
+    from rohan.dandage.io_dfs import read_table,to_table
+    outp=replacemany(p,**kws_replacemany)
+    if exists(outp) and not force: 
+        return
+#     info(outp)
+    df01=read_table(p)
+    if not len(df01[colsample].unique())>=3:
+        return
+    if colmut in df01:
+        df01=df01.loc[((df01[colmut]=='no') & ~(df01['rearrangement fusion'])),:]
+#     from rohan.dandage.stat.corr import corrdf
+    df1=corrdf(df01,
+               colindex=colindex,
+               colsample=colsample,
+               colvalue=colvalue,
+           colgroupby=colgroupby,
+                    method='spearman'
+          )
+    to_table(df1,outp)
+
+def get_corr_between(p,
+           colmut,
+           colindex,
+           colsample,
+           colvalue,
+           colgroupby=None,
+           force=False,
+           **kws_replacemany):
+    from rohan.dandage.io_strs import replacemany
+    from rohan.dandage.io_files import dirname,basename,basenamenoext,exists
+    from rohan.dandage.io_dfs import read_table,to_table
+    outp=p
+    p=replacemany(p,**kws_replacemany)
+    ps=[f"{dirname(p)}/{s}.pqt" for s in basenamenoext(outp).split('--')]    
+    if exists(outp) and not force: 
+        return
+    dfs=[read_table(p) for p in ps]
+    if colmut in dfs[0]:
+        dfs=[df.loc[((df[colmut]=='no') & ~(df['rearrangement fusion'])),:] for df in dfs]
+    if not all([len(df[colsample].unique())>=3 for df in dfs]):
+        return
+#     %run ../../../../rohan/rohan/dandage/stat/corr.py  # import corrdfs
+#     from rohan.dandage.stat.corr import corrdfs
+    df1=corrdfs(*dfs,
+               colindex=colindex,
+               colsample=colsample,
+               colvalue=colvalue,
+               colgroupby=colgroupby,                 
+                 method='spearman')
+    to_table(df1,outp)
+
+## partial 
 
 @add_method_to_class(rd)
 def get_partial_corrs(df,xs,ys,method='spearman',splits=5):

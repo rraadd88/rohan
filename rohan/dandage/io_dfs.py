@@ -187,6 +187,7 @@ def agg_bools(df1,cols):
 ## conversion to type
 @add_method_to_class(rd)
 def to_dict(df,cols,drop_duplicates=False):
+    df=df.log.dropna(subset=cols)
     if drop_duplicates:
         df=df.loc[:,cols].drop_duplicates()
     if not df.rd.check_duplicated([cols[0]]):
