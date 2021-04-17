@@ -23,11 +23,14 @@ def replacebyposition(s,i,replaceby):
     l[i]=replaceby
     return "".join(l)
 
-def replacemany(s,replaces,replacewith=''):
+def replacemany(s,replaces,replacewith='',
+               ignore=False):
+    s_=s
     if isinstance(replaces,list):
         replaces={k:replacewith for k in replaces}        
     for k in replaces:
         s=s.replace(k,replaces[k])
+    if not ignore: assert(s!=s_)
     return s
 
 def replacelist(l,replaces,replacewith=''):

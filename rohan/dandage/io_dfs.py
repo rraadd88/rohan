@@ -72,9 +72,9 @@ def flatten_columns(df):
     return df
 
 @add_method_to_class(rd)
-def renameby_replace(df,replaces,**kws):
+def renameby_replace(df,replaces,ignore=True,**kws):
     from rohan.dandage.io_strs import replacemany
-    df.columns=[replacemany(c,replaces,**kws) for c in df]
+    df.columns=[replacemany(c,replaces,ignore=ignore,**kws) for c in df]
     return df
 
 @add_method_to_class(rd)
@@ -1186,6 +1186,8 @@ def read_manytables(ps,
                    ):
     """
     :params ps: list
+    
+    :TODO: info: creation dates of the newest and the oldest files.
     """       
     if not to_dict:
         df2=apply_on_paths(ps,func=lambda df: df,
