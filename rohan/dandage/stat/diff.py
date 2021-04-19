@@ -113,6 +113,7 @@ def get_stat(df1,
               df2=None,
               stats=[np.mean,np.median,np.var]+[len],
 #               debug=False,
+             verb=False,
              ):
     """
     Either MWU or FE
@@ -149,6 +150,7 @@ def get_stat(df1,
         how='left',
         dryrun=False,
         test=False,
+        verb=verb,
     #     **kws_merge,
     )
     return df3
@@ -164,9 +166,9 @@ def get_stats(df1,
 #     from rohan.dandage.io_dfs import to_table
 #     to_table(df1,'test/get_stats.tsv')
 #     stats=[s for s in stats if not s in [sum,len]]
-    from tqdm import tqdm
+#     from tqdm import tqdm
     dn2df={}
-    for colvalue in tqdm(cols_value):
+    for colvalue in cols_value:
         df1_=df1.dropna(subset=[colsubset,colvalue])
         if len(df1_[colsubset].unique())>1:
             dn2df[colvalue]=get_stat(df1_,

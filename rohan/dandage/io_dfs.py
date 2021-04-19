@@ -237,6 +237,7 @@ def merge_paired(dfpair,df,
                         suffixes=[' gene1',' gene2'],how='left',
                                     dryrun=False, 
                                     test=False,
+                                    verb=True,
                                    **kws_merge):
     """
     :param right_ons_common: columns to merge the right ones. eg. cell line
@@ -304,7 +305,7 @@ def merge_paired(dfpair,df,
         dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)))
         
     d1['to  ']=dfpair_merge2.shape        
-    if d1['from']!=d1['to  ']:
+    if verb and d1['from']!=d1['to  ']:
         for k in d1:
             logging.info(f'shape changed {k} {d1[k]}')
     return dfpair_merge2
