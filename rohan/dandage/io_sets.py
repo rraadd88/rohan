@@ -22,13 +22,8 @@ def dropna(x):
             x_.append(i)
     return x_
 
-def unique(l,drop=None):
-    l=[str(s) for s in l]
-    if drop is not None:
-        l=[s for s in l if s!=drop]
-    return list(np.unique(l))
+def unique(l): return list(np.unique(l))
 def nunique(l,**kws): return len(unique(l,**kws))
-
 def unique_dropna(l): return dropna(unique(l,drop='nan'))
 def unique_dropna_str(l,sep='; '): return tuple2str(dropna(unique(l,drop='nan')),sep=sep)
 def merge_unique_dropna(l): return dropna(unique(list(itertools.chain(*l)),drop='nan'))

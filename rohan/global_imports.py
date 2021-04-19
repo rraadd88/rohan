@@ -1,14 +1,3 @@
-# stats    
-import scipy as sc
-from rohan.dandage.plot.annot import *
-# strings
-import re
-# dict
-from collections import OrderedDict
-ordereddict=OrderedDict
-import itertools
-
-
 # log
 from icecream import ic
 ic.configureOutput(prefix='INFO:icrm:')
@@ -45,16 +34,23 @@ class LoggingContext:
 info=logging.info
 
 # recepies
+import pandas as pd
 @pd.api.extensions.register_dataframe_accessor("rd")
 class rd:
     def __init__(self, pandas_obj):
         self._obj = pandas_obj
 #     pass
 
-from rohan.dandage.io_dfs import *
-from rohan.dandage.io_dict import *
 from rohan.dandage.io_strs import get_bracket, replacemany, make_pathable_string,get_suffix,get_prefix
+from rohan.dandage.io_dict import *
 from rohan.dandage.io_sets import *
+# from rohan.dandage.io_df import *
+# from rohan.dandage.io_dfs import *
+from rohan.dandage.io_files import * #io_df -> io_dfs -> io_files
+
+# stats    
+import scipy as sc
+from rohan.dandage.plot.annot import *
 
 # paths
 pwd=abspath('.')
