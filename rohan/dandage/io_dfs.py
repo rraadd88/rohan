@@ -223,9 +223,12 @@ def melt_paired(df,
     dn2df={}
     for s in suffixes:
         cols=[c for c in df if s in c]
-        dn2df[s]=df.loc[:,cols_common+cols].rename(columns={c:c.replace(s,'') for c in cols})
+        dn2df[s]=df.loc[:,cols_common+cols].rename(columns={c:c.replace(s,'') for c in cols},
+                                                  errors='raise')
     df1=pd.concat(dn2df,axis=0,names=['suffix']).reset_index(0)
-    return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1}).rename(columns={'':'id'})
+    return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1},
+                     errors='raise')#.rename(columns={'':'id'},
+                                     #       errors='raise')
 ### alias
 # @add_method_to_class(rd)
 # unpair_df=melt_paired
@@ -302,7 +305,8 @@ def merge_paired(dfpair,df,
         if test:
             logging.info('merged correctly')
         dfpair_merge2=dfpair_merge2.drop(cols_del,axis=1)
-        dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)))
+        dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)),
+                                          errors='raise')
         
     d1['to  ']=dfpair_merge2.shape        
     if verb and d1['from']!=d1['to  ']:
@@ -426,7 +430,8 @@ def column_suffixes2multiindex(df,suffixes,test=False):
     if test:
         logging.info(cols)
     df=df.loc[:,cols]
-    df=df.rename(columns={c: (s,c.replace(f' {s}','')) for s in suffixes for c in df if c.endswith(f' {s}')})
+    df=df.rename(columns={c: (s,c.replace(f' {s}','')) for s in suffixes for c in df if c.endswith(f' {s}')},
+                errors='raise')
     df.columns=pd.MultiIndex.from_tuples(df.columns)
     return df
 
@@ -448,7 +453,8 @@ def split_rows(df,collist,rowsep=None):
     """
     if not rowsep is None:
         df.loc[:,collist]=df.loc[:,collist].apply(lambda x : x.split(rowsep))
-    return dellevelcol(df.set_index([c for c in df if c!=collist])[collist].apply(pd.Series).stack().reset_index().rename(columns={0:collist}))        
+    return dellevelcol(df.set_index([c for c in df if c!=collist])[collist].apply(pd.Series).stack().reset_index().rename(columns={0:collist},
+                                                                                                                         errors='raise'))        
 ### alias
 meltlistvalues=split_rows
 
@@ -475,7 +481,8 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
         df1.columns=[col_out]
         return df1
     else:
-        return dmap2lin(df1).rename(columns={'value':col_out})[col_out].dropna()
+        return dmap2lin(df1).rename(columns={'value':col_out},
+                                   errors='raise')[col_out].dropna()
 
 ## nans:
 @add_method_to_class(rd)
@@ -743,7 +750,8 @@ def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
     ## rename columns of of to be sorted
     rename={c:c.replace(suffixes[0],suffixes[1]) if (suffixes[0] in c) else c.replace(suffixes[1],suffixes[0]) if (suffixes[1] in c) else c for c in df}
     for k in [True, False]:
-        dn2df[(k,True)]=dn2df[(k,True)].rename(columns=rename)
+        dn2df[(k,True)]=dn2df[(k,True)].rename(columns=rename,
+                                              errors='raise')
         
     df1=pd.concat(dn2df,names=['equal','sorted']).reset_index([0,1])
     logging.info(df1.groupby(['equal','sorted']).size())
@@ -1004,7 +1012,8 @@ def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
 ## tables io
 def dict2df(d,colkey='key',colvalue='value'):
     d={k:d[k] if isinstance(d[k],list) else list(d[k]) for k in d}
-    return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue})
+    return pd.DataFrame(pd.concat({k:pd.Series(d[k]) for k in d})).droplevel(1).reset_index().rename(columns={'index':colkey,0:colvalue},
+                                                                                                    errors='raise')
 
 ## append
 def append_dfs(dfs,cols_index=None,cols_value=None):
@@ -1019,7 +1028,8 @@ def append_dfs(dfs,cols_index=None,cols_value=None):
         dtype=dtypes[0]
         if dtype.startswith('float') or dtype.startswith('int'):
             renameto='value'
-        df1=pd.concat({col:dfs[dfi].rename(columns={col:renameto}).loc[:,cols_index+[renameto]] for dfi,col in enumerate(coli2cols[i])},axis=0,names=['variable']).reset_index(level=0)
+        df1=pd.concat({col:dfs[dfi].rename(columns={col:renameto},
+                                          errors='raise').loc[:,cols_index+[renameto]] for dfi,col in enumerate(coli2cols[i])},axis=0,names=['variable']).reset_index(level=0)
     return df1
 
 ## merge dfs
