@@ -1,2 +1,4 @@
 from rohan import dandage
-from rohan import dandage as lib
+import sys
+import rohan
+sys.modules['rohan.lib'] = sys.modules['rohan.dandage']
