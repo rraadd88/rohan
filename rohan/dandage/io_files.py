@@ -319,15 +319,13 @@ def apply_on_paths(ps,func,
     import inspect
     read_path=inspect.getfullargspec(func).args[0]=='p'
     if dbug: ic(read_path)
-    if not replaces_index is None:
-        drop_index=False
+    if not replaces_index is None: drop_index=False
     ps=read_ps(ps)
     if len(ps)==0:
         logging.error('no paths found')
         return
     df1=pd.DataFrame({'path':ps})
-    if fast and not progress_bar:
-        progress_bar=True
+    if fast and not progress_bar: progress_bar=True
     df2=getattr(df1.groupby('path',as_index=True),
                             f"{'parallel' if fast else 'progress'}_apply" if progress_bar else "apply"
                )(lambda df: func(*(read_table_(df,read_path=read_path,

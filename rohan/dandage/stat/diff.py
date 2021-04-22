@@ -184,11 +184,10 @@ def get_stats(df1,
             logging.warning(f"not processed: {colvalue}; probably because of dropna")
     df3=pd.concat(dn2df,
           ignore_index=False,
-#           join='outer',
-                  axis=0,
-                 names=['variable'])
-#     df3=df3.droplevel(0,axis=1)
-    df3=df3.reset_index()
+                  axis=1,
+                  verify_integrity=True,
+                 )
+    df3=df3.reset_index().rd.flatten_columns()
     return df3
 
 def get_significant_changes(df1,alpha=0.025,
