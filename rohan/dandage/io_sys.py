@@ -1,6 +1,6 @@
 import subprocess
 import sys
-from os.path import dirname,basename,abspath
+from os.path import dirname,basename,abspath,isdir
 import logging
 
 def runbashcmd(cmd,test=False,logf=None,dirs2ps=None):
@@ -96,6 +96,13 @@ def p2time(filename,time_type='m'):
         t = os.path.getctime(filename)
     return str(datetime.datetime.fromtimestamp(t))
 
+def ps2time(ps,**kws_p2time):
+    import pandas as pd
+    from glob import glob
+    if isinstance(ps,str):
+        ps=glob(f"{d}{'/*' if isdir(d) else ''}")
+    return pd.Series({p:p2time(p,**kws_p2time) for p in ps}).sort_values().reset_index().rename(columns={'index':'p',0:'time'})
+    
 ## logging system
 from rohan.dandage.io_strs import make_pathable_string
 def get_datetime(outstr=True):

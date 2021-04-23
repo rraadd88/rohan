@@ -98,6 +98,13 @@ def zip_folder(source, destination):
     archive_to = os.path.basename(source.strip(os.sep))
     shutil.make_archive(name, fmt, archive_from, archive_to)
     shutil.move(f'{name}.{fmt}', destination)
+
+def zip_folder_temp():
+    """
+    TODO: find and move/zip
+    """    
+    "find -regex .*/_.*"
+    "find -regex .*/test.*"
     
 def backup_to_zip(ps,destp,test=False):
     """
@@ -188,9 +195,9 @@ def get_chunks(df1,colindex,colvalue,bins=None,value='right'):
 from rohan.dandage.io_text import get_header
 def read_table(p,
                params={},
-#                params_read_csv={}, # deprecate
                ext=None,
                test=False,
+               filterby_time=None,
                **kws_manytables,):
     """
     'decimal':'.'
@@ -215,6 +222,7 @@ def read_table(p,
         if isinstance(p,list):
             ps=p
         return read_manytables(ps,params=params,
+                               filterby_time=filterby_time,
                                **kws_manytables)
     if len(params.keys())!=0 and not 'columns' in params:
         return pd.read_csv(p,**params).rd.clean()
@@ -350,21 +358,28 @@ def apply_on_paths(ps,func,
 
 def read_manytables(ps,
                     fast=False,
+                    filterby_time=None,
                     drop_index=True,
                     to_dict=False,
                     params={},
-                    **kws,
+                    **kws_apply_on_paths,
                    ):
     """
     :params ps: list
     
     :TODO: info: creation dates of the newest and the oldest files.
-    """       
+    """
+    if not filterby_time is None:
+        from rohan.lib.io_sys import ps2time
+        df_=ps2time(ps)
+        ps=df_.loc[df_['time'].str.contains(filterby_time),'p'].unique().tolist()
+        drop_index=False # see which files are read
     if not to_dict:
         df2=apply_on_paths(ps,func=lambda df: df,
-                           fast=fast,drop_index=drop_index,
+                           fast=fast,
+                           drop_index=drop_index,
                            params=params,
-                           **kws)
+                           **kws_apply_on_paths)
         return df2
     else:
         return {p:read_table(p,

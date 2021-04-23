@@ -65,7 +65,7 @@ def agg_paired_values(a,b,sort=True,logscaled=False):
     return d
 
 
-def get_stats_paired(x,y,error='raise'):
+def get_stats_paired(x,y,ignore=False,verb=True):
     """
     classify 2d distributions
     
@@ -73,15 +73,15 @@ def get_stats_paired(x,y,error='raise'):
     :params y: (pd.Series)
     """
     ## escape duplicate value inputs
-    if error=='raise': 
+    if not ignore:
         if len(x)!=len(y):
-            logging.error("len(x)!=len(y)")
+            if verb: logging.error("len(x)!=len(y)")
             return
         if len(x)<5:
-            logging.error("at least 5 data points needed.")
+            if verb: logging.error("at least 5 data points needed.")
             return
         if ((x.nunique()/len(x))<0.5) or ((y.nunique()/len(y))<0.5):
-            logging.error("half or more duplicate values.")        
+            if verb: logging.error("half or more duplicate values.")        
             return
     d={}
     d['n']=len(x)

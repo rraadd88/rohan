@@ -221,6 +221,23 @@ def get_significant_changes(df1,alpha=0.025,
             df1[f"significant change ({test} test)"]=df1[f"significant change ({test} test)"].fillna('ns')
     return df1
 
+def apply_get_significant_changes(df1,cols_value,
+                              cols_groupby,
+                            **kws,
+                           ):
+    d1={}
+    from tqdm import tqdm
+    for c in tqdm(cols_value):
+        df1_=df1.set_index(cols_groupby).filter(regex=f"^{c} .*").rd.renameby_replace({f'{c} ':''}).reset_index()
+        d1[c]=df1_.groupby(cols_groupby,as_index=True).apply(lambda df: get_significant_changes(df,**kws))
+    df2=pd.concat(d1,
+                  ignore_index=False,
+                  axis=1,
+                  verify_integrity=True,
+                 )
+    df2=df2.rd.flatten_columns().reset_index()
+    return df2
+
 # def annotate_difference(df1,cols_subset_comparison,cols_index,
 #                        ):
 #     cols_subset=['subset1','subset2']
