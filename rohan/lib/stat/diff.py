@@ -193,17 +193,19 @@ def get_stats(df1,
 def get_significant_changes(df1,alpha=0.025,
                             changeby="",
                             fdr=True,
+                            value_aggs=['mean','median'],
                            ):
     """
     groupby to get the comparable groups 
     # if both mean and median are high
     :param changeby: "" if check for change by both mean and median
     """    
-    if any([f'{s} subset1' in df1 for s in ['mean','median']]) :
-        for s in ['mean','median']:
+    if df1.filter(regex='|'.join([f"{s} subset(1|2)" for s in value_aggs])).shape[1]:
+        for s in value_aggs:
             df1[f'difference between {s} (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
-        df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
-        df1.loc[(df1.loc[:,df1.filter(like=f'difference between {changeby}').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
+        ## call change if both mean and median are changed
+        df1.loc[((df1.filter(like=f'difference between {changeby}')>0).T.sum()==2),'change']='increase'
+        df1.loc[((df1.filter(like=f'difference between {changeby}')<0).T.sum()==2),'change']='decrease'
         df1['change']=df1['change'].fillna('ns')
     from statsmodels.stats.multitest import multipletests
     for test in ['MWU','FE']:
@@ -222,20 +224,27 @@ def get_significant_changes(df1,alpha=0.025,
     return df1
 
 def apply_get_significant_changes(df1,cols_value,
-                              cols_groupby,
-                            **kws,
-                           ):
+                                    cols_groupby, # e.g. genes id
+                                    cols_grouped, # e.g. tissue
+                                    fast=False,
+                                    **kws,
+                                    ):
     d1={}
     from tqdm import tqdm
     for c in tqdm(cols_value):
-        df1_=df1.set_index(cols_groupby).filter(regex=f"^{c} .*").rd.renameby_replace({f'{c} ':''}).reset_index()
-        d1[c]=df1_.groupby(cols_groupby,as_index=True).apply(lambda df: get_significant_changes(df,**kws))
+        df1_=df1.set_index(cols_groupby).filter(regex=f"^{c} .*").filter(regex="^(?!("+' |'.join([s for s in cols_value if c!=s])+")).*")
+        print(df1_.shape)
+        df1_=df1_.rd.renameby_replace({f'{c} ':''}).reset_index()
+        d1[c]=getattr(df1_.groupby(cols_groupby),'apply' if not fast else 'parallel_apply')(lambda df: get_significant_changes(df,**kws))
+    d1={k:d1[k].set_index(cols_groupby) for k in d1}
+    d1['grouped']=df1.set_index(cols_groupby).loc[:,cols_grouped]
     df2=pd.concat(d1,
                   ignore_index=False,
                   axis=1,
                   verify_integrity=True,
-                 )
+                 )    
     df2=df2.rd.flatten_columns().reset_index()
+    assert(not df2.columns.duplicated().any())
     return df2
 
 # def annotate_difference(df1,cols_subset_comparison,cols_index,

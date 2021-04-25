@@ -28,7 +28,7 @@ rohan/data/data_feats_aas.txt
 rohan/_bin/
 rohan/lib/_pub/
 rohan/deps/
-rohan/dandage/figs/data/
+rohan/lib/figs/data/
 test/jupnbuks/
 test/*
 !test/test_install.py

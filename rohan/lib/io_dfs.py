@@ -226,9 +226,12 @@ def melt_paired(df,
         dn2df[s]=df.loc[:,cols_common+cols].rename(columns={c:c.replace(s,'') for c in cols},
                                                   errors='raise')
     df1=pd.concat(dn2df,axis=0,names=['suffix']).reset_index(0)
-    return df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1},
-                     errors='raise')#.rename(columns={'':'id'},
-                                     #       errors='raise')
+    df2=df1.rename(columns={c: c[:-1] if c.endswith(' ') else c[1:] if c.startswith(' ') else c for c in df1},
+                     errors='raise')
+    if '' in df2:
+        df2=df2.rename(columns={'':'id'},
+               errors='raise')
+    return df2
 ### alias
 # @add_method_to_class(rd)
 # unpair_df=melt_paired

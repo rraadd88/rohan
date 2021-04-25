@@ -136,6 +136,7 @@ def get_label2fractions(label2count,test=False):
         label2fraction[k2 if test else ' ']=label2fraction_drop[k2]
         label2fractions.append(label2fraction)
     return label2fractions
+
 def plot_slankey(dslankeys):
     import matplotlib.pyplot as plt
     from matplotlib.sankey import Sankey

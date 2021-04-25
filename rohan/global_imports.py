@@ -41,16 +41,16 @@ class rd:
         self._obj = pandas_obj
 #     pass
 
-from rohan.dandage.io_strs import get_bracket, replacemany, make_pathable_string,get_suffix,get_prefix
-from rohan.dandage.io_dict import *
-from rohan.dandage.io_sets import *
-# from rohan.dandage.io_df import *
-# from rohan.dandage.io_dfs import *
-from rohan.dandage.io_files import * #io_df -> io_dfs -> io_files
+from rohan.lib.io_strs import get_bracket, replacemany, make_pathable_string,get_suffix,get_prefix
+from rohan.lib.io_dict import *
+from rohan.lib.io_sets import *
+# from rohan.lib.io_df import *
+# from rohan.lib.io_dfs import *
+from rohan.lib.io_files import * #io_df -> io_dfs -> io_files
 
 # stats    
 import scipy as sc
-from rohan.dandage.plot.annot import *
+from rohan.lib.plot.annot import *
 
 # paths
 pwd=abspath('.')
@@ -67,18 +67,18 @@ plt.rcParams['axes.formatter.min_exponent'] = 3
 plt.rcParams['legend.frameon']=False
 from cycler import cycler
 plt.rcParams['axes.prop_cycle']= cycler('color',["#f55f5f", "#D3DDDC","#046C9A", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6", "#ECCBAE", "#D69C4E", "#ABDDDE", "#000000"])
-from rohan.dandage.plot.colors import get_colors_default
+from rohan.lib.plot.colors import get_colors_default
 # plt.rcParams['xtick.color']=[0.95,0.95,0.95]
 plt.rc('grid', lw=0.2,linestyle="-", color=[0.98,0.98,0.98])
 plt.rc('axes', axisbelow=True)
 plt.rcParams['axes.labelcolor'] = 'k'
 sns.set_context('notebook') # paper < notebook < talk < poster
-from rohan.dandage.figs.figure import *
+from rohan.lib.figs.figure import *
 info("pwd=abspath('.');logp=f'log_{basename(pwd)}.log';get_ipython().run_line_magic('logstart',f'{logplotp} over')")
-from rohan.dandage.plot.ax_ import *
+from rohan.lib.plot.ax_ import *
 
 from tqdm import tqdm#,notebook
-from rohan.dandage.io_sys import is_interactive_notebook
+from rohan.lib.io_sys import is_interactive_notebook
 if not is_interactive_notebook:
     tqdm.pandas()
 else:
