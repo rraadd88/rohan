@@ -233,7 +233,6 @@ def apply_get_significant_changes(df1,cols_value,
     from tqdm import tqdm
     for c in tqdm(cols_value):
         df1_=df1.set_index(cols_groupby).filter(regex=f"^{c} .*").filter(regex="^(?!("+' |'.join([s for s in cols_value if c!=s])+")).*")
-        print(df1_.shape)
         df1_=df1_.rd.renameby_replace({f'{c} ':''}).reset_index()
         d1[c]=getattr(df1_.groupby(cols_groupby),'apply' if not fast else 'parallel_apply')(lambda df: get_significant_changes(df,**kws))
     d1={k:d1[k].set_index(cols_groupby) for k in d1}

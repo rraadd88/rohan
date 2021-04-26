@@ -89,6 +89,18 @@ def set_legend_custom(ax,
                       size=10,color='k',
                      params_legend={}):
     """
+    # TODOS
+    1. differnet number of points for eachh entry
+    
+        from matplotlib.legend_handler import HandlerTuple
+        l1, = plt.plot(-1, -1, lw=0, marker="o",
+                       markerfacecolor='k', markeredgecolor='k')
+        l2, = plt.plot(-0.5, -1, lw=0, marker="o",
+                       markerfacecolor="none", markeredgecolor='k')
+        plt.legend([(l1,), (l1, l2)], ["test 1", "test 2"], 
+                   handler_map={tuple: HandlerTuple(2)}
+                  )
+    
     Ref: 
     https://matplotlib.org/stable/api/markers_api.html
     http://www.cis.jhu.edu/~shanest/mpt/js/mathjax/mathjax-dev/fonts/Tables/STIX/STIX/All/All.html

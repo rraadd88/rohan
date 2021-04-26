@@ -8,28 +8,21 @@ import pandas as pd
 # colors
 def rgbfloat2int(rgb_float):return [int(round(i*255)) for i in rgb_float]
 def rgb2hex(rgb): return f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
-def hex2rgb(c):
-    from PIL import ImageColor
-    return ImageColor.getrgb(c)
+def hex2rgb(c): colors.ColorConverter.to_rgb(c)   
     
-def saturate_color(color, amount=0.5):
+def saturate_color(color, alpha):
     """
-    Lightens the given color by multiplying (1-luminosity) by the given amount.
-    Input can be matplotlib color string, hex string, or RGB tuple.
-
-    Examples:
-    >> lighten_color('g', 0.3)
-    >> lighten_color('#F034A3', 0.6)
-    >> lighten_color((.3,.55,.1), 0.5)
+    Ref: https://stackoverflow.com/a/60562502/3521099
     """
-    import matplotlib.colors as mc
     import colorsys
-    try:
-        c = mc.cnames[color]
-    except:
-        c = color
-    c = colorsys.rgb_to_hls(*mc.to_rgb(c))
-    return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
+    from rohan.lib.stat.transform import rescale
+    alpha=rescale(alpha,[0,2],[1.6,0.4])
+    if isinstance(color,str):
+        color=colors.ColorConverter.to_rgb(color)
+    # convert rgb to hls
+    h, l, s = colorsys.rgb_to_hls(*color)
+    # manipulate h, l, s values and return as rgb
+    return colorsys.hls_to_rgb(h, min(1, l * alpha), s = s)
 
 def mix_colors(d):
     """
