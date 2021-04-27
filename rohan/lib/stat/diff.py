@@ -246,19 +246,49 @@ def apply_get_significant_changes(df1,cols_value,
     assert(not df2.columns.duplicated().any())
     return df2
 
-# def annotate_difference(df1,cols_subset_comparison,cols_index,
-#                        ):
-#     cols_subset=['subset1','subset2']
-#     df1.rd.check_duplicated(params['cols_index']+cols_subset)
-#     for s in ['mean','median']:
-#         df1[f'{s} difference (subset1-subset2)']=df1[f'{s} subset1']-df1[f'{s} subset2']
-#     df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]>0).apply(all,axis=1),'change']='increase'
-#     df1.loc[(df1.loc[:,df1.filter(like='difference').columns.tolist()]<0).apply(all,axis=1),'change']='decrease'
-#     df1['change']=df1['change'].fillna('ns')
-#     df1=df1.groupby(cols_subset+params['cols_subset_comparison']).progress_apply(get_change)
-# #     info(df1['change is significant (MWU test, FDR corrected)'].value_counts())
-#     # df1['change'].value_counts()
-#     # df1['significant change'].value_counts()
-#     return df1
+def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
+                      color=False):
+    coffs=np.array(sorted(coffs))
+    # df1[f'value P (MWU test, FDR corrected) bin']=pd.cut(x=df1[f'value P (MWU test, FDR corrected)'],
+    #       bins=[0]+coffs+[1],
+    #        labels=coffs+[1],
+    #        right=False,
+    #       ).fillna(1)
+    from rohan.lib.plot.colors import get_colors_default,saturate_color
+    d1={}
+    for i,coff in enumerate(coffs[::-1]):
+        col=f"value significant change, P (MWU test, FDR corrected) < {coff}"
+        df1[col]=df1.apply(lambda x: 'increase' if ((x[f'value P (MWU test, FDR corrected)']<coff) and (x['value difference between mean (subset1-subset2)']>0))\
+                                                                                    else 'decrease' if ((x[f'value P (MWU test, FDR corrected)']<coff) \
+                                                                                                        and (x['value difference between mean (subset1-subset2)']<0))\
+                                                                                    else 'ns', axis=1)
+        if color:
+            if i==0:
+                df1.loc[(df1[col]=='ns'),'c']=get_colors_default()[1]
+            saturate=1-((len(coffs)-(i+1))/len(coffs))
+            d2={}
+            d2['increase']=saturate_color(get_colors_default()[0],saturate)
+            d2['decrease']=saturate_color(get_colors_default()[2],saturate)
+            d1[coff]=d2
+            df1['c']=df1.apply(lambda x: d2[x[col]] if x[col] in d2 else x['c'],axis=1)
+            assert(df1['c'].isnull().sum()==0)
+    if color:
+        import itertools
+        from rohan.dandage.stat.transform import rescale
+        d3={}
+        for i,(k,coff) in enumerate(list(itertools.product(['increase','decrease'],coffs))):
+            col=f"value significant change, P (MWU test, FDR corrected) < {coff}"
+            d4={}
+            d4['y alpha']=rescale(1-(list(coffs).index(coff))/len(coffs),[0,1],[0.5,1])
+        #     d4['y color']=saturate_color("#000000",d4['y alpha'])
+            d4['y']=-1*(np.log10(coff))
+            d4['y text']=f" P < {coff}"
+            d4['x']=df1.loc[(df1[col]==k),'value difference between mean (subset1-subset2)'].min() if k=='increase' else df1.loc[(df1[col]==k),'value difference between mean (subset1-subset2)'].max()
+            d4['change']=k
+            d4['text']=f"{df1.loc[(df1[col]==k),'genes id'].nunique()}/{df1.loc[(df1[col]==k),'grouped tissue'].nunique()}"
+            d4['color']=d1[coff][k]
+            d3[i]=d4
+        d1=pd.DataFrame(d3).T
+    return df1,d1
 
 from rohan.dandage.plot.diff import plot_stats_diff

@@ -339,12 +339,59 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
 #             ax.axis('equal')
     return ax
 
-                  
+def plot_volcano(dplot,
+                 x,y,c,
+                 coffs=[0.01,0.05,0.2],
+                 ax=None,
+                 filter_rows=None,
+                 collabel=None,
+                 **kws_set):
+    from rohan.lib.stat.diff import binby_pvalue_coffs
+    df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
+                      color=True)
+    dplot[y]=dplot['value P (MWU test, FDR corrected)'].apply(lambda x : -1*(np.log10(x)))
+    assert(dplot[y].isnull().sum()==0)
+    dplot=dplot.rename(columns={'value difference between mean (subset1-subset2)':x})    
+    
+    from rohan.lib.plot.colors import saturate_color
+    if ax is None:
+        fig,ax=plt.subplots(figsize=[3,3])
+    dplot.plot.scatter(x=x,y=y,c=c,
+                       s=1,ax=ax)
+    ax.set(
+           **kws_set
+          )
+    df_.apply(lambda x: ax.hlines(x['y'],x['x'],ax.get_xlim()[0 if x['change']=='decrease' else 1],
+                                                 colors=x['color'],
+                                                 linestyles="solid",lw=1,
+                                              ),axis=1)
+    df_.apply(lambda x: ax.vlines(x['x'],x['y'],ax.get_ylim()[1],
+                                                 colors=x['color'],
+                                                 linestyles="solid",lw=1,
+                                              ),axis=1)
+    df_.apply(lambda x: ax.text(ax.get_xlim()[0 if x['change']=='decrease' else 1],x['y'],x['text'],
+    #                                 color=saturate_color(x['color'],3),
+                                    color='k',alpha=x['y alpha'],
+                                    ha='left' if x['change']=='decrease' else 'right',
+                                              ),axis=1)
+    df_.loc[:,['y','y text','y alpha']].drop_duplicates().apply(lambda x: ax.text(ax.get_xlim()[1],x['y'],x['y text'],
+                                                                   color='k',alpha=x['y alpha']),
+                                                  axis=1)
+    if (filter_rows is not None) and (collabel is not None):
+        df_=dplot.rd.filter_rows(filter_rows)
+        df_.groupby(collabel).apply(lambda df: ax.scatter(x=df_[x],
+                                                            y=df_[y],
+                                                            marker='o', 
+                                                            facecolors='none',
+                                                            edgecolors='k',
+                                                            label=f"{df.name}\n(n={len(df)})",
+                                                            ))
+    ax.legend(loc='upper left',
+             bbox_to_anchor=[1,1])
+    return ax
+
 from rohan.dandage.io_strs import linebreaker
-def plot_volcano(dplot,colx='interation score ratio hybrid/parent (log2 scale) zscore median',
-                coly='-log10(p-val)',
-                colxerr='interation score ratio hybrid/parent (log2 scale) zscore std',
-                 colsize='gene set size',
+def plot_volcano_agg(dplot,colx,coly,colxerr,colsize,
                  element2color={'between Scer Suva': '#428774',
                               'within Scer Scer': '#dc9f4e',
                               'within Suva Suva': '#53a9cb'},
