@@ -345,6 +345,7 @@ def plot_volcano(dplot,
                  ax=None,
                  filter_rows=None,
                  collabel=None,
+                 title=None,
                  **kws_set):
     from rohan.lib.stat.diff import binby_pvalue_coffs
     df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
@@ -388,6 +389,7 @@ def plot_volcano(dplot,
                                                             ))
     ax.legend(loc='upper left',
              bbox_to_anchor=[1,1])
+    ax.set_title(label=title,loc='left')
     return ax
 
 from rohan.dandage.io_strs import linebreaker

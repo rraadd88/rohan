@@ -47,6 +47,7 @@ from rohan.lib.io_sets import *
 # from rohan.lib.io_df import *
 # from rohan.lib.io_dfs import *
 from rohan.lib.io_files import * #io_df -> io_dfs -> io_files
+from rohan.lib.io_dict import to_dict # to replace io_df to_dict
 
 # stats    
 import scipy as sc
