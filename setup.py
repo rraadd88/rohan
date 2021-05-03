@@ -28,7 +28,7 @@ try:
 except ImportError:
     from distutils.core import setup, find_packages, Extension
 if (sys.version_info[0]) != (3):
-     raise RuntimeError('Python 3.6 required ')
+     raise RuntimeError('Python 3 required ')
 
 with open('requirements.txt') as f:
     required = f.read().splitlines()
@@ -38,7 +38,7 @@ setup(
 name='rohan',
 author='Rohan Dandage',
 author_email='rohanadandage@gmail.com',
-version='0.3.4',
+version='0.3.6',
 url='https://github.com/rraadd88/rohan',
 download_url='https://github.com/rraadd88/rohan/archive/master.zip',
 description='Python package for data analysis, but mostly for bioinformatics really.',
