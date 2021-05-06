@@ -8,7 +8,7 @@ import pandas as pd
 # colors
 def rgbfloat2int(rgb_float):return [int(round(i*255)) for i in rgb_float]
 def rgb2hex(rgb): return f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
-def hex2rgb(c): colors.ColorConverter.to_rgb(c)   
+def hex2rgb(c): return colors.ColorConverter.to_rgb(c)   
     
 def saturate_color(color, alpha):
     """

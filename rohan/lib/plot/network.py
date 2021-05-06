@@ -333,7 +333,7 @@ def plot_minimize_nested_blockmodel_dl(df1,
     
     def get_dtype(df3,vps):
         d2=df3.loc[:,vps].dtypes.to_dict()
-        d2={k:replacemany(d2[k].name,['64','32'],'') for k in d2}
+        d2={k:replacemany(d2[k].name,['64','32'],'',ignore=True) for k in d2}
         d2={k: 'string' if d2[k]=='object' else d2[k] for k in d2}
         cols_list=df3.iloc[0,:].apply(lambda x: isinstance(x,(tuple,list))).loc[lambda x: x].index
         for c in cols_list:
