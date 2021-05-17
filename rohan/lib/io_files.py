@@ -1,9 +1,7 @@
 # paths
 from glob import glob,iglob
 import os
-from os import makedirs
-from os.path import exists,basename,dirname,abspath,realpath
-
+from os.path import exists,basename,dirname,abspath,realpath,splitext
 from rohan.dandage.io_dfs import *
 from rohan.dandage.io_sys import is_interactive_notebook
 from rohan.dandage.io_strs import make_pathable_string,replacemany
@@ -32,9 +30,13 @@ def get_all_subpaths(d='.',include_directories=False):
     paths=sorted(paths)
     return paths
 
-from os.path import splitext,basename
 def basenamenoext(p): return splitext(basename(p))[0]
-
+def makedirs(p):
+    from os import makedirs
+    from os.path import isdir
+    if not isdir(p):
+        p=dirname(p)
+    makedirs(p,exist_ok=True)
 
 ## text files
 from rohan.dandage.io_strs import getall_fillers    
@@ -439,7 +441,7 @@ def tsv2pqt(p):
 def pqt2tsv(p):
     to_table(read_table(p),f"{p}.tsv")
     
-def read_excel(p,sheet_name=None,params_read_excel={},to_dict=False):
+def read_excel(p,sheet_name=None,to_dict=False,**params):
 #     if not 'xlrd' in sys.modules:
 #         logging.error('need xlrd to work with excel; pip install xlrd')
     if not to_dict:
@@ -450,7 +452,7 @@ def read_excel(p,sheet_name=None,params_read_excel={},to_dict=False):
                 sheet_name=input(', '.join(xl.sheet_names))
             return xl.parse(sheet_name) 
         else:
-            return pd.read_excel(p, sheet_name, **params_read_excel)
+            return pd.read_excel(p, sheet_name, **params)
     else:
         xl = pd.ExcelFile(p)
         # see all sheet names
