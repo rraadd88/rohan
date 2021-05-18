@@ -6,7 +6,6 @@ import logging
 # import rohan.dandage.io_dfs
 def get_deps(cfg=None,deps=[]):
     import logging
-    from rohan.dandage.io_sys import runbashcmd    
     """
     Installs conda dependencies.
 
@@ -36,26 +35,18 @@ def input_binary(q):
             return False
     return reply
 
-def runbashcmd(cmd,test=False,logf=None,dirs2ps=None):
+def runbash(cmd,test=False,logp=None):
     """
     Run bash commands from python.
+    TODOS:
+    1. logp
+    2. error ignoring
     """
-    if not dirs2ps is None:
-        import rohan
-        dirs2ps={'pyp':str(subprocess.check_output('which python3'.split(' '))).replace("b'",'').replace("\\n'",''),
-        'binDir':dirname(rohan.__file__)+'/bin', 
-        'scriptDir':dirname(rohan.__file__)+'/bin',
-        }
-        cmd = cmd.replace("$BIN", dirs2ps['binDir'])
-        cmd = cmd.replace("$PYTHON", dirs2ps['pyp'])
-        cmd = cmd.replace("$SCRIPT", dirs2ps['scriptDir'])
     if test:
         print(cmd)
-    err=subprocess.call(cmd,shell=True,stdout=logf,stderr=subprocess.STDOUT)
-    if err!=0:
-        print('bash command error: {}\n{}\n'.format(err,cmd))
-        sys.exit(1)
-
+    return subprocess.run(cmd,shell=True)
+runbashcmd=runbash
+        
 def is_interactive():
     """
     Check if the UI is interactive e.g. jupyter or command line. 

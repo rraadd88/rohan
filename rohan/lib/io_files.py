@@ -200,6 +200,7 @@ def read_table(p,
                ext=None,
                test=False,
                filterby_time=None,
+               kws_clean={},
                **kws_manytables,):
     """
     'decimal':'.'
@@ -227,7 +228,7 @@ def read_table(p,
                                filterby_time=filterby_time,
                                **kws_manytables)
     if len(params.keys())!=0 and not 'columns' in params:
-        return pd.read_csv(p,**params).rd.clean()
+        return pd.read_csv(p,**params).rd.clean(**kws_clean)
     else:
         if len(params.keys())==0:
             params={}
@@ -235,7 +236,7 @@ def read_table(p,
             ext=basename(p).split('.',1)[1]
             
         if any([s==ext for s in ['pqt','parquet']]):#p.endswith('.pqt') or p.endswith('.parquet'):
-            return pd.read_parquet(p,engine='fastparquet',**params).rd.clean()
+            return pd.read_parquet(p,engine='fastparquet',**params).rd.clean(**kws_clean)
         
         params['compression']='gzip' if ext.endswith('.gz') else 'zip' if ext.endswith('.zip') else None
         
@@ -265,7 +266,7 @@ def read_table(p,
         if test: print(params)
         return pd.read_table(p,
                   **params,
-                   ).rd.clean()
+                   ).rd.clean(**kws_clean)
              
 def read_ps(ps):
     if isinstance(ps,str) and '*' in ps:

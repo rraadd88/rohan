@@ -66,7 +66,10 @@ def drop_constants(df):
     return df.drop(cols_del,axis=1)
 
 @add_method_to_class(rd)
-def clean(df,cols=[],drop_constants=False):
+def clean(df,cols=[],
+          drop_constants=False,
+          drop_unnamed=True,
+         ):
     """
     Deletes temporary columns
     :param df: pandas dataframe
@@ -74,6 +77,8 @@ def clean(df,cols=[],drop_constants=False):
     cols_del=df.filter(regex="^(?:index|level|Unnamed|chunk|_).*$").columns.tolist()+df.filter(regex="^.*(?:\.1)$").columns.tolist()+cols
     if drop_constants:
         df=df.rd.drop_constants()
+    if not drop_unnamed:
+        cols_del=[c for c in cols_del if not c.startswith('Unnamed')]
     if len(cols_del)!=0:
         logging.warning(f"dropped columns: {', '.join(cols_del)}")
         return df.drop(cols_del,axis=1)
