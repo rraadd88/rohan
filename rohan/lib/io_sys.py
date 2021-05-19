@@ -124,7 +124,8 @@ def ps2time(ps,**kws_p2time):
     import pandas as pd
     from glob import glob
     if isinstance(ps,str):
-        ps=glob(f"{d}{'/*' if isdir(d) else ''}")
+        if isdir(ps):
+            ps=glob(f"{ps}/*")
     return pd.Series({p:p2time(p,**kws_p2time) for p in ps}).sort_values().reset_index().rename(columns={'index':'p',0:'time'})
     
 ## logging system

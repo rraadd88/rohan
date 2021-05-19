@@ -31,12 +31,12 @@ def get_all_subpaths(d='.',include_directories=False):
     return paths
 
 def basenamenoext(p): return splitext(basename(p))[0]
-def makedirs(p):
+def makedirs(p,exist_ok=True,**kws):
     from os import makedirs
     from os.path import isdir
     if not isdir(p):
         p=dirname(p)
-    makedirs(p,exist_ok=True)
+    makedirs(p,exist_ok=exist_ok,**kws)
 
 ## text files
 from rohan.dandage.io_strs import getall_fillers    
@@ -72,7 +72,7 @@ def cat(ps,outp):
     """
     Concatenate text files.
     """
-    makedirs(dirname(outp),exist_ok=True)
+    makedirs(outp,exist_ok=True)
     with open(outp, 'w') as outfile:
         for p in ps:
             with open(p) as infile:
@@ -131,7 +131,7 @@ def backup_to_zip(ps,destp,test=False):
         for p_ in ps_:
             if exists(p_):
                 p_dest=f"{destdp}/{p_.replace(get_common_preffix(ps_),'')}"
-                makedirs(dirname(p_dest),exist_ok=True)
+                makedirs(p_dest,exist_ok=True)
                 print(f"cp {p_} {p_dest}")
                 copyfile(p_,p_dest)
     zip_folder(destdp, destp)    
@@ -155,7 +155,7 @@ def download(url,path=None,outd='data/database',
         path=f"{outd}/{path}"
     if not exists(path) or force:
         import urllib.request
-        makedirs(dirname(path),exist_ok=True)
+        makedirs(path,exist_ok=True)
         urllib.request.urlretrieve(url, path)
     else:
         logging.info(f"exists: {path}")
@@ -405,7 +405,7 @@ def to_table(df,p,
     if not df.index.name is None:
         df=df.reset_index()
     if not exists(dirname(p)) and dirname(p)!='':
-        makedirs(dirname(p),exist_ok=True)
+        makedirs(p,exist_ok=True)
     if not colgroupby is None:
         to_manytables(df,p,colgroupby,**kws)
         return
@@ -434,7 +434,7 @@ def to_table_pqt(df,p,**kws_pqt):
     if len(df.index.names)>1:
         df=df.reset_index()    
     if not exists(dirname(p)) and dirname(p)!='':
-        makedirs(dirname(p),exist_ok=True)
+        makedirs(p,exist_ok=True)
     df.to_parquet(p,engine='fastparquet',compression='gzip',**kws_pqt)
 
 def tsv2pqt(p):

@@ -1,5 +1,6 @@
 from os.path import exists,basename,dirname
-from rohan.dandage.io_sys import runbashcmd
+from rohan.lib.io_sys import runbashcmd
+from rohan.lib.io_files import makedirs
 from glob import glob
 import logging
 
@@ -57,3 +58,22 @@ def svg_resize(svgp,svgoutp=None,scale=1.2,pad=200,test=False):
     svgout.root.set("viewBox", "0 0 %s %s" % (w,h))
     svgout.append(svg.getroot())
     svgout.save(svgoutp)    
+    
+def to_gif(ps,outp):
+    """    
+    Ref:
+    1. https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
+    2. https://stackoverflow.com/a/57751793/3521099
+    """    
+    import glob
+    from PIL import Image
+    
+    img, *imgs = [Image.open(f) for f in sorted(glob.glob(ps) if isinstance(ps,str) else ps)]
+    makedirs(outp)
+    width, height = imgs[0].size
+    img=img.resize((width//5, height//5))
+    imgs=[im.resize((width//5, height//5)) for im in imgs]
+    img.save(fp=outp, format='GIF', append_images=imgs,
+             save_all=True, 
+             duration=200, loop=0,
+            optimize=True)    
