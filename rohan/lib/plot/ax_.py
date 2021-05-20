@@ -75,6 +75,17 @@ def grid(ax,axis=None):
         ax.xaxis.grid(color='gray', linestyle='dashed')
     return ax
 
+## legends
+def rename_legends(ax,replaces,**kws_legend):
+    handles, labels = ax.get_legend_handles_labels()
+    if len(set(labels) - set(replaces.keys()))==0:
+        labels=[replaces[s] for s in labels]
+    else:
+        labels=[replacemany(str(s),replaces) for s in labels]
+    ax.legend(handles=handles,labels=labels,
+              **kws_legend)
+    return ax
+
 def append_legends(ax, labels,handles,**kws):
     h1, l1 = ax.get_legend_handles_labels()
     ax.legend(handles=h1+handles,

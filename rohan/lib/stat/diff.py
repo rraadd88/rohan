@@ -125,10 +125,13 @@ def get_stat(df1,
         return
     if subsets is None:
         subsets=df1[colsubset].unique()
+    if len(subsets)<2:
+        logging.error("len(subsets)<2")
+        return
     colvalue_bool=df1[colvalue].dtype==bool
     if df2 is None:
         import itertools
-        df2=pd.DataFrame([t for t in list(itertools.permutations(subsets,2))])
+        df2=pd.DataFrame([t for t in list(itertools.permutations(subsets,2))] if len(subsets)>2 else [subsets])
         df2.columns=cols_subsets
 #     print(df2.shape)
 #     print(df2.groupby(cols_subsets).size())
@@ -162,6 +165,7 @@ def get_stats(df1,
               cols_subsets=['subset1', 'subset2'],
               df2=None,
               stats=[np.mean,np.median,np.var,len],
+              axis=1, # concat
               **kws_get_stats):
 #     from rohan.dandage.io_dfs import to_table
 #     to_table(df1,'test/get_stats.tsv')
@@ -183,11 +187,13 @@ def get_stats(df1,
         else:
             logging.warning(f"not processed: {colvalue}; probably because of dropna")
     df3=pd.concat(dn2df,
-          ignore_index=False,
-                  axis=1,
+                  ignore_index=False,
+                  axis=axis,
                   verify_integrity=True,
+                  names=None if axis==1 else ['variable'],
                  )
-    df3=df3.reset_index().rd.flatten_columns()
+    if axis==1:
+        df3=df3.reset_index().rd.flatten_columns()
     return df3
 
 def get_significant_changes(df1,alpha=0.025,

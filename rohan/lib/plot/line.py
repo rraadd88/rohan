@@ -129,3 +129,32 @@ def plot_groupby_qbin(dplot,bins,
                   ax=ax,
                   **params_pointplot)
     return ax
+
+def plot_kinetics(df1, x, y, hue, cmap='Reds_r',
+                 ax=None,
+                test=False,
+                  **kws_set,
+                 ):
+    from rohan.lib.plot.ax_ import rename_legends
+    from rohan.lib.plot.colors import get_ncolors
+    df1=df1.sort_values(hue,ascending=False)
+    print(df1[hue].unique())
+    if ax is None: fig,ax=plt.subplots(figsize=[2.5,2.5])
+    label2color=dict(zip(df1[hue].unique(),get_ncolors(df1[hue].nunique(),
+                                                            ceil=False,
+                                                            cmap=cmap,
+                                                                )))
+    df2=df1.groupby([hue,x],sort=False).agg({c:[np.mean,np.std] for c in [y]}).rd.flatten_columns().reset_index()
+    d1=df1.groupby([hue,x],sort=False,as_index=False).size().groupby(hue)['size'].agg([min,max]).T.to_dict()
+    d2={str(k):str(k)+'\n'+(f"(n={d1[k]['min']})" if d1[k]['min']==d1[k]['max'] else f"(n={d1[k]['min']}-{d1[k]['max']})") for k in d1}
+    if test:ic(d2)
+    df2.groupby(hue,sort=False).apply(lambda df: df.sort_values(x).plot(x=x,
+                                                            y=f"{y} mean",
+                                                            yerr=f"{y} std",
+                                                            label=df.name,
+                                                            color=label2color[df.name],
+                                                            lw=2,
+                                                           ax=ax))
+    ax=rename_legends(ax,replaces=d2,title=hue)
+    ax.set(**kws_set)
+    return ax

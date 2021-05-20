@@ -50,12 +50,14 @@ def get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100):
 # def cut_cmap(cmap, vmin=0.0, vmax=1.0, n=100):return get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100)
 
 def get_ncolors(n,cmap='Spectral',ceil=False,
+                test=False,
                **kws_get_cmap_subset):
     if isinstance(cmap,str):
         cmap = get_cmap_subset(cmap, **kws_get_cmap_subset)
 #         cmap = cm.get_cmap(cmap)
-    print(np.arange(1 if ceil else 0,n+(1 if ceil else 0),1))
-    print(np.arange(1 if ceil else 0,n+(1 if ceil else 0),1)/n)
+    if test:
+        print(np.arange(1 if ceil else 0,n+(1 if ceil else 0),1))
+        print(np.arange(1 if ceil else 0,n+(1 if ceil else 0),1)/n)
     colors=[cmap(i) for i in np.arange(1 if ceil else 0,n+(1 if ceil else 0),1)/n]
     assert(n==len(colors))
     return colors

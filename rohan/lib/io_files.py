@@ -271,7 +271,9 @@ def read_table(p,
 def read_ps(ps):
     if isinstance(ps,str) and '*' in ps:
         ps=glob(ps)
+    ps=sorted(ps)
     return ps
+
 def apply_on_paths(ps,func,
                    replaces_outp=None,
                    replaces_index=None,
@@ -282,6 +284,7 @@ def apply_on_paths(ps,func,
                    progress_bar=True,
                    params={},
                    dbug=False,
+                   kws_read_table={},
                    **kws,
                   ):
     """
@@ -323,7 +326,7 @@ def apply_on_paths(ps,func,
             else:
                 return p,
         else:
-            df=read_table(p,params=params,)
+            df=read_table(p,params=params,**kws_read_table)
             if not filter_rows is None:
                 df=df.rd.filter_rows(filter_rows)            
             return df,
@@ -345,7 +348,10 @@ def apply_on_paths(ps,func,
                                                  filter_rows=filter_rows,
                                                  dbug=dbug)),
                                  **kws))
-    df2=df2.rd.clean().reset_index(drop=drop_index).rd.clean()
+    if drop_index:
+        df2=df2.rd.clean().reset_index(drop=drop_index).rd.clean()
+    else:
+        df2=df2.reset_index(drop=drop_index)
     if not replaces_index is None:
         if isinstance(replaces_index,str):
             if replaces_index=='basenamenoext':
