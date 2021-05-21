@@ -7,6 +7,8 @@ def plot_stats_diff(df2,
                     colsorty='difference between mean (subset1-subset2)',
                     tests=['MWU','FE'],
                     show_q=True,
+                    show_ns=True,
+                    ascending=False,
                     palette=None,
                     ax=None, fig=None,
                     params_ax={},
@@ -25,16 +27,18 @@ def plot_stats_diff(df2,
     if not coly is None or df2.rd.check_duplicated([colcomparison_]):
         if coly is None:
             coly=(df2.select_dtypes([object]).nunique()==len(df2)).loc[lambda x:x].index.tolist()[0]
-        colcomparison=f'{coly}\n(n1,n2)'
-        df2.loc[:,colcomparison]=df2.apply(lambda x: f"{x[coly]}\n({int(x['len subset1'])},{int(x['len subset2'])})",axis=1)
-#         df2[colcomparison]=df2[colcomparison]+df2[coly]
+        if show_ns:
+            colcomparison=f'{coly}\n(n1,n2)'
+            df2.loc[:,colcomparison]=df2.apply(lambda x: f"{x[coly]}\n({int(x['len subset1'])},{int(x['len subset2'])})",axis=1)
+        else:
+            colcomparison=coly
     else:
         colcomparison=colcomparison_
     info(f"colcomparison={colcomparison}")
     assert(not df2.rd.check_duplicated([colcomparison]))
     if not colsorty is None:
         df2=df2.sort_values(by=colsorty,
-                            ascending=False)
+                            ascending=ascending)
     df2=df2.drop([c for c in df2 if 'subset1-subset2' in c],axis=1)
     if palette is None:
         palette=get_colors_default()[:2]

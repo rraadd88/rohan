@@ -186,6 +186,8 @@ def get_stats(df1,
                          ).set_index(cols_subsets)
         else:
             logging.warning(f"not processed: {colvalue}; probably because of dropna")
+    if len(dn2df.keys())==0:
+        return 
     df3=pd.concat(dn2df,
                   ignore_index=False,
                   axis=axis,
@@ -225,8 +227,8 @@ def get_significant_changes(df1,alpha=0.025,
             df1[f'change is significant ({test} test)']=df1[f'P ({test} test)']<alpha
         #     info(f"corrected alpha alphacSidak={alphacSidak},alphacBonf={alphacBonf}")
         if test!='FE':
-            df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],f"significant change ({test} test)"]=df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],'change']
-            df1[f"significant change ({test} test)"]=df1[f"significant change ({test} test)"].fillna('ns')
+            df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],f"significant change ({test} test{(', FDR corrected' if fdr else '')})"]=df1.loc[df1[f"change is significant ({test} test{(', FDR corrected' if fdr else '')})"],'change']
+            df1[f"significant change ({test} test{(', FDR corrected' if fdr else '')})"]=df1[f"significant change ({test} test{(', FDR corrected' if fdr else '')})"].fillna('ns')
     return df1
 
 def apply_get_significant_changes(df1,cols_value,
@@ -242,6 +244,7 @@ def apply_get_significant_changes(df1,cols_value,
         df1_=df1_.rd.renameby_replace({f'{c} ':''}).reset_index()
         d1[c]=getattr(df1_.groupby(cols_groupby),'apply' if not fast else 'parallel_apply')(lambda df: get_significant_changes(df,**kws))
     d1={k:d1[k].set_index(cols_groupby) for k in d1}
+    ## to attach the info
     d1['grouped']=df1.set_index(cols_groupby).loc[:,cols_grouped]
     df2=pd.concat(d1,
                   ignore_index=False,
@@ -253,9 +256,12 @@ def apply_get_significant_changes(df1,cols_value,
     return df2
 
 def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
-                      color=False):
+                      color=False,
+                       colindex='genes id',
+                       colgroup='tissue',
+                      preffix=''):
     coffs=np.array(sorted(coffs))
-    # df1[f'value P (MWU test, FDR corrected) bin']=pd.cut(x=df1[f'value P (MWU test, FDR corrected)'],
+    # df1[f'{preffix}P (MWU test, FDR corrected) bin']=pd.cut(x=df1[f'{preffix}P (MWU test, FDR corrected)'],
     #       bins=[0]+coffs+[1],
     #        labels=coffs+[1],
     #        right=False,
@@ -263,11 +269,12 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
     from rohan.lib.plot.colors import get_colors_default,saturate_color
     d1={}
     for i,coff in enumerate(coffs[::-1]):
-        col=f"value significant change, P (MWU test, FDR corrected) < {coff}"
-        df1[col]=df1.apply(lambda x: 'increase' if ((x[f'value P (MWU test, FDR corrected)']<coff) and (x['value difference between mean (subset1-subset2)']>0))\
-                                                                                    else 'decrease' if ((x[f'value P (MWU test, FDR corrected)']<coff) \
-                                                                                                        and (x['value difference between mean (subset1-subset2)']<0))\
-                                                                                    else 'ns', axis=1)
+        col=f"{preffix}significant change, P (MWU test, FDR corrected) < {coff}"
+        df1[col]=df1.apply(lambda x: 'increase' if ((x[f'{preffix}P (MWU test, FDR corrected)']<coff) \
+                                                    and (x[f'{preffix}difference between mean (subset1-subset2)']>0))\
+                                else 'decrease' if ((x[f'{preffix}P (MWU test, FDR corrected)']<coff) \
+                                and (x[f'{preffix}difference between mean (subset1-subset2)']<0))\
+                                else 'ns', axis=1)
         if color:
             if i==0:
                 df1.loc[(df1[col]=='ns'),'c']=get_colors_default()[1]
@@ -283,15 +290,16 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
         from rohan.dandage.stat.transform import rescale
         d3={}
         for i,(k,coff) in enumerate(list(itertools.product(['increase','decrease'],coffs))):
-            col=f"value significant change, P (MWU test, FDR corrected) < {coff}"
+            col=f"{preffix}significant change, P (MWU test, FDR corrected) < {coff}"
             d4={}
             d4['y alpha']=rescale(1-(list(coffs).index(coff))/len(coffs),[0,1],[0.5,1])
         #     d4['y color']=saturate_color("#000000",d4['y alpha'])
             d4['y']=-1*(np.log10(coff))
             d4['y text']=f" P < {coff}"
-            d4['x']=df1.loc[(df1[col]==k),'value difference between mean (subset1-subset2)'].min() if k=='increase' else df1.loc[(df1[col]==k),'value difference between mean (subset1-subset2)'].max()
+            d4['x']=df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].min() if k=='increase' \
+                                        else df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].max()
             d4['change']=k
-            d4['text']=f"{df1.loc[(df1[col]==k),'genes id'].nunique()}/{df1.loc[(df1[col]==k),'grouped tissue'].nunique()}"
+            d4['text']=f"{df1.loc[(df1[col]==k),colindex].nunique()}/{df1.loc[(df1[col]==k),colgroup].nunique()}"
             d4['color']=d1[coff][k]
             d3[i]=d4
         d1=pd.DataFrame(d3).T

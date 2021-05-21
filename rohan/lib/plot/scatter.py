@@ -340,26 +340,33 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
     return ax
 
 def plot_volcano(dplot,
-                 x,y,c,
+                 x='difference between mean (subset1-subset2)',
+                 y='P (MWU test, FDR corrected)',
                  coffs=[0.01,0.05,0.2],
                  ax=None,
                  filter_rows=None,
                  collabel=None,
                  title=None,
+                 ylabel='significance\n(-log10(P))',
+                 kws_binby_pvalue_coffs={},
                  **kws_set):
     from rohan.lib.stat.diff import binby_pvalue_coffs
     df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
-                      color=True)
-    dplot[y]=dplot['value P (MWU test, FDR corrected)'].apply(lambda x : -1*(np.log10(x)))
-    assert(dplot[y].isnull().sum()==0)
-    dplot=dplot.rename(columns={'value difference between mean (subset1-subset2)':x})    
+                              color=True,
+                              **kws_binby_pvalue_coffs)
+    assert(df1[y].isnull().sum()==0)
+#     if df1[y].isnull().any(): 
+#         logging.warning('')
+#         df1=df1.log.dropna(subset=[y])
+    df1[y]=df1[y].apply(lambda x : -1*(np.log10(x)))
+#     df1=df1.rename(columns={'value difference between mean (subset1-subset2)':x})    
     
     from rohan.lib.plot.colors import saturate_color
     if ax is None:
         fig,ax=plt.subplots(figsize=[3,3])
-    dplot.plot.scatter(x=x,y=y,c=c,
+    df1.plot.scatter(x=x,y=y,c='c',
                        s=1,ax=ax)
-    ax.set(
+    ax.set(ylabel=ylabel,
            **kws_set
           )
     df_.apply(lambda x: ax.hlines(x['y'],x['x'],ax.get_xlim()[0 if x['change']=='decrease' else 1],
@@ -378,8 +385,11 @@ def plot_volcano(dplot,
     df_.loc[:,['y','y text','y alpha']].drop_duplicates().apply(lambda x: ax.text(ax.get_xlim()[1],x['y'],x['y text'],
                                                                    color='k',alpha=x['y alpha']),
                                                   axis=1)
+    if collabel is None:
+        if len(filter_rows.keys())==1:
+            collabel=list(filter_rows.keys())[0]
     if (filter_rows is not None) and (collabel is not None):
-        df_=dplot.rd.filter_rows(filter_rows)
+        df_=df1.rd.filter_rows(filter_rows)
         df_.groupby(collabel).apply(lambda df: ax.scatter(x=df_[x],
                                                             y=df_[y],
                                                             marker='o', 
