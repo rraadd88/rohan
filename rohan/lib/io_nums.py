@@ -1,8 +1,5 @@
 #!usr/bin/python
 
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com,rohan@igib.in>
-# This program is distributed under General Public License v. 3.  
-
 """
 ================================
 ``io_nums``

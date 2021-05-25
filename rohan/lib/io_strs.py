@@ -1,8 +1,5 @@
 #!usr/bin/python
 
-# Copyright 2018, Rohan Dandage <rraadd_8@hotmail.com,rohan@igib.in>
-# This program is distributed under General Public License v. 3.  
-
 """
 ================================
 ``io_strs``
@@ -32,6 +29,7 @@ def replacemany(s,replaces,replacewith='',
         s=s.replace(k,replaces[k])
     if not ignore: assert(s!=s_)
     return s
+replace_many=replacemany
 
 def replacelist(l,replaces,replacewith=''):
     lout=[]    

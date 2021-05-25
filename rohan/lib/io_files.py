@@ -1,3 +1,6 @@
+"""
+io_df -> io_dfs -> io_files
+"""
 # paths
 from glob import glob,iglob
 import os
@@ -165,34 +168,6 @@ from rohan.dandage.io_sys import p2time
 
 ## dfs
 from rohan.global_imports import rd
-
-@add_method_to_class(rd)
-def get_chunks(df1,colindex,colvalue,bins=None,value='right'):
-    """
-    based on other df
-    
-    :params colvalue: value within [0-100]
-    """
-    from rohan.dandage.io_sets import unique,nunique
-    if bins==0:
-        df1['chunk']=bins
-        logging.warning("bins=0, so chunks=1")
-        return df1['chunk']
-    elif bins is None:
-        bins=int(np.ceil(df1.memory_usage().sum()/1e9))
-    df2=df1.loc[:,[colindex,colvalue]].drop_duplicates()
-    from rohan.dandage.stat.transform import get_bins
-    d1=get_bins(df2.set_index(colindex)[colvalue],
-                 bins=bins,
-                 value=value,
-                ignore=True)
-    ## number bins
-    d_={k:f"chunk{ki+1:08d}_upto{int(k):03d}" for ki,k in enumerate(sorted(np.unique(list(d1.values()))))}
-    ## rename bins
-    d2={k:d_[d1[k]] for k in d1}
-    assert(nunique(d1.values())==nunique(d2.values()))
-    df1['chunk']=df1[colindex].map(d2)
-    return df1['chunk']
 
 from rohan.dandage.io_text import get_header
 def read_table(p,
