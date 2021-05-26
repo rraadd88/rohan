@@ -3,6 +3,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 from os.path import exists, basename,dirname
+from icecream import ic
 
 def plot_summarystats(df,cols=['mean','min','max','50%'],plotp=None,ax=None,value_name=None):
     if ax is None:ax=plt.subplot(111)
@@ -133,6 +134,7 @@ def plot_groupby_qbin(dplot,bins,
 def plot_kinetics(df1, x, y, hue, cmap='Reds_r',
                  ax=None,
                 test=False,
+                  kws_legend={},
                   **kws_set,
                  ):
     from rohan.lib.plot.ax_ import rename_legends
@@ -151,10 +153,12 @@ def plot_kinetics(df1, x, y, hue, cmap='Reds_r',
     df2.groupby(hue,sort=False).apply(lambda df: df.sort_values(x).plot(x=x,
                                                             y=f"{y} mean",
                                                             yerr=f"{y} std",
+                                                                        elinewidth=0.3,
                                                             label=df.name,
                                                             color=label2color[df.name],
                                                             lw=2,
                                                            ax=ax))
-    ax=rename_legends(ax,replaces=d2,title=hue)
+    ax=rename_legends(ax,replaces=d2,title=hue,
+                     **kws_legend)
     ax.set(**kws_set)
     return ax

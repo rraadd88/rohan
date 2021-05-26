@@ -338,6 +338,20 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
 #             axin.set_axis_off()
 #             ax.axis('equal')
     return ax
+def plot_volcano_get_dplot(dplot,x,y,
+                          coffs,
+                          **kws_binby_pvalue_coffs):
+    from rohan.lib.stat.diff import binby_pvalue_coffs
+    df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
+                              color=True,
+                              **kws_binby_pvalue_coffs)
+    assert(df1[y].isnull().sum()==0)
+#     if df1[y].isnull().any(): 
+#         logging.warning('')
+#         df1=df1.log.dropna(subset=[y])
+    df1[y]=df1[y].apply(lambda x : -1*(np.log10(x)))
+#     df1=df1.rename(columns={'value difference between mean (subset1-subset2)':x})    
+    return df1,df_
 
 def plot_volcano(dplot,
                  x='difference between mean (subset1-subset2)',
@@ -349,18 +363,11 @@ def plot_volcano(dplot,
                  title=None,
                  ylabel='significance\n(-log10(P))',
                  kws_binby_pvalue_coffs={},
+                 out_df=False,
                  **kws_set):
-    from rohan.lib.stat.diff import binby_pvalue_coffs
-    df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
-                              color=True,
-                              **kws_binby_pvalue_coffs)
-    assert(df1[y].isnull().sum()==0)
-#     if df1[y].isnull().any(): 
-#         logging.warning('')
-#         df1=df1.log.dropna(subset=[y])
-    df1[y]=df1[y].apply(lambda x : -1*(np.log10(x)))
-#     df1=df1.rename(columns={'value difference between mean (subset1-subset2)':x})    
-    
+    df1,df_=plot_volcano_get_dplot(dplot,x,y,
+                          coffs,
+                          **kws_binby_pvalue_coffs)
     from rohan.lib.plot.colors import saturate_color
     if ax is None:
         fig,ax=plt.subplots(figsize=[3,3])
@@ -400,7 +407,10 @@ def plot_volcano(dplot,
     ax.legend(loc='upper left',
              bbox_to_anchor=[1,1])
     ax.set_title(label=title,loc='left')
-    return ax
+    if out_df:
+        return ax,df1
+    else:
+        return ax
 
 from rohan.dandage.io_strs import linebreaker
 def plot_volcano_agg(dplot,colx,coly,colxerr,colsize,

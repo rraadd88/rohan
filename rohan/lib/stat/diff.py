@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import scipy as sc
 import logging
+from icecream import ic
 
 def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_control=None):
     if subset_control is None:
@@ -257,9 +258,12 @@ def apply_get_significant_changes(df1,cols_value,
 
 def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
                       color=False,
+                       testn='MWU test, FDR corrected',
                        colindex='genes id',
                        colgroup='tissue',
-                      preffix=''):
+                      preffix='',
+                      colns=None, # plot as ns, not counted
+                      ):
     coffs=np.array(sorted(coffs))
     # df1[f'{preffix}P (MWU test, FDR corrected) bin']=pd.cut(x=df1[f'{preffix}P (MWU test, FDR corrected)'],
     #       bins=[0]+coffs+[1],
@@ -269,11 +273,11 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
     from rohan.lib.plot.colors import get_colors_default,saturate_color
     d1={}
     for i,coff in enumerate(coffs[::-1]):
-        col=f"{preffix}significant change, P (MWU test, FDR corrected) < {coff}"
-        df1[col]=df1.apply(lambda x: 'increase' if ((x[f'{preffix}P (MWU test, FDR corrected)']<coff) \
+        col=f"{preffix}significant change, P ({testn}) < {coff}"
+        df1[col]=df1.apply(lambda x: 'increase' if ((x[f'{preffix}P ({testn})']<coff) \
                                                     and (x[f'{preffix}difference between mean (subset1-subset2)']>0))\
-                                else 'decrease' if ((x[f'{preffix}P (MWU test, FDR corrected)']<coff) \
-                                and (x[f'{preffix}difference between mean (subset1-subset2)']<0))\
+                                else 'decrease' if ((x[f'{preffix}P ({testn})']<coff) \
+                                                    and (x[f'{preffix}difference between mean (subset1-subset2)']<0))\
                                 else 'ns', axis=1)
         if color:
             if i==0:
@@ -285,24 +289,31 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
             d1[coff]=d2
             df1['c']=df1.apply(lambda x: d2[x[col]] if x[col] in d2 else x['c'],axis=1)
             assert(df1['c'].isnull().sum()==0)
+    if not colns is None:
+        df2=df1.loc[~(df1[colns]),:]
+        ic(df1[colns].sum())
+    else:
+        df2=df1.copy()
     if color:
         import itertools
         from rohan.dandage.stat.transform import rescale
         d3={}
         for i,(k,coff) in enumerate(list(itertools.product(['increase','decrease'],coffs))):
-            col=f"{preffix}significant change, P (MWU test, FDR corrected) < {coff}"
+            col=f"{preffix}significant change, P ({testn}) < {coff}"
             d4={}
             d4['y alpha']=rescale(1-(list(coffs).index(coff))/len(coffs),[0,1],[0.5,1])
         #     d4['y color']=saturate_color("#000000",d4['y alpha'])
             d4['y']=-1*(np.log10(coff))
             d4['y text']=f" P < {coff}"
-            d4['x']=df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].min() if k=='increase' \
-                                        else df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].max()
+            d4['x']=df2.loc[(df2[col]==k),f'{preffix}difference between mean (subset1-subset2)'].min() if k=='increase' \
+                                        else df2.loc[(df2[col]==k),f'{preffix}difference between mean (subset1-subset2)'].max()
             d4['change']=k
-            d4['text']=f"{df1.loc[(df1[col]==k),colindex].nunique()}/{df1.loc[(df1[col]==k),colgroup].nunique()}"
+            d4['text']=f"{df2.loc[(df2[col]==k),colindex].nunique()}/{df2.loc[(df2[col]==k),colgroup].nunique()}"
             d4['color']=d1[coff][k]
             d3[i]=d4
-        d1=pd.DataFrame(d3).T
-    return df1,d1
+        df3=pd.DataFrame(d3).T
+    if not colns is None:
+        df1.loc[df1[colns],'c']=get_colors_default()[1]            
+    return df1,df3
 
 from rohan.dandage.plot.diff import plot_stats_diff
