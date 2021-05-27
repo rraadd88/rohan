@@ -102,6 +102,13 @@ def check_na_percentage(df,cols=None):
         cols=df.columns.tolist()
     return (df.loc[:,cols].isnull().sum()/df.loc[:,cols].agg(len))*100
 
+## nunique:
+@add_method_to_class(rd)
+def check_nunique(df,cols=None,):
+    if cols is None:
+        cols=df.select_dtypes(object).columns.tolist()
+    return df.loc[:,cols].nunique()
+    
 ## duplicates:
 @add_method_to_class(rd)
 def check_duplicated(df,cols=None,subset=None):

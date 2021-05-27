@@ -59,7 +59,9 @@ def svg_resize(svgp,svgoutp=None,scale=1.2,pad=200,test=False):
     svgout.append(svg.getroot())
     svgout.save(svgoutp)    
     
-def to_gif(ps,outp):
+def to_gif(ps,outp,
+          duration=200, loop=0,
+          optimize=True):
     """    
     Ref:
     1. https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
@@ -74,6 +76,6 @@ def to_gif(ps,outp):
     img=img.resize((width//5, height//5))
     imgs=[im.resize((width//5, height//5)) for im in imgs]
     img.save(fp=outp, format='GIF', append_images=imgs,
-             save_all=True, 
-             duration=200, loop=0,
-            optimize=True)    
+             save_all=True,
+             duration=duration, loop=loop,
+          optimize=optimize )    

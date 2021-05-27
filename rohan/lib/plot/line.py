@@ -140,7 +140,7 @@ def plot_kinetics(df1, x, y, hue, cmap='Reds_r',
     from rohan.lib.plot.ax_ import rename_legends
     from rohan.lib.plot.colors import get_ncolors
     df1=df1.sort_values(hue,ascending=False)
-    print(df1[hue].unique())
+    ic(df1[hue].unique())
     if ax is None: fig,ax=plt.subplots(figsize=[2.5,2.5])
     label2color=dict(zip(df1[hue].unique(),get_ncolors(df1[hue].nunique(),
                                                             ceil=False,

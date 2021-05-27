@@ -5,7 +5,8 @@ def plot_stats_diff(df2,
 #                     colcomparison=None,  
                     cols_subset=None,
                     colsorty='difference between mean (subset1-subset2)',
-                    tests=['MWU','FE'],
+#                     testn='MWU test, FDR corrected',
+                    tests=['MWU test, FDR corrected','FE test, FDR corrected'],
                     show_q=True,
                     show_ns=True,
                     ascending=False,
@@ -59,8 +60,9 @@ def plot_stats_diff(df2,
                      zorder=2,
                     **kws_pointplot)
     from rohan.dandage.plot.ax_ import color_ticklabels
-    df2.loc[(df2['significant change (MWU test)' if 'significant change (MWU test)' in df2 else 'change']=='ns'),'color yticklabel']='lightgray'
-    df2.loc[(df2['significant change (MWU test)' if 'significant change (MWU test)' in df2 else 'change']!='ns'),'color yticklabel']='gray'
+    df2.loc[(df2[f'significant change ({tests[0]})' if f'significant change ({tests[0]})' in df2 else 'change']=='ns'),'color yticklabel']='lightgray'
+    df2.loc[(df2[f'significant change ({tests[0]})' if f'significant change ({tests[0]})' in df2 else 'change']!='ns'),'color yticklabel']='gray'
+    logging.warning(f"yticklabels shaded by {tests[0]}")
     ax=color_ticklabels(ax, ticklabel2color=df2.loc[:,[params['y'],'color yticklabel']].drop_duplicates().rd.to_dict([params['y'],'color yticklabel']),
                         axis='y')
     
@@ -101,35 +103,40 @@ def plot_stats_diff(df2,
     ax.set(**params_ax)
     ## annot p-vals
     w=(ax.get_xlim()[1]-ax.get_xlim()[0])
-    cols_pvalues=[]
-    for k in tests:
-        if f'P ({k} test, FDR corrected)' in df3 and show_q:
-            cols_pvalues.append(f'P ({k} test, FDR corrected)')
-        elif f'P ({k} test)' in df3:
-            cols_pvalues.append(f'P ({k} test)')
-        else:
-            continue
-    for i,c in enumerate(cols_pvalues):
-        if df3[c].isnull().all():
+#     cols_pvalues=[]
+#     for k in tests:
+#         if f'P ({k test, FDR corrected})' in df3 and show_q:
+#             cols_pvalues.append(f'P ({k} test, FDR corrected)')
+#         elif f'P ({k} test)' in df3:
+#             cols_pvalues.append(f'P ({k} test)')
+#         else:
+#             continue
+    for i,c in enumerate(tests):
+        if df3[f'P ({c})'].isnull().all():
             logging.error(f"all null for {c}")
             continue
         posx=ax.get_xlim()[0]+w+(w*(i*0.3))
         ax.text(posx,
                 ax.get_ylim()[1],
-                f"P {get_bracket(c).split(' ')[0]}",
+                f"P {c.split(' ')[0]}",
                 va='top',
+                color='gray',
                )
-        df3.drop_duplicates(subset=['y',c]).apply(lambda x: ax.text(posx,x['y'],
-                                                                   pval2annot(x[c], 
+        df3.drop_duplicates(subset=['y',f'P ({c})']).apply(lambda x: ax.text(posx,x['y'],
+                                                                   pval2annot(x[f'P ({c})'], 
                                                                                alternative='two-sided', 
                                                                                alpha=None, 
                                                                                fmt='<', 
                                                                                linebreak=False).replace('P',''),
-#                                                                     f"{x[c]:1.1e}",
                                                                     va='center',
                                                                    color='gray'),
                                                   axis=1)
-    ax.legend(bbox_to_anchor=[len(cols_pvalues),1])
+    ax.legend(
+#                 bbox_to_anchor=[len(tests),1],
+              loc='upper left', 
+              bbox_to_anchor=(1, 0),)
     from rohan.dandage.plot.ax_ import format_ticklabels
     ax=format_ticklabels(ax=ax)
+    ax.set(ylim=(len(ax.get_yticklabels()),-1),
+          )
     return ax

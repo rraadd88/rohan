@@ -53,11 +53,12 @@ def labelplots(fig,axes,xoff=0,yoff=0,
         label2ax[label].text(*axi2xy[axi],f"{label}",
                              transform=fig.transFigure,
                              **params_text)    
-def ax2plotp(ax,plotp='plot/plot_',
+def ax2plotp(ax,prefix='plot/plot_',
              suffix=''):
     """
     :params plotp: preffix
     """
+    plotp=prefix
     if not isinstance(ax,str):
         for k in ['get_xlabel','get_ylabel','get_title','legend_']: 
             if hasattr(ax,k):
