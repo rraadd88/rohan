@@ -12,5 +12,3 @@ def add_method_to_class(cls):
         # Note we are not binding func, but wrapper which accepts self but does exactly the same as func
         return func # returning func means func can still be used normally
     return decorator
-
-
