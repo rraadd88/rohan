@@ -20,7 +20,7 @@ from rohan.lib.align import bed_colns,gff_colns
 from rohan.lib.io_sys import runbashcmd
 from rohan.lib.io_seqs import fa2df,gffatributes2ids,hamming_distance,align 
 from rohan.lib.io_dfs import * 
-from rohan.lib.io_nums import str2num
+from rohan.lib.io_strs import str2num
 
 def dqueries2queriessam(cfg,dqueries):    
     """
@@ -145,7 +145,7 @@ def queriessam2dalignbed(cfg):
             else:
                 logging.warning(f"file is empty: {queriessamp}")
         dalignbed.to_csv(dalignbedp,sep='\t')
-        from rohan.lib.io_nums import str2numorstr
+        from rohan.lib.io_strs import str2numorstr
         dalignbed['chromosome']=dalignbed.apply(lambda x : str2numorstr(x['chromosome']),axis=1)
         dalignbed=dalignbed.sort_values(['chromosome','start','end'], ascending=[True, True, True])
         dalignbed.loc[:,bed_colns].to_csv(alignmentbedp,sep='\t',

@@ -160,7 +160,6 @@ def annot_heatmap(ax,dannot,
 # stats 
 def perc_label(a,b,bracket=True): return f"{(a/b)*100:.0f}%"+(f" ({num2str(a)}/{num2str(b)})" if bracket else "")
 
-from rohan.lib.io_nums import is_numeric
 def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
                linebreak=True,
               ):
@@ -172,7 +171,7 @@ def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
     if alternative is None and alpha is None:
         ValueError('both alternative and alpha are None')
     if alpha is None:
-        alpha=0.025 if alternative=='two-sided' else alternative if is_numeric(alternative) else 0.05
+        alpha=0.025 if alternative=='two-sided' else 0.05
     if pd.isnull(pval):
         annot= ''
     elif pval < 0.0001:
