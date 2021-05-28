@@ -90,6 +90,21 @@ def get_dnds(x,pal2nald,clustalop,codemlp,dndsd,fastad,test=False):
 
     
 def align_blast(subjectfap,queryfaps,test=False,outdp='.'):
+    """
+    ## protein
+        diamond_blastp_cols=['query',
+        'subject',
+        '% identity',
+        'alignment length',
+        '# of mistmatches',
+        'gap openings',
+        'query start',
+        'query end',
+        'subject start',
+        'subject end',
+        'E-value',
+        'bit score']
+    """
     com=f"diamond makedb --in {subjectfap} -d {basenamenoext(subjectfap)}"
     from rohan.lib.io_sys import runbashcmd
     print(com) if test else runbashcmd(com,test=True)

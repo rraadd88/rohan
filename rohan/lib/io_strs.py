@@ -277,7 +277,31 @@ def str2dict(s,sep=';',sep_equal='='):
 
 # TODO: deprecate
 # from rohan.lib.io_sys import get_logger,get_datetime,get_time
-from rohan.lib.io_nums import str2num,str2nums#,format_number_human
+def str2num(x):
+    """
+    This extracts numbers from strings. eg. 114 from M114R.
+
+    :param x: string
+    """
+    return int(''.join(ele for ele in x if ele.isdigit()))
+
+def str2nums(s):
+    import re
+    return [int(i) for i in re.findall(r'\d+', s)]
+
+def str2numorstr(x,method=int):
+    """
+    This extracts numbers from strings. eg. 114 from M114R.
+
+    :param x: string
+    """
+    try:
+        x=method(x)
+        return x
+    except:
+        return x
+
+
 # from rohan.lib.io_dict import str2dict
 def num2str(num,magnitude=False,
            coff=10000):
