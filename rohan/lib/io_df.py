@@ -6,7 +6,7 @@ import numpy as np
 import logging
 from icecream import ic
 
-from rohan.dandage import add_method_to_class
+from rohan.lib import add_method_to_class
 from rohan.global_imports import rd
 
 ## log

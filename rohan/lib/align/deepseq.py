@@ -1,6 +1,6 @@
 from rohan.global_imports import * 
-from rohan.dandage.io_sys import runbashcmd
-from rohan.dandage.io_seqs import *
+from rohan.lib.io_sys import runbashcmd
+from rohan.lib.io_seqs import *
 from os.path import isdir
 from glob import iglob
 import logging
@@ -72,7 +72,7 @@ def get_read_counts_from_log(p,step):
             return np.nan,np.nan    
 
 def get_aligned(dirp,method=None,test=False,quality_coff=30):
-    from rohan.dandage.io_sys import runbashcmd
+    from rohan.lib.io_sys import runbashcmd
     logging.info(dirp)
     coms=[]
     if method is None:
@@ -102,8 +102,8 @@ def get_aligned(dirp,method=None,test=False,quality_coff=30):
             
 # def get_daligned_target(dirp):
 #     import pysam
-#     from rohan.dandage.io_seqs import read_fasta
-#     from rohan.dandage.io_strs import findall
+#     from rohan.lib.io_seqs import read_fasta
+#     from rohan.lib.io_strs import findall
 #     logging.info(dirp)
 #     aligned=pysam.AlignmentFile(f'{dirp}/aligned.bam', 'rb')
 #     reference2seq=read_fasta(f'{dirp}/reference.fasta')
@@ -141,8 +141,8 @@ def get_daligned(dirp,method,target=False):
     TODO: targetn: {refn}_target 
     """
     import pysam
-    from rohan.dandage.io_seqs import read_fasta
-    from rohan.dandage.io_strs import findall
+    from rohan.lib.io_seqs import read_fasta
+    from rohan.lib.io_strs import findall
     logging.info(dirp)
     aligned=pysam.AlignmentFile(f'{dirp}/aligned.bam', 'rb')
     reference2seq=read_fasta(f'{dirp}/reference.fasta')

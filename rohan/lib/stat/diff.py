@@ -18,7 +18,7 @@ def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_contro
         logging.warning(f"pval for reference condition vs reference condition = {subset2metrics[subset_control]}. shouldn't be. check colindex")
     subset2metrics={k:subset2metrics[k] for k in subset2metrics if k!=subset_control}
     if outstr:
-        from rohan.dandage.plot.annot import pval2annot
+        from rohan.lib.plot.annot import pval2annot
         subset2metrics={k: pval2annot(subset2metrics[k],
                                       fmt='<',
                                       alternative='two-sided',
@@ -144,7 +144,7 @@ def get_stat(df1,
     df2=df2.rename(columns={0:f"stat ({'MWU' if not colvalue_bool else 'FE'} test)",
                             1:f"P ({'MWU' if not colvalue_bool else 'FE'} test)",
                             }).reset_index()
-    from rohan.dandage.io_dfs import merge_paired
+    from rohan.lib.io_dfs import merge_paired
     df3=merge_paired(df2,
         df=df1.groupby([colsubset])[colvalue].agg(stats if not colvalue_bool else [sum,len]).reset_index(),
         left_ons=cols_subsets,
@@ -171,7 +171,7 @@ def get_stats(df1,
     """
     :params axis: 1 if different tests else use 0.
     """
-#     from rohan.dandage.io_dfs import to_table
+#     from rohan.lib.io_dfs import to_table
 #     to_table(df1,'test/get_stats.tsv')
 #     stats=[s for s in stats if not s in [sum,len]]
 #     from tqdm import tqdm
@@ -299,7 +299,7 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
         df2=df1.copy()
     if color:
         import itertools
-        from rohan.dandage.stat.transform import rescale
+        from rohan.lib.stat.transform import rescale
         d3={}
         for i,(k,coff) in enumerate(list(itertools.product(['increase','decrease'],coffs))):
             col=f"{preffix}significant change, P ({testn}) < {coff}"
@@ -322,4 +322,4 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
         df1.loc[df1[colns],'c']=get_colors_default()[1]            
     return df1,df3
 
-from rohan.dandage.plot.diff import plot_stats_diff
+from rohan.lib.plot.diff import plot_stats_diff

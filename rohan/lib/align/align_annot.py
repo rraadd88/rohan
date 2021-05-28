@@ -16,11 +16,11 @@ import pysam
 import numpy as np
 from glob import glob
 
-from rohan.dandage.align import bed_colns,gff_colns    
-from rohan.dandage.io_sys import runbashcmd
-from rohan.dandage.io_seqs import fa2df,gffatributes2ids,hamming_distance,align 
-from rohan.dandage.io_dfs import * 
-from rohan.dandage.io_nums import str2num
+from rohan.lib.align import bed_colns,gff_colns    
+from rohan.lib.io_sys import runbashcmd
+from rohan.lib.io_seqs import fa2df,gffatributes2ids,hamming_distance,align 
+from rohan.lib.io_dfs import * 
+from rohan.lib.io_nums import str2num
 
 def dqueries2queriessam(cfg,dqueries):    
     """
@@ -145,7 +145,7 @@ def queriessam2dalignbed(cfg):
             else:
                 logging.warning(f"file is empty: {queriessamp}")
         dalignbed.to_csv(dalignbedp,sep='\t')
-        from rohan.dandage.io_nums import str2numorstr
+        from rohan.lib.io_nums import str2numorstr
         dalignbed['chromosome']=dalignbed.apply(lambda x : str2numorstr(x['chromosome']),axis=1)
         dalignbed=dalignbed.sort_values(['chromosome','start','end'], ascending=[True, True, True])
         dalignbed.loc[:,bed_colns].to_csv(alignmentbedp,sep='\t',
@@ -313,7 +313,7 @@ def dannots2dalignbed2dannotsagg(cfg):
         dannots=del_Unnamed(dannots)
         dannots=dannots.reset_index()
         logging.debug('aggregating the annotations')
-        from rohan.dandage.io_sets import unique 
+        from rohan.lib.io_sets import unique 
         cols2aggf={'annotations count':np.sum,
                   'type': unique,
                   'gene name': unique,
@@ -351,7 +351,7 @@ def dannotsagg2dannots2dalignbedannot(cfg):
         dalignbedannot=dalignbedstats.set_index('id').join(set_index(dannotsagg,'id'),
                                               rsuffix=' annotation')
         dalignbedannot['NM']=dalignbedannot['NM'].apply(int)
-#         from rohan.dandage.get_scores import get_beditorscore_per_alignment,get_cfdscore
+#         from rohan.lib.get_scores import get_beditorscore_per_alignment,get_cfdscore
 #         dalignbedannot['beditor score']=dalignbedannot.apply(lambda x : get_beditorscore_per_alignment(NM=x['NM'],
 #                                genic=True if x['region']=='genic' else False,
 #                                alignment=x['alignment'],
@@ -382,7 +382,7 @@ def dalignbedannot2daggbyquery(cfg):
                                 colfmt='tuple')    
         dalignbedannot['alternate alignments count']=1
         import itertools
-        from rohan.dandage.io_sets import unique
+        from rohan.lib.io_sets import unique
         def unique_dropna(l): return unique(l,drop='nan')
         def merge_unique_dropna(l): return unique(list(itertools.chain(*l)),drop='nan')
         cols2aggf={'id':unique_dropna,
@@ -406,7 +406,7 @@ def queries2alignments(cfg):
     
     :param cfg: Configuration settings provided in .yml file
     """
-    from rohan.dandage.align import get_genomes
+    from rohan.lib.align import get_genomes
     get_genomes(cfg)
     
     cfg['datad']=cfg['prjd']

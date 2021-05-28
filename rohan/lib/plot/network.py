@@ -1,6 +1,6 @@
 from rohan.global_imports import *
 # import matplotlib.pyplot as plt
-# from rohan.dandage.io_dfs import *
+# from rohan.lib.io_dfs import *
 
 
 def plot_ppi(dplot,params,ax=None):
@@ -88,7 +88,7 @@ def plot_phylogeny(tree,organismname2id,
     dplot['organism id']=dplot['index'].map({get_name(k,organismname2id):organismname2id[k] for k in organismname2id})
     dplot=dplot.sort_values('y')
     def plot_img(x,ax,y_bbox,x_bbox,size):
-        from rohan.dandage.plot.ax_ import set_logo
+        from rohan.lib.plot.ax_ import set_logo
         p=f"database/embl_itol/itol.embl.de/img/species/{x}.jpg"
         if exists(p):
             axin=set_logo(p,ax,size=size,
@@ -160,7 +160,7 @@ def plot_ppi_overlap_get_positions(df1,
     d2=dict(zip(df1[coltarget].unique(),range(len(df1[coltarget].unique()))[::-1]))    
     df1.loc[:,'y_target']=df1[coltarget].map(d2)
 
-    from rohan.dandage.stat.transform import rescale
+    from rohan.lib.stat.transform import rescale
     df1.loc[:,'y_target']=rescale(df1['y_target'], 
                             range1=[df1['y_target'].min(),
                                     df1['y_target'].max()], 
@@ -169,7 +169,7 @@ def plot_ppi_overlap_get_positions(df1,
     df1.loc[:,'x_target']=np.sqrt(r-df1['y_target']**2)+xoff
     df1.loc[:,'x_target annot']=np.sqrt(r*1.2-df1['y_target']**2)+xoff
     ## source x y
-    from rohan.dandage.stat.transform import rescale
+    from rohan.lib.stat.transform import rescale
 #     print(np.arange(len(nodes_source)))
 #     print(rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4]))
     source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),range1=None,range2=[0.4,-0.4])))
@@ -226,7 +226,7 @@ def plot_ppi_overlap(
 
                                       )
     ## colors
-    from rohan.dandage.plot.colors import mix_colors,get_colors_default,saturate_color    
+    from rohan.lib.plot.colors import mix_colors,get_colors_default,saturate_color    
     if colors is None:        
         colors=get_colors_default()[:len(nodes_source)]
     node_type2color=dict(zip(nodes_source,colors))
@@ -278,7 +278,7 @@ def plot_ppi_overlap(
                                     color=node_type2color[df.name],
                              zorder=2,
                              ))        
-#     from rohan.dandage.stat.transform import rescale
+#     from rohan.lib.stat.transform import rescale
 # #     print(np.arange(len(nodes_source)))
 # #     print(rescale(np.arange(len(nodes_source)),[0,1],[0.4,-0.4]))
 #     source2y=dict(zip(nodes_source,rescale(np.arange(len(nodes_source)),range1=None,range2=[0.4,-0.4])))
@@ -327,7 +327,7 @@ def plot_minimize_nested_blockmodel_dl(df1,
     mplfig=ax[1,0]
     https://graph-tool.skewed.de/static/doc/draw.html#contents
     """
-#     from rohan.dandage.io_strs import replacemany,get_prefix,get_suffix
+#     from rohan.lib.io_strs import replacemany,get_prefix,get_suffix
     eid='eid'
     df1[eid]=range(len(df1))
     

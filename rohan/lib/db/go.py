@@ -40,7 +40,7 @@ def get_goid_info(queries,result=None,interval=500):
                 ds.append(pd.Series({k:d[k] if (isinstance(d[k],(str,bool))) else d[k]['text'] for k in d if isinstance(d[k],(str,bool)) or (isinstance(d[k],(dict)) and k=='definition')}))
                 
     return pd.concat(ds,axis=1).T
-#     from rohan.dandage.io_dict import merge_dict_values
+#     from rohan.lib.io_dict import merge_dict_values
 #     return merge_dict_values(ds)
 
 def get_genes_bygoids(
@@ -58,7 +58,7 @@ def get_genes_bygoids(
         r.raise_for_status()
         sys.exit()
     responseBody = r.text
-    from rohan.dandage.db.go import read_gpad
+    from rohan.lib.db.go import read_gpad
     from io import StringIO
     return read_gpad(StringIO(responseBody))                          
                           
@@ -75,7 +75,7 @@ def slim_goterms(queries,interval=500,subset='generic'):
     subset2terms={   'generic':'GO:0140014,GO:0071941,GO:0071554,GO:0065003,GO:0061024,GO:0055085,GO:0051604,GO:0051301,GO:0051276,GO:0051186,GO:0050877,GO:0048870,GO:0048856,GO:0048646,GO:0044403,GO:0044281,GO:0043473,GO:0042592,GO:0042254,GO:0040011,GO:0040007,GO:0034655,GO:0034641,GO:0034330,GO:0032196,GO:0030705,GO:0030198,GO:0030154,GO:0022618,GO:0022607,GO:0021700,GO:0019748,GO:0016192,GO:0015979,GO:0015031,GO:0009790,GO:0009058,GO:0009056,GO:0008283,GO:0008219,GO:0007568,GO:0007267,GO:0007165,GO:0007155,GO:0007059,GO:0007049,GO:0007034,GO:0007010,GO:0007009,GO:0007005,GO:0006950,GO:0006914,GO:0006913,GO:0006810,GO:0006790,GO:0006629,GO:0006605,GO:0006520,GO:0006464,GO:0006457,GO:0006412,GO:0006399,GO:0006397,GO:0006259,GO:0006091,GO:0005975,GO:0003013,GO:0002376,GO:0000902,GO:0000278,GO:0000003,GO:0043226,GO:0032991,GO:0031410,GO:0031012,GO:0030312,GO:0009579,GO:0009536,GO:0005929,GO:0005886,GO:0005856,GO:0005840,GO:0005829,GO:0005815,GO:0005811,GO:0005794,GO:0005783,GO:0005777,GO:0005773,GO:0005768,GO:0005764,GO:0005739,GO:0005737,GO:0005730,GO:0005694,GO:0005654,GO:0005635,GO:0005634,GO:0005623,GO:0005622,GO:0005618,GO:0005615,GO:0005576,GO:0000229,GO:0000228,GO:0051082,GO:0043167,GO:0042393,GO:0032182,GO:0030674,GO:0030555,GO:0030533,GO:0030234,GO:0022857,GO:0019899,GO:0019843,GO:0016887,GO:0016874,GO:0016853,GO:0016829,GO:0016810,GO:0016798,GO:0016791,GO:0016779,GO:0016765,GO:0016757,GO:0016746,GO:0016491,GO:0016301,GO:0008289,GO:0008233,GO:0008168,GO:0008135,GO:0008134,GO:0008092,GO:0005198,GO:0004518,GO:0004386,GO:0003924,GO:0003735,GO:0003729,GO:0003723,GO:0003700,GO:0003677'
              }
     slimedterms= subset2terms[subset] if subset in  subset2terms else subset
-    from rohan.dandage.io_strs import str2urlformat
+    from rohan.lib.io_strs import str2urlformat
     slimedterms_str=str2urlformat(slimedterms)
     import requests, sys
     ds=[]
@@ -89,8 +89,8 @@ def slim_goterms(queries,interval=500,subset='generic'):
             logging.error(f"check the list: {', '.join(queries[ini:end])}")
         responseBody = r.json()
         ds.append({d["slimsFromId"]:d["slimsToIds"] for d in responseBody['results']})
-    from rohan.dandage.io_dict import merge_dict_list
-    from rohan.dandage.io_dict import dict2df
+    from rohan.lib.io_dict import merge_dict_list
+    from rohan.lib.io_dict import dict2df
     df=dict2df(merge_dict_list(ds))
     return df.rename(columns={'key':'go id','value':'go id slimmed'})
 
@@ -136,7 +136,7 @@ def get_curated_goterms_physical_interactions(taxid,outd,force=False):
     print(df['go id'].unique().shape,df['go id slimmed'].unique().shape)
     df2=df1.merge(df,left_on='GO ID',right_on='go id',how='left')
     print(df1.shape,df2.shape)
-    from rohan.dandage.db.go import get_go_info
+    from rohan.lib.db.go import get_go_info
     genesetid2namep=f"{outd}/{taxid}/genesetid2name.json"
     if not exists(genesetid2namep):
         genesetid2name=goid2name(queries=unique(df2['GO ID'].tolist()+df2['go id slimmed'].tolist()),
@@ -146,7 +146,7 @@ def get_curated_goterms_physical_interactions(taxid,outd,force=False):
         genesetid2name=read_dict(genesetid2namep)
     df2['gene set name']=df2['GO ID'].map(genesetid2name)
     df2['gene set name slimmed']=df2['go id slimmed'].map(genesetid2name)
-    from rohan.dandage.db.uniprot import map_ids_batch
+    from rohan.lib.db.uniprot import map_ids_batch
     df=map_ids_batch(queries=df1['DB Object ID'].unique().tolist(),
                  params_map_ids={'frm': 'ACC', 'to': 'ENSEMBL_PRO_ID'},)
     df3=df2.merge(df,left_on='DB Object ID',right_on='ACC',how='left')

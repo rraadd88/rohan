@@ -17,7 +17,7 @@ def log(df,col,base=10,pcount=0):
 
 ## TODO deprecated
 dflogcol=log
-from rohan.dandage.stat.norm import zscore_cols as df2zscore
+from rohan.lib.stat.norm import zscore_cols as df2zscore
 
 def plog(x,p = 0.5,base=None):
     """

@@ -1,8 +1,8 @@
 from rohan.global_imports import *
-from rohan.dandage.plot.annot import annot_contourf,annot_corners
+from rohan.lib.plot.annot import annot_contourf,annot_corners
 
-from rohan.dandage.plot.colors import get_cmap_subset,saturate_color
-from rohan.dandage.plot.ax_ import set_colorbar,grid
+from rohan.lib.plot.colors import get_cmap_subset,saturate_color
+from rohan.lib.plot.ax_ import set_colorbar,grid
 
 def plot_contourf(x,y,z,
                   # coutourf
@@ -31,7 +31,7 @@ def plot_contourf(x,y,z,
                 test=False,
                 **kws_contourf,
                 ):
-    from rohan.dandage.stat.fit import get_grid
+    from rohan.lib.stat.fit import get_grid
     xg,yg,zg=get_grid(x,y,z,
                 grids=grids,
                 method=method,**params_grid)

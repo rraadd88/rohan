@@ -1,5 +1,5 @@
-from rohan.dandage.plot.heatmap import get_clusters
-from rohan.dandage.io_dfs import *
+from rohan.lib.plot.heatmap import get_clusters
+from rohan.lib.io_dfs import *
 import matplotlib.pyplot as plt
 # dynamic time wrapping
 def get_ddist_dtw(df,window):
@@ -152,7 +152,7 @@ def cluster_1d(ds,n_clusters,clf_type='gmm',
                          histtype='step',
                          ax=ax)
         if clf_type=='gmm':
-            from rohan.dandage.plot.dist import plot_gaussianmixture    
+            from rohan.lib.plot.dist import plot_gaussianmixture    
             ax,coff=plot_gaussianmixture(g=clf,x=x,
                                          n_clusters=n_clusters,
                                          ax=ax)

@@ -211,7 +211,7 @@ class string():
         return dint   
       
                       
-# from rohan.dandage.db.intact import *
+# from rohan.lib.db.intact import *
 class intact():
     def get_dint(speciesn,dgene_annotp,dintact_rawp=None,force=False):
         """
@@ -228,7 +228,7 @@ class intact():
 
         file format https://github.com/HUPO-PSI/miTab/blob/master/PSI-MITAB27Format.md
         """
-        from rohan.dandage.io_strs import replacemany,get_bracket
+        from rohan.lib.io_strs import replacemany,get_bracket
         if dintact_rawp is None:
             dintact_rawp='database/intact/pub/databases/intact/current/psimitab/intact.pqt'
 

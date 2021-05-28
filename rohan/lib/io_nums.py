@@ -59,7 +59,7 @@ def float2int(x):
             x=int(x)
     return x    
 
-# from rohan.dandage.stat.transform import rescale
+# from rohan.lib.stat.transform import rescale
 # def rescale(a,mn=None):
 #     a=(a-a.min())/(a.max()-a.min())
 #     if not mn is None:

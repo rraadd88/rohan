@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 from Bio import SeqIO,SeqRecord
-from rohan.dandage.io_dfs import *
+from rohan.lib.io_dfs import *
 
 # map ids
 
@@ -163,7 +163,7 @@ def get_sequence_batch(queries,fap,interval=1000,params_get_sequence={'organism_
         f.write(text)
     return fap
 
-from rohan.dandage.io_sys import runbashcmd
+from rohan.lib.io_sys import runbashcmd
 def uniproitid2seq(id,fap='tmp.fasta'):
     runbashcmd(f"wget https://www.uniprot.org/uniprot/{id}.fasta -O {fap}")
     from Bio import SeqIO
@@ -196,7 +196,7 @@ def compare_uniprot2ensembl(uid,ensp,ensembl,test=False):
         return False
 #         logging.info('lengths not equal')     
 
-# from rohan.dandage.db.ensembl import enst2prtseq
+# from rohan.lib.db.ensembl import enst2prtseq
 # def filter_compare_uniprot2ensembl(df,coluid,colensp,test=False): 
 # #     id2seq={}
 # #     for record in SeqIO.parse(fap, "fasta"):
@@ -210,7 +210,7 @@ def compare_uniprot2ensembl(uid,ensp,ensembl,test=False):
 #     }),release=95)
 #     return=df.apply(lambda x: compare_uniprot2ensembl(x[coluid],x[colensp],ensembl=ensembl,test=test),axis=1)
     
-from rohan.dandage.io_seqs import ids2seqs2fasta
+from rohan.lib.io_seqs import ids2seqs2fasta
 from Bio import SeqIO,SeqRecord
 def normalise_uniprot_fasta(fap,test=True):
     faoutp=f"{fap}.normalised.fasta"
@@ -229,11 +229,11 @@ def normalise_uniprot_fasta(fap,test=True):
 ## sequence features
 
 # from rohan.global_imports import *
-# from rohan.dandage.io_dict import to_dict,read_dict
+# from rohan.lib.io_dict import to_dict,read_dict
 
 def uniprotid2features(uniprotid,databasep='data/database',force=False,out_dict=True):
-    from rohan.dandage.io_dfs import read_table,to_table
-    from rohan.dandage.io_dict import read_dict,to_dict
+    from rohan.lib.io_dfs import read_table,to_table
+    from rohan.lib.io_dict import read_dict,to_dict
     dp=f'{databasep}/uniprot/{uniprotid}.json'
     dfp=f'{databasep}/uniprot/{uniprotid}.tsv'
     if all([exists(dp),exists(dfp)]) and not force:
@@ -273,7 +273,7 @@ def uniprotid2features(uniprotid,databasep='data/database',force=False,out_dict=
     df1=pd.concat(dfs,axis=0)
     def get_feature_name(s):
         if len(s['feature description'])>1:
-            from rohan.dandage.io_dict import str2dict
+            from rohan.lib.io_dict import str2dict
             d=str2dict(s['feature description'])
             return d['Note'] if 'Note' in d else d['ID'] if 'ID' in d else s['feature type']
     df1['feature name']=df1.apply(lambda x: get_feature_name(x),axis=1)

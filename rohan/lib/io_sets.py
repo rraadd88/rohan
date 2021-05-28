@@ -116,7 +116,7 @@ compare_lists_jaccard=intersections
 
 ## stats
 def jaccard_index_df(df):
-    from rohan.dandage.io_sets import jaccard_index_dict
+    from rohan.lib.io_sets import jaccard_index_dict
     return jaccard_index_dict(df.apply(lambda x: dropna(x)).to_dict())
 
 def jaccard_index(l1,l2):

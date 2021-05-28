@@ -2,12 +2,12 @@ import warnings
 warnings.filterwarnings(action='ignore')
 
 from rohan.global_imports import * 
-from rohan.dandage.io_sys import runbashcmd
+from rohan.lib.io_sys import runbashcmd
 import logging
 
 from Bio import SeqIO
-from rohan.dandage.io_seqs import *
-from rohan.dandage.align.deepseq import get_aligned,get_daligned
+from rohan.lib.io_seqs import *
+from rohan.lib.align.deepseq import get_aligned,get_daligned
 
 def get_alignment_score_coff(barcode2bcr1r2):
     """
@@ -87,7 +87,7 @@ def demultiplex_readids(fastqr1_reads,fastqr2_reads,
         else:
             return get_align_metrics(align_global(s1,s2))[1]
         
-    from rohan.dandage.io_dict import sort_dict
+    from rohan.lib.io_dict import sort_dict
     barcode2reads={sample:[] for sample in list(barcode2bcr1r2.keys())+["undetermined_barcode","undetermined_linker"]}
     for ri,(r1,r2) in enumerate(zip(fastqr1_reads,fastqr2_reads)):
         if test and np.remainder(ri,100000)==0:
@@ -174,7 +174,7 @@ def check_undetermined(cfg,readids,sample,test=False):
     get_daligned(dirp,method='global',)
 
 def get_read_counts_bystep(cfg):
-    from rohan.dandage.align.deepseq import get_read_counts_from_log
+    from rohan.lib.align.deepseq import get_read_counts_from_log
     doutp=f"{cfg['prjd']}/data_demultiplex_qc/dcoverage.tsv"
     dcoverage=read_table(doutp)
     barcode2readids=read_dict(cfg['barcode2readidsp'])
@@ -348,7 +348,7 @@ def run_demupliplex(cfg,test=False):
     to_dict(cfg,cfgp_)
 
     # get the logger running
-    from rohan.dandage.io_strs import get_logger,get_datetime
+    from rohan.lib.io_strs import get_logger,get_datetime
     if cfg['test']:
         level=logging.INFO
     else: 

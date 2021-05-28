@@ -7,7 +7,7 @@ from glob import glob
 import pandas as pd
 import subprocess
 import logging
-from rohan.dandage.io_sys import runbashcmd    
+from rohan.lib.io_sys import runbashcmd    
 
 #use good old bash programs for speed
 # bed_colns = ['chromosome','start','end','id','NM','strand']

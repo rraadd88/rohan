@@ -3,7 +3,7 @@ import sys
 from os.path import dirname,basename,abspath,isdir
 import logging
 
-# import rohan.dandage.io_dfs
+# import rohan.lib.io_dfs
 def get_deps(cfg=None,deps=[]):
     import logging
     """
@@ -129,7 +129,7 @@ def ps2time(ps,**kws_p2time):
     return pd.Series({p:p2time(p,**kws_p2time) for p in ps}).sort_values().reset_index().rename(columns={'index':'p',0:'time'})
     
 ## logging system
-from rohan.dandage.io_strs import make_pathable_string
+from rohan.lib.io_strs import make_pathable_string
 def get_datetime(outstr=True):
     import datetime
     time=datetime.datetime.now()

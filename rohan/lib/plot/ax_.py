@@ -2,7 +2,7 @@ from rohan.global_imports import *
 
 ## ticklabels
 
-from rohan.dandage.plot.colors import color_ticklabels
+from rohan.lib.plot.colors import color_ticklabels
 
 def rename_ticklabels(ax,axis,rename):
     k=f"{axis}ticklabels"
@@ -236,7 +236,6 @@ def set_logo(imp,ax,
                  'interpolation':'catrom'},
              test=False,force=False):
     """
-    %run ../../../rohan/rohan/dandage/plot/ax_.py
     # fig, ax = plt.subplots()
     for figsize in [
     #                     [4,3],[3,4],
@@ -258,7 +257,7 @@ def set_logo(imp,ax,
                 )    
         plt.tight_layout()
     """
-    from rohan.dandage.figs.convert import vector2raster
+    from rohan.lib.figs.convert import vector2raster
     if isinstance(imp,str):
         if splitext(imp)[1]=='.svg':
             pngp=vector2raster(imp,force=force)
@@ -319,7 +318,7 @@ def set_logos(label,element2color,ax=None,test=False):
                         element2color['hybrid'] if interactor1!=interactor2 else element2color[interactor1],
                         element2color[interactor2]],
                          linestyle=':' if interactor1!=interactor2 else '-')
-#     from rohan.dandage.plot import ax_ as ax_funs
+#     from rohan.lib.plot import ax_ as ax_funs
 #     [getattr(ax_funs,fun)(ax=ax,**fun2params[fun]) for fun in fun2params]
     _=[globals()[fun](ax=ax,**fun2params[fun]) for fun in fun2params]
     return ax
@@ -348,7 +347,7 @@ def plot_axvmetrics(ax,ds,label='',stat='mean std',color='#D3D3D3',
                     alpha=0.1,
 #                     **kws_saturate_color=
                    ):
-#     from rohan.dandage.plot.colors import saturate_color
+#     from rohan.lib.plot.colors import saturate_color
     if stat=='mean std':
         ax.axvline(ds.mean(),
                   color='lightgray',label=f'$\mu$ {label}',zorder=1)

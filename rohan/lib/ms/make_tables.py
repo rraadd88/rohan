@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-from rohan.dandage.figs.figure import *
+from rohan.lib.figs.figure import *
     
 def fun2dplot(fun,test=False,colsindex=[],ret_params=False):
     paramsp,dplotp=plotfun2ps(fun,test=False)

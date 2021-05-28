@@ -31,7 +31,7 @@ def plot_value_counts(df,col,logx=False,
         axbar=axes
     _=dplot.plot.barh(ax=axbar,legend=False,**kws_bar)
     axbar.set_xlabel('count')
-    from rohan.dandage.io_strs import linebreaker
+    from rohan.lib.io_strs import linebreaker
     axbar.set_ylabel(col.replace(' ','\n'))
     if logx:
         if hist:
@@ -67,15 +67,15 @@ def plot_barh_stacked_percentage(df1,coly,colannot,
     :params coly: yticklabels, e.g. retained and dropped 
     :params colannot: col to annot
     """
-    from rohan.dandage.plot.ax_ import get_ticklabel2position
-    from rohan.dandage.plot.colors import get_colors_default
+    from rohan.lib.plot.ax_ import get_ticklabel2position
+    from rohan.lib.plot.colors import get_colors_default
     if color is None:
         color=get_colors_default()[0]
     ax=plt.subplot() if ax is None else ax
     df2=df1.set_index(coly).apply(lambda x: (x/sum(x))*100, axis=1)
     ax=df2.plot.barh(stacked=True,ax=ax)
     ticklabel2position=get_ticklabel2position(ax,'y')
-    from rohan.dandage.plot.colors import saturate_color
+    from rohan.lib.plot.colors import saturate_color
     _=df2.reset_index().apply(lambda x: ax.text(1,
                                                   ticklabel2position[x[coly]]-yoff,
                                                   f"{x[colannot]:.1f}%",ha='left',va='center',
@@ -125,7 +125,7 @@ def plot_bar_intersections(dplot,cols=None,colvalue=None,
     elif isinstance(dplot,pd.Series):
         ds=dplot.copy()
     ds2=(ds/ds.sum())*100
-    # from rohan.dandage.io_strs import linebreaker
+    # from rohan.lib.io_strs import linebreaker
     # ds.index.names=[linebreaker(s,break_pt=25) for s in ds.index.names]
     import upsetplot as up
 #     fig=plt.figure()

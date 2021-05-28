@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-from rohan.dandage.io_seqs import *
+from rohan.lib.io_seqs import *
 
 def get_nucleotide_mutmats(daligned):
     dvalue_counts=daligned.apply(pd.value_counts)
@@ -26,7 +26,7 @@ def plot_dntmat_mut(dntmat_mut,plotp,title,params_ax_set={},yaxis_fmt='%1.1e'):
 def get_codon_mutations(cfg,test=False):
     if not 'test' in cfg:
         cfg['test']=test
-    from rohan.dandage.io_strs import replacebyposition
+    from rohan.lib.io_strs import replacebyposition
     dbarcodes=read_table(cfg['dbarcodesp'])
     if not 'sample name' in dbarcodes: #TODO deprecate; make a template for dbarcode
         dbarcodes=dbarcodes.sort_values(by=['Locus','Position_DMS'])
@@ -117,7 +117,7 @@ def plot_mutmat(dplot,refn,
     dplot.columns.name='position reference'
     if log:
         dplot=dplot.applymap(np.log10).replace([np.inf, -np.inf], np.nan)
-    from rohan.dandage.plot.annot import annot_heatmap 
+    from rohan.lib.plot.annot import annot_heatmap 
     plt.figure(figsize=[(len(dplot.columns)/2.25)*scale_figsize,
                         (len(dplot.index)/2.5)*scale_figsize])
     ax=plt.subplot()

@@ -1,17 +1,17 @@
 import inspect
 from glob import glob
 from os.path import basename,dirname,exists,splitext,abspath
-from rohan.dandage.io_files import basenamenoext
-from rohan.dandage.io_sets import sort_list_by_list
+from rohan.lib.io_files import basenamenoext
+from rohan.lib.io_sets import sort_list_by_list
 import logging
-from rohan.dandage.io_dict import read_dict,to_dict
+from rohan.lib.io_dict import read_dict,to_dict
 
 import pandas as pd
 pd.options.mode.chained_assignment = None
 
 # auto scripts
 def notebook2packagescript(notebookp,test=False):
-    from rohan.dandage.io_sets import unique
+    from rohan.lib.io_sets import unique
     import pandas as pd
     print(notebookp)
     d1=read_dict(notebookp,fmt='json',encoding="utf8")
@@ -47,7 +47,7 @@ def notebook2packagescript(notebookp,test=False):
     df1.loc[:,'path output']=df1['code raw'].apply(get_path_output)
     df1=df1.log.dropna(subset=['path output'])
     if test:
-        from rohan.dandage.io_dfs import to_table
+        from rohan.lib.io_dfs import to_table
         to_table(df1,'test/notebook2packagescript.tsv')
     df1.loc[:,'parameter output']=df1['path output'].apply(lambda x: basenamenoext(x)+'p')
     def get_paths_input(s):
@@ -72,7 +72,7 @@ def notebook2packagescript(notebookp,test=False):
     df1.loc[:,'function line']=df1.apply(lambda x: f"def {x['function name']}({','.join(x['parameters'])}):",axis=1)
 
     def get_code(x):
-        from rohan.dandage.io_strs import replacemany
+        from rohan.lib.io_strs import replacemany
         code=replacemany(x['code raw'],{f"'{x['path output']}'":x['parameter output'],
         f"\"{x['path output']}\"":x['parameter output']})
         code=replacemany(code,dict(zip([f"'{s}'" for s in x['paths input']],x['parameters input'])))
@@ -153,7 +153,7 @@ def get_modulen2funn2params_by_package(package,module_exclude,modulen_prefix=Non
 def get_modulen2funn2params_for_run(modulen2funn2params,cfg,
                                     force=False,
                                     paramns_binary=['force','test','debug','plot']):
-    from rohan.dandage.io_strs import replacemany
+    from rohan.lib.io_strs import replacemany
     logging.info('steps in the workflow')
     for modulen in modulen2funn2params:
 #         print(sort_stepns(list(modulen2funn2params[modulen].keys())))
@@ -193,7 +193,7 @@ def get_modulen2funn2params_for_run(modulen2funn2params,cfg,
                         modulen2funn2params[modulen][funn][paramn]=False                        
                 else:
                     logging.error(f"paramn: {paramn} not found for {modulen}.{funn}:{paramn}")
-                    from rohan.dandage.io_dict import to_dict
+                    from rohan.lib.io_dict import to_dict
                     to_dict(modulen2funn2params,'test/modulen2funn2params.json')
                     to_dict(cfg,'test/cfg.json')
                     logging.error(f"check test/modulen2funn2params,cfg for debug")
@@ -215,11 +215,11 @@ def run_get_modulen2funn2params_for_run(package,modulen2funn2params_for_run):
             
 def get_dparams(modulen2funn2params):
     import pandas as pd
-    from rohan.dandage.io_dfs import coltuples2str,merge_dfpairwithdf,split_lists
+    from rohan.lib.io_dfs import coltuples2str,merge_dfpairwithdf,split_lists
     dn2df={}
     for k1 in modulen2funn2params:
     #     print({k2:k2.split('_')[0][-1:] for k2 in modulen2funn2params[k1] if re.search('\d\d_','curate0d0_dms')})
-        from rohan.dandage.io_dfs import dict2df
+        from rohan.lib.io_dfs import dict2df
         dfs_={k2:dict2df(modulen2funn2params[k1][k2]) for k2 in modulen2funn2params[k1] if re.search('\d\d_',k2)}
         if len(dfs_)!=0:
             dn2df[k1]=pd.concat(dfs_,axis=0)
@@ -275,7 +275,7 @@ def plot_workflow_log(dplot):
                         len(dplot)*0.5+2,])
     ax=plt.subplot(1,5,2)
     #     ax=plt.subplot()
-    from rohan.dandage.plot.colors import saturate_color
+    from rohan.lib.plot.colors import saturate_color
     elements=[
                 'script',
                 'function',
@@ -362,7 +362,7 @@ def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
     if len(reruns)!=0 and not all([modulen2funn2params[k][k_] is None for k in modulen2funn2params for k_ in modulen2funn2params[k]]):
         ax=plot_workflow_log(dparam)
         import matplotlib.pyplot as plt
-        from rohan.dandage.figs.figure import savefig
+        from rohan.lib.figs.figure import savefig
         plt.subplots_adjust(left=0.2, right=0.9, top=0.9, bottom=0.1)
         savefig(f"{cfg['prjd']}/plot_workflow_log.svg",tight_layout=False)
     return cfg
@@ -382,7 +382,7 @@ def git_commit(repop,suffix_message=''):
         repo.index.commit('auto-update'+suffix_message)
 
     if len(repo.untracked_files)!=0:
-        from rohan.dandage import input_binary
+        from rohan.lib import input_binary
         print(len(repo.untracked_files),'untracked file/s in the repo:',repo.untracked_files)
         yes=input_binary("add all of them? [y/n]")
         if yes:
@@ -411,7 +411,7 @@ def git_notebooks(packagen,packagep,notebooksdp=None,validate=False,test=False):
     df1.index.name='step name'
     df1=df1.sort_index().reset_index()
     if validate:
-        from rohan.dandage.io_fun import notebook2packagescript
+        from rohan.lib.io_fun import notebook2packagescript
         df1['script text']=df1['notebook path'].progress_apply(lambda x: notebook2packagescript(x,validate=validate,test=test))
     else:
         df1['script text']=df1['notebook path'].progress_apply(lambda x: notebook2script(x))

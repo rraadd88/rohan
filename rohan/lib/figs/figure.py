@@ -1,6 +1,6 @@
 from rohan.global_imports import *
-from rohan.dandage.plot.annot import add_corner_labels
-from rohan.dandage.io_sys import is_interactive_notebook
+from rohan.lib.plot.annot import add_corner_labels
+from rohan.lib.io_sys import is_interactive_notebook
 
 def get_subplots(nrows,ncols,total=None):
     idxs=list(itertools.product(range(nrows),range(ncols)))
@@ -80,7 +80,7 @@ def savefig(plotp,
             normalise_path=True,
             dpi=500,
            **kws_ax2plotp):
-#         from rohan.dandage.plot.ax_ import ax2plotp
+#         from rohan.lib.plot.ax_ import ax2plotp
     plotp=ax2plotp(plotp,**kws_ax2plotp)
     if exists(plotp):
         logging.warning(f"overwritting: {plotp}")    

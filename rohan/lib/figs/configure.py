@@ -1,7 +1,7 @@
 import pandas as pd
 from os.path import exists,splitext,basename,dirname,abspath
 from os import makedirs
-from rohan.dandage.io_sys import runbashcmd
+from rohan.lib.io_sys import runbashcmd
 import string
 import svgutils.transform as sg
 from lxml import etree
@@ -44,7 +44,7 @@ def get_plots(plotp,doutp,force=False,symbols=False):
             runbashcmd(f"pdftocairo -svg {plotrawp} {plotsvgp}")
     return abspath(plotsvgp)
 
-from rohan.dandage.io_strs import str2num
+from rohan.lib.io_strs import str2num
 def len2inches(h):
     if 'pt' in h:
         return str2num(h)/72
@@ -72,7 +72,7 @@ def get_svg_size(p,testp='test.txt',test=False):
 #             logging.error(f'can not read {p}')
     return w,h
 
-from rohan.dandage.io_dfs import *
+from rohan.lib.io_dfs import *
 def configure(dcfg,doutp,force=False):
     if not exists(doutp):
         makedirs(doutp,exist_ok=True)
@@ -126,7 +126,7 @@ def make_figs(dcfg,dp='figs',force=False):
             runbashcmd(f"cd {dirname(templatep)};git pull")    
         except:
             logging.error('can not pull in masonry.git')
-    from rohan.dandage.io_files import fill_form   
+    from rohan.lib.io_files import fill_form   
     for figi in dcfg['figi'].unique():
 #         if len(dcfg.loc[(dcfg['ploti']==figi),:])>0:
         htmlp=dcfg.loc[(dcfg['figi']==figi),'fightmlp'].unique()[0]
@@ -145,7 +145,7 @@ def make_figs(dcfg,dp='figs',force=False):
             runbashcmd(f'google-chrome --headless --disable-gpu --virtual-time-budget=10000 --print-to-pdf={htmlp}.pdf {htmlp}')
             print(htmlp)
             
-    from rohan.dandage.figs.convert import vectors2rasters
+    from rohan.lib.figs.convert import vectors2rasters
     vectors2rasters(doutp,ext='pdf')
     #     break
 ##--

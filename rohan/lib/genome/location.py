@@ -10,7 +10,7 @@ def get_chr_loc_type(l,ignore=['MT']):
         return 'same'
 
 ## coords (ranges)
-from rohan.dandage.io_sets import range_overlap
+from rohan.lib.io_sets import range_overlap
 
 def get_direction():
     """

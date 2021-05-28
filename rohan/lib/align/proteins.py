@@ -68,7 +68,7 @@ def get_dnds(x,pal2nald,clustalop,codemlp,dndsd,fastad,test=False):
                                       [x[f'{seqtype}1 sequence'],x[f'{seqtype}2 sequence']])),
                    fastap=fastap)
 
-    from rohan.dandage.io_sys import runbashcmd
+    from rohan.lib.io_sys import runbashcmd
     from os.path import abspath
     # tmpd='codeml/tmp/'
     codemltxtp=f"{abspath(seqtype2fastap['protein'])}.codeml.txt"
@@ -91,7 +91,7 @@ def get_dnds(x,pal2nald,clustalop,codemlp,dndsd,fastad,test=False):
     
 def align_blast(subjectfap,queryfaps,test=False,outdp='.'):
     com=f"diamond makedb --in {subjectfap} -d {basenamenoext(subjectfap)}"
-    from rohan.dandage.io_sys import runbashcmd
+    from rohan.lib.io_sys import runbashcmd
     print(com) if test else runbashcmd(com,test=True)
     for queryfap in queryfaps:
         com=f"diamond blastp --more-sensitive --threads 5 -d {basenamenoext(subjectfap)} -q {queryfap} -o {outdp}/{basenamenoext(queryfap)}.m8"

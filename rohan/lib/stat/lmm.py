@@ -53,8 +53,8 @@ def plot_residuals_verusus_groups(model):
     ax.set_xlabel("groups")
     return ax
 def plot_model_sanity(model):
-    from rohan.dandage.plot.scatter import plot_qq 
-    from rohan.dandage.plot.dist import plot_normal 
+    from rohan.lib.plot.scatter import plot_qq 
+    from rohan.lib.plot.dist import plot_normal 
     plot_normal(x=model.resid)
     plot_qq(x=model.resid)
     plot_residuals_versus_fitted(model)

@@ -43,7 +43,7 @@ def compare_bools_jaccard(x,y):
     return np.double(np.bitwise_and(x, y).sum()) / np.double(np.bitwise_or(x, y).sum())
 
 def compare_bools_jaccard_df(df):
-    from rohan.dandage.stat.binary import compare_bools_jaccard
+    from rohan.lib.stat.binary import compare_bools_jaccard
     dmetrics=pd.DataFrame(index=df.columns.tolist(),columns=df.columns.tolist())
     for c1i,c1 in enumerate(df.columns):
         for c2i,c2 in enumerate(df.columns):

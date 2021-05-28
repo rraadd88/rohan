@@ -1,6 +1,6 @@
 from rohan.global_imports import *
-from rohan.dandage.plot.colors import *
-from rohan.dandage.plot.annot import *
+from rohan.lib.plot.colors import *
+from rohan.lib.plot.annot import *
 
 def annot_submap(ax,dplot,colx,coly,cols,
                        markers,sizes,linewidths,
@@ -67,8 +67,8 @@ def get_clusters(clustergrid,axis=0,criterion='maxclust',clusters_fraction=0.25)
     dclst=dclst.sort_values(by='cluster #')
     return dclst
 
-from rohan.dandage.plot.annot import annot_heatmap
-from rohan.dandage.stat.corr import corrdfs
+from rohan.lib.plot.annot import annot_heatmap
+from rohan.lib.stat.corr import corrdfs
 def heatmap_corr(dplot, ax=None,params_heatmap={}):
     if ax is None:ax=plt.subplot(111)
     dcorr,dpval=corrdfs(dplot,dplot,method='spearman')

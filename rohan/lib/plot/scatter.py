@@ -1,6 +1,6 @@
 from rohan.global_imports import *
-from rohan.dandage.io_strs import make_pathable_string
-# from rohan.dandage.io_fun import add_method_to_class
+from rohan.lib.io_strs import make_pathable_string
+# from rohan.lib.io_fun import add_method_to_class
 # from rohan.global_imports import rd
 
 #rasterized=True
@@ -13,13 +13,13 @@ def annot_stats(dplot,colx,coly,colz,
             params_set_label={},
             ax=None):
     stat_method = [stat_method] if isinstance(stat_method,str) else stat_method
-    from rohan.dandage.plot.ax_ import set_label
+    from rohan.lib.plot.ax_ import set_label
     if 'mlr' in stat_method:
-        from rohan.dandage.stat.poly import get_mlr_2_str
+        from rohan.lib.stat.poly import get_mlr_2_str
         ax=set_label(ax,label=get_mlr_2_str(dplot,colz,[colx,coly]),
                     title=True,params={'loc':'left'})
     if 'spearman' in stat_method or 'pearson' in stat_method:
-        from rohan.dandage.stat.corr import get_corr
+        from rohan.lib.stat.corr import get_corr
         ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],
                                        bootstrapped=bootstrapped,
                                        outstr=True,n=True),
@@ -84,21 +84,21 @@ def plot_scatter(dplot,colx,coly,colz=None,
         ax=ax,
         **params_plot,
         )
-    from rohan.dandage.plot.ax_ import set_label_colorbar
+    from rohan.lib.plot.ax_ import set_label_colorbar
 #     print(colz)
     ax=set_label_colorbar(ax,colz if label_colorbar is None else label_colorbar)
-    from rohan.dandage.plot.ax_ import set_label
+    from rohan.lib.plot.ax_ import set_label
     if 'mlr' in stat_method:
-        from rohan.dandage.stat.poly import get_mlr_2_str
+        from rohan.lib.stat.poly import get_mlr_2_str
         ax=set_label(ax,label=get_mlr_2_str(dplot,colz,[colx,coly]),
                     title=True,params={'loc':'left'})
     if 'spearman' in stat_method or 'pearson' in stat_method:
-        from rohan.dandage.stat.corr import get_corr
+        from rohan.lib.stat.corr import get_corr
         ax=set_label(ax,label=get_corr(dplot[colx],dplot[coly],method=stat_method[0],
                                        bootstrapped=bootstrapped,
                                        outstr=True,n=True),
                     **params_set_label)
-    from rohan.dandage.plot.colors import saturate_color
+    from rohan.lib.plot.colors import saturate_color
     plot_trendline(dplot,colx,coly,
                     params_plot={'color':saturate_color(params_plot['color']) if 'color' in params_plot else None,
                                  'linestyle':'solid','lw':2},
@@ -134,7 +134,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         ax.set_xscale("log", nonposx='clip')
         ax.set_yscale("log", nonposy='clip')
     if trendline:
-        from rohan.dandage.plot.colors import saturate_color
+        from rohan.lib.plot.colors import saturate_color
         coef = np.polyfit(d[xcol], d[ycol],1)
         poly1d_fn = np.poly1d(coef) 
         # poly1d_fn is now a function which takes in x and returns an estimate for y
@@ -146,7 +146,7 @@ def plot_reg(d,xcol,ycol,textxy=[0.65,1],
         xys_lowess=lowess(d[ycol], d[xcol],frac=0.9,it=20)
         ax.plot(xys_lowess[:,0],xys_lowess[:,1], linestyle='--',
                 color=params_scatter['color'] if 'color' in params_scatter else None)
-    from rohan.dandage.stat.corr import get_corr
+    from rohan.lib.stat.corr import get_corr
     textstr=get_corr(d[xcol],d[ycol],method=method,bootstrapped=bootstrapped,outstr=True)#.replace('\n',', ')
     if title_stat:
         ax.set_title(textstr)            
@@ -176,7 +176,7 @@ def plot_corr(dplot,x,y,ax=None,params_sns_regplot={},params_ax={}):
     ax.set(**params_ax)
     return ax
 
-from rohan.dandage.plot.ax_ import *    
+from rohan.lib.plot.ax_ import *    
 def plot_scatterbysubsets(df,colx,coly,colannot,
                         ax=None,dfout=False,
                           kws_dfannot2color={'cmap':'spring'},
@@ -188,7 +188,7 @@ def plot_scatterbysubsets(df,colx,coly,colannot,
         dfout=True
     if ax is None:ax=plt.subplot()
     if annot2color is None:
-        from rohan.dandage.plot.annot import dfannot2color
+        from rohan.lib.plot.annot import dfannot2color
         df,annot2color=dfannot2color(df,colannot,renamecol=False,
                                      test=test,
                                      **kws_dfannot2color)
@@ -219,7 +219,7 @@ def plot_scatter_agg(dplot,colgroupby,colx,coly,
                      params_legend=dict(loc=2,bbox_to_anchor=[1,1]),
                      ax=None):
     ax=plt.subplot() if ax is None else ax
-    from rohan.dandage.stat.variance import confidence_interval_95
+    from rohan.lib.stat.variance import confidence_interval_95
     dplot2=dplot.groupby(colgroupby).agg({k:[np.median,confidence_interval_95] for k in [colx,coly]})
     dplot2.columns=coltuples2str(dplot2.columns)
     dplot2=dplot2.reset_index()
@@ -233,7 +233,7 @@ def plot_scatter_agg(dplot,colgroupby,colx,coly,
         
 def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary',cmap_child='Reds'):
 #     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-    from rohan.dandage.plot.ax_ import set_legend_custom
+    from rohan.lib.plot.ax_ import set_legend_custom
     import circlify as circ
     
     dplot=dplot.rename(columns={circvar2col[k]:k for k in circvar2col})
@@ -242,7 +242,7 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
     data=dplot.groupby(['parent id','parent datum']).apply(lambda df: {'id': df.loc[:,'parent id'].unique()[0],
                                                                       'datum': df.loc[:,'parent datum'].unique()[0],
                                                               'children':list(df.loc[:,['child id','child datum']].rename(columns={c:c.split(' ')[1] for c in ['child id','child datum']}).T.to_dict().values())}).tolist()
-    from rohan.dandage.plot.colors import get_val2color,get_cmap_subset
+    from rohan.lib.plot.colors import get_val2color,get_cmap_subset
     type2params_legend={k:{'title':circvar2col[f"{k} color"]} for k in ['child','parent'] if f"{k} color" in circvar2col}
     if "child color" in circvar2col:
         dplot['child color'],type2params_legend['child']['data']=get_val2color(dplot['child color'],cmap=cmap_child)
@@ -275,7 +275,7 @@ def plot_circlify(dplot,circvar2col,threshold_side=0,ax=None,cmap_parent='binary
 #                      ha='center',
 #                     color='r' if 'child' in circle.ex else 'b')
     ax.plot()
-#     from rohan.dandage.io_strs import linebreaker
+#     from rohan.lib.io_strs import linebreaker
     lw=2
     color='k'
     for side in lineside2params:
@@ -347,7 +347,7 @@ def plot_qq(x):
               line = 's', 
               ax=ax)
     ax.set_title("SW test "+pval2annot(sc.stats.shapiro(x)[1],alpha=0.05,fmt='<',linebreak=False))
-    from rohan.dandage.plot.ax_ import set_equallim
+    from rohan.lib.plot.ax_ import set_equallim
     ax=set_equallim(ax)
     return ax
 

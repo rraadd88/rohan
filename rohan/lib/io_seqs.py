@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from Bio import SeqIO,SeqRecord,Seq
-from rohan.dandage.io_dfs import *
+from rohan.lib.io_dfs import *
 import logging
 
 ##vars
@@ -290,7 +290,7 @@ def ids2seqs2fasta(ids2seqs,fastap):
     
 ## generate mutations
 def seq_with_substitution(record,pos,sub,test=False):
-    from rohan.dandage.io_strs import replacebyposition    
+    from rohan.lib.io_strs import replacebyposition    
     subfrom=sub[0]
     subto=sub[-1]
     seq=str(record.seq)

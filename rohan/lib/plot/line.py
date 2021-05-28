@@ -42,7 +42,7 @@ def plot_connections(dplot,label2xy,colval='$r_{s}$',line_scale=40,legend_title=
     dplot['column xy']=dplot['column'].map(label2xy)
     
     ax=plt.subplot() if ax is None else ax
-    from rohan.dandage.plot.ax_ import set_logos,get_subplot_dimentions
+    from rohan.lib.plot.ax_ import set_logos,get_subplot_dimentions
     patches=[]
     label2xys_rectangle_centers={}
     for label in label2xy:
@@ -115,7 +115,7 @@ def plot_groupby_qbin(dplot,bins,
                       ticklabels_precision=1,
                       **params_pointplot,
                      ):
-    from rohan.dandage.stat.transform import get_qbins
+    from rohan.lib.stat.transform import get_qbins
     d=get_qbins(dplot.set_index(colindex)[f"{colx}"],bins, 'mid')
     d={k:"{:.{}f}".format(d[k],ticklabels_precision) for k in d}
     d={k:int(d[k]) if ticklabels_precision==0 else float(d[k]) for k in d}

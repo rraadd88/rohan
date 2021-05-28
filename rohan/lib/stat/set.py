@@ -2,7 +2,7 @@ from rohan.global_imports import *
 
 # set enrichment
 def get_intersection_stats(df,coltest,colset,background_size=None):
-    from rohan.dandage.stat.binary import compare_bools_jaccard
+    from rohan.lib.stat.binary import compare_bools_jaccard
     from scipy.stats import hypergeom,fisher_exact
     """
     :param background: size of the union (int)
@@ -53,7 +53,7 @@ def get_set_enrichment_stats(test,sets,background,fdr_correct=True):
 
 def test_set_enrichment(tests_set2elements,test2_set2elements,background_size):
     from tqdm import tqdm
-    from rohan.dandage.io_sets import list2union
+    from rohan.lib.io_sets import list2union
     dn2df={}
     for test1n in tqdm(tests_set2elements):
         for test2n in test2_set2elements:

@@ -38,7 +38,7 @@ def make_figure_src(
     outd,
     ind,
     plots_imports='from rohan.global_imports import *',
-    figures_imports='from rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\nfrom rohan.dandage.plot.schem import *\nfrom .plots import *\nimport warnings\nwarnings.filterwarnings("ignore")',
+    figures_imports='from rohan.global_imports import *\nfrom rohan.lib.figs.figure import *\nfrom rohan.lib.plot.schem import *\nfrom .plots import *\nimport warnings\nwarnings.filterwarnings("ignore")',
     replaces={'plot_schem("plot/':'plot_schem(f"{ind}/plot/',
               "plot_schem('plot/":"plot_schem(f'{ind}/plot/",
               '"logos/':'f"{dirname(__file__)}/var/logos/',
@@ -52,7 +52,7 @@ def make_figure_src(
     
     """
     ind,outd=abspath(ind),abspath(outd)
-    from rohan.dandage.io_strs import replacemany    
+    from rohan.lib.io_strs import replacemany    
     plots_logp=f"{ind}/log_00_metaanalysis.log.py"   
     figure_nbp=sorted(glob(f"{ind}/figures*.ipynb"))[-1]
     replace_fullpath=abspath(ind)+'/'        
@@ -60,7 +60,7 @@ def make_figure_src(
     figures_outp=f'{outd}/figures.py'
     if test:
         print(plots_logp,figure_nbp,replace_fullpath,plots_outp,figures_outp)
-    from rohan.dandage.io_fun import scriptp2modules
+    from rohan.lib.io_fun import scriptp2modules
     plotns=scriptp2modules(plots_logp)
     plotns=[s for s in plotns if not s.startswith('_')]
     text= open(plots_logp,'r').read()
@@ -71,12 +71,12 @@ def make_figure_src(
     clean_figure_nb(figure_nbp,
                    figure_clean_nbp,
                    clear_outputs=True)
-    from rohan.dandage.io_fun import notebook2script
+    from rohan.lib.io_fun import notebook2script
     figure_clean_pyp=notebook2script(notebookp=figure_clean_nbp)
 
     figtext= open(figure_clean_pyp,'r').read()
     fign2text={s.split('ure')[1].split('\n')[0]:'# ## fig'+s for s in figtext.split('# ## fig') if s.startswith('ure')}
-    from rohan.dandage.io_strs import findall
+    from rohan.lib.io_strs import findall
     fign2plotns={k:findall(fign2text[k],'plot_*([a-zA-Z0-9_]+)',outends=True,outstrs=True) for k in fign2text}
     fign2plotns={k:[s for s in unique(fign2plotns[k]) if s in plotns] for k in fign2plotns}
     ploti_alphabetical=False
@@ -125,7 +125,7 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
     import nbformat
     nb=nbformat.read(figure_nbp,as_version=nbformat.NO_CONVERT)
 
-    nb['cells'][0]['source']="# import\nfrom rohan.global_imports import *\nfrom rohan.dandage.figs.figure import *\n%run plots.py"
+    nb['cells'][0]['source']="# import\nfrom rohan.global_imports import *\nfrom rohan.lib.figs.figure import *\n%run plots.py"
 
     for celli in range(len(nb['cells'])):
         try:
@@ -171,7 +171,7 @@ def clean_figure_nb(figure_nbp,figure_nboutp,clear_images=False,clear_outputs=Fa
     
 def upload_figures(dfigures,presentation_id,folder_id,client_config):
     pandarallel.initialize(nb_workers=4,progress_bar=True)        
-    from rohan.dandage.cloud.google import get_service,upload_file,slides    
+    from rohan.lib.cloud.google import get_service,upload_file,slides    
     print(f'https://docs.google.com/presentation/d/{presentation_id}')
     servicetype2obj={k : get_service(k,access_limit=False,client_config=client_config) for k in ['drive','slides']}
     df0=dfigures.copy()
@@ -218,7 +218,7 @@ def make_figures(packagen,force=False,parallel=False,upload=False,test=False,che
     ds=getattr(df1,'parallel_apply' if parallel else 'progress_apply')(lambda x: apply_figure(x,script,ind=ind,outd=outd,force=force,test=test),axis=1)
     if ds.any():
         outp=f"{outd}/figures/_figures.pdf"
-        from rohan.dandage.io_sys import runbashcmd
+        from rohan.lib.io_sys import runbashcmd
         # TODO parallel -j 8 convert {} -resize ... {} ::: *.png
 #         runbashcmd(f"parallel -j {6} "+"convert {} -resize 500\> -density 100 {}.pdf ::: figures/Figure*.png")
 #         runbashcmd(f"parallel -j {6} "+"convert {} -resize 2000\> {}.jpeg ::: figures/Figure*.png")

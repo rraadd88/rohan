@@ -1,8 +1,8 @@
 from rohan.global_imports import *
-from rohan.dandage.plot.colors import *
-from rohan.dandage.plot.annot import *
-from rohan.dandage.plot.ax_ import *
-from rohan.dandage import add_method_to_class
+from rohan.lib.plot.colors import *
+from rohan.lib.plot.annot import *
+from rohan.lib.plot.ax_ import *
+from rohan.lib import add_method_to_class
 
 @add_method_to_class(rd)
 def plot_dists(dplot,colx,coly,colindex,order,
@@ -30,7 +30,7 @@ def plot_dists(dplot,colx,coly,colindex,order,
     params_dist['order']=order
     params_dist['data']=dplot
     if colhue is None:
-        from rohan.dandage.plot.colors import get_ncolors
+        from rohan.lib.plot.colors import get_ncolors
         ax=sns.violinplot(**params_dist,
                           palette=palette,
                           **params_violin,
@@ -53,7 +53,7 @@ def plot_dists(dplot,colx,coly,colindex,order,
             label2n=dplot.groupby(params_dist['y']).agg({colindex:len})[colindex].to_dict()
             _=[ax.text(ax.get_xlim()[0],y+0.15,f"n={label2n[t.get_text()]}",color='gray',ha='left',va='top') for y,t in enumerate(ax.get_yticklabels())]
         if annot_pval!=False:
-            from rohan.dandage.stat.diff import get_subset2metrics
+            from rohan.lib.stat.diff import get_subset2metrics
             subset2metrics=get_subset2metrics(dplot,
                                     colindex=colindex,
                                     colvalue=params_dist['x'],
@@ -80,7 +80,7 @@ def plot_dists(dplot,colx,coly,colindex,order,
         dplot[params_dist['y']]=dplot[params_dist['y']].astype(str)
         params_dist['order']=[str(i) for i in params_dist['order']]
         def apply_(df):
-            from rohan.dandage.stat.diff import get_subset2metrics
+            from rohan.lib.stat.diff import get_subset2metrics
             subset2metrics=get_subset2metrics(df,
                                     colindex=colindex,
                                     colvalue=params_dist['x'],
@@ -93,7 +93,7 @@ def plot_dists(dplot,colx,coly,colindex,order,
         _=[ax.text(ax.get_xlim()[1],y+0.15,yticklabel2metric[t.get_text()],
                    color='gray',ha='right',va='top') for y,t in enumerate(ax.get_yticklabels()) if t.get_text() in yticklabel2metric]
         ax.legend(bbox_to_anchor=[1,1],title=params_dist['hue'])    
-# from rohan.dandage.plot.ax_ import get_ticklabel2position
+# from rohan.lib.plot.ax_ import get_ticklabel2position
 # yticklabel2y=get_ticklabel2position(ax,'y')
 # _=dplot.groupby(params['y']).agg({params['x']:max}).reset_index().apply(lambda x: ax.text(ax.get_xlim()[1],
 #                                                                                              yticklabel2y[x[params['y']]],
@@ -221,14 +221,14 @@ def plot_dist_comparison_pair(dplot,colx,coly,
                               order,
                               palette=['r','k'],
                              ax=None):
-    from rohan.dandage.plot.colors import saturate_color
+    from rohan.lib.plot.colors import saturate_color
     sns.boxplot(data=dplot,x=colx,y=coly,
                  ax=ax,order=order,palette=[saturate_color(s,0.05) for s in palette],
                 width=0.2,showcaps=False,showfliers=False)
     ax=sns.swarmplot(data=dplot,y=coly,x=colx,
                      ax=ax,order=order,palette=palette,
                     )
-    from rohan.dandage.plot.annot import get_dmetrics
+    from rohan.lib.plot.annot import get_dmetrics
     dmetrics=get_dmetrics(df=dplot,#.dropna(subset=[colx]), 
                           metricsby='xs', colx=coly,coly=colx, 
                  colhue='', xs=dplot[coly].unique(), hues=[], 
@@ -268,7 +268,7 @@ def hist_annot(dplot,colx,
                 params_scatter={'zorder':2,'alpha':0.1,'marker':'|'},
                xlim=None,
                 ax=None):
-    from rohan.dandage.plot.ax_ import reset_legend_colors
+    from rohan.lib.plot.ax_ import reset_legend_colors
     if not xlim is None:
         logging.warning('colx adjusted to xlim')
         dplot.loc[(dplot[colx]<xlim[0]),colx]=xlim[0]
@@ -280,7 +280,7 @@ def hist_annot(dplot,colx,
     if not xlim is None:
         ax.set_xlim(xlim)
     ax.set_ylim(0,ax.get_ylim()[1]*ylimoff)        
-    from rohan.dandage.plot.colors import get_ncolors
+    from rohan.lib.plot.colors import get_ncolors
     colors=get_ncolors(len(colssubsets),cmap=cmap)
     for colsubsetsi,(colsubsets,color) in enumerate(zip(colssubsets,colors)):
         subsets=[s for s in dropna(dplot[colsubsets].unique()) if not (subset_unclassified and s=='unclassified')]
@@ -320,7 +320,7 @@ def plot_gaussianmixture(g,x,
                          ax=None,
                          test=False,
                         ):
-    from rohan.dandage.stat.solve import get_intersection_locations
+    from rohan.lib.stat.solve import get_intersection_locations
     weights = g.weights_
     means = g.means_
     covars = g.covariances_
@@ -384,7 +384,7 @@ def pointplot_join_hues(df1,x,y,hue,hues,
                                                       ax=ax,
                                                      ))
     # ax.legend()
-    from rohan.dandage.plot.ax_ import get_ticklabel2position,sort_legends
+    from rohan.lib.plot.ax_ import get_ticklabel2position,sort_legends
     df1['y']=df1[y].map(get_ticklabel2position(ax,axis='y'))
     df1['hue']=df1[hue].map(dict(zip(hue_order,[-1,1])))*dodge*0.5
     df1['y hue']=df1['y']+df1['hue']
@@ -393,7 +393,7 @@ def pointplot_join_hues(df1,x,y,hue,hues,
                 columns=[hue,],
                 values=[x,'y hue','y','hue'],
                 ).reset_index()#.rd.flatten_columns()
-    from rohan.dandage.plot.colors import get_val2color
+    from rohan.lib.plot.colors import get_val2color
     df2['color'],_=get_val2color(df2[hues],vmin=-0.2,cmap=cmap)
     df2['label']=df2[hues].apply(lambda x: f"{hues}{x:.1f}")
     # x=df2.iloc[0,:]

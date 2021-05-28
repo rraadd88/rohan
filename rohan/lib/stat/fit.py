@@ -160,7 +160,7 @@ def fit_gaussian2d(x,y,z,
         xg,yg,zg=x,y,z
     from astropy.modeling import models,fitting
     if rescalez:
-        from rohan.dandage.stat.transform import rescale
+        from rohan.lib.stat.transform import rescale
         range1=(np.min(zg),np.max(zg))
         zg_=rescale(a=zg, range1=range1, range2=[0, 1])
         

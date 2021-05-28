@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-from rohan.dandage.io_fun import f2params
+from rohan.lib.io_fun import f2params
 
 def f2df(f):
     dplot=read_table(f"{f2params(f)['plotp']}.tsv")
@@ -11,7 +11,7 @@ def f2df(f):
     return dpvals.merge(deffss,left_on=['index','column'],right_on=[colhue,colx])
                           
 def convert_dists2heatmap(label2fun,plotp,colx_dtype,colhue_dtype):
-    from rohan.dandage.plot.annot import get_dmetrics
+    from rohan.lib.plot.annot import get_dmetrics
     label2df={}
     for label in label2fun:
         label2df[label]=f2df(label2fun[label])

@@ -3,7 +3,7 @@ import numpy as np
 import scipy as sc
 import logging
 
-from rohan.dandage import add_method_to_class
+from rohan.lib import add_method_to_class
 from rohan.global_imports import rd
 
 from scipy.stats import spearmanr,pearsonr
@@ -14,8 +14,8 @@ def get_pearsonr(x,y):
     return sc.stats.pearsonr(x,y)
 
 def get_corr_bootstrapped(x,y,method='spearman',ci_type='max'):
-    from rohan.dandage.stat.ml import get_cvsplits
-    from rohan.dandage.stat.variance import get_ci
+    from rohan.lib.stat.ml import get_cvsplits
+    from rohan.lib.stat.variance import get_ci
     cv2xy=get_cvsplits(x,y,cv=5,outtest=False)
     rs=[globals()[f"get_{method}r"](**cv2xy[k])[0] for k in cv2xy]
     return np.mean(rs), get_ci(rs,ci_type=ci_type)
@@ -26,8 +26,8 @@ def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
     """
     between vectors
     """
-    from rohan.dandage.plot.annot import pval2annot
-    from rohan.dandage.io_strs import num2str
+    from rohan.lib.plot.annot import pval2annot
+    from rohan.lib.io_strs import num2str
     if bootstrapped:
         r,ci=get_corr_bootstrapped(x,y,method=method,ci_type=ci_type)
         _,p=globals()[f"get_{method}r"](x, y)
@@ -91,7 +91,7 @@ def corr_between(df1,df2,method):
     df1 in columns
     df2 in rows    
     """
-    from rohan.dandage.io_sets import list2intersection
+    from rohan.lib.io_sets import list2intersection
     index_common=list2intersection([df1.index.tolist(),df2.index.tolist()])
     # get the common indices with loc. it sorts the dfs too.
     df1=df1.loc[index_common,:]
@@ -145,7 +145,7 @@ def corrdfs(df1,df2,
     return df3
 
 # def get_corr_str(r,p):
-#     from rohan.dandage.plot.annot import pval2annot
+#     from rohan.lib.plot.annot import pval2annot
 #     return f"$\\rho$={r:.1e} ({pval2annot(p,fmt='<')})".replace('\n','')
 
 # def get_spearmanr_str(x,y):    
@@ -161,9 +161,9 @@ def get_corr_within(p,
            colgroupby,
            force=False,
            **kws_replacemany):
-    from rohan.dandage.io_strs import replacemany
-    from rohan.dandage.io_files import dirname,basename,basenamenoext,exists
-    from rohan.dandage.io_dfs import read_table,to_table
+    from rohan.lib.io_strs import replacemany
+    from rohan.lib.io_files import dirname,basename,basenamenoext,exists
+    from rohan.lib.io_dfs import read_table,to_table
     outp=replacemany(p,**kws_replacemany)
     if exists(outp) and not force: 
         return
@@ -173,7 +173,7 @@ def get_corr_within(p,
         return
     if colmut in df01:
         df01=df01.loc[((df01[colmut]=='no') & ~(df01['rearrangement fusion'])),:]
-#     from rohan.dandage.stat.corr import corrdf
+#     from rohan.lib.stat.corr import corrdf
     df1=corrdf(df01,
                colindex=colindex,
                colsample=colsample,
@@ -191,9 +191,9 @@ def get_corr_between(p,
            colgroupby=None,
            force=False,
            **kws_replacemany):
-    from rohan.dandage.io_strs import replacemany
-    from rohan.dandage.io_files import dirname,basename,basenamenoext,exists
-    from rohan.dandage.io_dfs import read_table,to_table
+    from rohan.lib.io_strs import replacemany
+    from rohan.lib.io_files import dirname,basename,basenamenoext,exists
+    from rohan.lib.io_dfs import read_table,to_table
     outp=p
     p=replacemany(p,**kws_replacemany)
     ps=[f"{dirname(p)}/{s}.pqt" for s in basenamenoext(outp).split('--')]    
@@ -204,8 +204,7 @@ def get_corr_between(p,
         dfs=[df.loc[((df[colmut]=='no') & ~(df['rearrangement fusion'])),:] for df in dfs]
     if not all([len(df[colsample].unique())>=3 for df in dfs]):
         return
-#     %run ../../../../rohan/rohan/dandage/stat/corr.py  # import corrdfs
-#     from rohan.dandage.stat.corr import corrdfs
+#     from rohan.lib.stat.corr import corrdfs
     df1=corrdfs(*dfs,
                colindex=colindex,
                colsample=colsample,
@@ -256,7 +255,7 @@ def get_partial_corrs(df,xs,ys,method='spearman',splits=5):
 def check_collinearity(df3,threshold=0.7):
     df4=df3.corr(method='spearman')
     # df4=df4.applymap(abs)
-    from rohan.dandage.io_dfs import get_offdiagonal_values
+    from rohan.lib.io_dfs import get_offdiagonal_values
     df5=get_offdiagonal_values(df4.copy())
     df6=df5.melt(ignore_index=False).dropna().reset_index()
     df6['value']=df6['value'].apply(abs)
@@ -267,8 +266,7 @@ def check_collinearity(df3,threshold=0.7):
         return
     logging.info(f"% collinear vars: {perc}")
     df6=df6.loc[(df6['is collinear']),:]
-    #     %run ../../../../rohan/rohan/dandage/stat/network.py
-    from rohan.dandage.stat.network import get_subgraphs
+    from rohan.lib.stat.network import get_subgraphs
     df7=get_subgraphs(df6.loc[df6['is collinear'],:],'index','variable')
     df7=df7.groupby('subnetwork name').agg({'node name':list}).reset_index()
     return df7.groupby('subnetwork name').apply(lambda df: df6.apply(lambda x: x['value'] if len(set([x['index'],x['variable']]) - set(df['node name'].tolist()[0]))==0 else np.nan,axis=1).min()).sort_values(ascending=False)

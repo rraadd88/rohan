@@ -1,9 +1,9 @@
 from rohan.global_imports import *
 
-from rohan.dandage.plot.annot import get_dmetrics
+from rohan.lib.plot.annot import get_dmetrics
 
 def compare_bools_scores(df0,colbool,colscore,colpivotindex,colpivotcolumns):
-    from rohan.dandage.stat.binary import compare_bools_jaccard_df
+    from rohan.lib.stat.binary import compare_bools_jaccard_df
     df1=pd.concat({'correlation':dmap2lin(df0.pivot_table(columns=colpivotcolumns,index=colpivotindex,values=colscore).corr(method='pearson')),
            'jaccard index':dmap2lin(compare_bools_jaccard_df(df0.pivot_table(columns=colpivotcolumns,index=colpivotindex,values='interaction bool')))},axis=0,names=['metric type']).reset_index()
     # .rename(columns={'index':'row',:'col'})
@@ -21,7 +21,7 @@ def compare_bools_scores(df0,colbool,colscore,colpivotindex,colpivotcolumns):
 
 def compare_by_zscore(df,col1,col2,coldn='comparison',log=True):
     if log:
-        from rohan.dandage.stat.transform import plog
+        from rohan.lib.stat.transform import plog
         df[f'{coldn} ratio {col1}/{col2} (log2 scale)']=(df[col1].apply(lambda x: plog(x,p=0.5,base=2))-df[col2].apply(lambda x: plog(x,p=0.5,base=2)))
     else:
         df[f'{coldn} ratio {col1}/{col2} (log2 scale)']=df[col1]-df[col2]
@@ -32,8 +32,8 @@ def compare_by_zscore(df,col1,col2,coldn='comparison',log=True):
     return df
 
 def get_stats_by_bins(df,colx,coly,fun,bins=4):
-    from rohan.dandage.stat.variance import confidence_interval_95
-    from rohan.dandage.stat.transform import get_qbins
+    from rohan.lib.stat.variance import confidence_interval_95
+    from rohan.lib.stat.transform import get_qbins
     print(df.shape,end=' ')
     df=df.dropna(subset=[colx,coly])
     print(df.shape)
@@ -48,7 +48,7 @@ def get_stats_by_bins(df,colx,coly,fun,bins=4):
     return pd.DataFrame(pd.concat(dn2df))
 
 import numpy as np
-from rohan.dandage.stat.diff import diff,balance 
+from rohan.lib.stat.diff import diff,balance 
 def aggbypair(a,b,absolute=True): return np.mean([a,b]),diff(a,b,absolute=absolute),balance(a,b)
 
 def agg_paired_values(a,b,sort=True,logscaled=False):
@@ -85,12 +85,12 @@ def get_stats_paired(x,y,ignore=False,verb=True):
             return
     d={}
     d['n']=len(x)
-    from rohan.dandage.stat.corr import get_spearmanr,get_pearsonr
+    from rohan.lib.stat.corr import get_spearmanr,get_pearsonr
     d['$r_s$'],d['P ($r_s$)']=get_spearmanr(x,y)
     d['linear regression slope'],d['linear regression y-intercept'],d['$r_p$'],d['P ($r_p$)'],d['linear regression stderr']=sc.stats.linregress(x,y)
 #     shape of distributions
     for k,a in zip(['x','y'],[x,y]):
-        from rohan.dandage.stat.cluster import cluster_1d
+        from rohan.lib.stat.cluster import cluster_1d
         d2=cluster_1d(ds=a,
                    n_clusters=2,
                     returns=['clf'],             

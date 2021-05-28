@@ -17,7 +17,7 @@ def run_needle(s1p,s2p,
     """
     :params outfmt: fasta|pair
     """
-    from rohan.dandage.io_sys import runbashcmd    
+    from rohan.lib.io_sys import runbashcmd    
     if not exists(outp):
         if form.lower()=='dna':
             com=f"needle -auto -asequence {s1p} -bsequence {s2p} -datafile EDNAFULL -gapopen 10.0 -gapextend 0.5 -endopen 10.0 -endextend 0.5 -aformat3 {outfmt} -snucleotide1 -snucleotide2 -outfile {outp}"

@@ -60,10 +60,10 @@ def plot_schem(imp,ax=None,force=False,margin=0,test=False,params_vector2raster=
         pngp=imp
     else:
 #         if splitext(imp)[1]=='.svg' or force:
-#             from rohan.dandage.figs.convert import svg2png
+#             from rohan.lib.figs.convert import svg2png
 #             pngp=svg2png(imp,force=force,**params_vector2raster)
 #         else:
-        from rohan.dandage.figs.convert import vector2raster
+        from rohan.lib.figs.convert import vector2raster
         pngp=vector2raster(imp,force=force,**params_vector2raster)
     ax=plt.subplot() if ax is None else ax
     im=plt.imread(pngp)
@@ -196,7 +196,7 @@ def plot_genes_legend(df,d1):
     df['color']=df['color'].fillna('k').apply(str)
     to_table(df,f"plot/schem_gene_{' '.join(df['gene id'].unique()[:5]).replace('.',' ')}_legend.pqt")
 
-from rohan.dandage.db.ensembl import pid2prtseq,proteinid2domains
+from rohan.lib.db.ensembl import pid2prtseq,proteinid2domains
 def plot_genes_data(df1,custom=False,colsort=None,cmap='Spectral'):
     if not custom:
         if not 'protein length' in df1:
@@ -233,7 +233,7 @@ def plot_genes_data(df1,custom=False,colsort=None,cmap='Spectral'):
     df2=df2.groupby('gene id',as_index=False).apply(gety)
 #     df=df.sort_values(by=['domains','protein length'],ascending=[False,False])        
     
-    from rohan.dandage.plot.colors import get_ncolors
+    from rohan.lib.plot.colors import get_ncolors
     cs=get_ncolors(n=df2['description'].nunique(),
                    cmap=cmap, ceil=False,
                    vmin=0.2,vmax=1)

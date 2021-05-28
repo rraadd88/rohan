@@ -5,9 +5,9 @@ io_df -> io_dfs -> io_files
 from glob import glob,iglob
 import os
 from os.path import exists,basename,dirname,abspath,realpath,splitext
-from rohan.dandage.io_dfs import *
-from rohan.dandage.io_sys import is_interactive_notebook
-from rohan.dandage.io_strs import make_pathable_string,replacemany
+from rohan.lib.io_dfs import *
+from rohan.lib.io_sys import is_interactive_notebook
+from rohan.lib.io_strs import make_pathable_string,replacemany
 
 from shutil import copyfile
 import logging
@@ -42,7 +42,7 @@ def makedirs(p,exist_ok=True,**kws):
     makedirs(p,exist_ok=exist_ok,**kws)
 
 ## text files
-from rohan.dandage.io_strs import getall_fillers    
+from rohan.lib.io_strs import getall_fillers    
 def fill_form(df,templatep,template_insert_line,outp,splitini,splitend,field2replace,
            test=False):
     """
@@ -119,7 +119,7 @@ def backup_to_zip(ps,destp,test=False):
         loggin.error('arg destp should have .zip extension')
         return 0
     
-    from rohan.dandage.io_strs import get_common_preffix
+    from rohan.lib.io_strs import get_common_preffix
     if '/' in destp: 
         destdp=destp.split('.')[0]
         makedirs(destdp,exist_ok=True)
@@ -164,12 +164,12 @@ def download(url,path=None,outd='data/database',
         logging.info(f"exists: {path}")
     return path
 
-from rohan.dandage.io_sys import p2time
+from rohan.lib.io_sys import p2time
 
 ## dfs
 from rohan.global_imports import rd
 
-from rohan.dandage.io_text import get_header
+from rohan.lib.io_text import get_header
 def read_table(p,
                params={},
                ext=None,
@@ -223,7 +223,7 @@ def read_table(p,
         elif any([s==ext for s in ['csv']]):
             params['sep']=','            
         elif ext=='vcf':
-            from rohan.dandage.io_strs import replacemany
+            from rohan.lib.io_strs import replacemany
             params.update(dict(sep='\t',
                                comment='#',
                                header=None,
@@ -374,7 +374,7 @@ def to_table(df,p,
              colgroupby=None,
              test=False,**kws):
     if is_interactive_notebook(): test=True
-#     from rohan.dandage.io_strs import make_pathable_string
+#     from rohan.lib.io_strs import make_pathable_string
 #     p=make_pathable_string(p)
     if not 'My Drive' in p:
         p=p.replace(' ','_')

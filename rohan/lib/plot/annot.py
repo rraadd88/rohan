@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import logging
 
-from rohan.dandage.io_strs import *
+from rohan.lib.io_strs import *
 
 def add_corner_labels(fig,pos,xoff=0,yoff=0,test=False,kw_text={}):
     import string
@@ -22,7 +22,7 @@ def add_corner_labels(fig,pos,xoff=0,yoff=0,test=False,kw_text={}):
         del dpos
     return fig
 
-from rohan.dandage.io_sets import dropna
+from rohan.lib.io_sets import dropna
 def dfannot2color(df,colannot,cmap='Spectral',
                   renamecol=True,
                   test=False,):
@@ -160,7 +160,7 @@ def annot_heatmap(ax,dannot,
 # stats 
 def perc_label(a,b,bracket=True): return f"{(a/b)*100:.0f}%"+(f" ({num2str(a)}/{num2str(b)})" if bracket else "")
 
-from rohan.dandage.io_nums import is_numeric
+from rohan.lib.io_nums import is_numeric
 def pval2annot(pval,alternative=None,alpha=None,fmt='*',#swarm=False
                linebreak=True,
               ):
@@ -195,7 +195,7 @@ def annot_many(ax,df,axis2col,colannot,
                axis2cutoffs={'x':None,'y':None},
                xoff_bend=0.1,xoff_annot=0.05,off_axes=1,
                test=False):
-    from rohan.dandage.io_strs import linebreaker
+    from rohan.lib.io_strs import linebreaker
     axis2params={axis:{} for axis in ['x','y']}
     for axis in ['x','y']:
         axis2params[axis]['cutoff']=df[axis2col[axis]].median() if axis2cutoffs[axis] is None else axis2cutoffs[axis]
@@ -240,7 +240,7 @@ def annot_subsets(dplot,colx,colsubsets,
                 ax=None):
     if ax is None:ax=plt.subplot()
     ax.set_ylim(0,ax.get_ylim()[1]*off_ylim)
-    from rohan.dandage.plot.colors import get_ncolors
+    from rohan.lib.plot.colors import get_ncolors
 #     dplot=dplot.loc[:,[colx]+colsubsets].dropna(how='all',axis=1)
     colsubsets=[c for c in colsubsets if dplot[c].isnull().sum()!=len(dplot)]
     subsets=dplot.loc[:,colsubsets].melt()['value'].dropna().unique().tolist()

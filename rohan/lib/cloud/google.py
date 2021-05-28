@@ -282,14 +282,11 @@ def get_metadata_of_paper(file_id,service_drive,service_search,
             return metadata        
     if pd.isnull(metadata['queries']) or force:
         content = service_drive.files().get_media(fileId=file_id).execute()
-        # %run ../rohan/dandage/io_text.py
-        from rohan.dandage.io_text import pdf_to_text
+        from rohan.lib.io_text import pdf_to_text
         text=pdf_to_text(pdf_path=content,
                               pages=[2,3])
-        # %run ../rohan/dandage/cloud/google.py
         metadata['queries']=get_search_strings(text,num=3,test=False)
     if test: print(metadata['queries'])
-    # %run ../rohan/dandage/cloud/google.py
     if pd.isnull(metadata['titles']) or force:
         metadata['titles']=[]
         for k in metadata['queries']:

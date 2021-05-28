@@ -12,8 +12,8 @@ dtypes
 'U'       Unicode
 'V'       raw data (void)
 """
-from rohan.dandage.io_df import *
-from rohan.dandage import add_method_to_class
+from rohan.lib.io_df import *
+from rohan.lib import add_method_to_class
 from rohan.global_imports import rd
 
 def filter_dfs(dfs,cols,how='inner'):
@@ -21,7 +21,7 @@ def filter_dfs(dfs,cols,how='inner'):
     
     """
     def apply_(dfs,col,how):
-        from rohan.dandage.io_sets import list2intersection,list2union
+        from rohan.lib.io_sets import list2intersection,list2union
         if how=='inner':
             l=list(list2intersection([df[col].tolist() for df in dfs]))
         elif how=='outer':
@@ -125,7 +125,7 @@ merge_dfs_paired_with_unpaireds=merge_paired
 
 ## append
 def append_dfs(dfs,cols_index=None,cols_value=None):
-    from rohan.dandage.io_sets import list2intersection,unique
+    from rohan.lib.io_sets import list2intersection,unique
     if cols_index is None: cols_index=list(list2intersection([list(df) for df in dfs]))
     if cols_value is None: cols_value=[[c for c in df if not c in cols_index] for df in dfs]
     coli2cols={i:list(cols) for i,cols in enumerate(list(zip(*cols_value)))}
@@ -153,7 +153,7 @@ def merge_dfs_auto(dfs,how='left',suffixes=['','_'],
     """
     
     """
-    from rohan.dandage.io_sets import list2intersection,flatten
+    from rohan.lib.io_sets import list2intersection,flatten
     if isinstance(dfs,dict):
         dfs=list(dfs.values())
     if all([isinstance(df,str) for df in dfs]):
@@ -187,7 +187,7 @@ def merge_dfs_auto(dfs,how='left',suffixes=['','_'],
     if sort:
         d={dfi:[len(df)] for dfi,df in enumerate(dfs)}
         logging.info(f"size agg: {d}")
-        from rohan.dandage.io_dict import sort_dict
+        from rohan.lib.io_dict import sort_dict
         sorted_indices_by_size=sort_dict({dfi:[len(df.drop_duplicates(subset=params_merge['on']))] for dfi,df in enumerate(dfs)},0)
         logging.info(f'size dedup: {sorted_indices_by_size}')
         sorted_indices_by_size=list(sorted_indices_by_size.keys())#[::-1]

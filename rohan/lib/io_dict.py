@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-from rohan.dandage.io_sets import *
+from rohan.lib.io_sets import *
 from os.path import basename,dirname,exists
 from os import makedirs
 import yaml
@@ -123,7 +123,7 @@ def flip_dict(d):
                 d_[v]=k
         return d_
 
-from rohan.dandage.io_strs import str2dict
+from rohan.lib.io_strs import str2dict
 
 def merge_dicts(l):    
     from collections import ChainMap
@@ -139,4 +139,4 @@ def merge_dicts(l):
 def head_dict(d, lines=5):
     return dict(itertools.islice(d.items(), lines))
 
-from rohan.dandage.io_sets import group_list_bylen,sort_list_by_list
+from rohan.lib.io_sets import group_list_bylen,sort_list_by_list

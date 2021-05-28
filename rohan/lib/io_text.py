@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-from rohan.dandage.stat.cluster import get_clusters
+from rohan.lib.stat.cluster import get_clusters
     
 def get_header(path,comment='#',lineno=None):
     import re

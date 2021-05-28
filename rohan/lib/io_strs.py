@@ -229,7 +229,7 @@ def get_suffix(s1,s2,common=False): return align(s1,s2,suffix=True,common=common
 ## filenames 
 def strlist2one(l,label=''):
     # find unique prefix
-    from rohan.dandage.io_sets import unique
+    from rohan.lib.io_sets import unique
     from os.path import splitext
     for si in range(len(l[0]))[::-1]:
         s_i=l[0][:si]
@@ -253,7 +253,7 @@ def str_split(strng, sep, pos):
 
 def str_ranges2list(s,func=int,range_marker='-',sep=',',replace=['[',']']):
     s=replacemany(s,replace)
-    from rohan.dandage.io_sets import flatten
+    from rohan.lib.io_sets import flatten
     return flatten([list(range(func(i.split(range_marker)[0]),func(i.split(range_marker)[1])+1)) if '-' in i else int(i) for i in s.split(sep)])
 
 def str2urlformat(s):
@@ -276,9 +276,9 @@ def str2dict(s,sep=';',sep_equal='='):
 #     return d
 
 # TODO: deprecate
-# from rohan.dandage.io_sys import get_logger,get_datetime,get_time
-from rohan.dandage.io_nums import str2num,str2nums#,format_number_human
-# from rohan.dandage.io_dict import str2dict
+# from rohan.lib.io_sys import get_logger,get_datetime,get_time
+from rohan.lib.io_nums import str2num,str2nums#,format_number_human
+# from rohan.lib.io_dict import str2dict
 def num2str(num,magnitude=False,
            coff=10000):
     if not magnitude:

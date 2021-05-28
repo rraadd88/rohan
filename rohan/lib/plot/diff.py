@@ -59,14 +59,14 @@ def plot_stats_diff(df2,
                  ax=ax,
                      zorder=2,
                     **kws_pointplot)
-    from rohan.dandage.plot.ax_ import color_ticklabels
+    from rohan.lib.plot.ax_ import color_ticklabels
     df2.loc[(df2[f'significant change ({tests[0]})' if f'significant change ({tests[0]})' in df2 else 'change']=='ns'),'color yticklabel']='lightgray'
     df2.loc[(df2[f'significant change ({tests[0]})' if f'significant change ({tests[0]})' in df2 else 'change']!='ns'),'color yticklabel']='gray'
     logging.warning(f"yticklabels shaded by {tests[0]}")
     ax=color_ticklabels(ax, ticklabel2color=df2.loc[:,[params['y'],'color yticklabel']].drop_duplicates().rd.to_dict([params['y'],'color yticklabel']),
                         axis='y')
     
-    from rohan.dandage.plot.ax_ import get_ticklabel2position
+    from rohan.lib.plot.ax_ import get_ticklabel2position
     df3['y']=df3[params['y']].map(get_ticklabel2position(ax, axis='y'))
     ## apply dodge
     df3['y+off']=df3.apply(lambda x: x['y']+(-0.1 if x['subset']=='subset1' else 0.1),axis=1)
@@ -135,7 +135,7 @@ def plot_stats_diff(df2,
 #                 bbox_to_anchor=[len(tests),1],
               loc='upper left', 
               bbox_to_anchor=(1, 0),)
-    from rohan.dandage.plot.ax_ import format_ticklabels
+    from rohan.lib.plot.ax_ import format_ticklabels
     ax=format_ticklabels(ax=ax)
     ax.set(ylim=(len(ax.get_yticklabels()),-1),
           )
@@ -216,7 +216,7 @@ def plot_volcano(dplot,
     else:
         return ax
 
-from rohan.dandage.io_strs import linebreaker
+from rohan.lib.io_strs import linebreaker
 def plot_volcano_agg(dplot,colx,coly,colxerr,colsize,
                  element2color={'between Scer Suva': '#428774',
                               'within Scer Scer': '#dc9f4e',

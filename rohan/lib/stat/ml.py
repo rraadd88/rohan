@@ -167,7 +167,6 @@ def run_grid_search(df,
                 d[k1][k2]=estimatorn2param_grid[k1][k2]
     estimatorn2param_grid=d
     if test: print(estimatorn2param_grid)
-#     %run ../../../../rohan/rohan/dandage/stat/ml.py
     params=get_Xy_for_classification(df.set_index(colindex),coly=coly,
                               qcut=qcut,drop_xs_low_complexity=True,
                                     )
@@ -177,7 +176,6 @@ def run_grid_search(df,
                                X=params['X'],y=params['y'])
 #     to_dict({k:estimatorn2grid_search[k].cv_results_ for k in estimatorn2grid_search},
 #            f'{outp}/estimatorn2grid_search_results.json')
-#     %run ../../../../rohan/rohan/dandage/io_dict.py
     to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.pickle')
     to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.joblib')
 #     return estimatorn2grid_search
@@ -312,7 +310,7 @@ def get_feature_importances(estimatorn2grid_search,
             value_name='importance',
            )
     df2=dellevelcol(pd.concat(dn2df,axis=0,names=['estimator name']).reset_index())
-    from rohan.dandage.stat.transform import rescale
+    from rohan.lib.stat.transform import rescale
     def apply_(df):
         df['importance rescaled']=rescale(df['importance'])
         df['importance rank']=len(df)-df['importance'].rank()
@@ -517,7 +515,7 @@ def dclassifiers2dres(dclassifiers,dataset2cols,colxs):
     dplot['x']=range(len(dplot))
 
     def get_text(x):    
-        from rohan.dandage.io_strs import linebreaker
+        from rohan.lib.io_strs import linebreaker
     #     x=dplot[dplot.columns[-3:]].iloc[1,:]
         ds=(1-x).rank(method='dense').apply(int).sort_index().sort_values()
         return "feature ranking:\n"+'\n'.join([linebreaker(': '.join(list(t)),14) for t in list(zip([str(int(i)) for i in ds.values.tolist()],ds.index.tolist()))])
