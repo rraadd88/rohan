@@ -31,7 +31,7 @@ class LoggingContext:
 # with LoggingContext(logger, level=logging.ERROR):
 #     logger.debug('3. This should appear once on stderr.')
 # alias
-info=logging.info
+info=ic
 
 # recepies
 import pandas as pd

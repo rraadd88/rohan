@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import scipy as sc
 import logging
-from icecream import ic
+from icecream import ic as info
 
 def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_control=None):
     if subset_control is None:
@@ -166,8 +166,11 @@ def get_stats(df1,
               cols_subsets=['subset1', 'subset2'],
               df2=None,
               stats=[np.mean,np.median,np.var,len],
-              axis=1, # concat
+              axis=1, # concat 
               **kws_get_stats):
+    """
+    :params axis: 1 if different tests else use 0.
+    """
 #     from rohan.dandage.io_dfs import to_table
 #     to_table(df1,'test/get_stats.tsv')
 #     stats=[s for s in stats if not s in [sum,len]]
@@ -291,7 +294,7 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
             assert(df1['c'].isnull().sum()==0)
     if not colns is None:
         df2=df1.loc[~(df1[colns]),:]
-        ic(df1[colns].sum())
+        info(df1[colns].sum())
     else:
         df2=df1.copy()
     if color:
@@ -308,6 +311,9 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
             d4['x']=df2.loc[(df2[col]==k),f'{preffix}difference between mean (subset1-subset2)'].min() if k=='increase' \
                                         else df2.loc[(df2[col]==k),f'{preffix}difference between mean (subset1-subset2)'].max()
             d4['change']=k
+#             info(df2.shape)
+#             info(df2.columns)
+#             info(d4)
             d4['text']=f"{df2.loc[(df2[col]==k),colindex].nunique()}/{df2.loc[(df2[col]==k),colgroup].nunique()}"
             d4['color']=d1[coff][k]
             d3[i]=d4

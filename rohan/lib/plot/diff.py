@@ -140,3 +140,138 @@ def plot_stats_diff(df2,
     ax.set(ylim=(len(ax.get_yticklabels()),-1),
           )
     return ax
+
+## volcano
+def plot_volcano_get_dplot(dplot,x,y,
+                          coffs,
+                          **kws_binby_pvalue_coffs):
+    from rohan.lib.stat.diff import binby_pvalue_coffs
+    df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
+                              color=True,
+                              **kws_binby_pvalue_coffs)
+    assert(df1[y].isnull().sum()==0)
+#     if df1[y].isnull().any(): 
+#         logging.warning('')
+#         df1=df1.log.dropna(subset=[y])
+    df1[y]=df1[y].apply(lambda x : -1*(np.log10(x)))
+#     df1=df1.rename(columns={'value difference between mean (subset1-subset2)':x})    
+    return df1,df_
+
+def plot_volcano(dplot,
+                 x='difference between mean (subset1-subset2)',
+                 y='P (MWU test, FDR corrected)',
+                 coffs=[0.01,0.05,0.2],
+                 ax=None,
+                 filter_rows=None,
+                 collabel=None,
+                 title=None,
+                 ylabel='significance\n(-log10(P))',
+                 kws_binby_pvalue_coffs={},
+                 out_df=False,
+                 **kws_set):
+    df1,df_=plot_volcano_get_dplot(dplot,x,y,
+                          coffs,
+                          **kws_binby_pvalue_coffs)
+    from rohan.lib.plot.colors import saturate_color
+    if ax is None:
+        fig,ax=plt.subplots(figsize=[3,3])
+    df1.plot.scatter(x=x,y=y,c='c',
+                       s=1,ax=ax)
+    ax.set(ylabel=ylabel,
+           **kws_set
+          )
+    df_.apply(lambda x: ax.hlines(x['y'],x['x'],ax.get_xlim()[0 if x['change']=='decrease' else 1],
+                                                 colors=x['color'],
+                                                 linestyles="solid",lw=1,
+                                              ),axis=1)
+    df_.apply(lambda x: ax.vlines(x['x'],x['y'],ax.get_ylim()[1],
+                                                 colors=x['color'],
+                                                 linestyles="solid",lw=1,
+                                              ),axis=1)
+    df_.apply(lambda x: ax.text(ax.get_xlim()[0 if x['change']=='decrease' else 1],x['y'],x['text'],
+    #                                 color=saturate_color(x['color'],3),
+                                    color='k',alpha=x['y alpha'],
+                                    ha='left' if x['change']=='decrease' else 'right',
+                                              ),axis=1)
+    df_.loc[:,['y','y text','y alpha']].drop_duplicates().apply(lambda x: ax.text(ax.get_xlim()[1],x['y'],x['y text'],
+                                                                   color='k',alpha=x['y alpha']),
+                                                  axis=1)
+    if collabel is None:
+        if len(filter_rows.keys())==1:
+            collabel=list(filter_rows.keys())[0]
+    if (filter_rows is not None) and (collabel is not None):
+        df_=df1.rd.filter_rows(filter_rows)
+        df_.groupby(collabel).apply(lambda df: ax.scatter(x=df_[x],
+                                                            y=df_[y],
+                                                            marker='o', 
+                                                            facecolors='none',
+                                                            edgecolors='k',
+                                                            label=f"{df.name}\n(n={len(df)})",
+                                                            ))
+    ax.legend(loc='upper left',
+             bbox_to_anchor=[1,1])
+    ax.set_title(label=title,loc='left')
+    if out_df:
+        return ax,df1
+    else:
+        return ax
+
+from rohan.dandage.io_strs import linebreaker
+def plot_volcano_agg(dplot,colx,coly,colxerr,colsize,
+                 element2color={'between Scer Suva': '#428774',
+                              'within Scer Scer': '#dc9f4e',
+                              'within Suva Suva': '#53a9cb'},
+                colenrichtype='enrichment type',
+                enrichmenttype2color={'high':'#d24043','low': (0.9294117647058824, 0.7003921568627451, 0.7050980392156864)},
+                 annots_off=0.2,
+                 annot_count_max=10,
+                 break_pt=15,
+                label=None,
+                 ax=None):
+    ax=plt.subplot() if ax is None else ax
+    ax=dplot.plot.scatter(x=colx,
+                      y=coly,color='gray',ax=ax)
+    ax.set_xlim(-5,5)
+    ax.set_ylim(0,15 if ax.get_ylim()[1]>15 else ax.get_ylim()[1])
+    for enrichtype in enrichmenttype2color:
+        df=dplot.loc[(dplot[colenrichtype]==enrichtype),:]
+        df.plot.scatter(x=colx,
+                        xerr=colxerr,                    
+                        y=coly,
+                        color=enrichmenttype2color[enrichtype],
+                        s=df[colsize].values*5,
+                        ax=ax,
+                       alpha=0.5)
+        ax.set_xlim(-4,4)
+        df=df.sort_values(by=[coly],ascending=[True]).tail(annot_count_max)
+        df['y']=np.linspace(ax.get_ylim()[0],
+                            ax.get_ylim()[0]+((ax.get_ylim()[1]-ax.get_ylim()[0])*len(df)/annot_count_max),
+                            len(df) if len(df)<=annot_count_max else annot_count_max)
+        xmin=ax.get_xlim()[0]*(1.2+(annots_off))
+        xmax=ax.get_xlim()[1]+annots_off
+        xlen=ax.get_xlim()[1]-ax.get_xlim()[0]
+        xmin_axhline=1-(ax.get_xlim()[1]-xmin)/xlen
+        xmax_axhline=(xmax-ax.get_xlim()[0])/xlen
+        df['x']= xmin if enrichtype=='low' else xmax
+        df.apply(lambda x: ax.plot([x[colx],ax.get_xlim()[0 if enrichtype=='low' else 1],x['x']],
+                                   [x[coly],x['y'],x['y']],
+                                  color='gray',lw=1),axis=1)
+        df.apply(lambda x:ax.axhline(y = x['y'], 
+                                     xmin=xmin_axhline if enrichtype=='low' else 1,
+                                     xmax=0 if enrichtype=='low' else xmax_axhline,
+                                     
+#                                      xmin=-1*(annots_off*0.7) if enrichtype=='low' else 1,
+#                                      xmax=0 if enrichtype=='low' else 1+(annots_off*annots_off*0.7),
+                                             clip_on = False,color='gray',lw=1,
+                                    ),axis=1)
+        df.apply(lambda x: ax.text(x['x'],x['y'],linebreaker(x['gene set description'],break_pt=break_pt,),
+                                  ha='right' if enrichtype=='low' else 'left',
+                                   va='center',
+                                  color=element2color[x['comparison type']],
+                                  zorder=2),axis=1)
+        ax.axvspan(2, 4, color=enrichmenttype2color['high'], alpha=0.2,label='significantly high')
+        ax.axvspan(-4, -2, color=enrichmenttype2color['low'], alpha=0.2,label='significantly low')
+#     if not label is None:
+#         ax.set_title(label)
+    return ax
+
