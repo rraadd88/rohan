@@ -6,8 +6,7 @@ import numpy as np
 import logging
 from icecream import ic
 
-from rohan.lib import add_method_to_class
-from rohan.global_imports import rd
+from rohan.lib import to_class,rd
 
 ## log
 def log_apply(df, fun, *args, **kwargs):
@@ -23,7 +22,7 @@ def log_apply(df, fun, *args, **kwargs):
     return df
 
 ## delete unneeded columns
-@add_method_to_class(rd)
+@to_class(rd)
 def drop_unnamedcol(df):
     """
     Deletes all the unnamed columns
@@ -35,7 +34,7 @@ def drop_unnamedcol(df):
 ### alias
 delunnamedcol=drop_unnamedcol
 
-@add_method_to_class(rd)
+@to_class(rd)
 def drop_levelcol(df):
     """
     Deletes all the unnamed columns
@@ -47,24 +46,24 @@ def drop_levelcol(df):
 ### alias
 dellevelcol=drop_levelcol
 
-@add_method_to_class(rd)
+@to_class(rd)
 def flatten_columns(df):
     df.columns=coltuples2str(df.columns)
     return df
 
-@add_method_to_class(rd)
+@to_class(rd)
 def renameby_replace(df,replaces,ignore=True,**kws):
     from rohan.lib.io_strs import replacemany
     df.columns=[replacemany(c,replaces,ignore=ignore,**kws) for c in df]
     return df
 
-@add_method_to_class(rd)
+@to_class(rd)
 def drop_constants(df):
     cols_del=df.nunique().loc[lambda x: x==1].index.tolist()
     logging.warning(f"dropped columns: {', '.join(cols_del)}")
     return df.drop(cols_del,axis=1)
 
-@add_method_to_class(rd)
+@to_class(rd)
 def clean(df,cols=[],
           drop_constants=False,
           drop_unnamed=True,
@@ -87,7 +86,7 @@ def clean(df,cols=[],
         return df.drop(cols_del,axis=1)
     else:
         return df
-@add_method_to_class(rd)
+@to_class(rd)
 def compress(df1,coff_categories=20,test=False):
     if test: ini=df1.memory_usage().sum()
     ds=df1.select_dtypes('object').nunique()
@@ -96,25 +95,25 @@ def compress(df1,coff_categories=20,test=False):
     if test: logging.info(f"compression={((ini-df1.memory_usage().sum())/ini)*100:.1f}%")
     return df1
 
-@add_method_to_class(rd)
+@to_class(rd)
 def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_compress)
 
 ## nans:
-@add_method_to_class(rd)
+@to_class(rd)
 def check_na_percentage(df,cols=None):
     if cols is None:
         cols=df.columns.tolist()
     return (df.loc[:,cols].isnull().sum()/df.loc[:,cols].agg(len))*100
 
 ## nunique:
-@add_method_to_class(rd)
+@to_class(rd)
 def check_nunique(df,cols=None,):
     if cols is None:
         cols=df.select_dtypes(object).columns.tolist()
     return df.loc[:,cols].nunique()
     
 ## duplicates:
-@add_method_to_class(rd)
+@to_class(rd)
 def check_duplicated(df,cols=None,subset=None):
     if not cols is None and not subset is None: logging.error(f"cols and subset are alias, both cannot be used.")        
     if cols is None and not subset is None: cols=subset        
@@ -127,7 +126,7 @@ def check_duplicated(df,cols=None,subset=None):
         return False
 
 ## mappings    
-@add_method_to_class(rd)        
+@to_class(rd)        
 def check_mappings(df,cols=None):
     """
     identify duplicates within columns
@@ -140,7 +139,7 @@ def check_mappings(df,cols=None):
         d[t]=df.groupby(t[0])[t[1]].nunique().value_counts()
     return pd.concat(d,axis=0,ignore_index=False,names=['from','to','map to']).to_frame('map from').sort_index().reset_index(-1).loc[:,['map from','map to']]
 
-@add_method_to_class(rd)
+@to_class(rd)
 def get_mappings(df1,cols=None,keep='1:1'):
     """
     validate by df1.rd.check_mappings(cols)
@@ -167,7 +166,7 @@ def get_mappings(df1,cols=None,keep='1:1'):
         assert(len(df1)==len(d1['1:1'])+len(d1['not']))
         return pd.concat(d1,axis=0,names=['mapping']).reset_index()
 
-@add_method_to_class(rd)
+@to_class(rd)
 def filterby_mappings(df1,cols=None,maps=['1:1'],test=False):
     """
     :cols :
@@ -207,7 +206,7 @@ def filterby_mappings(df1,cols=None,maps=['1:1'],test=False):
 #                          names=['rate'],
 #                         axis=0)
     
-@add_method_to_class(rd)
+@to_class(rd)
 def to_map_binary(df,colgroupby=None,colvalue=None):
     """
     linear mappings to binary map
@@ -221,7 +220,7 @@ def to_map_binary(df,colgroupby=None,colvalue=None):
     df1=df.pivot(index=colvalue,columns=colgroupby,values='_value').fillna(False)
     return df1
 
-@add_method_to_class(rd)        
+@to_class(rd)        
 def check_intersections(df,
                         colindex=None, # 'paralog pair'
                         colgroupby=None, # 'variable'
@@ -258,7 +257,7 @@ def check_intersections(df,
         return ds
 
 #filter df
-@add_method_to_class(rd)
+@to_class(rd)
 def filter_rows(df,d,sign='==',logic='and',
                 drop_constants=False,
                 test=False,
@@ -280,7 +279,7 @@ def filter_rows(df,d,sign='==',logic='and',
 filter_rows_bydict=filter_rows
 
 ## conversion to type
-@add_method_to_class(rd)
+@to_class(rd)
 def to_dict(df,cols,drop_duplicates=False):
     df=df.log.dropna(subset=cols)
     if drop_duplicates:
@@ -291,7 +290,7 @@ def to_dict(df,cols,drop_duplicates=False):
         return df.groupby(cols[0])[cols[1]].unique().to_dict()        
 
 ## conversion
-@add_method_to_class(rd)
+@to_class(rd)
 def get_bools(df,cols,drop=False):
     """
     prefer pd.get_dummies
@@ -307,7 +306,7 @@ def get_bools(df,cols,drop=False):
             df=df.drop([c],axis=1)
     return df
 
-@add_method_to_class(rd)
+@to_class(rd)
 def agg_bools(df1,cols):
     """
     reverse pd.get_dummies
@@ -322,7 +321,7 @@ def agg_bools(df1,cols):
     return df1[col]     
 
 ## paired dfs
-@add_method_to_class(rd)
+@to_class(rd)
 def melt_paired(df,
                 cols_index=None,
                 suffixes=None,
@@ -349,7 +348,7 @@ def melt_paired(df,
                errors='raise')
     return df2
 
-@add_method_to_class(rd)
+@to_class(rd)
 def get_chunks(df1,colindex,colvalue,bins=None,value='right'):
     """
     based on other df
@@ -378,11 +377,11 @@ def get_chunks(df1,colindex,colvalue,bins=None,value='right'):
     return df1['chunk']
 
 ### alias
-# @add_method_to_class(rd)
+# @to_class(rd)
 # unpair_df=melt_paired
 
 ## symmetric dfs eg. submaps    
-@add_method_to_class(rd)
+@to_class(rd)
 def dfmap2symmcolidx(df,test=False):
     geneids=set(df.index).union(set(df.columns))
     df_symm=pd.DataFrame(columns=geneids,index=geneids)
@@ -392,7 +391,7 @@ def dfmap2symmcolidx(df,test=False):
         logging.debug(df_symm.shape)
     return df_symm
 
-@add_method_to_class(rd)
+@to_class(rd)
 def fill_diagonal(df,filler=None):
     if df.shape[0]!=df.shape[1]:
         logging.warning('df not symmetric')      
@@ -404,7 +403,7 @@ def fill_diagonal(df,filler=None):
     np.fill_diagonal(df.values, filler)        
     return df
 
-@add_method_to_class(rd)
+@to_class(rd)
 def get_diagonalvals(df):
     if df.shape[0]!=df.shape[1]:
         logging.warning('df not symmetric')
@@ -415,7 +414,7 @@ def get_diagonalvals(df):
 #         id2val[i]=df.loc[i,c]
     return pd.DataFrame(ds,columns=['diagonal value']).reset_index()
 
-@add_method_to_class(rd)
+@to_class(rd)
 def fill_symmetricdf_indices(dsubmap,vals=None):
     if vals is None:
         vals=np.unique(dsubmap.index.tolist()+dsubmap.columns.tolist())
@@ -426,7 +425,7 @@ def fill_symmetricdf_indices(dsubmap,vals=None):
             dsubmap.loc[v,:]=np.nan
     return dsubmap.loc[vals,vals]
 
-@add_method_to_class(rd)
+@to_class(rd)
 def fill_symmetricdf_across_diagonal(df,fill=None):
     df=fill_symmetricdf_indices(dsubmap=df,vals=None)
     for c1i,c1 in enumerate(df.columns):
@@ -445,7 +444,7 @@ def fill_symmetricdf_across_diagonal(df,fill=None):
                     df.loc[c2,c1]=df.loc[c1,c2]                            
     return df
 
-@add_method_to_class(rd)
+@to_class(rd)
 def get_offdiagonal_values(dcorr,side='lower',take_diag=False,replace=np.nan):
     for ii,i in enumerate(dcorr.index):
         for ci,c in enumerate(dcorr.columns):            
@@ -470,7 +469,7 @@ def get_group(groups,i=None,verbose=True):
     df.name=dn
     return df
         
-@add_method_to_class(rd)
+@to_class(rd)
 def dropna_by_subset(df,colgroupby,colaggs,colval,colvar,test=False):
     df_agg=dfaggregate_unique(df,colgroupby,colaggs)
     df_agg['has values']=df_agg.apply(lambda x : len(x[f'{colval}: list'])!=0,axis=1)
@@ -489,7 +488,7 @@ def coltuples2str(cols,sep=' '):
         cols_str.append(tuple2str(col,sep=sep))
     return cols_str
 
-@add_method_to_class(rd)
+@to_class(rd)
 def column_suffixes2multiindex(df,suffixes,test=False):
     cols=[c for c in df if c.endswith(f' {suffixes[0]}') or c.endswith(f' {suffixes[1]}')]
     if test:
@@ -501,7 +500,7 @@ def column_suffixes2multiindex(df,suffixes,test=False):
     return df
 
 ## dtype conversion
-@add_method_to_class(rd)
+@to_class(rd)
 def colobj2str(df,test=False):
     cols_obj=df.dtypes[df.dtypes=='object'].index.tolist()
     if test:
@@ -510,7 +509,7 @@ def colobj2str(df,test=False):
         df[c]=df[c].astype('|S80')
     return df
 
-@add_method_to_class(rd)
+@to_class(rd)
 def split_rows(df,collist,rowsep=None):
     """
     for merging dfs with names with df with synonymns
@@ -524,7 +523,7 @@ def split_rows(df,collist,rowsep=None):
 meltlistvalues=split_rows
 
 ## apply
-@add_method_to_class(rd)
+@to_class(rd)
 def apply_as_map(df,index,columns,values,
                  fun,**kws):
     """
@@ -534,7 +533,7 @@ def apply_as_map(df,index,columns,values,
     df2=fun(df1,**kws)
     return df2.melt(ignore_index=False,value_name=values).reset_index()
 
-@add_method_to_class(rd)
+@to_class(rd)
 def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
                        col_out='position'):
     if col_list is None:
@@ -551,7 +550,7 @@ def apply_expand_ranges(df,col_list=None,col_start=None,col_end=None,fun=range,
 
     
 ## drop duplicates by aggregating the dups
-@add_method_to_class(rd)
+@to_class(rd)
 def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False):
     col2aggfunc={}
     for col in cols_value:
@@ -579,14 +578,14 @@ def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False)
     return df1.reset_index()
 
 ## sorting
-@add_method_to_class(rd)
+@to_class(rd)
 def sort_col_by_list(df, col,l):
     df[col]=pd.Categorical(df[col],categories=l, ordered=True)
     df=df.sort_values(col)
     df[col]=df[col].astype(str)
     return df
 
-@add_method_to_class(rd)
+@to_class(rd)
 def dfswapcols(df,cols):
     df[f"_{cols[0]}"]=df[cols[0]].copy()
     df[cols[0]]=df[cols[1]].copy()
@@ -632,7 +631,7 @@ def agg_by_order_counts(x,order):
     ds[x.name]=agg_by_order(x,order)
     return ds.to_frame('').T
 
-@add_method_to_class(rd)
+@to_class(rd)
 def groupby_agg_merge(df,col_groupby,col_aggby,
                       funs=['mean'],
                       ascending=True):
@@ -643,7 +642,7 @@ def groupby_agg_merge(df,col_groupby,col_aggby,
         logging.warning(f'column added to df: {col_sortby} per {col_groupby}')
         return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
 
-@add_method_to_class(rd)
+@to_class(rd)
 def groupby_sort_values(df,col_groupby,col_sortby,
                  subset=None,
                  col_subset=None,
@@ -665,7 +664,7 @@ def groupby_sort_values(df,col_groupby,col_sortby,
 #         return df2.sort_values(f'{col_sortby} per {col_groupby}',ascending=ascending)
 sort_values_groupby=groupby_sort_values
 
-@add_method_to_class(rd)
+@to_class(rd)
 def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
                             suffixes=['gene1','gene2'], # no spaces
                             ):
@@ -692,7 +691,7 @@ def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
     return df1         
     
 # quantile bins
-@add_method_to_class(rd)
+@to_class(rd)
 def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
     """
     get_stats_by_bins(df,colx,coly,fun,bins=4)
@@ -717,7 +716,7 @@ def aggcol_by_qbins(df,colx,coly,colgroupby=None,bins=10):
 
 # subsets
 from rohan.lib.io_sets import dropna
-@add_method_to_class(rd)
+@to_class(rd)
 def get_intersectionsbysubsets(df,cols_fracby2vals,
                                cols_subset,
                                col_ids,
@@ -747,7 +746,7 @@ def get_intersectionsbysubsets(df,cols_fracby2vals,
     return df
 
 
-@add_method_to_class(rd)
+@to_class(rd)
 def get_colsubset2stats(dannot,colssubset=None):
     if colssubset is None:
         colssubset=dannot_stats.columns
@@ -758,7 +757,7 @@ def get_colsubset2stats(dannot,colssubset=None):
     colsubset2classns={k:[int(i) for i in colsubset2classns[k]] for k in colsubset2classns}
     return dannot_stats,colsubset2classes,colsubset2classns
 # 2d subsets
-@add_method_to_class(rd)
+@to_class(rd)
 def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,
                            fast=False,
                            test=False):    
@@ -802,21 +801,21 @@ def subset_cols_by_cutoffs(df,col2cutoffs,quantile=False,outdf=False,
 
 ## make ids
 get_ids_sorted=lambda x: '--'.join(sorted(x))
-@add_method_to_class(rd)
+@to_class(rd)
 def make_ids_sorted(df,cols,ids_have_equal_length):
     if ids_have_equal_length:
         return np.apply_along_axis(get_ids_sorted, 1, df.loc[:,cols].values)
     else:
         return df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
 
-@add_method_to_class(rd)    
+@to_class(rd)    
 def split_ids(df1,col):
     df=df1[col].str.split('--',expand=True)
     for i in range(len(df.columns)):
         df1[f"{col} {i+1}"]=df[i]
     return df1
 
-@add_method_to_class(rd)
+@to_class(rd)
 def sort_ids_paired(df1,cols=['g1','g2'],col=None):
     if col is None:
         col=f"{cols[0].split('1')[0]}s id"
@@ -830,7 +829,7 @@ def sort_ids_paired(df1,cols=['g1','g2'],col=None):
     return df1
     
 ## merge/map ids
-@add_method_to_class(rd)
+@to_class(rd)
 def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
     """
     :params df: target

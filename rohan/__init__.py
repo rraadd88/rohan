@@ -35,7 +35,7 @@ for k,v in d1.items():
     importlib.import_module(f'rohan.lib.{v}')
     sys.modules[f'rohan.lib.{k}'] = sys.modules[f'rohan.lib.{v}']
 
-for k1 in d2:
-    for k,v in d2[k1].items():
-        importlib.import_module(f'rohan.lib.{k}')
-        sys.modules[f'rohan.lib.{k1}.{v}'] = sys.modules[f'rohan.lib.{k}']
+# for k1 in d2:
+#     for k,v in d2[k1].items():
+#         importlib.import_module(f'rohan.lib.{k}')
+#         sys.modules[f'rohan.lib.{k1}.{v}'] = sys.modules[f'rohan.lib.{k}']

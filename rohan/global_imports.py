@@ -34,13 +34,6 @@ class LoggingContext:
 info=ic
 
 # recepies
-import pandas as pd
-@pd.api.extensions.register_dataframe_accessor("rd")
-class rd:
-    def __init__(self, pandas_obj):
-        self._obj = pandas_obj
-#     pass
-
 from rohan.lib.io_strs import get_bracket, replacemany, make_pathable_string,get_suffix,get_prefix
 from rohan.lib.io_dict import *
 from rohan.lib.io_sets import *
@@ -74,7 +67,7 @@ plt.rc('axes', axisbelow=True)
 plt.rcParams['axes.labelcolor'] = 'k'
 sns.set_context('notebook') # paper < notebook < talk < poster
 from rohan.lib.figs.figure import *
-info("pwd=abspath('.');logp=f'log_{basename(pwd)}.log';get_ipython().run_line_magic('logstart',f'{logplotp} over')")
+logging.info("pwd=abspath('.');logp=f'log_{basename(pwd)}.log';get_ipython().run_line_magic('logstart',f'{logplotp} over')")
 from rohan.lib.plot.ax_ import *
 
 from tqdm import tqdm#,notebook
@@ -89,4 +82,4 @@ else:
 
 from pandarallel import pandarallel
 pandarallel.initialize(nb_workers=4,progress_bar=True)
-info("pandarallel.initialize(nb_workers=4,progress_bar=True)")
+logging.info("pandarallel.initialize(nb_workers=4,progress_bar=True)")

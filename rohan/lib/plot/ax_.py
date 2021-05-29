@@ -1,7 +1,6 @@
 from rohan.global_imports import * 
 
 ## ticklabels
-
 from rohan.lib.plot.colors import color_ticklabels
 
 def rename_ticklabels(ax,axis,rename):

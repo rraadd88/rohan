@@ -13,9 +13,8 @@ dtypes
 'V'       raw data (void)
 """
 from rohan.lib.io_df import *
-from rohan.lib import add_method_to_class
-from rohan.global_imports import rd
-
+from rohan.lib import to_class,rd
+        
 def filter_dfs(dfs,cols,how='inner'):
     """
     
@@ -38,7 +37,7 @@ def filter_dfs(dfs,cols,how='inner'):
         dfs=apply_(dfs=dfs,col=c,how=how)
     return dfs
 
-@add_method_to_class(rd)
+@to_class(rd)
 def merge_paired(dfpair,df,
                         left_ons=['gene1 id','gene2 id'],
                         right_on='gene id',right_ons_common=[],

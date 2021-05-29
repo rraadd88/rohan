@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sc
 import logging
 from icecream import ic as info
+from rohan.lib import to_class,stat
 
 def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_control=None):
     if subset_control is None:
@@ -202,6 +203,7 @@ def get_stats(df1,
         df3=df3.reset_index().rd.flatten_columns()
     return df3
 
+@to_class(stat)
 def get_significant_changes(df1,alpha=0.025,
                             changeby="",
                             fdr=True,
@@ -235,6 +237,7 @@ def get_significant_changes(df1,alpha=0.025,
             df1[f"significant change ({test} test{(', FDR corrected' if fdr else '')})"]=df1[f"significant change ({test} test{(', FDR corrected' if fdr else '')})"].fillna('ns')
     return df1
 
+@to_class(stat)
 def apply_get_significant_changes(df1,cols_value,
                                     cols_groupby, # e.g. genes id
                                     cols_grouped, # e.g. tissue
@@ -259,6 +262,7 @@ def apply_get_significant_changes(df1,cols_value,
     assert(not df2.columns.duplicated().any())
     return df2
 
+@to_class(stat)
 def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
                       color=False,
                        testn='MWU test, FDR corrected',
@@ -322,4 +326,4 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
         df1.loc[df1[colns],'c']=get_colors_default()[1]            
     return df1,df3
 
-from rohan.lib.plot.diff import plot_stats_diff
+# from rohan.lib.plot.diff import plot_stats_diff

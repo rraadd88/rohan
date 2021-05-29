@@ -3,8 +3,7 @@ import numpy as np
 import scipy as sc
 import logging
 
-from rohan.lib import add_method_to_class
-from rohan.global_imports import rd
+from rohan.lib import to_class,rd
 
 from scipy.stats import spearmanr,pearsonr
 def get_spearmanr(x,y):
@@ -46,7 +45,7 @@ def get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
 #     return get_corr(x,y,method='spearman',bootstrapped=False,ci_type='max',
 #             outstr=False):    
 
-@add_method_to_class(rd)
+@to_class(rd)
 def corr_within(df,
          method='spearman',
          ):
@@ -60,7 +59,7 @@ def corr_within(df,
     df2=df2.rename(columns={col:col+'2'}).reset_index().rename(columns={col:col+'1','value':f'$r_{method[0]}$'})
     return df2
 
-@add_method_to_class(rd)
+@to_class(rd)
 def corrdf(df1,
            colindex,
            colsample,
@@ -85,7 +84,7 @@ def corrdf(df1,
             )).rd.clean().reset_index(0)
     return df2
 
-@add_method_to_class(rd)
+@to_class(rd)
 def corr_between(df1,df2,method):
     """
     df1 in columns
@@ -117,7 +116,7 @@ def corr_between(df1,df2,method):
     df3.index.name='variable correlation'
     return df3.reset_index()
 
-@add_method_to_class(rd)
+@to_class(rd)
 def corrdfs(df1,df2,
            colindex,
            colsample,
@@ -215,7 +214,7 @@ def get_corr_between(p,
 
 ## partial 
 
-@add_method_to_class(rd)
+@to_class(rd)
 def get_partial_corrs(df,xs,ys,method='spearman',splits=5):
     """
     xs=['protein expression balance','coexpression']

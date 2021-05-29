@@ -2,9 +2,9 @@ from rohan.global_imports import *
 from rohan.lib.plot.colors import *
 from rohan.lib.plot.annot import *
 from rohan.lib.plot.ax_ import *
-from rohan.lib import add_method_to_class
+from rohan.lib import to_class
 
-@add_method_to_class(rd)
+@to_class(rd)
 def plot_dists(dplot,colx,coly,colindex,order,
                colhue=None,
                hue_order=None,
@@ -256,7 +256,7 @@ def plot_boxplot_subsets(df,colx,xs,colhue,hues,coly,
     import inspect
     return [locals()[arg] for arg in inspect.getargspec(plot_dist_comparison).args]
 
-@add_method_to_class(rd)
+@to_class(rd)
 def hist_annot(dplot,colx,
                colssubsets=[],
                bins=100,

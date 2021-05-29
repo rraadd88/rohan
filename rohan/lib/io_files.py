@@ -167,7 +167,7 @@ def download(url,path=None,outd='data/database',
 from rohan.lib.io_sys import p2time
 
 ## dfs
-from rohan.global_imports import rd
+from rohan.lib import to_class,rd
 
 from rohan.lib.io_text import get_header
 def read_table(p,

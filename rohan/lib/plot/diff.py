@@ -1,5 +1,7 @@
 from rohan.global_imports import *
+from rohan.lib import stat,to_class
 
+@to_class(stat)
 def plot_stats_diff(df2,
                     coly=None,
 #                     colcomparison=None,  
@@ -142,25 +144,15 @@ def plot_stats_diff(df2,
     return ax
 
 ## volcano
-def plot_volcano_get_dplot(dplot,x,y,
-                          coffs,
-                          **kws_binby_pvalue_coffs):
-    from rohan.lib.stat.diff import binby_pvalue_coffs
-    df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
-                              color=True,
-                              **kws_binby_pvalue_coffs)
-    assert(df1[y].isnull().sum()==0)
-#     if df1[y].isnull().any(): 
-#         logging.warning('')
-#         df1=df1.log.dropna(subset=[y])
-    df1[y]=df1[y].apply(lambda x : -1*(np.log10(x)))
-#     df1=df1.rename(columns={'value difference between mean (subset1-subset2)':x})    
-    return df1,df_
 
+@to_class(stat)
 def plot_volcano(dplot,
                  x='difference between mean (subset1-subset2)',
                  y='P (MWU test, FDR corrected)',
                  coffs=[0.01,0.05,0.2],
+                 colindex='gene name test',
+                 colgroup='condition',
+                 colns=None,#f'not mean+-{2}*std',
                  ax=None,
                  filter_rows=None,
                  collabel=None,
@@ -169,9 +161,21 @@ def plot_volcano(dplot,
                  kws_binby_pvalue_coffs={},
                  out_df=False,
                  **kws_set):
-    df1,df_=plot_volcano_get_dplot(dplot,x,y,
-                          coffs,
-                          **kws_binby_pvalue_coffs)
+    """
+    1. create dplot
+    """
+    # 1
+    from rohan.lib.stat.diff import binby_pvalue_coffs
+    df1,df_=binby_pvalue_coffs(dplot,coffs=coffs,
+                                colindex=colindex,#'gene name test',
+                                 colgroup=colgroup,#'condition',
+                                 colns=colns,#None,#f'not mean+-{2}*std',
+                              color=True,
+                              **kws_binby_pvalue_coffs)
+    assert(df1[y].isnull().sum()==0)
+    df1[y]=df1[y].apply(lambda x : -1*(np.log10(x)))
+#     df1=df1.rename(columns={'value difference between mean (subset1-subset2)':x})
+    # 2
     from rohan.lib.plot.colors import saturate_color
     if ax is None:
         fig,ax=plt.subplots(figsize=[3,3])
