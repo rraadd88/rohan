@@ -155,12 +155,10 @@ def plot_volcano(dplot,
                  colns=None,#f'not mean+-{2}*std',
                  ax=None,
                  filter_rows=None,
-                 collabel=None,
-                 title=None,
                  ylabel='significance\n(-log10(P))',
                  kws_binby_pvalue_coffs={},
                  out_df=False,
-                 **kws_set):
+                 **kws_ax):
     """
     1. create dplot
     """
@@ -181,9 +179,8 @@ def plot_volcano(dplot,
         fig,ax=plt.subplots(figsize=[3,3])
     df1.plot.scatter(x=x,y=y,c='c',
                        s=1,ax=ax)
-    ax.set(ylabel=ylabel,
-           **kws_set
-          )
+    ax.set(ylabel=ylabel,)
+    set_(ax,**kws_ax)
     df_.apply(lambda x: ax.hlines(x['y'],x['x'],ax.get_xlim()[0 if x['change']=='decrease' else 1],
                                                  colors=x['color'],
                                                  linestyles="solid",lw=1,
@@ -200,12 +197,14 @@ def plot_volcano(dplot,
     df_.loc[:,['y','y text','y alpha']].drop_duplicates().apply(lambda x: ax.text(ax.get_xlim()[1],x['y'],x['y text'],
                                                                    color='k',alpha=x['y alpha']),
                                                   axis=1)
-    if collabel is None:
-        if len(filter_rows.keys())==1:
-            collabel=list(filter_rows.keys())[0]
-    if (filter_rows is not None) and (collabel is not None):
+    if (filter_rows is not None):
+        if not all([isinstance(s,str) for s in filter_rows.values()]):
+            filter_rows={k:df1.sort_values(by=x).iloc[0,:][colindex] if v==min else df1.sort_values(by=x).iloc[0,:][colindex] if v==max else None for k,v in filter_rows.items()}
+        ## TODOS more than one color
+        assert(len(filter_rows.keys())==1)
+        assert(all([isinstance(s,str) for s in filter_rows.values()]))
         df_=df1.rd.filter_rows(filter_rows)
-        df_.groupby(collabel).apply(lambda df: ax.scatter(x=df_[x],
+        df_.groupby(colindex).apply(lambda df: ax.scatter(x=df_[x],
                                                             y=df_[y],
                                                             marker='o', 
                                                             facecolors='none',
@@ -214,7 +213,7 @@ def plot_volcano(dplot,
                                                             ))
     ax.legend(loc='upper left',
              bbox_to_anchor=[1,1])
-    ax.set_title(label=title,loc='left')
+#     ax.set_title(label=title,loc='left')
     if out_df:
         return ax,df1
     else:
@@ -279,3 +278,62 @@ def plot_volcano_agg(dplot,colx,coly,colxerr,colsize,
 #         ax.set_title(label)
     return ax
 
+def plot_ranking(dplot,
+             x,y,colgroup,
+             estimator='min',
+            **kws_ax):
+    dplot=dplot.rd.groupby_sort_values(
+        col_groupby=y,
+        col_sortby=x,
+        subset=None,
+        col_subset=None,
+        func=estimator,
+        ascending=True,)
+    df2=dplot.loc[(dplot[x]==dplot[f"{x} per {y}"]),:]
+    fig,ax=plt.subplots(figsize=[1.5,dplot[y].nunique()*0.3])
+    ax=sns.violinplot(data=dplot,
+                    x=x,y=y,
+                      color='#999999',
+#                     color=[0.99,0.99,0.99],
+#                     alpha=0.5,
+#                     jitter=False,
+#                     dodge=False, 
+                      width=0,cut=0,
+                    ax=ax,
+                    zorder=1,
+                     )
+    ax.grid()    
+    ax_ = ax.twinx()
+    ax_=sns.pointplot(data=df2,
+                    x=x,y=y,
+                    estimator=getattr(np,estimator),
+                    join=False,
+                    errwidth=0,
+                     palette=df2['c'],
+                    ax=ax_,
+#                     zorder=100,
+                    )
+    ax_.set(yticklabels=[],
+           xlabel=None,
+           ylabel=None)
+    ax_.grid(False)
+    ax.set_xlim([dplot[f'{x} per {y}'].min()-0.5,0.5])    
+    if estimator in ['min','max','median']:
+        from rohan.lib.plot.ax_ import get_ticklabel2position
+        df_=pd.Series(get_ticklabel2position(ax,'y')).to_frame('y').reset_index()
+        df3=df_.merge(df2,
+                 how='left',
+                 left_on='index',
+                 right_on=y,
+                 validate="1:1",
+                 )
+#         df_['label']=df_['index'].map(df2.rd.to_dict([y,'condition']))
+        assert(df3[colgroup].isnull().sum()==0)
+        _=df3.apply(lambda x: ax.text(0.5,x['y'],'- '+x[colgroup],
+                                      color=[0.3,0.3,0.3],
+#                                       color=x['c'],
+                                      va='center',),axis=1)
+    else:
+        ValueError(estimator)
+    set_(ax,**kws_ax,)
+    return ax

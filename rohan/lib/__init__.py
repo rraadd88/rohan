@@ -22,5 +22,4 @@ class rd:
 class stat:
     def __init__(self, pandas_obj):
         self._obj = pandas_obj
-#     pass
 

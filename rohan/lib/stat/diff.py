@@ -270,14 +270,19 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
                        colgroup='tissue',
                       preffix='',
                       colns=None, # plot as ns, not counted
+                      palette=None,#['#f55f5f','#ababab','#046C9A',],
                       ):
+    if palette is None:
+        from rohan.lib.plot.colors import get_colors_default
+        palette=get_colors_default()[:3]
+    assert(len( palette)==3)
     coffs=np.array(sorted(coffs))
     # df1[f'{preffix}P (MWU test, FDR corrected) bin']=pd.cut(x=df1[f'{preffix}P (MWU test, FDR corrected)'],
     #       bins=[0]+coffs+[1],
     #        labels=coffs+[1],
     #        right=False,
     #       ).fillna(1)
-    from rohan.lib.plot.colors import get_colors_default,saturate_color
+    from rohan.lib.plot.colors import saturate_color
     d1={}
     for i,coff in enumerate(coffs[::-1]):
         col=f"{preffix}significant change, P ({testn}) < {coff}"
@@ -288,19 +293,14 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
                                 else 'ns', axis=1)
         if color:
             if i==0:
-                df1.loc[(df1[col]=='ns'),'c']=get_colors_default()[1]
+                df1.loc[(df1[col]=='ns'),'c']=palette[1]
             saturate=1-((len(coffs)-(i+1))/len(coffs))
             d2={}
-            d2['increase']=saturate_color(get_colors_default()[0],saturate)
-            d2['decrease']=saturate_color(get_colors_default()[2],saturate)
+            d2['increase']=saturate_color(palette[0],saturate)
+            d2['decrease']=saturate_color(palette[2],saturate)
             d1[coff]=d2
             df1['c']=df1.apply(lambda x: d2[x[col]] if x[col] in d2 else x['c'],axis=1)
             assert(df1['c'].isnull().sum()==0)
-    if not colns is None:
-        df2=df1.loc[~(df1[colns]),:]
-        info(df1[colns].sum())
-    else:
-        df2=df1.copy()
     if color:
         import itertools
         from rohan.lib.stat.transform import rescale
@@ -309,21 +309,18 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
             col=f"{preffix}significant change, P ({testn}) < {coff}"
             d4={}
             d4['y alpha']=rescale(1-(list(coffs).index(coff))/len(coffs),[0,1],[0.5,1])
-        #     d4['y color']=saturate_color("#000000",d4['y alpha'])
             d4['y']=-1*(np.log10(coff))
             d4['y text']=f" P < {coff}"
-            d4['x']=df2.loc[(df2[col]==k),f'{preffix}difference between mean (subset1-subset2)'].min() if k=='increase' \
-                                        else df2.loc[(df2[col]==k),f'{preffix}difference between mean (subset1-subset2)'].max()
+            d4['x']=df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].min() if k=='increase' \
+                                        else df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].max()
             d4['change']=k
-#             info(df2.shape)
-#             info(df2.columns)
-#             info(d4)
-            d4['text']=f"{df2.loc[(df2[col]==k),colindex].nunique()}/{df2.loc[(df2[col]==k),colgroup].nunique()}"
+            d4['text']=f"{df1.loc[(df1[col]==k),colindex].nunique()}/{df1.loc[(df1[col]==k),colgroup].nunique()}"
             d4['color']=d1[coff][k]
             d3[i]=d4
-        df3=pd.DataFrame(d3).T
+        df2=pd.DataFrame(d3).T
     if not colns is None:
-        df1.loc[df1[colns],'c']=get_colors_default()[1]            
-    return df1,df3
+        df1.loc[df1[colns],'c']=palette[1]
+#     info(df1.shape,df1.shape)
+    return df1,df2
 
 # from rohan.lib.plot.diff import plot_stats_diff

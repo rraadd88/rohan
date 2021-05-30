@@ -58,6 +58,9 @@ def ax2plotp(ax,prefix='plot/plot_',
     """
     :params plotp: preffix
     """
+    if isinstance(suffix,(list,tuple)):
+        suffix='_'.join(suffix)
+    suffix=suffix.replace('/','_')
     plotp=prefix
     if not isinstance(ax,str):
         for k in ['get_xlabel','get_ylabel','get_title','legend_']: 

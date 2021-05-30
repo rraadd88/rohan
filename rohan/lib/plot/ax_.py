@@ -1,5 +1,18 @@
 from rohan.global_imports import * 
 
+## set
+def set_(ax,test=False,**kws):
+    kws1={k:v for k,v in kws.items() if not isinstance(v,dict)}
+    kws2={k:v for k,v in kws.items() if isinstance(v,dict)}    
+#     if test:
+#     info(kws)
+#     info(kws1)
+#     info(kws2)
+    ax.set(**kws1)
+    for k,v in kws2.items():
+        getattr(ax,f"set_{k}")(**v)
+    return ax
+
 ## ticklabels
 from rohan.lib.plot.colors import color_ticklabels
 
