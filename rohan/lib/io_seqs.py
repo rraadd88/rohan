@@ -274,6 +274,8 @@ def read_fasta(fap,key_type='id',duplicates=False):
             id2seq[getattr(seq_record,key_type)]=str(seq_record.seq)
         return id2seq
 def to_fasta(ids2seqs,fastap):
+    from os.path import exists,dirname
+    from os import makedirs
     if not exists(dirname(fastap)) and dirname(fastap)!='':
         makedirs(dirname(fastap),exist_ok=True)    
     seqs = (SeqRecord.SeqRecord(Seq.Seq(ids2seqs[id]), id) for id in ids2seqs)

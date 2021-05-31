@@ -68,21 +68,29 @@ def plot_scatter(dplot,colx,coly,colz=None,
     stat_method = [stat_method] if isinstance(stat_method,str) else stat_method
     
     dplot=dplot.dropna(subset=[colx,coly]+[] if colz is None else [colz],how='any')
-    
-    if colz is None and kind in ['hexbin']:
-        colz='count'
-        dplot[colz]=1
-    if colz in dplot:
-        params_plot['C']=colz
-        params_plot['reduce_C_function']=len if colz=='count' else params_plot['reduce_C_function'] if 'reduce_C_function' in params_plot else np.mean        
-        params_plot['gridsize']=params_plot['gridsize'] if 'gridsize' in params_plot else gridsize
-        params_plot['cmap']=params_plot['cmap'] if 'cmap' in params_plot else cmap
-        print(params_plot)
-    ax=dplot.plot(kind=kind, x=colx, y=coly, 
-#         C=colz,
-        ax=ax,
-        **params_plot,
-        )
+    if kind in ['hexbin']:
+        if colz is None: 
+            colz='count'
+            dplot[colz]=1
+        if colz in dplot:
+            params_plot['C']=colz
+            params_plot['reduce_C_function']=len if colz=='count' else params_plot['reduce_C_function'] if 'reduce_C_function' in params_plot else np.mean        
+            params_plot['gridsize']=params_plot['gridsize'] if 'gridsize' in params_plot else gridsize
+            params_plot['cmap']=params_plot['cmap'] if 'cmap' in params_plot else cmap
+            print(params_plot)
+        ax=dplot.plot(kind=kind, x=colx, y=coly, 
+    #         C=colz,
+            ax=ax,
+            **params_plot,
+            )
+    else:
+        ax=sns.scatterplot(data=dplot,
+        x=colx,
+        y=coly,
+        hue=colz,       
+        palette=cmap,
+        ax=ax)
+        ax.legend(bbox_to_anchor=[1,1],title=colz)
     from rohan.lib.plot.ax_ import set_label_colorbar
 #     print(colz)
     ax=set_label_colorbar(ax,colz if label_colorbar is None else label_colorbar)

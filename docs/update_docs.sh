@@ -1,3 +1,19 @@
+"""[Summary]
+
+:param [ParamName]: [ParamDescription], defaults to [DefaultParamVal]
+:type [ParamName]: [ParamType](, optional)
+...
+:raises [ErrorType]: [ErrorDescription]
+...
+:return: [ReturnDescription]
+:rtype: [ReturnType]
+
+Ref: https://sphinx-rtd-tutorial.readthedocs.io/en/latest/docstrings.html
+"""
+
+
+# reset docs
+# sphinx-apidoc -o source/ ../rohan
 # make docs
 make text
 # rename and copy to rohan.wiki
