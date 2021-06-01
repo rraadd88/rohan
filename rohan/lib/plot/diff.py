@@ -51,6 +51,7 @@ def plot_stats_diff(df2,
     params=dict(x='mean',
                 y=colcomparison,
                 hue='id',
+                palette=palette,
                )
     if fig is None: plt.figure(figsize=[3,(len(df3)*0.175)+1])
     ax=plt.subplot() if ax is None else ax
