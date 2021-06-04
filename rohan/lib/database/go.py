@@ -3,22 +3,24 @@ import requests
 
 def get_goid_info(queries,result=None,interval=500):
     """
-    quickgo
-    result: 'name','definition','synonyms'
+    QuickGo search.
     
-    {'numberOfHits': 1,
- 'results': [{'id': 'GO:0000006',
-   'isObsolete': False,
-   'name': 'high-affinity zinc transmembrane transporter activity',
-   'definition': {'text': 'Enables the transfer of zinc ions (Zn2+) from one side of a membrane to the other, probably powered by proton motive force. In high-affinity transport the transporter is able to bind the solute even if it is only present at very low concentrations.',
-    'xrefs': [{'dbCode': 'TC', 'dbId': '2.A.5.1.1'}]},
-   'synonyms': [{'name': 'high-affinity zinc uptake transmembrane transporter activity',
-     'type': 'related'},
-    {'name': 'high affinity zinc uptake transmembrane transporter activity',
-     'type': 'exact'}],
-   'aspect': 'molecular_function',
-   'usage': 'Unrestricted'}],
- 'pageInfo': None}
+    :return: 'name','definition','synonyms'
+    
+        {'numberOfHits': 1,
+     'results': [{'id': 'GO:0000006',
+       'isObsolete': False,
+       'name': 'high-affinity zinc transmembrane transporter activity',
+       'definition': {'text': 'Enables the transfer of zinc ions (Zn2+) from one side of a membrane to the other, probably powered by proton motive force. In high-affinity transport the transporter is able to bind the solute even if it is only present at very low concentrations.',
+        'xrefs': [{'dbCode': 'TC', 'dbId': '2.A.5.1.1'}]},
+       'synonyms': [{'name': 'high-affinity zinc uptake transmembrane transporter activity',
+         'type': 'related'},
+        {'name': 'high affinity zinc uptake transmembrane transporter activity',
+         'type': 'exact'}],
+       'aspect': 'molecular_function',
+       'usage': 'Unrestricted'}],
+     'pageInfo': None}
+     
     """
     if isinstance(queries,str):
         queries=[queries]
@@ -47,8 +49,10 @@ def get_genes_bygoids(
     goids=['GO:0004713','GO:0004725'],
     taxid=559292):
     """
-    geneProductSubset=Swiss-Prot&proteome=gcrpCan,complete&
-    reference=PMID,DOI&
+    
+        geneProductSubset=Swiss-Prot&proteome=gcrpCan,complete&
+        reference=PMID,DOI&
+        
     """
     requestURL=f"https://www.ebi.ac.uk/QuickGO/services/annotation/downloadSearch?taxonId={taxid}&taxonUsage=exact&geneProductType=protein&goId={','.join(goids)}&goUsage=descendants&downloadLimit=50000"
     import requests

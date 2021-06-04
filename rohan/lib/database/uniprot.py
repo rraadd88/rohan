@@ -57,27 +57,29 @@ def map_ids(queries,frm='ACC',to='ENSEMBL_PRO_ID',
             **kws_map_ids,
             ):
     """
-    https://www.uniprot.org/help/api_idmapping
-    Category: Genome annotation databases
-    Ensembl	ENSEMBL_ID	both
-    Ensembl Protein	ENSEMBL_PRO_ID	both
-    Ensembl Transcript	ENSEMBL_TRS_ID	both
-    Ensembl Genomes	ENSEMBLGENOME_ID	both
-    Ensembl Genomes Protein	ENSEMBLGENOME_PRO_ID	both
-    Ensembl Genomes Transcript	ENSEMBLGENOME_TRS_ID	both
-    Entrez Gene (GeneID)	P_ENTREZGENEID
-    Category: 3D structure databases
-    PDB	PDB_ID	both
-    Category: Protein-protein interaction databases
-    BioGrid	BIOGRID_ID	both
-    ComplexPortal	COMPLEXPORTAL_ID	both
-    DIP	DIP_ID	both
-    STRING	STRING_ID	both
-    def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMBL_PRO_ID'},
-                 intermediate=None):
-    # def map_ids_chained(queries,frm='GENENAME',
-    #                     to='ENSEMBL_ID',intermediate='ACC',
-    #                     **kws_map_ids):
+    
+        https://www.uniprot.org/help/api_idmapping
+        Category: Genome annotation databases
+        Ensembl	ENSEMBL_ID	both
+        Ensembl Protein	ENSEMBL_PRO_ID	both
+        Ensembl Transcript	ENSEMBL_TRS_ID	both
+        Ensembl Genomes	ENSEMBLGENOME_ID	both
+        Ensembl Genomes Protein	ENSEMBLGENOME_PRO_ID	both
+        Ensembl Genomes Transcript	ENSEMBLGENOME_TRS_ID	both
+        Entrez Gene (GeneID)	P_ENTREZGENEID
+        Category: 3D structure databases
+        PDB	PDB_ID	both
+        Category: Protein-protein interaction databases
+        BioGrid	BIOGRID_ID	both
+        ComplexPortal	COMPLEXPORTAL_ID	both
+        DIP	DIP_ID	both
+        STRING	STRING_ID	both
+        def map_ids_batch(queries,interval=1000,params_map_ids={'frm':'ACC','to':'ENSEMBL_PRO_ID'},
+                     intermediate=None):
+        # def map_ids_chained(queries,frm='GENENAME',
+        #                     to='ENSEMBL_ID',intermediate='ACC',
+        #                     **kws_map_ids):
+        
     """
     if intermediate is None:
         return map_ids_request_in_batches(queries=queries,
@@ -127,8 +129,10 @@ def get_sequence(queries,fap=None,fmt='fasta',
             organism_taxid=9606,
                  test=False):
     """
-    http://www.ebi.ac.uk/Tools/dbfetch/dbfetch?db=uniprotkb&id=P14060+P26439&format=fasta&style=raw&Retrieve=Retrieve
-    https://www.uniprot.org/uniprot/?format=fasta&organism=9606&query=O75116+O75116+P35548+O14944+O14944
+    Examples:
+        http://www.ebi.ac.uk/Tools/dbfetch/dbfetch?db=uniprotkb&id=P14060+P26439&format=fasta&style=raw&Retrieve=Retrieve
+        https://www.uniprot.org/uniprot/?format=fasta&organism=9606&query=O75116+O75116+P35548+O14944+O14944
+        
     """
     url = 'http://www.ebi.ac.uk/Tools/dbfetch/dbfetch'
     params = {

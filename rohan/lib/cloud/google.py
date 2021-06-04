@@ -4,6 +4,15 @@ pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-
 """
 
 def get_service(service_name='drive',access_limit=True,client_config=None):
+    """
+    Creates a google service object. 
+    
+    :param service_name: name of the service e.g. drive
+    :param access_limit: True is access limited else False
+    :param client_config: custom client config
+    ...
+    :return: google service object
+    """
     service_name2params={
     'drive': {
         'scope':'https://www.googleapis.com/auth/drive.readonly',
@@ -45,6 +54,17 @@ def list_files_in_folder(service,folderid,
                          filetype=None,
                          fileext=None,                         
                          test=False):
+    """
+    Lists files in a google drive folder.
+    
+    :param service: service object e.g. drive
+    :param folderid: folder id from google drive
+    :param filetype: specify file type
+    :param fileext: specify file extension
+    :param test: True if verbose else False
+    ...
+    :return: list of files in the folder     
+    """
     filetype2mimetype={"audio":"application/vnd.google-apps.audio", #
     "document":"application/vnd.google-apps.document", #Google Docs
     "drive":"application/vnd.google-apps.drive-sdk", #3rd party shortcut
@@ -79,7 +99,15 @@ def list_files_in_folder(service,folderid,
 
 def download_file(service,fileid,filetypes,outp,test=False):
     """
-    https://developers.google.com/drive/api/v3/ref-export-formats
+    Downloads a specified file.
+    
+    :param service: google service object
+    :param fileid: file id as on google drive
+    :param filetypes: specify file type
+    :param outp: path to the ouput file
+    :param test: True if verbose else False
+    
+    Ref: https://developers.google.com/drive/api/v3/ref-export-formats
     """
     from googleapiclient.http import MediaIoBaseDownload
     from os import makedirs
@@ -100,6 +128,16 @@ def download_file(service,fileid,filetypes,outp,test=False):
                 print( f"Downloading {outp_}: {int(status.progress() * 100)}")
                 
 def upload_file(service,filep,folder_id,test=False):
+    """
+    Uploads a local file onto google drive.
+    
+    :param service: google service object
+    :param filep: path of the file
+    :param folder_id: id of the folder on google drive where the file will be uploaded 
+    :param test: True is verbose else False
+    ...
+    :return: id of the uploaded file 
+    """
     from googleapiclient.http import MediaFileUpload
     from os.path import basename
     file_metadata = {'name': basename(filep),
@@ -123,6 +161,9 @@ def upload_file(service,filep,folder_id,test=False):
                                          ).execute()
     return file_id
 def download_drawings(folderid,outd,service=None,test=False):
+    """
+    Download specific files: drawings
+    """
     if service is None:
         service=get_service_drive()
     filename2id=list_files_in_folder(service=service,
@@ -195,26 +236,28 @@ def get_comments(fileid,
                  fields='comments/quotedFileContent/value,comments/content,comments/id',
                 service=None):
     """
-    fields: comments/
-                kind:
-                id:
-                createdTime:
-                modifiedTime:
-                author:
+    Get comments.
+    
+        fields: comments/
                     kind:
-                    displayName:
-                    photoLink:
-                    me:
-                        True
-                htmlContent:
-                content:
-                deleted:
-                quotedFileContent:
-                    mimeType:
-                    value:
-                anchor:
-                replies:
-                    []
+                    id:
+                    createdTime:
+                    modifiedTime:
+                    author:
+                        kind:
+                        displayName:
+                        photoLink:
+                        me:
+                            True
+                    htmlContent:
+                    content:
+                    deleted:
+                    quotedFileContent:
+                        mimeType:
+                        value:
+                    anchor:
+                    replies:
+                        []
     """
     def apply_(service,fileId,fields,**kws_list):
         comments = service.comments().list(fileId=fileId,fields=fields,**kws_list).execute()
@@ -244,7 +287,11 @@ def search(query,results=1,
            service=None,
            **kws_search):
     """
-    :params query: exact terms
+    Google search.
+    
+    :param query: exact terms
+    ...
+    :return: dict
     """
     if service is None: service=get_service("customsearch")
     # https://developers.google.com/custom-search/v1/reference/rest/v1/cse/list
@@ -257,6 +304,15 @@ def search(query,results=1,
 #     res
 
 def get_search_strings(text,num=5,test=False):
+    """
+    Google search.
+    
+    :param text: string
+    :param num: number of results
+    :param test: True if verbose else False
+    ...
+    :return lines: list
+    """
     lines=text.split("\n")
     lines=[s.split('.')[0].split(';')[0].strip() for s in lines]    
     lines=sorted(lines, key=len)[::-1][:num+2]
@@ -272,6 +328,9 @@ def get_metadata_of_paper(file_id,service_drive,service_search,
                           metadata=None,
                           force=False,
                          test=False):
+    """
+    Get the metadata of a pdf document.
+    """
     import numpy as np
     if metadata is None: 
         metadata={'queries':np.nan,

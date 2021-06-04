@@ -15,7 +15,7 @@ def run_needle(s1p,s2p,
                outfmt='pair',
                test=False):
     """
-    :params outfmt: fasta|pair
+    :param outfmt: fasta|pair
     """
     from rohan.lib.io_sys import runbashcmd    
     if not exists(outp):

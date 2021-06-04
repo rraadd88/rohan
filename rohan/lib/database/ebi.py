@@ -7,7 +7,7 @@ def ebiid2uniprotids(k):
 ## protein structures
 def get_pos(d2,pdbid,uniprotid):
     """
-    sifts df
+    Sifts a dataframe.
     """
     a=np.array([[d2[pdbid]['UniProt'][uniprotid]['mappings'][0]['start'][k] for k in d2[pdbid]['UniProt'][uniprotid]['mappings'][0]['start'] if 'number' in k],
     [d2[pdbid]['UniProt'][uniprotid]['mappings'][0]['end'][k] for k in d2[pdbid]['UniProt'][uniprotid]['mappings'][0]['start'] if 'number' in k]])

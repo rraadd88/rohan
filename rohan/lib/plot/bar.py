@@ -63,9 +63,9 @@ def plot_barh_stacked_percentage(df1,coly,colannot,
                      ax=None,
                      ):
     """
-    :params dplot: values sum to 100% in rows
-    :params coly: yticklabels, e.g. retained and dropped 
-    :params colannot: col to annot
+    :param dplot: values sum to 100% in rows
+    :param coly: yticklabels, e.g. retained and dropped 
+    :param colannot: col to annot
     """
     from rohan.lib.plot.ax_ import get_ticklabel2position
     from rohan.lib.plot.colors import get_colors_default

@@ -119,7 +119,7 @@ def get_stat(df1,
              ):
     """
     Either MWU or FE
-    :params df2: pairs of comparisons between subsets
+    :param df2: pairs of comparisons between subsets
     either colsubset or subsets are needed 
     """        
     if not ((colvalue in df1) and (colsubset in df1)):
@@ -170,7 +170,7 @@ def get_stats(df1,
               axis=1, # concat 
               **kws_get_stats):
     """
-    :params axis: 1 if different tests else use 0.
+    :param axis: 1 if different tests else use 0.
     """
 #     from rohan.lib.io_dfs import to_table
 #     to_table(df1,'test/get_stats.tsv')

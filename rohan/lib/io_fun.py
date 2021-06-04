@@ -317,7 +317,7 @@ def get_output_parameter_names(k,dparam):
                                           
 def run_package(cfgp,packagen,reruns=[],test=False,force=False,cores=4):
     """
-    :params reruns: list of file names
+    :param reruns: list of file names
     """
     
     cfg=read_dict(cfgp)
@@ -382,7 +382,7 @@ def git_commit(repop,suffix_message=''):
         repo.index.commit('auto-update'+suffix_message)
 
     if len(repo.untracked_files)!=0:
-        from rohan.lib import input_binary
+        from rohan.lib.io_sys import input_binary
         print(len(repo.untracked_files),'untracked file/s in the repo:',repo.untracked_files)
         yes=input_binary("add all of them? [y/n]")
         if yes:
@@ -400,7 +400,7 @@ def git_commit(repop,suffix_message=''):
         
 def git_notebooks(packagen,packagep,notebooksdp=None,validate=False,test=False):
     """
-    :params validate: validate if functions are formatted correctly. 
+    :param validate: validate if functions are formatted correctly. 
     """
     packagescriptsp=f"{packagep}/{packagen}"
     if notebooksdp is None:

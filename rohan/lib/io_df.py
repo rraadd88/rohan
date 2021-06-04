@@ -37,7 +37,7 @@ delunnamedcol=drop_unnamedcol
 @to_class(rd)
 def drop_levelcol(df):
     """
-    Deletes all the unnamed columns
+    Deletes all the temporary columns names "level".
 
     :param df: pandas dataframe
     """
@@ -311,7 +311,7 @@ def agg_bools(df1,cols):
     """
     reverse pd.get_dummies
     
-    :params df1: bools
+    :param df1: bools
     """
     col='+'.join(cols)
 #     print(df1.loc[:,cols].T.sum())
@@ -353,7 +353,7 @@ def get_chunks(df1,colindex,colvalue,bins=None,value='right'):
     """
     based on other df
     
-    :params colvalue: value within [0-100]
+    :param colvalue: value within [0-100]
     """
     from rohan.lib.io_sets import unique,nunique
     if bins==0:
@@ -527,7 +527,7 @@ meltlistvalues=split_rows
 def apply_as_map(df,index,columns,values,
                  fun,**kws):
     """
-    :params fun: map to map
+    :param fun: map to map
     """
     df1=df.pivot(index=index,columns=columns,values=values)
     df2=fun(df1,**kws)
@@ -845,8 +845,8 @@ def reverse_ids(df,col,colonly=None,fast=False):
 @to_class(rd)
 def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
     """
-    :params df: target
-    :params df2: sources. labels in colgroupby 
+    :param df: target
+    :param df2: sources. labels in colgroupby 
     """
     order_subsets=df[colgroupby].unique() if colgroupby is None else order_subsets
     dn2df={}

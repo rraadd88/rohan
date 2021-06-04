@@ -263,7 +263,7 @@ def apply_on_paths(ps,func,
                    **kws,
                   ):
     """
-    :params func:
+    :param func:
     def apply_(p,outd='data/data_analysed',force=False):
         outp=f"{outd}/{basenamenoext(p)}.pqt'
         if exists(outp) and not force:
@@ -277,9 +277,9 @@ def apply_on_paths(ps,func,
     fast=False,
     read_path=True,
     )
-    :params replaces_outp: to genrate outp
-    :params replaces_index: to replace (e.g. dirname) in p
-    :params colindex: column containing path 
+    :param replaces_outp: to genrate outp
+    :param replaces_index: to replace (e.g. dirname) in p
+    :param colindex: column containing path 
     """
     def read_table_(df,read_path=False,
                    filter_rows=None,
@@ -349,7 +349,7 @@ def read_manytables(ps,
                     **kws_apply_on_paths,
                    ):
     """
-    :params ps: list
+    :param ps: list
     
     :TODO: info: creation dates of the newest and the oldest files.
     """

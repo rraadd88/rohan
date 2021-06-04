@@ -69,8 +69,8 @@ def get_stats_paired(x,y,ignore=False,verb=True):
     """
     classify 2d distributions
     
-    :params x: (pd.Series)
-    :params y: (pd.Series)
+    :param x: (pd.Series)
+    :param y: (pd.Series)
     """
     ## escape duplicate value inputs
     if not ignore:

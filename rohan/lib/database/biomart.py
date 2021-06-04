@@ -12,12 +12,13 @@ def query(release,
             force=False,
              **kws_query,):
     """
-    filters={
-          # REMOVE: mitochondria/sex chr
-             'chromosome_name':[str(i) for i in list(range(1,23))],
-          # REMOVE: non protein coding
-             'biotype':['protein_coding'],
-             }
+    
+        filters={
+              # REMOVE: mitochondria/sex chr
+                 'chromosome_name':[str(i) for i in list(range(1,23))],
+              # REMOVE: non protein coding
+                 'biotype':['protein_coding'],
+                 }
 
     TODO: restrict to a ensembl release version
     """    

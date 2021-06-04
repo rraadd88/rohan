@@ -149,7 +149,10 @@ def geneid2homology(x='ENSG00000148584',
                    outd='data/database',
                    force=False):
     """
-    # outp='data/database/'+replacemany(p.split(';content-type')[0],{'https://':'','?':'/',';':'/'})+'.json'
+    Gene id to homology.
+    
+        outp='data/database/'+replacemany(p.split(';content-type')[0],{'https://':'','?':'/',';':'/'})+'.json'
+        
     Ref: f"https://e{release}.rest.ensembl.org/documentation/info/homology_ensemblgene
     """
     p=f"https://e{release}.rest.ensembl.org/homology/id/{x}?type={homologytype};compara=vertebrates;sequence=none;cigar_line=0;content-type=application/json;format=full"
@@ -296,7 +299,7 @@ def read_idmapper(outd=None,ini=75,
                  ids=None,force=False,
                  idtype='gene'):
     """
-    :params ps: glob(f'{outd}/*.idmapper.txt')
+    :param ps: glob(f'{outd}/*.idmapper.txt')
     """
     ps=glob(f'{outd}/*.idmapper.txt')
     ic(ps)
@@ -327,8 +330,8 @@ def check_release(ids,
                   releases=[75,100],
                  ):
     """
-    :params ids:
-    :params p: database  
+    :param ids:
+    :param p: database  
     """
     idtype=basename(dirname(dirname(p)))
     df1=read_table(p)
@@ -343,7 +346,7 @@ def check_release(ids,
 # to be deprecated
 def read_idmapper_results(ps):
     """
-    :params ps:glob(f'{outd}/Results-Homo_sapiens_Tools_IDMapper_*.csv')
+    :param ps:glob(f'{outd}/Results-Homo_sapiens_Tools_IDMapper_*.csv')
     Note: deprecated becase, it maps to the latest release.
     """
     return pd.concat([read_table(p).loc[:,['Requested ID','Matched ID(s)']] for p in ps],

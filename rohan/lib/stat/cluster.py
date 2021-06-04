@@ -99,7 +99,7 @@ def get_clusters_optimum(X,n_clusters=range(2,11),
                          test=False,
                         ):
     """
-    :params X: samples to cluster in indexed 
+    :param X: samples to cluster in indexed 
     
     cluster center intertia
     """

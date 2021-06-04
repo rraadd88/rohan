@@ -56,7 +56,7 @@ def labelplots(fig,axes,xoff=0,yoff=0,
 def ax2plotp(ax,prefix='plot/plot_',
              suffix=''):
     """
-    :params plotp: preffix
+    :param plotp: preffix
     """
     if isinstance(suffix,(list,tuple)):
         suffix='_'.join(suffix)
@@ -135,7 +135,7 @@ def get_plot_inputs(plotp,dplot,params,outd):
     if dplot is None:
         dplot=read_table(f"{splitext(plotp)[0]}.tsv");
     params_saved=read_dict(f"{splitext(plotp)[0]}.json" if exists(f"{splitext(plotp)[0]}.json") else f"{splitext(plotp)[0]}.yml");
-    params=params_saved if params is None else {k:params[k] if k in params else params_saved[k] for k in params_saved};
+    params=params_saved if params is None else {k:param[k] if k in params else params_saved[k] for k in params_saved};
     return plotp,dplot,params
     
 def saveplot(dplot,

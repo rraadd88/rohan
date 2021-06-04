@@ -26,7 +26,7 @@ def corpus2clusters(corpus, index,
     """
     Cluster a list of strings.
     
-    :params corpus: list of strings
+    :param corpus: list of strings
     """
     from sklearn.feature_extraction.text import TfidfVectorizer
     vect = TfidfVectorizer()

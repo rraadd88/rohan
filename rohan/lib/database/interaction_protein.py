@@ -37,9 +37,11 @@ class biogrid():
                             keep_exp_syss=[],del_exp_syss=[],
                             filldiagonal_withna=False):
         """
-        taxid=559292
-        del_exp_syss=["Co-purification", "Co-fractionation", "Proximity Label-MS", 
-                                      "Affinity Capture-RNA", "Protein-peptide"]
+        
+            taxid=559292
+            del_exp_syss=["Co-purification", "Co-fractionation", "Proximity Label-MS", 
+                                          "Affinity Capture-RNA", "Protein-peptide"]
+                                          
         """    
         if not genefmt is None:
             logging.warning('genefmt is deprecated, both gene ids and gene names will be used')
@@ -226,7 +228,7 @@ class intact():
 
         intact ftp: ftp://ftp.ebi.ac.uk/pub/databases/intact/current/psimitab/
 
-        file format https://github.com/HUPO-PSI/miTab/blob/master/PSI-MITAB27Format.md
+        Ref: file format https://github.com/HUPO-PSI/miTab/blob/master/PSI-MITAB27Format.md
         """
         from rohan.lib.io_strs import replacemany,get_bracket
         if dintact_rawp is None:

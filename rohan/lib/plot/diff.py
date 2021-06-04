@@ -17,8 +17,8 @@ def plot_stats_diff(df2,
                     params_ax={},
                    **kws_pointplot):
     """
-    :params df2: output of `get_stats`
-    :params coly: unique
+    :param df2: output of `get_stats`
+    :param coly: unique
     """
     if 'sorted' in df2:
         assert(df2['sorted'].nunique()==1)
