@@ -827,7 +827,20 @@ def sort_ids_paired(df1,cols=['g1','g2'],col=None):
 #     if any(df1[cols[0]]==df1[cols[1]]):
 #         df1['homomeric interaction']=df1[cols[0]]==df1[cols[1]]
     return df1
-    
+
+reverse_ids_=lambda x: '--'.join(x.split('--')[::-1])
+                                 
+@to_class(rd)
+def reverse_ids(df,col,colonly=None,fast=False):
+    """
+    :param col: ids
+    :param col: e.g. sorted
+    """
+    if colonly is None:
+        return getattr(df[col],f"{'progress' if not fast else 'parallel'}_apply")(reverse_ids_)
+    else:
+        return getattr(df,f"{'progress' if not fast else 'parallel'}_apply")(lambda x: reverse_ids_(x[col]) if x[colonly] else x[col], axis=1)
+                                 
 ## merge/map ids
 @to_class(rd)
 def map_ids(df,df2,colgroupby,col_mergeon,order_subsets=None,**kws_merge):
