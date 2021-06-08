@@ -28,3 +28,4 @@ done
 # update repo
 cd rohan.wiki;git status
 
+echo 'cd rohan.wiki/;git commit -am "update";git push origin master'
