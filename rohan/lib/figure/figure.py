@@ -82,6 +82,7 @@ def savefig(plotp,
             savepdf=False,
             normalise_path=True,
             dpi=500,
+            force=False,
            **kws_ax2plotp):
 #         from rohan.lib.plot.ax_ import ax2plotp
     plotp=ax2plotp(plotp,**kws_ax2plotp)
@@ -93,6 +94,9 @@ def savefig(plotp,
     makedirs(dirname(plotp),exist_ok=True)
     if len(fmts)==0:
         fmts=['png']
+    if exists(plotp) and not force:
+        logging.info("fig exists")
+        return
     if '.' in plotp:
         plt.savefig(plotp,
                     dpi=dpi,
@@ -100,7 +104,11 @@ def savefig(plotp,
                    )
     else:
         for fmt in fmts:
-            plt.savefig(f"{plotp}.{fmt}",
+            plotp=f"{plotp}.{fmt}"
+            if exists(plotp) and not force:
+                logging.info("fig exists")
+                return
+            plt.savefig(plotp,
                         format=fmt,
                         dpi=dpi,
                         bbox_inches=bbox_inches if (not bbox_inches is None) else 'tight' if tight_layout else None)

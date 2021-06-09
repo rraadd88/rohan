@@ -159,6 +159,7 @@ def plot_volcano(dplot,
                  ylabel='significance\n(-log10(P))',
                  kws_binby_pvalue_coffs={},
                  out_df=False,
+                 title=None,
                  **kws_ax):
     """
     1. create dplot
@@ -214,7 +215,7 @@ def plot_volcano(dplot,
                                                             ))
     ax.legend(loc='upper left',
              bbox_to_anchor=[1,1])
-#     ax.set_title(label=title,loc='left')
+    ax.set_title(label=title,loc='left')
     if out_df:
         return ax,df1
     else:
