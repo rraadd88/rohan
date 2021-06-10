@@ -1,6 +1,6 @@
 # `rohan` [![flag](https://raw.githubusercontent.com/wiki/rraadd88/rohan/static/2x.png)](#)
 
-[![PyPI](https://img.shields.io/pypi/v/rohan?style=flat-square&colorB=blue)](https://pypi.org/project/rohan)
+[![PyPI](https://img.shields.io/pypi/v/rohan?style=flat-square&colorB=blue)](https://pypi.org/project/rohan)  
 [![build status](
   http://img.shields.io/travis/rraadd88/rohan/master.svg?style=flat-square&colorB=blue)](
  https://travis-ci.org/rraadd88/rohan)  
