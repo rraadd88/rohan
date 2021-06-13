@@ -285,6 +285,7 @@ def to_dict(df,cols,drop_duplicates=False):
     if drop_duplicates:
         df=df.loc[:,cols].drop_duplicates()
     if not df.rd.check_duplicated([cols[0]]):
+        logging.warning('format: {key:list}')
         return df.set_index(cols[0])[cols[1]].to_dict()
     else:
         return df.groupby(cols[0])[cols[1]].unique().to_dict()        
