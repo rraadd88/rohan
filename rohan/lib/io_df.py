@@ -284,10 +284,10 @@ def to_dict(df,cols,drop_duplicates=False):
     df=df.log.dropna(subset=cols)
     if drop_duplicates:
         df=df.loc[:,cols].drop_duplicates()
-    if not df.rd.check_duplicated([cols[0]]):
-        logging.warning('format: {key:list}')
+    if not df[cols[0]].duplicated().any():
         return df.set_index(cols[0])[cols[1]].to_dict()
     else:
+        logging.warning('format: {key:list}')
         return df.groupby(cols[0])[cols[1]].unique().to_dict()        
 
 ## conversion
