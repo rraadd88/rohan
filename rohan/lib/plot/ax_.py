@@ -59,7 +59,15 @@ def set_equallim(ax,diagonal=False,
 #     ax.set_xticks(ax.get_yticks())
     return ax
 
-def get_axlims(X,Y,space=0.2,equal=False):
+def get_axlims(ax,off=0.0):
+    d1={}
+    for axis in ['x','y']:
+        d1[axis]={}
+        d1[axis]['min'],d1[axis]['max']=getattr(ax,f'get_{axis}lim')()
+        d1[axis]['len']=abs(d1[axis]['min']-d1[axis]['max'])
+    return d1
+    
+def get_axlimsby_data(X,Y,off=0.2,equal=False):
     try:
         xmin=np.min(X)
         xmax=np.max(X)
@@ -69,8 +77,8 @@ def get_axlims(X,Y,space=0.2,equal=False):
     ymin=np.min(Y)
     ymax=np.max(Y)
     ylen=ymax-ymin
-    xlim=(xmin-space*xlen,xmax+space*xlen)
-    ylim=(ymin-space*ylen,ymax+space*ylen)
+    xlim=(xmin-off*xlen,xmax+off*xlen)
+    ylim=(ymin-off*ylen,ymax+off*ylen)
     if not equal:
         return xlim,ylim
     else:

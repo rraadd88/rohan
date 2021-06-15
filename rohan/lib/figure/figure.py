@@ -70,7 +70,7 @@ def ax2plotp(ax,prefix='plot/plot_',
                 else:
                     if not ax.legend_ is None:
                         plotp=f"{plotp}_"+ax.legend_.get_title().get_text()
-        plotp=f"{plotp}{suffix}.png"
+        plotp=f"{plotp} {suffix}.png"
         return plotp
     else:
         return ax
@@ -91,7 +91,7 @@ def savefig(plotp,
     if normalise_path:
         plotp=abspath(make_pathable_string(plotp))
     plotp=f"{dirname(plotp)}/{basenamenoext(plotp).replace('.','_')}{splitext(plotp)[1]}"    
-    makedirs(dirname(plotp),exist_ok=True)
+    makedirs(plotp,exist_ok=True)
     if len(fmts)==0:
         fmts=['png']
     if exists(plotp) and not force:

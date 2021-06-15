@@ -381,3 +381,37 @@ def scatter_ellipse(x, y, ax, std=2, facecolor='none', **kwargs):
 
     ellipse.set_transform(transf + ax.transData)
     return ax.add_patch(ellipse)
+
+def annot_side(ax,
+    df1,
+    colx,#=params['text']['x'],
+    coly,#=params['text']['y'],
+    cols,#=params['text']['s'],
+    loc='right',
+    annot_count_max=5,
+    offx3=0.15,
+    offymin=0.1,
+    break_pt=25,
+    ):
+    df1=df1.sort_values(coly,ascending=True)
+    from rohan.lib.plot.ax_ import get_axlims
+    d1=get_axlims(ax)
+    df1['y']=np.linspace(d1['y']['min']+((d1['y']['len'])*offymin),
+                        d1['y']['max'],
+                        len(df1))
+    x2=d1['x']['min'] if loc=='left' else d1['x']['max']
+    x3=d1['x']['min'] if loc=='left' else d1['x']['max']+d1['x']['len']*offx3
+    df1.apply(lambda x: ax.plot([x[colx],x2,x2],
+                               [x[coly],x['y'],x['y']],
+                              color='gray',lw=1),axis=1)
+    df1.apply(lambda x: ax.text(x3,x['y'],linebreaker(x[cols],break_pt=break_pt,),
+                              ha='right' if loc=='left' else 'left',
+                               va='bottom',
+    #                           color=element2color[x['comparison type']],
+                              zorder=2),axis=1)
+    df1.apply(lambda x:ax.axhline(y = x['y'], 
+                                 xmin=0 if loc=='left' else 1,
+                                 xmax=0-offx3 if loc=='left' else 3+offx3,
+                                         clip_on = False,color='gray',lw=1,
+                                ),axis=1)
+    return ax

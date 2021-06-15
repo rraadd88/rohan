@@ -898,3 +898,6 @@ class log:
     def merge(self,**kws):
         from rohan.lib.io_df import log_apply
         return log_apply(self._obj,fun='merge',**kws)
+    def join(self,**kws):
+        from rohan.lib.io_df import log_apply
+        return log_apply(self._obj,fun='join',**kws)    

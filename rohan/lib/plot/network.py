@@ -328,6 +328,7 @@ def plot_minimize_nested_blockmodel_dl(df1,
     https://graph-tool.skewed.de/static/doc/draw.html#contents
     """
 #     from rohan.lib.io_strs import replacemany,get_prefix,get_suffix
+    assert(not df1.duplicated(subset=[source,target]).any())
     eid='eid'
     df1[eid]=range(len(df1))
     
@@ -352,15 +353,17 @@ def plot_minimize_nested_blockmodel_dl(df1,
     vid=get_suffix(source,target,common=True)[0].replace(' ','')
     info(f"vid={vid}")
     df2['index']=df2[vid].map(d0)
-    df3=df2.drop(['suffix',eid]+eps,axis=1).log.drop_duplicates(subset=[vid])
+#     df3=df2.drop(['suffix',eid]+eps,axis=1).log.drop_duplicates(subset=[vid])
+    df3=df2.loc[:,vps+[vid,'index']].log.drop_duplicates()
+    assert(not df3[vid].duplicated().any())
     # assert(not df3.rd.check_duplicated(cols))
     df3=df3.set_index('index').sort_index()
     # vps=[c for c in df3 if c!=vid]
     vps=df3.columns.tolist()
     d2=get_dtype(df3,vps)
+    
     # graph set up
     from matplotlib import cm 
-
     import graph_tool.all as gt
     g = gt.Graph(directed=False)
     for c in d1:
@@ -400,4 +403,4 @@ def plot_minimize_nested_blockmodel_dl(df1,
               **{k:g.vp[vp2col[k]] for k in vp2col}
     )
     if not test: plt.axis('off')
-    return df1,df3
+    return g,df1,df3
