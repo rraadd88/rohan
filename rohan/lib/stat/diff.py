@@ -89,13 +89,13 @@ def get_pval(df,
     if colvalue_bool and not df[colvalue].dtype==bool:        
         logging.warning(f"colvalue_bool {colvalue} is not bool")
         return
-    if not colvalue_bool:
-        try:
-            return sc.stats.mannwhitneyu(
-            df.loc[(df[colsubset]==subsets[0]),colvalue],
-            df.loc[(df[colsubset]==subsets[1]),colvalue],
-                alternative='two-sided')
-        except:
+    if not colvalue_bool:      
+#         try:
+        x,y=df.loc[(df[colsubset]==subsets[0]),colvalue].tolist(),df.loc[(df[colsubset]==subsets[1]),colvalue].tolist()
+        if len(x)!=0 and len(y)!=0 and (nunique(x+y)!=1):
+            return sc.stats.mannwhitneyu(x,y,alternative='two-sided')
+        else:
+            #if empty list: RuntimeWarning: divide by zero encountered in double_scalars  z = (bigu - meanrank) / sd
             return np.nan,np.nan
     else:
 #         df.to_csv('test/get_pval_bool.tsv',sep='\t')

@@ -75,3 +75,113 @@ def get_paired_sets_stats(l1,l2):
         l.append(get_ratio_sorted(len(l1),len(l2)))
         return l
 
+def get_enrichment(df1,df2,
+                   background,
+                   outd,
+           colid='gene id',
+           colref='gene set id',
+           colreftype='gene set type',
+           colrank='rank',
+           name=None,
+            # enrichr
+           cutoff=0.05, # only used for plotting. 
+            # prerank
+           permutation_num=1000,
+            # etc
+            verbose=False,no_plot=True,
+           **kws_prerank,
+                  ):
+    """
+    
+    :return leading edge gene ids: high rank first
+    """
+    
+    import gseapy as gp
+    name=df2.name if hasattr(df2,'name') else df2.iloc[0,:][colreftype]
+    
+    o1 = gp.enrichr(gene_list=df1[colid].unique().tolist(),
+                     # or gene_list=glist
+                     description=name,
+                     gene_sets=df2.rd.to_dict([colref,colid]),
+                     background=background, # or the number of genes, e.g 20000
+                     outdir=f'{outd}/{name}',
+                     cutoff=cutoff, # only used for plotting.
+                     verbose=verbose,
+                     no_plot=no_plot,
+#                      **kws,
+                     )
+    df3=o1.results
+    df3=df3.rename(columns={'Term':colref,
+                             'P-value':'P (FE test)',
+                             'Adjusted P-value':'P (FE test, FDR corrected)',
+                             'Genes':f'{colid}s'},errors='raise')
+    df_=df3['Overlap'].str.split('/',expand=True).rename(columns={0:f"{colid}s overlap",
+                                                         1:f"{colid}s per {colref}"}).applymap(int)
+    df3=df3.join(df_)
+#     df3['overlap %']=df3['Overlap'].apply(eval)*100    
+    df3['overlap %']=df3.apply(lambda x: (x[f"{colid}s overlap"]/x[f"{colid}s per {colref}"])*100,axis=1)
+    df3=df3.drop(['Gene_set','Overlap',],axis=1)
+    info('enrichr: '+perc_label(sum(df3['P (FE test, FDR corrected)']<=0.05),len(df3)))
+    if not colrank in df1:
+        return df3
+    if df3[f"{colid}s overlap"].max()<2:
+        logging.error("df3[f'{colid}s overlap'].max()<2 # can not run prerank")
+        return df3
+    o2 = gp.prerank(rnk=df1.loc[:,[colid,colrank]],
+                     gene_sets=df2.rd.to_dict([colref,colid]),
+                     min_size=2,
+                     max_size=df3[f"{colid}s overlap"].max(),
+                     processes=1,
+                     permutation_num=permutation_num, # reduce number to speed up testing
+                     ascending=False, # look for high number 
+                     outdir=f'{outd}/{name}',
+                     pheno_pos='high',
+                     pheno_neg='low',
+                     format='png',
+                    no_plot=no_plot,
+                    seed=1,
+                    graph_num=1,
+                    **kws_prerank,
+                   )
+    df4=o2.res2d.reset_index()
+#     es	nes	pval	fdr	geneset_size	matched_size	genes	ledge_genes
+    df4=df4.rename(columns={'Term':colref,
+                            'es':'enrichment score',
+                            'nes':'normalized enrichment score', 
+                             'pval':'P (GSEA test)',
+                            'fdr':'FDR (GSEA test)',
+                            'matched_size':f"{colid}s overlap",
+                            'geneset_size':f"{colid}s per {colref}",
+                             'ledge_genes':f'{colid}s leading edge',
+                           },
+                   errors='raise')
+    df4['overlap %']=df4.apply(lambda x: (x[f"{colid}s overlap"]/x[f"{colid}s per {colref}"])*100,axis=1)
+    df4=df4.drop(['genes',],axis=1)
+    info('preraked: '+perc_label(sum(df4['P (GSEA test)']<=0.05),len(df4)))
+    
+    df5=df3.merge(df4,
+              on='gene set id',
+              how='left',
+             validate="1:1",
+                 suffixes=['',' (prerank)'])
+    df5=df5.drop([
+#                 f'{colid}s',
+                  f'{colid}s per {colref} (prerank)',f'{colid}s overlap (prerank)','overlap % (prerank)'],axis=1)
+    return df5
+
+def get_enrichments(df1,
+                    df2,
+                    background,
+                    outd,
+                    coltest='subset',
+                    colid='gene id',
+                    colref='gene set id',
+                    colreftype='gene set type',
+                    fast=False,
+                    **kws):
+    """
+    :param df1: test sets
+    :param df2: reference sets
+    """
+    return getattr(df1.groupby(coltest),'progress_apply' if not fast else 'parallel_apply')(lambda df_: df2.groupby(colreftype).apply(lambda df: get_enrichment(df_,df,background=background,outd=outd,**kws)).reset_index(0)).reset_index(0)
+    

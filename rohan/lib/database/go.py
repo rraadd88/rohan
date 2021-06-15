@@ -40,8 +40,8 @@ def get_goid_info(queries,result=None,interval=500):
                 ds.append(pd.Series({k:d[k] for k in d if k in ['id',result]}))            
             else:
                 ds.append(pd.Series({k:d[k] if (isinstance(d[k],(str,bool))) else d[k]['text'] for k in d if isinstance(d[k],(str,bool)) or (isinstance(d[k],(dict)) and k=='definition')}))
-                
-    return pd.concat(ds,axis=1).T
+        
+    return pd.concat(ds,axis=1).T.add_prefix('gene set ')
 #     from rohan.lib.io_dict import merge_dict_values
 #     return merge_dict_values(ds)
 
