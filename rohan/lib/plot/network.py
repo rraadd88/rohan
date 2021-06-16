@@ -306,20 +306,18 @@ def plot_ppi_overlap(
 def plot_minimize_nested_blockmodel_dl(df1,
                                         source='gene1 id',
                                         target='gene2 id',
-#                                         vid='id',
-                                       ep2col={},vp2col={},
-#                                         eid=None,
+                                        ep2col={},vp2col={},
                                         vcmap='RdBu',
-                                       valpha=0.5,
-                                       ecmap=None,
-                                       ealpha=0.5,
-            output_size=(300, 300),
-            vertex_pen_width=0,
-                                       vertex_text_position=6.25,
-            vertex_font_family='sans',            
-                                       params_blockmodel={},
-                                       test=False,
-                                       **kws_draw,
+                                        valpha=0.5,
+                                        ecmap=None,
+                                        ealpha=0.5,
+                                        output_size=(300, 300),
+                                        vertex_pen_width=0,
+                                        vertex_text_position=-2,
+                                        vertex_font_family='sans',            
+                                        params_blockmodel={},
+                                        test=False,
+                                        **kws_draw,
                                       ):
     """
     B_min=2
@@ -340,6 +338,13 @@ def plot_minimize_nested_blockmodel_dl(df1,
         for c in cols_list:
             d2[c]='vector<double>'
         return d2
+    def convert_vids(g,source,target):
+        df0=pd.DataFrame(g.get_edges(),columns=['v1 id','v2 id'])
+        df0[source]=list(g.edge_properties[source])
+        df0[target]=list(g.edge_properties[target])
+        df0=df0.rd.melt_paired(suffixes=['1 id','2 id']).loc[:,unique(get_prefix(source,target,common=True))+['v']]
+        return df0.rd.to_dict(cols=df0.columns,drop_duplicates=True)
+        
     eps=list(ep2col.values())
     vps=list(vp2col.values())
     if test:
@@ -354,10 +359,10 @@ def plot_minimize_nested_blockmodel_dl(df1,
     info(f"vid={vid}")
     df2['index']=df2[vid].map(d0)
 #     df3=df2.drop(['suffix',eid]+eps,axis=1).log.drop_duplicates(subset=[vid])
-    df3=df2.loc[:,vps+[vid,'index']].log.drop_duplicates()
+    df3=df2.loc[:,vps+[vid]].log.drop_duplicates()
     assert(not df3[vid].duplicated().any())
     # assert(not df3.rd.check_duplicated(cols))
-    df3=df3.set_index('index').sort_index()
+#     df3=df3.set_index('index').sort_index()
     # vps=[c for c in df3 if c!=vid]
     vps=df3.columns.tolist()
     d2=get_dtype(df3,vps)
@@ -368,14 +373,19 @@ def plot_minimize_nested_blockmodel_dl(df1,
     g = gt.Graph(directed=False)
     for c in d1:
         g.ep[c] = g.new_ep(d1[c])
+#     print(df1.loc[(df1[source]=='ENSG00000116251'),[source,target]+eps].values)
     g.add_edge_list(df1.loc[:,[source,target]+eps].values,
                    hashed=True, hash_type='string',
                     # catch
                    eprops=[g.ep[c] for c in eps])
+    
+    df3['v id']=df3[vid].map(convert_vids(g,source,target))
+    df3=df3.set_index('v id')
     for c in d2:
         g.vertex_properties[c] = g.new_vertex_property(d2[c]) # family name as vertex label
         for i in list(g.vertex_index):
             g.vertex_properties[c][g.vertex(i)] = df3[c][i]
+            
     state = gt.minimize_nested_blockmodel_dl(g,
                                              **params_blockmodel,
                                             )
@@ -391,13 +401,6 @@ def plot_minimize_nested_blockmodel_dl(df1,
             vertex_pen_width=vertex_pen_width,#0,
             vertex_text_position=vertex_text_position,
             vertex_font_family=vertex_font_family,#'sans',
-#             vertex_fill_color=g.vp[vcolor], 
-#             vertex_text=g.vp[vtext], 
-#             vertex_size=10,
-#             #vertex_size=gt.prop_to_size(g.vp.wealth, mi=5, ma=20), 
-#             edge_pen_width=3,#g.ep[ewidth],
-    #         mplfig=ax,
-    #      output='plot/network_graph_tool_complex.svg'
               **kws_draw,
               **{k:g.ep[ep2col[k]] for k in ep2col},
               **{k:g.vp[vp2col[k]] for k in vp2col}

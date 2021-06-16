@@ -586,14 +586,6 @@ def sort_col_by_list(df, col,l):
     df[col]=df[col].astype(str)
     return df
 
-@to_class(rd)
-def dfswapcols(df,cols):
-    df[f"_{cols[0]}"]=df[cols[0]].copy()
-    df[cols[0]]=df[cols[1]].copy()
-    df[cols[1]]=df[f"_{cols[0]}"].copy()
-    df=df.drop([f"_{cols[0]}"],axis=1)
-    return df
-
 # def dfsortbybins(df, col):
 #     d=dict(zip(bins,[float(s.split(',')[0].split('(')[1]) for s in bins]))
 #     df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
@@ -666,6 +658,11 @@ def groupby_sort_values(df,col_groupby,col_sortby,
 sort_values_groupby=groupby_sort_values
 
 @to_class(rd)
+def swap_paired_cols(df_,suffixes=['gene1', 'gene2']):
+    rename={c:c.replace(suffixes[0],suffixes[1]) if (suffixes[0] in c) else c.replace(suffixes[1],suffixes[0]) if (suffixes[1] in c) else c for c in df_}
+    return df_.rename(columns=rename,errors='raise')
+
+@to_class(rd)
 def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
                             suffixes=['gene1','gene2'], # no spaces
                             ):
@@ -682,6 +679,7 @@ def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
     dn2df[(True,False)]=df.loc[(df[cols_sortby[0]]==df[cols_sortby[1]]),:]
     dn2df[(True,True)]=df.loc[(df[cols_sortby[0]]==df[cols_sortby[1]]),:]
     ## rename columns of of to be sorted
+    ## TODO: use swap_paired_cols
     rename={c:c.replace(suffixes[0],suffixes[1]) if (suffixes[0] in c) else c.replace(suffixes[1],suffixes[0]) if (suffixes[1] in c) else c for c in df}
     for k in [True, False]:
         dn2df[(k,True)]=dn2df[(k,True)].rename(columns=rename,

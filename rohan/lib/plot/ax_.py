@@ -118,7 +118,8 @@ def set_legend_custom(ax,
                       marker='o',
                       markerfacecolor=True,
                       size=10,color='k',
-                     params_legend={}):
+                      linestyle='',
+                      **kws):
     """
     # TODOS
     1. differnet number of points for eachh entry
@@ -139,16 +140,16 @@ def set_legend_custom(ax,
     from matplotlib.lines import Line2D
     legend_elements=[Line2D([0], [0],
                        marker=marker,
-                       color='none',
+                       color=color if param!='color' else legend2param[k],
                        markeredgecolor=(color if param!='color' else legend2param[k]), 
                        markerfacecolor=(color if param!='color' else legend2param[k]) if not markerfacecolor is None else 'none',
                        markersize=(size if param!='size' else legend2param[k]),
                        label=k,
                        lw=(lw if param!='lw' else legend2param[k]),
-                       linestyle='',
+                       linestyle=linestyle if param!='lw' else '-',
                       ) for k in legend2param]   
     ax.legend(handles=legend_elements,
-              **params_legend)
+              **kws)
     return ax
 
 def set_legend_lines(ax,

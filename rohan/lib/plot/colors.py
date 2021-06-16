@@ -69,8 +69,9 @@ def get_val2color(ds,vmin=None,vmax=None,cmap='Reds'):
         vmax=ds.max()
     colors = [(plt.get_cmap(cmap) if isinstance(cmap,str) else cmap)((i-vmin)/(vmax-vmin)) for i in ds]
     legend2color = {i:(plt.get_cmap(cmap) if isinstance(cmap,str) else cmap)((i-vmin)/(vmax-vmin)) for i in [vmin,np.mean([vmin,vmax]),vmax]}
-    return colors,legend2color
-              
+    return dict(zip(ds,colors)),legend2color
+#    columns=['value','c']
+
 def color_ticklabels(ax,ticklabel2color,axis='y'):
     for tick in getattr(ax,f'get_{axis}ticklabels')():
         if tick.get_text() in ticklabel2color.keys():
