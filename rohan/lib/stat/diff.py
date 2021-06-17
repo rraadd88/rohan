@@ -4,6 +4,7 @@ import scipy as sc
 import logging
 from icecream import ic as info
 from rohan.lib import to_class,stat
+from rohan.lib.io_sets import *
 
 def get_subset2metrics(df,colvalue,colsubset,colindex,outstr=False,subset_control=None):
     if subset_control is None:

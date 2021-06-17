@@ -580,23 +580,7 @@ def drop_duplicates_by_agg(df,cols_groupby,cols_value,aggfunc='mean',fast=False)
 
 ## sorting
 @to_class(rd)
-def sort_col_by_list(df, col,l):
-    df[col]=pd.Categorical(df[col],categories=l, ordered=True)
-    df=df.sort_values(col)
-    df[col]=df[col].astype(str)
-    return df
-
-# def dfsortbybins(df, col):
-#     d=dict(zip(bins,[float(s.split(',')[0].split('(')[1]) for s in bins]))
-#     df[f'{col} dfrankbybins']=df.apply(lambda x : d[x[col]] if not pd.isnull(x[col]) else x[col], axis=1)
-#     df=df.sort_values(f'{col} dfrankbybins').drop(f'{col} dfrankbybins',axis=1)
-#     return df
-
-# def sort_binnnedcol(df,col):
-#     df[f'_{col}']=df[col].apply(lambda s : float(s.split('(')[1].split(',')[0]))
-#     df=df.sort_values(by=f'_{col}')
-#     df=df.drop([f'_{col}'],axis=1)
-#     return df
+def sort_valuesby_list(df1,by,l1,**kws):return df1.sort_values(by=by, key=lambda x: pd.Series(l1),**kws)
 
 ## apply_agg
 def agg_by_order(x,order):
