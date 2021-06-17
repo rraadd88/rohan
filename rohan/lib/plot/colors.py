@@ -7,7 +7,10 @@ import pandas as pd
 
 # colors
 def rgbfloat2int(rgb_float):return [int(round(i*255)) for i in rgb_float]
-def rgb2hex(rgb): return f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
+def rgb2hex(rgb): 
+#     if all([isinstance(i,float) for i in rgb]):
+#     else:
+    return f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
 def hex2rgb(c): return colors.ColorConverter.to_rgb(c)   
     
 def saturate_color(color, alpha):
@@ -18,7 +21,7 @@ def saturate_color(color, alpha):
     from rohan.lib.stat.transform import rescale
     alpha=rescale(alpha,[0,2],[1.6,0.4])
     if isinstance(color,str):
-        color=colors.ColorConverter.to_rgb(color)
+        color=hex2rgb(color)
     # convert rgb to hls
     h, l, s = colorsys.rgb_to_hls(*color)
     # manipulate h, l, s values and return as rgb
