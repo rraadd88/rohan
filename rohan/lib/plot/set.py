@@ -45,7 +45,8 @@ from rohan.lib.plot.bar import plot_bar_intersections
 def plot_subsets(df4,
                  xorder,scale='linear',
                  ax=None,
-                 test=False):
+                 test=False,
+                **kws):
     if ax is None:
         _,ax=plt.subplots(figsize=[3,3])
     ax=sns.boxplot(data=df4,
@@ -53,13 +54,15 @@ def plot_subsets(df4,
             y='count',
             order=xorder,
             showfliers=False,
-            color='r',
+            **kws,
            )
     ax.set_yscale(scale)
     ax.set(ylabel='count')
     return ax
 def plot_sets(df6,yorder,scale='linear',
-              ax=None,test=False):
+              ax=None,
+              test=False,
+              **kws):
     """
     counts per sets.
     """
@@ -70,7 +73,7 @@ def plot_sets(df6,yorder,scale='linear',
                x='count sum',
                order=yorder,
                 showfliers=False,
-            color='r',
+                **kws,
                ax=ax)
     ax.set_xscale(scale)
     if not test:
@@ -78,6 +81,7 @@ def plot_sets(df6,yorder,scale='linear',
               ylabel=None)    
     return ax
 def plot_latice(df1,
+                xmin_strip=-0.6,
                 line=None,
                 color='#A8A8A8',
                 ax=None,test=False):
@@ -90,8 +94,8 @@ def plot_latice(df1,
                                          zorder=3,
                                         )
     def plot_strips(ax,x,color):
-        ax.axhline(x['y'],-0.6,1,lw=15,zorder=1,color=color,clip_on = False)
-        ax.text(-0.5,x['y'],x['yticklabel'],ha='right',va='center')
+        ax.axhline(x['y'],xmin_strip,1,lw=15,zorder=1,color=color,clip_on = False)
+        ax.text(-1,x['y'],x['yticklabel'],ha='right',va='center')
         return ax
     _=df1.loc[:,['y','yticklabel']].drop_duplicates().apply(lambda x: plot_strips(ax,x,color=saturate_color(color,0.25)) ,axis=1)
 #     _=[ax.axhline(v,-0.6,1,lw=15,zorder=1,color=(0.9,0.9,0.9),clip_on = False) for k,v in yticklabel2y.items()]
@@ -108,6 +112,8 @@ def plot_latice(df1,
 
 def plot_bool(df4,xorder,yorder,
               xticklabel2x,yticklabel2y,
+              xmin_strip,
+              color='#A8A8A8',
               ax=None,test=False):
     if ax is None:
         _,ax=plt.subplots(figsize=[3,3])
@@ -128,10 +134,14 @@ def plot_bool(df4,xorder,yorder,
                                         )
     ax=plot_latice(df6.loc[df6['value'],:],
                    line='y',
+                   color=color,
+                   xmin_strip=xmin_strip,
                  ax=ax,test=test,)
     return ax
 
 def plot_groups(d2,xticklabel2x,
+                xmin_strip,
+                color='#f55f5f',
                 ax=None,test=False):
     if ax is None:
         _,ax=plt.subplots(figsize=[3,3])    
@@ -139,20 +149,30 @@ def plot_groups(d2,xticklabel2x,
     df5['x']=df5['xticklabel'].map(xticklabel2x)
     df5['y']=df5['yticklabel'].map({k:i for i,k in enumerate(d2)})
     ax=plot_latice(df5,
-                   line='x',      
-                   color='#f55f5f',
+                   line='x',
+                   xmin_strip=xmin_strip,
+                   color=color,
                    ax=ax,test=test)
 #     set_label(ax, 'pLOF', x=-0.7, y=0.9, ha='right', va='top')
+    ax.annotate('', xy=(0.5, 1.0), xytext=(0.5, 1.2), xycoords='axes fraction', 
+            arrowprops=dict(arrowstyle="->", color='k'))
     return ax,df5
 
-def plot_intersections_groups(df1,yorder,d1,xorder=None,
-                             figsize=[4,4],
-                              exclude=[],
-                              scale='linear',
-                              test=False,
-                             dbug=False):
+def plot_intersections_groups(df1,yorder,d1,
+                            xlabel=None,
+                            xorder=None,
+                            figsize=[4,4],
+                            exclude=[],
+                            xmin_strip=-0.6,
+                            scale='linear',
+                            wspace=0.05,
+                            hspace=None,                              
+                            palette=['#f55f5f','#A8A8A8'],
+                            test=False,
+                            dbug=False):
     df1['xticklabel']=df1[yorder].apply(lambda x: tuple(x.tolist()),axis=1)
     if xorder is None:
+        df1=df1.sort_values(yorder,ascending=False)
         xorder=df1['xticklabel'].unique().tolist()
     info(xorder)
     xticklabel2x={c:i for i,c in enumerate(xorder)}    
@@ -160,30 +180,35 @@ def plot_intersections_groups(df1,yorder,d1,xorder=None,
     if not dbug:
         fig=plt.figure(figsize=figsize)
     if not dbug:
-        ax1=plt.subplot2grid([3,4],[1,0],1,3)
+        ax1=plt.subplot2grid([3,2],[1,0],1,1)
     else:
         fig,ax1=plt.subplots()
     ax1=plot_bool(df1,xorder=xorder,yorder=yorder,
                  xticklabel2x=xticklabel2x,
                  yticklabel2y=yticklabel2y,
+                  xmin_strip=xmin_strip,
+                  color=palette[1],
                  ax=ax1,
                  test=test)
     df2=pd.concat({k:df1.loc[(df1[k]),:].groupby(['path','sample id']).agg({'count':[sum]}).rd.flatten_columns() for k in yorder},
          axis=0,names=['yticklabel']).reset_index()    
     if not 'sets' in exclude:
         if not dbug:
-            ax2=plt.subplot2grid([3,4],[1,3],1,1,sharey=ax1)
+            ax2=plt.subplot2grid([3,2],[1,1],1,1,sharey=ax1)
         else:
             fig,ax2=plt.subplots()            
         ax2=plot_sets(df2,
                      yorder=yorder,scale=scale,
+                     color=palette[1],
                      ax=ax2,
                      test=test)
     if not dbug:
-        ax3=plt.subplot2grid([3,4],[2,0],1,3,sharex=ax1)
+        ax3=plt.subplot2grid([3,2],[2,0],1,1,sharex=ax1)
     else:
         fig,ax3=plt.subplots()            
     ax3,df3=plot_groups(d1,xticklabel2x=xticklabel2x,
+                        xmin_strip=xmin_strip,
+                  color=palette[0],
                    ax=ax3,
              test=test)
     df4=df3.log.merge(right=df1,
@@ -192,28 +217,41 @@ def plot_intersections_groups(df1,yorder,d1,xorder=None,
              validate="m:m")
     df4=df4.groupby(['yticklabel','path','sample id']).agg({'count':[sum]}).rd.flatten_columns().reset_index(0)    
     if not dbug:
-        ax4=plt.subplot2grid([3,4],[2,3],1,1,sharex=ax2 if not 'sets' in exclude else None,sharey=ax3)
+        ax4=plt.subplot2grid([3,2],[2,1],1,1,sharex=ax2 if not 'sets' in exclude else None,sharey=ax3)
     else:
         fig,ax4=plt.subplots()            
     ax4=plot_sets(df4,
                  yorder=d1.keys(),scale=scale,
+                color=palette[0],  
                  ax=ax4,
                  test=test)
     if not 'subsets' in exclude:
         if not dbug:
-            ax5=plt.subplot2grid([3,4],[0,0],1,3,sharex=ax1)
+            ax5=plt.subplot2grid([3,2],[0,0],1,1,sharex=ax1)
         else:
             fig,ax5=plt.subplots()
         ax5=plot_subsets(df1,ax=ax5,
                         xorder=xorder,scale=scale,
+                     color=palette[1],                         
                         test=test)
         if not test:
             ax5.set(xticklabels=[],xlabel=None)  
         else:
             ax5.set_xticklabels(ax5.get_xticklabels(), rotation = 270, ha="right")        
-#     if not test and not 'sets' in exclude:
-#         l1=[t.get_text() for t in ax4.get_xticklabels()]
+    if not test and not 'sets' in exclude:
+#         l1=[t.get_text() for t in ax2.get_xticklabels()]
 #         print(l1)
+#         ax4.set_xticks([10, 100,2000])
+#         import matplotlib
+#         ax4.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
 #         ax2.set(xticklabels=[],xlabel=None)  
-#         ax4.set_xticklabels(l1)        
-    return fig
+        plt.setp(ax2.get_xticklabels(), visible=False)
+        ax2.set_xlabel(None)
+        plt.setp(ax4.get_xticklabels(), visible=True)
+        ax4.set_xlabel(xlabel)
+#         ax4.set_xticklabels(l1)   
+    plt.subplots_adjust(
+        wspace=wspace,
+        hspace=hspace,
+    )
+    return ax2
