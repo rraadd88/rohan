@@ -14,8 +14,6 @@ def set_(ax,test=False,**kws):
     return ax
 
 ## ticklabels
-from rohan.lib.plot.colors import color_ticklabels
-
 def rename_ticklabels(ax,axis,rename):
     k=f"{axis}ticklabels"
     _=getattr(ax,f"set_{k}")([rename[t.get_text()] for t in getattr(ax,f"get_{k}")()])
@@ -24,8 +22,17 @@ def rename_ticklabels(ax,axis,rename):
 def get_ticklabel2position(ax,axis='x'):
     return dict(zip([t.get_text() for t in getattr(ax,f'get_{axis}ticklabels')()],
                   getattr(ax,f"{axis}axis").get_ticklocs()))
-     
+
+def color_ticklabels(ax,ticklabel2color,axis='y'):
+    for tick in getattr(ax,f'get_{axis}ticklabels')():
+        if tick.get_text() in ticklabel2color.keys():
+            tick.set_color(ticklabel2color[tick.get_text()])
+    return ax 
+
 def format_ticklabels(ax,axes=['x','y'],n=None,fmt=None):
+    """
+    TODO: include color_ticklabels
+    """
     if isinstance(n,int):
         n={'x':n,
            'y':n}
@@ -353,6 +360,22 @@ def set_logos(label,element2color,ax=None,test=False):
     _=[globals()[fun](ax=ax,**fun2params[fun]) for fun in fun2params]
     return ax
 
+
+def set_label(x,y,s,ax,
+              ha='left',va='top',
+              title=False,
+              **kws,
+             ):
+    if title:
+        ax.set_title(s,**kws)
+    else:
+        ax.text(s=s,transform=ax.transAxes,
+                x=x,y=y,ha=ha,va=va,
+                **kws)
+    return ax
+def set_ylabel(ax,s=None,x=-0.05,y=1): return set_label(x=x,y=y,s=ax.get_ylabel() if s is None else s,
+                                                       ha='right',va='bottom',ax=ax)
+
 def set_label_colorbar(ax,label):
     for a in ax.figure.get_axes()[::-1]:
         if a.properties()['label']=='<colorbar>':
@@ -360,18 +383,6 @@ def set_label_colorbar(ax,label):
                 a.set_ylabel(label)
                 break
     return ax
-def set_label(ax,label,title=False,
-              x=0,y=1,ha='left',va='top',
-              **kws,
-             ):
-    if title:
-        ax.set_title(label)
-    else:
-        ax.text(s=label,transform=ax.transAxes,
-                x=x,y=y,ha=ha,va=va,
-                **kws)
-    return ax
-
 # metrics
 def plot_axvmetrics(ax,ds,label='',stat='mean std',color='#D3D3D3',
                     alpha=0.1,

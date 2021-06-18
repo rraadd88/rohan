@@ -51,12 +51,16 @@ def get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100):
         cmap(np.linspace(vmin, vmax, n)))
     return new_cmap
 # def cut_cmap(cmap, vmin=0.0, vmax=1.0, n=100):return get_cmap_subset(cmap, vmin=0.0, vmax=1.0, n=100)
-
+def make_cmap(cs,N=20,**kws): return colors.LinearSegmentedColormap.from_list("custom", colors=cs, N=N,**kws)
+    
 def get_ncolors(n,cmap='Spectral',ceil=False,
                 test=False,
+                N=20,
                **kws_get_cmap_subset):
     if isinstance(cmap,str):
         cmap = get_cmap_subset(cmap, **kws_get_cmap_subset)
+    elif isinstance(cmap,list):
+        cmap=make_cmap(cmap,N=N)
 #         cmap = cm.get_cmap(cmap)
     if test:
         print(np.arange(1 if ceil else 0,n+(1 if ceil else 0),1))
@@ -73,13 +77,7 @@ def get_val2color(ds,vmin=None,vmax=None,cmap='Reds'):
     colors = [(plt.get_cmap(cmap) if isinstance(cmap,str) else cmap)((i-vmin)/(vmax-vmin)) for i in ds]
     legend2color = {i:(plt.get_cmap(cmap) if isinstance(cmap,str) else cmap)((i-vmin)/(vmax-vmin)) for i in [vmin,np.mean([vmin,vmax]),vmax]}
     return dict(zip(ds,colors)),legend2color
-#    columns=['value','c']
-
-def color_ticklabels(ax,ticklabel2color,axis='y'):
-    for tick in getattr(ax,f'get_{axis}ticklabels')():
-        if tick.get_text() in ticklabel2color.keys():
-            tick.set_color(ticklabel2color[tick.get_text()])
-    return ax              
+#    columns=['value','c']             
 
 # cmap
 def plot_cmap(cs,title=''):

@@ -181,6 +181,9 @@ def read_table(p,
     'decimal':'.'
     
     examples:
+    1. Specific columns only: params=dict(columns=list)
+    
+    2.
     s='.vcf|vcf.gz'
     read_table(p,
                params_read_csv=dict(
@@ -188,6 +191,7 @@ def read_table(p,
                sep='\t',comment='#',header=None,
                names=replacemany(get_header(path,comment='#',lineno=-1),['#','\n'],'').split('\t'))
                )
+    
     """
     ## deprecate params_read_csv
 #     if len(params_read_csv.keys())!=0:

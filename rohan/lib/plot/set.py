@@ -98,8 +98,6 @@ def plot_latice(df1,
         ax.text(-1,x['y'],x['yticklabel'],ha='right',va='center')
         return ax
     _=df1.loc[:,['y','yticklabel']].drop_duplicates().apply(lambda x: plot_strips(ax,x,color=saturate_color(color,0.25)) ,axis=1)
-#     _=[ax.axhline(v,-0.6,1,lw=15,zorder=1,color=(0.9,0.9,0.9),clip_on = False) for k,v in yticklabel2y.items()]
-#     _=[ax.text(-0.5,v,k,ha='right',va='center') for k,v in yticklabel2y.items()]
     if not line is None: 
         c1,c2=line,'y' if line=='x' else 'x'
         df1.groupby([c2])[c1].agg([min,max]).reset_index().apply(lambda x: ax.plot([x['min'],x['max']] if c1=='x' else [x[c2],x[c2]],
@@ -137,6 +135,7 @@ def plot_bool(df4,xorder,yorder,
                    color=color,
                    xmin_strip=xmin_strip,
                  ax=ax,test=test,)
+    set_label(0.5,0,'intersections',ax=ax, ha='center',va='top')    
     return ax
 
 def plot_groups(d2,xticklabel2x,
@@ -154,7 +153,7 @@ def plot_groups(d2,xticklabel2x,
                    color=color,
                    ax=ax,test=test)
 #     set_label(ax, 'pLOF', x=-0.7, y=0.9, ha='right', va='top')
-    ax.annotate('', xy=(0.5, 1.0), xytext=(0.5, 1.2), xycoords='axes fraction', 
+    ax.annotate('', xy=(0.5, 1), xytext=(0.5, 1.2), xycoords='axes fraction', 
             arrowprops=dict(arrowstyle="->", color='k'))
     return ax,df5
 
@@ -165,6 +164,7 @@ def plot_intersections_groups(df1,yorder,d1,
                             exclude=[],
                             xmin_strip=-0.6,
                             scale='linear',
+                            heights=[3,2,3], # plot_bool, plot_groups
                             wspace=0.05,
                             hspace=None,                              
                             palette=['#f55f5f','#A8A8A8'],
@@ -172,15 +172,18 @@ def plot_intersections_groups(df1,yorder,d1,
                             dbug=False):
     df1['xticklabel']=df1[yorder].apply(lambda x: tuple(x.tolist()),axis=1)
     if xorder is None:
-        df1=df1.sort_values(yorder,ascending=False)
+        df1['sum by cols_y']=df1[yorder].apply(sum,axis=1)
+#         df1=df1.sort_values(,ascending=False)        
+        df1=df1.sort_values(['sum by cols_y']+yorder,ascending=[True,False,False,False])
         xorder=df1['xticklabel'].unique().tolist()
     info(xorder)
     xticklabel2x={c:i for i,c in enumerate(xorder)}    
+    yorder=yorder if not 'sets' in exclude else yorder[::-1]
     yticklabel2y={c:i for i,c in enumerate(yorder)}
     if not dbug:
         fig=plt.figure(figsize=figsize)
     if not dbug:
-        ax1=plt.subplot2grid([3,2],[1,0],1,1)
+        ax1=plt.subplot2grid([sum(heights)+1,2],[sum(heights[:1]),0],heights[1],1)
     else:
         fig,ax1=plt.subplots()
     ax1=plot_bool(df1,xorder=xorder,yorder=yorder,
@@ -194,7 +197,7 @@ def plot_intersections_groups(df1,yorder,d1,
          axis=0,names=['yticklabel']).reset_index()    
     if not 'sets' in exclude:
         if not dbug:
-            ax2=plt.subplot2grid([3,2],[1,1],1,1,sharey=ax1)
+            ax2=plt.subplot2grid([sum(heights)+1,2],[sum(heights[:1]),1],heights[1],1,sharey=ax1)
         else:
             fig,ax2=plt.subplots()            
         ax2=plot_sets(df2,
@@ -203,7 +206,7 @@ def plot_intersections_groups(df1,yorder,d1,
                      ax=ax2,
                      test=test)
     if not dbug:
-        ax3=plt.subplot2grid([3,2],[2,0],1,1,sharex=ax1)
+        ax3=plt.subplot2grid([sum(heights)+1,2],[sum(heights[:2])+1,0],heights[2],1,sharex=ax1)
     else:
         fig,ax3=plt.subplots()            
     ax3,df3=plot_groups(d1,xticklabel2x=xticklabel2x,
@@ -217,7 +220,7 @@ def plot_intersections_groups(df1,yorder,d1,
              validate="m:m")
     df4=df4.groupby(['yticklabel','path','sample id']).agg({'count':[sum]}).rd.flatten_columns().reset_index(0)    
     if not dbug:
-        ax4=plt.subplot2grid([3,2],[2,1],1,1,sharex=ax2 if not 'sets' in exclude else None,sharey=ax3)
+        ax4=plt.subplot2grid([sum(heights)+1,2],[sum(heights[:2])+1,1],heights[2],1,sharex=ax2 if not 'sets' in exclude else None,sharey=ax3)
     else:
         fig,ax4=plt.subplots()            
     ax4=plot_sets(df4,
@@ -227,7 +230,7 @@ def plot_intersections_groups(df1,yorder,d1,
                  test=test)
     if not 'subsets' in exclude:
         if not dbug:
-            ax5=plt.subplot2grid([3,2],[0,0],1,1,sharex=ax1)
+            ax5=plt.subplot2grid([sum(heights)+1,2],[0,0],heights[0],1,sharex=ax1)
         else:
             fig,ax5=plt.subplots()
         ax5=plot_subsets(df1,ax=ax5,
@@ -239,19 +242,13 @@ def plot_intersections_groups(df1,yorder,d1,
         else:
             ax5.set_xticklabels(ax5.get_xticklabels(), rotation = 270, ha="right")        
     if not test and not 'sets' in exclude:
-#         l1=[t.get_text() for t in ax2.get_xticklabels()]
-#         print(l1)
-#         ax4.set_xticks([10, 100,2000])
-#         import matplotlib
-#         ax4.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-#         ax2.set(xticklabels=[],xlabel=None)  
         plt.setp(ax2.get_xticklabels(), visible=False)
         ax2.set_xlabel(None)
-        plt.setp(ax4.get_xticklabels(), visible=True)
-        ax4.set_xlabel(xlabel)
-#         ax4.set_xticklabels(l1)   
+    plt.setp(ax4.get_xticklabels(), visible=True)
+    ax4.set_xlabel(xlabel)
+    ax5.set_ylabel(xlabel)
     plt.subplots_adjust(
         wspace=wspace,
         hspace=hspace,
     )
-    return ax2
+    return fig

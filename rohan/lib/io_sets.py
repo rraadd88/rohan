@@ -47,6 +47,10 @@ def list2str(x):
 def flatten(l):
     return list(np.hstack(np.array(l)))
 
+def get_alt(l1,s,): 
+    assert(s in l1)
+    return [i for i in l1 if i!=s][0]
+
 def rankwithlist(l,lwith,test=False):
     """
     rank l wrt lwith

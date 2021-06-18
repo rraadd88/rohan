@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib as mpl
+from rohan.lib.plot.ax_ import *
 
 def plot_value_counts(df,col,logx=False,
                       kws_hist={'bins':10},
@@ -86,6 +87,47 @@ def plot_barh_stacked_percentage(df1,coly,colannot,
     d1=df1.set_index(coly).T.sum().to_dict()
     ax.set(xlim=[0,100],xlabel='%',
           yticklabels=[f"{t.get_text()}\n(n={d1[t.get_text()]})" for t in ax.get_yticklabels()])
+    return ax
+
+def plot_barh_stacked_percentage_intersections(df0,
+                                               colxbool='paralog',
+                                               colybool='essential',
+                                               colvalue='value',
+                                               colid='gene id',
+                                               colalt='singleton',
+                                               coffgroup=0.95,
+                                               colgroupby='tissue',
+                                              ):
+    ##1 threshold for value by group
+    def apply_(df):
+        coff=np.quantile(df.loc[df[colybool],colvalue],coffgroup)
+        df[colybool]=df[colvalue]<coff
+        return df
+    df1=df0.groupby(colgroupby).progress_apply(apply_)
+    ##2 % 
+    df2=df1.groupby([colid,colxbool]).agg({colybool: perc}).reset_index().rename(columns={colybool:f'% {colgroupby}s with {colybool}'},
+                                                                                        errors='raise')
+    coly=f"% of {colgroupby}s"
+    ##3 bin y
+    df2[coly]=pd.cut(df2[f'% {colgroupby}s with {colybool}'],bins=pd.interval_range(0,100,4),)
+    ##3 % sum
+    df3=df2.groupby(coly)[colxbool].agg([sum]).rename(columns={'sum':colxbool})
+    dplot=df3.join(df2.groupby(coly).size().to_frame('total'))
+    dplot[colalt]=dplot['total']-dplot[colxbool]
+    dplot.index=[str(i) for i in dplot.index]
+    dplot.index.name=coly
+    dplot.columns.name=f"{colid} type"
+    dplot=dplot.sort_values(coly,ascending=False)
+    dplot=dplot.reset_index()
+#     from rohan.lib.plot.bar import plot_barh_stacked_percentage
+    fig,ax=plt.subplots(figsize=[3,3])
+    plot_barh_stacked_percentage(df1=dplot.loc[:,[coly,colxbool,colalt]],
+                                coly=coly,
+                                colannot=colxbool,
+                                ax=ax)
+    set_ylabel(ax)
+    ax.set(xlabel=f'% of {colid}s',
+          ylabel=None)
     return ax
 
 def plot_bar_intersections(dplot,cols=None,colvalue=None,
