@@ -373,8 +373,12 @@ def set_label(x,y,s,ax,
                 x=x,y=y,ha=ha,va=va,
                 **kws)
     return ax
-def set_ylabel(ax,s=None,x=-0.05,y=1): return set_label(x=x,y=y,s=ax.get_ylabel() if s is None else s,
-                                                       ha='right',va='bottom',ax=ax)
+def set_ylabel(ax,s=None,x=-0.1,y=1.02): 
+    ax.set_ylabel(ax.get_ylabel(),rotation=0,ha='right',va='center')
+    ax.yaxis.set_label_coords(x,y) 
+    return ax
+#     return set_label(x=x,y=y,s=ax.get_ylabel() if s is None else s,
+#                                                        ha='right',va='bottom',ax=ax)
 
 def set_label_colorbar(ax,label):
     for a in ax.figure.get_axes()[::-1]:
