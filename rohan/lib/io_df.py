@@ -250,6 +250,10 @@ def check_intersections(df,
             ds=map2groupby(df)
     elif isinstance(df,pd.Series):
         ds=df
+    elif isinstance(df,dict):
+        ds=dict2df(d1).rd.check_intersections(colindex='value',colgroupby='key')
+    else:
+        ValueError()
     if plot:
         from rohan.lib.plot.bar import plot_bar_intersections
         return plot_bar_intersections(dplot=ds,colvalue=colindex,**kws_plot)
