@@ -298,7 +298,6 @@ def to_dict(df,cols,drop_duplicates=False):
 @to_class(rd)
 def get_bools(df,cols,drop=False):
     """
-    prefer pd.get_dummies
     """
     for c in cols:
         df_=pd.get_dummies(df[c],

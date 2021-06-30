@@ -273,6 +273,7 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
                       colns=None, # plot as ns, not counted
                       palette=None,#['#f55f5f','#ababab','#046C9A',],
                       ):
+    assert(len(df1)!=0)
     if palette is None:
         from rohan.lib.plot.colors import get_colors_default
         palette=get_colors_default()[:3]
