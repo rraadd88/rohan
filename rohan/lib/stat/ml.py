@@ -1,19 +1,23 @@
 from rohan.global_imports import *
 
 # currate data 
-def get_Xy_for_classification(df1,coly,qcut,drop_xs_low_complexity=False):
+def get_Xy_for_classification(df1,coly,qcut=None,drop_xs_low_complexity=False):
     """
-    : param df1: is indexed  
+    Get X matrix and y vector 
+    
+    :param df1: is indexed  
+    :param coly: column with y values, bool if qcut is None else float/int
+    :param drop_xs_low_complexity: if drop columns with <5 unique values
     """
-    if qcut>0.5:
-        logging.error('qcut should be <=0.5')
-        return 
+    df1=df1.rd.clean(drop_constants=True)
     cols_X=[c for c in df1 if c!=coly]
-    lims=[df1[coly].quantile(1-qcut),df1[coly].quantile(qcut)]
-    df1[coly]=df1.progress_apply(lambda x: True if x[coly]>=lims[0] else False if x[coly]<lims[1] else np.nan,axis=1)
-    print(df1.shape,end='')
-    df1=df1.dropna()
-    print(df1.shape)
+    if not qcut is None:
+        if qcut>0.5:
+            logging.error('qcut should be <=0.5')
+            return 
+        lims=[df1[coly].quantile(1-qcut),df1[coly].quantile(qcut)]
+        df1[coly]=df1.progress_apply(lambda x: True if x[coly]>=lims[0] else False if x[coly]<lims[1] else np.nan,axis=1)
+        df1=df1.log.dropna()
     df1[coly]=df1[coly].apply(bool)
     y=df1[coly]
     X=df1.loc[:,cols_X]
@@ -43,86 +47,32 @@ def get_cvsplits(X,y,cv=5,random_state=88,outtest=True):
             cv2Xy[i]['y']=y[dtype2index['train']]                
     return cv2Xy
 
-def make_kfold2df_balanced(df,colxs,coly,colidx,random_state=88):
-    """
-    split the major class
-    """
-    np.random.seed(random_state)
-    
-    df=df.loc[:,colxs+[coly,colidx]]
-    dn2df={}
-    dn2df['00 input']=df.copy()
-    dn2df['00 input'].index=range(len(dn2df['00 input']))
-    if 'unclassified' in dn2df['00 input'][coly]:
-        dn2df['01 fitered']=dn2df['00 input'].loc[(dn2df['00 input'][coly]!='unclassified'),:].dropna()
-    else:
-        dn2df['01 fitered']=dn2df['00 input']
-
-    ### assign true false to classes
-    if dn2df['01 fitered'][coly].dtype!=bool:
-        cls2binary={cls:int(True if not 'not' in cls else False) for cls in dn2df['01 fitered'].loc[:,coly].unique()}
-        dn2df['01 fitered'].loc[:,f"{coly} original"]=dn2df['01 fitered'].loc[:,coly]
-        dn2df['01 fitered'].loc[:,coly]=dn2df['01 fitered'].loc[:,coly].apply(lambda x : cls2binary[x])
-        df2info(dn2df['01 fitered'])
-
-    ### find the major cls
-    cls2n=ordereddict(dn2df['01 fitered'][coly].value_counts().to_dict())
-    print(dn2df['01 fitered'][coly].value_counts())
-    print(cls2n)
-
-    # k fold cross validate the larger class
-    k=round(cls2n[list(cls2n.keys())[0]]/cls2n[list(cls2n.keys())[1]])
-           
-    if k!=1:
-        from sklearn.model_selection import KFold
-        kf = KFold(n_splits=k,random_state=random_state)
-        #shuffle
-        dn2df['02 shuffle']=dn2df['01 fitered'].loc[np.random.permutation(dn2df['01 fitered'].index),:]
-        print(len(np.unique(dn2df['01 fitered'].index.tolist())))
-        print(dn2df['02 shuffle'][coly].value_counts())
-
-        df_=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]==list(cls2n.keys())[0],:]
-        df_.index=range(len(df_))
-        print(sum(dn2df['02 shuffle'][coly]==list(cls2n.keys())[0]))
-
-        fold2dx={}
-        for fold,(train_index, test_index) in enumerate(kf.split(df_.index)):
-            df_.loc[test_index,'k-fold #']=fold
-
-        print(df_['k-fold #'].value_counts())
-
-        ### put it back in the table
-#         print(dn2df['02 shuffle'].columns)
-#         print(df_.columns)
-        dn2df['02 k-folded major class']=dn2df['02 shuffle'].loc[dn2df['02 shuffle'][coly]!=list(cls2n.keys())[0],:].append(df_,sort=True)
-        dn2df['02 k-folded major class'].index=range(len(dn2df['02 k-folded major class']))
-
-        ### kfold to dataset
-        kfold2dataset={}
-        for kfold in dropna(dn2df['02 k-folded major class']['k-fold #'].unique()):
-            df_=dn2df['02 k-folded major class'].loc[((dn2df['02 k-folded major class']['k-fold #']==kfold) | (pd.isnull(dn2df['02 k-folded major class']['k-fold #']))),:]
-            kfold2dataset[kfold]=df_.loc[:,colxs].values,df_.loc[:,coly].values
-    else:
-        ### kfold to dataset
-        kfold2dataset={0:(df.loc[:,colxs].values,df.loc[:,coly].values)}
-    return kfold2dataset
-
 # search estimator
 def get_grid_search(modeln,
                     X,y,param_grid={},
                     cv=5,
                     n_jobs=6,
                     random_state=88,
+                    scoring='balanced_accuracy',
+                    **kws,
                    ):
+    """
+    Ref: 
+    1. https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
+    2. https://scikit-learn.org/stable/modules/model_evaluation.html
+    """
     from sklearn.model_selection import GridSearchCV
     from sklearn import ensemble
     estimator = getattr(ensemble,modeln)(random_state=random_state)
-    grid_search = GridSearchCV(estimator, param_grid,cv=cv,n_jobs=n_jobs)
+    grid_search = GridSearchCV(estimator, 
+                               param_grid,
+                               cv=cv,n_jobs=n_jobs,
+                              **kws)
     grid_search.fit(X, y)
-    print(modeln,grid_search.best_score_)
+    info(modeln,grid_search.best_score_)
     return grid_search
 
-def get_estimatorn2grid_search(estimatorn2param_grid,X,y):
+def get_estimatorn2grid_search(estimatorn2param_grid,X,y,**kws):
     estimatorn2grid_search={}
     for k in tqdm(estimatorn2param_grid.keys()):
         estimatorn2grid_search[k]=get_grid_search(modeln=k,
@@ -131,66 +81,10 @@ def get_estimatorn2grid_search(estimatorn2param_grid,X,y):
                         cv=5,
                         n_jobs=6,
                         random_state=88,
+                        **kws,
                        )
-    print({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
+    info({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
     return estimatorn2grid_search
-
-def run_grid_search(df,
-    colindex,#='genes id',
-    coly,#='robustness mean min',
-    qcut,#=0.5,
-    outp,#=f"data/data_analysed/data71_classification/predict_{coly}/len {len(df)}/qcut {qcut}/",
-    estimatorns,#=[
-    n_estimators,
-#                 'RandomForestClassifier',
-    #     'GradientBoostingClassifier', 
-#     ],
-    test=False,
-    ):
-    from sklearn import ensemble
-    estimatorn2param_grid={k:getattr(ensemble,k)().get_params() for k in estimatorns}
-#     print(estimatorn2param_grid)
-    for k in estimatorn2param_grid:
-        estimatorn2param_grid[k]['n_estimators']=[n_estimators]
-    # estimatorn2param_grid['RandomForestClassifier']['criterion']=['gini']
-    # estimatorn2param_grid['RandomForestClassifier']['oob_score']=[True]
-    # estimatorn2param_grid['RandomForestClassifier']['bootstrap']=[True]
-    # estimatorn2param_grid['GradientBoostingClassifier']['loss']=['deviance']
-    # estimatorn2param_grid['RandomForestRegressor']['n_estimators']=estimatorn2param_grid['GradientBoostingRegressor']['n_estimators']=[250,500]
-    # estimatorn2param_grid['RandomForestRegressor']['min_samples_leaf']=estimatorn2param_grid['GradientBoostingRegressor']['min_samples_leaf']=[1,10,100]
-    # estimatorn2param_grid['GradientBoostingRegressor']['loss']=['ls','lad', 'huber','quantile']
-    d={}
-    for k1 in estimatorn2param_grid:
-        d[k1]={}
-        for k2 in estimatorn2param_grid[k1]:
-            if isinstance(estimatorn2param_grid[k1][k2],list):
-                d[k1][k2]=estimatorn2param_grid[k1][k2]
-    estimatorn2param_grid=d
-    if test: print(estimatorn2param_grid)
-    params=get_Xy_for_classification(df.set_index(colindex),coly=coly,
-                              qcut=qcut,drop_xs_low_complexity=True,
-                                    )
-    dn2df={}
-    dn2df['input']=params['X'].join(params['y'])
-    estimatorn2grid_search=get_estimatorn2grid_search(estimatorn2param_grid,
-                               X=params['X'],y=params['y'])
-#     to_dict({k:estimatorn2grid_search[k].cv_results_ for k in estimatorn2grid_search},
-#            f'{outp}/estimatorn2grid_search_results.json')
-    to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.pickle')
-    to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.joblib')
-#     return estimatorn2grid_search
-    dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],coff=qcut,test=True)
-
-    dn2df['feature importances']=get_feature_importances(estimatorn2grid_search,
-                                X=params['X'],y=params['y'],
-                                random_state=88,test=test)
-    dn2df['partial dependence']=get_partial_dependence(estimatorn2grid_search,
-                                X=params['X'],y=params['y'],)
-    ## save data
-    for k in dn2df:
-        if isinstance(dn2df[k],dict):
-            dn2df[k]=dellevelcol(pd.concat(dn2df[k],axis=0,names=['estimator name']).reset_index())
-        to_table(dn2df[k],f'{outp}/{k}.pqt')
 
 # evaluate
 def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
@@ -201,9 +95,9 @@ def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
                                                   'true':y,
                                                   'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search},
              axis=0,names=['estimator name']).reset_index())
-    print(df1.shape,end='')
+    info(df1.shape)
     df1.loc[:,'correct by truth']=df1.apply(lambda x: ((x['true'] and x['probability']>coff) or (not x['true'] and x['probability']<1-coff)),axis=1)
-    print(df1.loc[:,'correct by truth'].sum())
+    info(df1.loc[:,'correct by truth'].sum())
 
     df1['probability per class']=df1.apply(lambda x: np.nan if not x['correct by truth'] else 1-x['probability'] if x['probability']<0.5 else x['probability'],axis=1)
     if test:
@@ -218,9 +112,94 @@ def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
     df1=df1.merge(df1.groupby(['sample name']).agg({'probability per class': lambda x: all([i>coff or i<1-coff for i in x])}).rename(columns={'probability per class':'correct by estimators'}).reset_index(),
              on='sample name',how='left')
 
-    print('total samples\t',len(df1))
-    print(df1.groupby(['sample name']).agg({c:lambda x: any(x) for c in df1.filter(regex='^correct ')}).sum())
+    info('total samples\t',len(df1))
+    info(df1.groupby(['sample name']).agg({c:lambda x: any(x) for c in df1.filter(regex='^correct ')}).sum())
     return df1
+
+def run_grid_search(df,
+    colindex,#='genes id',
+    coly,#='robustness mean min',
+    estimatorns,#=[
+#                 'RandomForestClassifier',
+    #     'GradientBoostingClassifier', 
+#     ],
+    n_estimators,
+    qcut=None,#=0.5,
+    evaluations=['prediction','feature importances',
+                'partial dependence',
+                ],
+    estimatorn2param_grid=None,
+    outp=None,#'test/',#=f"data/data_analysed/data71_classification/predict_{coly}/len {len(df)}/qcut {qcut}/",
+    test=False,
+    **kws, ## grid search
+    ):
+    """
+    :params coly: bool if qcut is None else float/int
+    """
+    
+    if estimatorn2param_grid is None: 
+        from sklearn import ensemble
+        estimatorn2param_grid={k:getattr(ensemble,k)().get_params() for k in estimatorns}
+        if test=='estimatorn2param_grid':
+            return estimatorn2param_grid
+    #     info(estimatorn2param_grid)
+        for k in estimatorn2param_grid:
+            estimatorn2param_grid[k]['n_estimators']=[n_estimators]
+        # estimatorn2param_grid['RandomForestClassifier']['criterion']=['gini']
+        # estimatorn2param_grid['RandomForestClassifier']['oob_score']=[True]
+        # estimatorn2param_grid['RandomForestClassifier']['bootstrap']=[True]
+        # estimatorn2param_grid['GradientBoostingClassifier']['loss']=['deviance']
+        # estimatorn2param_grid['RandomForestRegressor']['n_estimators']=estimatorn2param_grid['GradientBoostingRegressor']['n_estimators']=[250,500]
+        # estimatorn2param_grid['RandomForestRegressor']['min_samples_leaf']=estimatorn2param_grid['GradientBoostingRegressor']['min_samples_leaf']=[1,10,100]
+        # estimatorn2param_grid['GradientBoostingRegressor']['loss']=['ls','lad', 'huber','quantile']    
+        if test: info(estimatorn2param_grid)
+        d={}
+        for k1 in estimatorn2param_grid:
+            d[k1]={}
+            for k2 in estimatorn2param_grid[k1]:
+                if isinstance(estimatorn2param_grid[k1][k2],list):
+                    d[k1][k2]=estimatorn2param_grid[k1][k2]
+        estimatorn2param_grid=d
+    if test: info(estimatorn2param_grid)
+    params=get_Xy_for_classification(df.set_index(colindex),coly=coly,
+                              qcut=qcut,drop_xs_low_complexity=True,
+                                    )
+    dn2df={}
+    dn2df['input']=params['X'].join(params['y'])
+    estimatorn2grid_search=get_estimatorn2grid_search(estimatorn2param_grid,
+                               X=params['X'],y=params['y'],
+                                                     **kws)
+#     to_dict({k:estimatorn2grid_search[k].cv_results_ for k in estimatorn2grid_search},
+#            f'{outp}/estimatorn2grid_search_results.json')
+    if not outp is None:
+        to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.pickle')
+        to_dict(estimatorn2grid_search,f'{outp}/estimatorn2grid_search.joblib')
+        d1={} # cols
+        d1['colindex']=colindex
+        d1['coly']=coly
+        d1['cols_x']=dn2df['input'].filter(regex=f"^((?!({d1['colindex']}|{d1['coly']})).)*$").columns.tolist()
+        d1['estimatorns']=estimatorns
+        d1['evaluations']=evaluations
+        to_dict(d1,f'{outp}/input.json')
+#     return estimatorn2grid_search
+    if 'prediction' in evaluations:
+        dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],test=True)
+
+    if 'feature importances' in evaluations:
+        dn2df['feature importances']=get_feature_importances(estimatorn2grid_search,
+                                X=params['X'],y=params['y'],
+                                random_state=88,test=test)
+    if 'partial dependence' in evaluations:
+        dn2df['partial dependence']=get_partial_dependence(estimatorn2grid_search,
+                                X=params['X'],y=params['y'],)
+    ## save data
+    if not outp is None:
+        for k in dn2df:
+            if isinstance(dn2df[k],dict):
+                dn2df[k]=dellevelcol(pd.concat(dn2df[k],axis=0,names=['estimator name']).reset_index())
+            to_table(dn2df[k],f'{outp}/{k}.pqt')
+
+
 
 def get_auc_cv(estimator,X,y,cv=5,test=False,fitted=False):
     """
@@ -342,7 +321,7 @@ def get_partial_dependence(estimatorn2grid_search,
         df1=pd.concat(dn2df,axis=0,names=['estimator name']).reset_index()
         df1['feature name']=featuren
         return dellevelcol(df1)
-    df4=df3.groupby('feature #',as_index=False).parallel_apply(lambda df:apply_(featuren=df.iloc[0,:]['feature name'],
+    df4=df3.groupby('feature #',as_index=False).progress_apply(lambda df:apply_(featuren=df.iloc[0,:]['feature name'],
                                     featurei=df.iloc[0,:]['feature #'],                                                                                                estimatorn2grid_search=estimatorn2grid_search))
     
     return df4
@@ -408,7 +387,7 @@ def many_classifiers(dn2dataset={},
         ds=dn2dataset[dn]
         # preprocess dataset, split into training and test part
         X, y = ds
-        print(X.shape,y.shape)
+        info(X.shape,y.shape)
         X = StandardScaler().fit_transform(X)
         X_train, X_test, y_train, y_test = \
             train_test_split(X, y, test_size=.4, random_state=random_state)
@@ -447,7 +426,7 @@ def many_classifiers(dn2dataset={},
                 selector = selector.fit(X, y)
                 dfeatimp.loc[dn,name]=list(selector.ranking_)
             except:
-                print(f'{name} does not expose "coef_" or "feature_importances_" attributes')
+                info(f'{name} does not expose "coef_" or "feature_importances_" attributes')
                 pass
             # score = clf.score(X_test, y_test)
             if test:
@@ -527,12 +506,12 @@ def make_kfold_regression(df,kfolds=5,random_state=88):
     df.index=range(len(df))
     #shuffle
     df=df.loc[np.random.permutation(df.index),:]
-    print(len(np.unique(df.index.tolist())))
+    info(len(np.unique(df.index.tolist())))
     from sklearn.model_selection import KFold
     kf = KFold(n_splits=kfolds,random_state=random_state)
     for fold,(train_index, test_index) in enumerate(kf.split(df.index)):
         df.loc[test_index,'k-fold #']=fold
-    print(df['k-fold #'].value_counts())
+    info(df['k-fold #'].value_counts())
     return df
 
 import itertools
@@ -546,7 +525,7 @@ def get_dmetrics_mlr(df,colxs,coly,
     test=False
     if test:
         dataset=pd.read_csv('test/petrol_consumption.csv')
-        print(dataset.shape)
+        info(dataset.shape)
         dataset=dataset.reset_index()
         colxs=['Average_income', 'Paved_Highways',
                'Population_Driver_licence(%)']
@@ -669,7 +648,7 @@ def many_models(df=None,colxs=None,coly=None,colidx=None,
         kfold = model_selection.KFold(n_splits=cv, random_state=random_state)
         modeln2metric[modeln] = model_selection.cross_val_score(modeln2model[modeln], StandardScaler().fit_transform(X), Y, cv=kfold, scoring=scoring)
         modeln2prediction[modeln] = model_selection.cross_val_predict(modeln2model[modeln], X, Y, cv=kfold)
-        print("%s: %f (%f)" % (modeln, modeln2metric[modeln].mean(), modeln2metric[modeln].std()))
+        info("%s: %f (%f)" % (modeln, modeln2metric[modeln].mean(), modeln2metric[modeln].std()))
     dmetrics=pd.DataFrame(modeln2metric)
     dpredictions=pd.DataFrame({'Y':Y}).join(pd.DataFrame(modeln2prediction))
     if plot or test or demo:    

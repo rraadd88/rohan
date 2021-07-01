@@ -268,4 +268,4 @@ def check_collinearity(df3,threshold=0.7):
     from rohan.lib.stat.network import get_subgraphs
     df7=get_subgraphs(df6.loc[df6['is collinear'],:],'index','variable')
     df7=df7.groupby('subnetwork name').agg({'node name':list}).reset_index()
-    return df7.groupby('subnetwork name').apply(lambda df: df6.apply(lambda x: x['value'] if len(set([x['index'],x['variable']]) - set(df['node name'].tolist()[0]))==0 else np.nan,axis=1).min()).sort_values(ascending=False)
+    return df7.groupby('subnetwork name').progress_apply(lambda df: df6.apply(lambda x: x['value'] if len(set([x['index'],x['variable']]) - set(df['node name'].tolist()[0]))==0 else np.nan,axis=1).min()).sort_values(ascending=False)
