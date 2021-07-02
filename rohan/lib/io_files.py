@@ -409,10 +409,13 @@ def to_manytables(df,p,colgroupby,**kws_get_chunks):
     """
     :colvalue: if colgroupby=='chunk'
     """
-    if colgroupby=='chunk':
-        df[colgroupby]=get_chunks(df1=df,value='right',
-                                  **kws_get_chunks)
     outd,ext=splitext(p)
+    if colgroupby=='chunk':
+        if exists(outd):
+            logging.error(f"can not overwrite existing chunks: {outd}/")
+        assert(not exists(outd))
+        df[colgroupby]=get_chunks(df1=df,value='right',
+                                  **kws_get_chunks)        
     df.groupby(colgroupby).progress_apply(lambda x: to_table(x,f"{outd}/{x.name if not isinstance(x.name, tuple) else '/'.join(x.name)}{ext}"))
     
 def to_table_pqt(df,p,**kws_pqt):

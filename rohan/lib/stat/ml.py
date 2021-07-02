@@ -66,8 +66,10 @@ def get_grid_search(modeln,
     estimator = getattr(ensemble,modeln)(random_state=random_state)
     grid_search = GridSearchCV(estimator, 
                                param_grid,
-                               cv=cv,n_jobs=n_jobs,
-                              **kws)
+                               cv=cv,
+                               n_jobs=n_jobs,
+                               scoring=scoring,
+                               **kws)
     grid_search.fit(X, y)
     info(modeln,grid_search.best_score_)
     return grid_search
@@ -83,7 +85,7 @@ def get_estimatorn2grid_search(estimatorn2param_grid,X,y,**kws):
                         random_state=88,
                         **kws,
                        )
-    info({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
+#     info({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
     return estimatorn2grid_search
 
 # evaluate
@@ -167,8 +169,8 @@ def run_grid_search(df,
     dn2df={}
     dn2df['input']=params['X'].join(params['y'])
     estimatorn2grid_search=get_estimatorn2grid_search(estimatorn2param_grid,
-                               X=params['X'],y=params['y'],
-                                                     **kws)
+                                                      X=params['X'],y=params['y'],
+                                                      **kws)
 #     to_dict({k:estimatorn2grid_search[k].cv_results_ for k in estimatorn2grid_search},
 #            f'{outp}/estimatorn2grid_search_results.json')
     if not outp is None:
@@ -198,8 +200,8 @@ def run_grid_search(df,
             if isinstance(dn2df[k],dict):
                 dn2df[k]=dellevelcol(pd.concat(dn2df[k],axis=0,names=['estimator name']).reset_index())
             to_table(dn2df[k],f'{outp}/{k}.pqt')
-
-
+    else:
+        return estimatorn2grid_search
 
 def get_auc_cv(estimator,X,y,cv=5,test=False,fitted=False):
     """
