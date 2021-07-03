@@ -88,7 +88,45 @@ def get_estimatorn2grid_search(estimatorn2param_grid,X,y,**kws):
 #     info({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
     return estimatorn2grid_search
 
-# evaluate
+## evaluate metrics
+def plot_metrics(outd,plot=False):
+    d0=read_dict(f'{outd}/input.json')
+    d1=read_pickle(f'{outd}/estimatorn2grid_search.pickle')
+    df01=read_table(f'{outd}/input.pqt')
+    
+    def get_test_scores(d1):
+        d2={}
+        for k1 in d1:
+            l1=list(d1[k1].cv_results_.keys())
+            l1=[k2 for k2 in l1 if not re.match("^split[0-9]_test_.*",k2) is None]
+            d2[k1]={k2: d1[k1].cv_results_[k2] for k2 in l1}
+        df1=pd.DataFrame(d2).applymap(lambda x: x[0] if (len(x)==1) else None).reset_index()
+        df1['variable']=df1['index'].str.split('_test_',expand=True)[1].str.replace('_',' ')
+        df1['cv #']=df1['index'].str.split('_test_',expand=True)[0].str.replace('split','').apply(int)
+        df1=df1.rd.clean()
+        return df1.melt(id_vars=['variable','cv #'],
+                       value_vars=d1.keys(),
+                       var_name='model',
+                       )
+    df2=get_test_scores(d1)
+    if plot:
+        _,ax=plt.subplots(figsize=[3,3])
+        sns.pointplot(data=df2,
+        y='variable',
+        x='value',
+        hue='model',
+        join=False,
+        dodge=0.2,
+        ax=ax)
+        ax.axvline(0.5,linestyle=":",
+                   color='k',
+                  label='reference: accuracy')
+        ax.axvline(sum(df01[d0['coly']])/len(df01[d0['coly']]),linestyle=":",
+                   color='b',
+                  label='reference: precision')
+        ax.legend(bbox_to_anchor=[1,1])
+    return df2
+
 def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
     """
     TODO: for non-binary classification
@@ -131,6 +169,7 @@ def run_grid_search(df,
                 'partial dependence',
                 ],
     estimatorn2param_grid=None,
+    drop_xs_low_complexity=False,
     outp=None,#'test/',#=f"data/data_analysed/data71_classification/predict_{coly}/len {len(df)}/qcut {qcut}/",
     test=False,
     **kws, ## grid search
@@ -164,7 +203,7 @@ def run_grid_search(df,
         estimatorn2param_grid=d
     if test: info(estimatorn2param_grid)
     params=get_Xy_for_classification(df.set_index(colindex),coly=coly,
-                              qcut=qcut,drop_xs_low_complexity=True,
+                              qcut=qcut,drop_xs_low_complexity=drop_xs_low_complexity,
                                     )
     dn2df={}
     dn2df['input']=params['X'].join(params['y'])
@@ -190,7 +229,7 @@ def run_grid_search(df,
     if 'feature importances' in evaluations:
         dn2df['feature importances']=get_feature_importances(estimatorn2grid_search,
                                 X=params['X'],y=params['y'],
-                                random_state=88,test=test)
+                                test=test)
     if 'partial dependence' in evaluations:
         dn2df['partial dependence']=get_partial_dependence(estimatorn2grid_search,
                                 X=params['X'],y=params['y'],)
@@ -203,58 +242,48 @@ def run_grid_search(df,
     else:
         return estimatorn2grid_search
 
-def get_auc_cv(estimator,X,y,cv=5,test=False,fitted=False):
-    """
-    TODO: just predict_probs as inputs
-    TODO: resolve duplication of stat.binary.auc
-    TODO: add more metrics in ds1 in addition to auc
-    """
-    def plot(df1,df2,ax=None):
-        params={'label':'Mean ROC\n(AUC=%0.2f$\pm$%0.2f)' % (df1['AUC'].mean(), df1['AUC'].std()),}
-        ax=plt.subplot() if ax is None else ax
-        sns.lineplot(x="FPR", y="TPR", data=df2,
-                     ci='sd',
-                     label=params['label'],
-                     ax=ax,
-                    )
-        ax.plot([0, 1], [0, 1], linestyle=':', lw=2, color='lightgray',)
-        ax.set(xlim=[0, 1], ylim=[0, 1],)
-        return ax
-    cv2Xy=get_cvsplits(X,y,cv=cv)
-    mean_fpr = np.linspace(0, 1, 100)
-    from sklearn.metrics import roc_curve,auc
-    dn2df={}
-    d={}
-    for i in tqdm(cv2Xy.keys()):
-        if not fitted:
-            estimator.fit(cv2Xy[i]['train']['X'], cv2Xy[i]['train']['y'])
-        tpr,fpr,thresholds = roc_curve(cv2Xy[i]['test']['y'],
-                                       estimator.predict_proba(cv2Xy[i]['test']['X'])[:,0],
-                                      )
-        interp_tpr = np.interp(mean_fpr, fpr, tpr)
-        interp_tpr[0] = 0.0
-        dn2df[i]=pd.DataFrame({'FPR':mean_fpr,
-                               'TPR':interp_tpr,
-                              })
-        d[i]=auc(fpr,tpr)        
-    ds1=pd.Series(d)
-    ds1.name='AUC'
-    df1=pd.DataFrame(ds1)
-    df1.index.name='cv #'
-    df2=dellevelcol(pd.concat(dn2df,axis=0,names=['cv #']).reset_index())
-    if test:
-        plt.figure(figsize=[3,3])
-        plot(df1,df2,ax=None)
-    return df1,df2
-
 # interpret 
+
+def feature_predictive_power(d0,df01,
+                                n_splits=5, 
+                                n_repeats=10,
+                                random_state=88,
+                               **kws):
+    """
+    x values: scale and sign agnostic.
+    """
+    from sklearn.metrics import average_precision_score,roc_auc_score
+    from sklearn.model_selection import StratifiedKFold,RepeatedStratifiedKFold
+
+    d2={}
+    for colx in tqdm(d0['cols_x']):
+        cv = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=random_state,**kws)
+        d1={i: ids for i,(_, ids) in enumerate(cv.split(df01[colx], df01[d0['coly']]))}
+        df2=pd.DataFrame({'cv #':range(cv.get_n_splits())})
+        df1=df01.loc[:,[d0['coly'],colx]]
+        if roc_auc_score(df1[d0['coly']], df1[colx])<roc_auc_score(~df1[d0['coly']], df1[colx]):
+            df1[d0['coly']]=~df1[d0['coly']]
+        df2['ROC AUC']=df2['cv #'].apply(lambda x: roc_auc_score(df1.iloc[d1[x],:][d0['coly']],
+                                                                 df1.iloc[d1[x],:][colx]))
+        df2['average precision']=df2['cv #'].apply(lambda x: average_precision_score(df1.iloc[d1[x],:][d0['coly']],
+                                                                                     df1.iloc[d1[x],:][colx]))
+        d2[colx]=df2.melt(id_vars='cv #',value_vars=['ROC AUC','average precision'])
+
+    df3=pd.concat(d2,axis=0,names=['feature']).reset_index(0)
+    return df3
 
 def get_feature_importances(estimatorn2grid_search,
                             X,y,
-                            random_state=88,test=False):
-    def plot(df,ax=None):
+                            scoring='roc_auc',
+                            n_repeats=20,
+                            n_jobs=6,
+                            random_state=88,
+                            plot=False,
+                            test=False,
+                           **kws):
+    def plot_(df,ax=None):
         ax=plt.subplot() if ax is None else ax
-        dplot=groupby_sort(df,
+        dplot=groupby_sort_values(df,
              col_groupby=['estimator name','feature'],
              col_sortby='importance rescaled',
              func='mean', ascending=False
@@ -279,14 +308,15 @@ def get_feature_importances(estimatorn2grid_search,
         from sklearn.inspection import permutation_importance
         r = permutation_importance(estimator=estimatorn2grid_search[k].best_estimator_, 
                                    X=X, y=y,
-                                   scoring='accuracy',
-                                   n_repeats=20,
-                                   n_jobs=6,
+                                   scoring=scoring,
+                                   n_repeats=n_repeats,
+                                   n_jobs=n_jobs,
                                    random_state=random_state,
+                                   **kws,
                                   )
         df=pd.DataFrame(r.importances)
         df['feature']=X.columns
-        dn2df[k]=df.melt(id_vars=['feature'],value_vars=range(20),
+        dn2df[k]=df.melt(id_vars=['feature'],value_vars=range(n_repeats),
             var_name='permutation #',
             value_name='importance',
            )
@@ -297,8 +327,8 @@ def get_feature_importances(estimatorn2grid_search,
         df['importance rank']=len(df)-df['importance'].rank()
         return df#.sort_values('importance rescaled',ascending=False)
     df3=df2.groupby(['estimator name','permutation #']).apply(apply_)
-    if test:
-        plot(df3)
+    if plot:
+        plot_(df3)
     return df3
 
 def get_partial_dependence(estimatorn2grid_search,
@@ -327,6 +357,7 @@ def get_partial_dependence(estimatorn2grid_search,
                                     featurei=df.iloc[0,:]['feature #'],                                                                                                estimatorn2grid_search=estimatorn2grid_search))
     
     return df4
+
 
 ## metas
 

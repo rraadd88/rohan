@@ -43,7 +43,7 @@ def notebook2packagescript(notebookp,test=False,check_outputs=True):
         else:
             return '',pd.DataFrame()
     df1=pd.DataFrame(pd.Series(funs,name='code raw'))
-    def check_outputs:
+    if check_outputs:
         def get_path_output(s):
             s='\n'.join([line for line in s.split('\n') if not line.startswith('#')])
             for f in ['to_table','to_dict']:
