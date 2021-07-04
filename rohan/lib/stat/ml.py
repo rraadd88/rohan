@@ -244,14 +244,29 @@ def run_grid_search(df,
 
 # interpret 
 
-def feature_predictive_power(d0,df01,
+def get_feature_predictive_power(d0,df01,
                                 n_splits=5, 
                                 n_repeats=10,
                                 random_state=88,
+                                 plot=False,
                                **kws):
     """
     x values: scale and sign agnostic.
     """
+    def plot_(df3):
+        df4=df3.rd.filter_rows({'variable':'ROC AUC'}).rd.groupby_sort_values(col_groupby='feature',
+                         col_sortby='value',
+                         ascending=False)
+        _,ax=plt.subplots(figsize=[3,3])
+        sns.pointplot(data=df3,
+                     y='feature',
+                     x='value',
+                     hue='variable',
+                      order=df4['feature'].unique(),
+                     join=False,
+                      ax=ax,
+                     )
+        ax.legend(bbox_to_anchor=[1,1])
     from sklearn.metrics import average_precision_score,roc_auc_score
     from sklearn.model_selection import StratifiedKFold,RepeatedStratifiedKFold
 
@@ -261,8 +276,9 @@ def feature_predictive_power(d0,df01,
         d1={i: ids for i,(_, ids) in enumerate(cv.split(df01[colx], df01[d0['coly']]))}
         df2=pd.DataFrame({'cv #':range(cv.get_n_splits())})
         df1=df01.loc[:,[d0['coly'],colx]]
-        if roc_auc_score(df1[d0['coly']], df1[colx])<roc_auc_score(~df1[d0['coly']], df1[colx]):
-            df1[d0['coly']]=~df1[d0['coly']]
+        if roc_auc_score(df1[d0['coly']], df1[colx])<roc_auc_score(df1[d0['coly']], -df1[colx]):
+#             df1[d0['coly']]=~df1[d0['coly']]
+            df1[colx]=-df1[colx]
         df2['ROC AUC']=df2['cv #'].apply(lambda x: roc_auc_score(df1.iloc[d1[x],:][d0['coly']],
                                                                  df1.iloc[d1[x],:][colx]))
         df2['average precision']=df2['cv #'].apply(lambda x: average_precision_score(df1.iloc[d1[x],:][d0['coly']],
@@ -270,6 +286,7 @@ def feature_predictive_power(d0,df01,
         d2[colx]=df2.melt(id_vars='cv #',value_vars=['ROC AUC','average precision'])
 
     df3=pd.concat(d2,axis=0,names=['feature']).reset_index(0)
+    if plot: plot_(df3)
     return df3
 
 def get_feature_importances(estimatorn2grid_search,
