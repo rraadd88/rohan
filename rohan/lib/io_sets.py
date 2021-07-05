@@ -25,7 +25,8 @@ def dropna(x):
 def unique(l): return list(np.unique(l))
 def unique_str(l1): 
     l2=unique(l1)
-    return l2[0] if len(l2)==1 else l2
+    assert(len(l2)==1)
+    return l2[0]
 def nunique(l,**kws): return len(unique(l,**kws))
 def unique_dropna(l): return dropna(unique(l,drop='nan'))
 def unique_dropna_str(l,sep='; '): return tuple2str(dropna(unique(l,drop='nan')),sep=sep)

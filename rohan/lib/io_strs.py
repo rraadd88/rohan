@@ -200,9 +200,6 @@ def get_bracket(s,l='(',r=')'):
         return '' 
     
 ## split
-def get_prefix(string,sep):
-    return re.match(f"(.*?){sep}",string).group()[:-1]
-
 def align(s1,s2,
           prefix=False,
           suffix=False,
@@ -223,8 +220,26 @@ def align(s1,s2,
         return [s1[:i],s2[:i]] if prefix else [s1[i+1:],s2[i+1:]] 
     else:
         return [s1[:i+1],s2[:i+1]] if prefix else [s1[i:],s2[i:]] 
-def get_prefix(s1,s2,common=False): return align(s1,s2,prefix=True,common=common)
-def get_suffix(s1,s2,common=False): return align(s1,s2,suffix=True,common=common)
+
+from rohan.lib.io_sets import unique_str    
+def get_prefix(s1,s2,common=True,clean=True): 
+    l1=align(s1,s2,prefix=True,common=common)
+    s3=unique_str(l1)
+    if not clean:
+        return s3
+    else:
+        return s3.strip().rsplit(' ', 1)[0]    
+def get_suffix(s1,s2,common=True,clean=True): 
+    l1=align(s1,s2,suffix=True,common=common)
+    s3=unique_str(l1)
+    if not clean:
+        return s3
+    else:
+        return s3.strip()#.rsplit(' ', 1)[0]
+def get_fix(s1,s2,**kws):
+    s3=get_prefix(s1,s2,**kws)
+    s4=get_suffix(s1,s2,**kws)
+    return s3 if len(s3)>=len(s4) else s4
     
 ## filenames 
 def strlist2one(l,label=''):
@@ -237,12 +252,6 @@ def strlist2one(l,label=''):
     #         si=si+1
             break
     return f"{l[0][:si]}{''.join(list(unique([s[si] for s in l])))}{label}{splitext(l[0])[1]}"
-
-def get_common_preffix(ps): 
-    for i in range(len(ps[0])):
-        if not all([p[:i]==ps[0][:i] for p in ps]):
-            break
-    return ps[0][:i-1]
 
 def str_split(strng, sep, pos):
     """https://stackoverflow.com/a/52008134/3521099"""

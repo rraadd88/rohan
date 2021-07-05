@@ -111,7 +111,10 @@ def merge_paired(dfpair,df,
         dfpair_merge2=dfpair_merge2.drop(cols_del,axis=1)
         dfpair_merge2=dfpair_merge2.rename(columns=dict(zip(cols_same_right_ons_common[0::2],right_ons_common)),
                                           errors='raise')
-        
+    else:
+        logging.warning(f"contains potentially redundant columns e.g. {cols_del[0]}")
+        if how=='left':
+            logging.info("maybe incomplete merge; try how='inner'")
     d1['to  ']=dfpair_merge2.shape        
     if verb and d1['from']!=d1['to  ']:
         for k in d1:

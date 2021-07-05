@@ -38,6 +38,8 @@ def diff(a,b,absolute=True):
         return abs(diff)
     else:
         return diff
+def get_diff_sorted(a,b): return diff(a,b,absolute=True)
+
 def balance(a,b,absolute=True):
     sum_=a+b
     if sum_!=0:
