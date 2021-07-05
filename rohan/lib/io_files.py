@@ -367,6 +367,7 @@ def read_manytables(ps,
                            fast=fast,
                            drop_index=drop_index,
                            params=params,
+                           kws_read_table=dict(verb=False if len(ps)>50 else True),
                            **kws_apply_on_paths)
         return df2
     else:

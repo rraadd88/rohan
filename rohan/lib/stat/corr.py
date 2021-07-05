@@ -263,7 +263,7 @@ def check_collinearity(df3,threshold=0.7):
     if perc==0:
         logging.info(f"% collinear vars: {perc}")
         return
-    logging.info(f"% collinear vars: {perc}")
+    info(f"% collinear vars: {perc} ({df6['is collinear'].sum()}/{len(df6)})")
     df6=df6.loc[(df6['is collinear']),:]
     from rohan.lib.stat.network import get_subgraphs
     df7=get_subgraphs(df6.loc[df6['is collinear'],:],'index','variable')

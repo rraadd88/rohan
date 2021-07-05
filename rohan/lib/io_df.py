@@ -67,6 +67,7 @@ def drop_constants(df):
 def clean(df,cols=[],
           drop_constants=False,
           drop_unnamed=True,
+          verb=True,
          ):
     """
     Deletes temporary columns
@@ -79,10 +80,10 @@ def clean(df,cols=[],
         cols_del=[c for c in cols_del if not c.startswith('Unnamed')]
     if any(df.columns.duplicated()):
 #         from rohan.lib.io_sets import unique
-        logging.warning(f"duplicate column/s dropped:{df.loc[:,df.columns.duplicated()].columns.tolist()}")
+        if verb: logging.warning(f"duplicate column/s dropped:{df.loc[:,df.columns.duplicated()].columns.tolist()}")
         df=df.loc[:,~(df.columns.duplicated())]
     if len(cols_del)!=0:
-        logging.warning(f"dropped columns: {', '.join(cols_del)}")
+        if verb: logging.warning(f"dropped columns: {', '.join(cols_del)}")
         return df.drop(cols_del,axis=1)
     else:
         return df
