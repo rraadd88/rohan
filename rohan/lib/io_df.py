@@ -796,8 +796,8 @@ def make_ids_sorted(df,cols,ids_have_equal_length):
         return df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
 
 @to_class(rd)    
-def split_ids(df1,col):
-    df=df1[col].str.split('--',expand=True)
+def split_ids(df1,col,sep='--'):
+    df=df1[col].str.split(sep,expand=True)
     for i in range(len(df.columns)):
         df1[f"{col} {i+1}"]=df[i]
     return df1

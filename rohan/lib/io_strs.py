@@ -224,18 +224,24 @@ def align(s1,s2,
 from rohan.lib.io_sets import unique_str    
 def get_prefix(s1,s2,common=True,clean=True): 
     l1=align(s1,s2,prefix=True,common=common)
-    s3=unique_str(l1)
-    if not clean:
-        return s3
+    if not common:
+        return l1
     else:
-        return s3.strip().rsplit(' ', 1)[0]    
+        s3=unique_str(l1)
+        if not clean:
+            return s3
+        else:
+            return s3.strip().rsplit(' ', 1)[0]    
 def get_suffix(s1,s2,common=True,clean=True): 
     l1=align(s1,s2,suffix=True,common=common)
-    s3=unique_str(l1)
-    if not clean:
-        return s3
+    if not common:
+        return l1
     else:
-        return s3.strip()#.rsplit(' ', 1)[0]
+        s3=unique_str(l1)
+        if not clean:
+            return s3
+        else:
+            return s3.strip()#.rsplit(' ', 1)[0]
 def get_fix(s1,s2,**kws):
     s3=get_prefix(s1,s2,**kws)
     s4=get_suffix(s1,s2,**kws)

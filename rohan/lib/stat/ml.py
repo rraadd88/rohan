@@ -19,6 +19,7 @@ def get_Xy_for_classification(df1,coly,qcut=None,drop_xs_low_complexity=False):
         df1[coly]=df1.progress_apply(lambda x: True if x[coly]>=lims[0] else False if x[coly]<lims[1] else np.nan,axis=1)
         df1=df1.log.dropna()
     df1[coly]=df1[coly].apply(bool)
+    info(df1[coly].value_counts())
     y=df1[coly]
     X=df1.loc[:,cols_X]
     # remove low complexity features
@@ -185,7 +186,8 @@ def run_grid_search(df,
             return estimatorn2param_grid
     #     info(estimatorn2param_grid)
         for k in estimatorn2param_grid:
-            estimatorn2param_grid[k]['n_estimators']=[n_estimators]
+            if 'n_estimators' not in estimatorn2param_grid[k]:
+                estimatorn2param_grid[k]['n_estimators']=[n_estimators]
         # estimatorn2param_grid['RandomForestClassifier']['criterion']=['gini']
         # estimatorn2param_grid['RandomForestClassifier']['oob_score']=[True]
         # estimatorn2param_grid['RandomForestClassifier']['bootstrap']=[True]
@@ -239,6 +241,8 @@ def run_grid_search(df,
             if isinstance(dn2df[k],dict):
                 dn2df[k]=dellevelcol(pd.concat(dn2df[k],axis=0,names=['estimator name']).reset_index())
             to_table(dn2df[k],f'{outp}/{k}.pqt')
+        _=plot_metrics(outd=outp,
+                      plot=True)        
     else:
         return estimatorn2grid_search
 

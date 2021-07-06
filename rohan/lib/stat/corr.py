@@ -251,7 +251,7 @@ def get_partial_corrs(df,xs,ys,method='spearman',splits=5):
     return df1.reset_index()
 
 
-def check_collinearity(df3,threshold=0.7):
+def check_collinearity(df3,threshold):
     df4=df3.corr(method='spearman')
     # df4=df4.applymap(abs)
     from rohan.lib.io_dfs import get_offdiagonal_values
@@ -260,10 +260,9 @@ def check_collinearity(df3,threshold=0.7):
     df6['value']=df6['value'].apply(abs)
     df6['is collinear']=df6['value'].apply(lambda x: x>=threshold)
     perc=(df6['is collinear'].sum()/len(df6))*100
+    logging.info(f"% collinear vars: {perc} ({df6['is collinear'].sum()}/{len(df6)})")
     if perc==0:
-        logging.info(f"% collinear vars: {perc}")
         return
-    info(f"% collinear vars: {perc} ({df6['is collinear'].sum()}/{len(df6)})")
     df6=df6.loc[(df6['is collinear']),:]
     from rohan.lib.stat.network import get_subgraphs
     df7=get_subgraphs(df6.loc[df6['is collinear'],:],'index','variable')
