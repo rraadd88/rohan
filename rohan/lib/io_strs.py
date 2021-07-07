@@ -283,6 +283,8 @@ def str2dict(s,sep=';',sep_equal='='):
     """
     return dict(item.split(sep_equal) for item in s.split(sep))
 
+def dict2str(d1,sep=';',sep2='='): return sep.join([sep2.join([k,str(v)]) for k,v in d1.items()])
+
 # def s2dict(s,sep=';',sep_key=':',):
 #     d={}
 #     for pair in s.split(sep):

@@ -64,6 +64,16 @@ def drop_constants(df):
     return df.drop(cols_del,axis=1)
 
 @to_class(rd)
+def dropby_patterns(df1,l1,test=False):
+    s0='|'.join(l1).replace('(','\(').replace(')','\)')
+    s1=f"^.*({s0}).*$"
+    cols=df1.filter(regex=s1).columns.tolist()
+    if test: info(s1)
+    assert(len(cols)!=0)
+    logging.info('columns dropped:'+','.join(cols))
+    return df1.log.drop(labels=cols,axis=1)
+
+@to_class(rd)
 def clean(df,cols=[],
           drop_constants=False,
           drop_unnamed=True,
@@ -102,6 +112,15 @@ def clean_compress(df,**kws_compress): return df.rd.clean().rd.compress(**kws_co
 ## nans:
 @to_class(rd)
 def check_na_percentage(df,cols=None):
+    """
+    prefer check_na
+    """
+    if cols is None:
+        cols=df.columns.tolist()
+    return (df.loc[:,cols].isnull().sum()/df.loc[:,cols].agg(len))*100
+
+@to_class(rd)
+def check_na(df,cols=None):
     if cols is None:
         cols=df.columns.tolist()
     return (df.loc[:,cols].isnull().sum()/df.loc[:,cols].agg(len))*100
@@ -112,6 +131,14 @@ def check_nunique(df,cols=None,):
     if cols is None:
         cols=df.select_dtypes(object).columns.tolist()
     return df.loc[:,cols].nunique()
+
+## nunique:
+@to_class(rd)
+def check_inflation(df1,cols=None,):
+    if cols is None:
+        cols=df1.columns.tolist()
+    return df1.loc[:,cols].apply(lambda x: (x.value_counts().values[0]/len(df1))*100)
+#     df.loc[:,cols].nunique()
     
 ## duplicates:
 @to_class(rd)
@@ -658,7 +685,7 @@ def sort_columns_by_values(df,cols_sortby=['mutation gene1','mutation gene2'],
     sorts in ascending order. 
     `sorted` means values are sorted because gene1>gene2. 
     """
-    assert((df.rd.check_na_percentage(cols=cols_sortby)==0).all())
+    assert((df.rd.check_na(cols=cols_sortby)==0).all())
     suffixes=[s.replace(' ','') for s in suffixes]
     dn2df={}
     # keys: (equal, to be sorted)
@@ -794,25 +821,13 @@ def make_ids_sorted(df,cols,ids_have_equal_length):
         return np.apply_along_axis(get_ids_sorted, 1, df.loc[:,cols].values)
     else:
         return df.loc[:,cols].agg(lambda x: '--'.join(sorted(x)),axis=1)
+def get_alt_id(s1='A--B',s2='A'): return [s for s in s1.split('--') if s!=s2][0]
 
 @to_class(rd)    
 def split_ids(df1,col,sep='--'):
     df=df1[col].str.split(sep,expand=True)
     for i in range(len(df.columns)):
         df1[f"{col} {i+1}"]=df[i]
-    return df1
-
-@to_class(rd)
-def sort_ids_paired(df1,cols=['g1','g2'],col=None):
-    if col is None:
-        col=f"{cols[0].split('1')[0]}s id"
-    ## combine id
-    df1[col]=make_ids_sorted(df1,cols,ids_have_equal_length=True)
-    ## drop dups
-    df1=df1.drop(cols,axis=1).log.drop_duplicates()
-    ## split id
-#     if any(df1[cols[0]]==df1[cols[1]]):
-#         df1['homomeric interaction']=df1[cols[0]]==df1[cols[1]]
     return df1
 
 reverse_ids_=lambda x: '--'.join(x.split('--')[::-1])                                 

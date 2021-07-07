@@ -1,7 +1,31 @@
 from rohan.global_imports import *
 
 # currate data 
-def get_Xy_for_classification(df1,coly,qcut=None,drop_xs_low_complexity=False):
+def drop_low_complexity(df1,min_nunique,max_inflation,cols=None,test=False):  
+    if cols is None:
+        cols=df1.columns.tolist()
+    df_=pd.concat([df1.rd.check_nunique(cols),df1.rd.check_inflation(cols)],axis=1,)
+    df_.columns=['nunique','% inflation']
+    df_=df_.sort_values(df_.columns.tolist(),ascending=False)
+    df_=df_.loc[((df_['nunique']<=min_nunique) | (df_['% inflation']>=max_inflation)),:]
+    l1=df_.index.tolist()
+#     def apply_(x,df1,min_nunique,max_inflation):
+#         ds1=x.value_counts()
+#         return (len(ds1)<=min_nunique) or ((ds1.values[0]/len(df1))>=max_inflation)
+#     l1=df1.loc[:,cols].apply(lambda x: apply_(x,df1,min_nunique=min_nunique,max_inflation=max_inflation)).loc[lambda x: x].index.tolist()
+    logging.info(f"{len(l1)}(/{len(cols)}) low complexity columns {'could be ' if test else ''}dropped:")
+    info(df_)
+    if not test:
+        return df1.log.drop(labels=l1,axis=1)
+    else:
+        return df1
+
+def get_Xy_for_classification(df1,coly,qcut=None,
+                              # low_complexity filters
+                              drop_xs_low_complexity=False,
+                              min_nunique=5,
+                              max_inflation=0.5,
+                             ):
     """
     Get X matrix and y vector 
     
@@ -23,12 +47,15 @@ def get_Xy_for_classification(df1,coly,qcut=None,drop_xs_low_complexity=False):
     y=df1[coly]
     X=df1.loc[:,cols_X]
     # remove low complexity features
-    logging.warning(f"xs with very low complexity: {X.loc[:,~(X.apply(lambda x: len(x.unique()))>=5)].columns.tolist()}")
-    if drop_xs_low_complexity:
-        X=X.loc[:,(X.apply(lambda x: len(x.unique()))>=5)]
+    X=X.rd.clean(drop_constants=True)
+    X=drop_low_complexity(X,cols=None,
+                          min_nunique=min_nunique,
+                          max_inflation=max_inflation,                          
+                          test=False if drop_xs_low_complexity else True)
     return {'X':X,'y':y}
 
-def get_cvsplits(X,y,cv=5,random_state=88,outtest=True):
+def get_cvsplits(X,y,cv=5,random_state=None,outtest=True):
+    if random_state is None: logging.warning(f"random_state is None")
     X.index=range(len(X))
     y.index=range(len(y))
     
@@ -53,7 +80,7 @@ def get_grid_search(modeln,
                     X,y,param_grid={},
                     cv=5,
                     n_jobs=6,
-                    random_state=88,
+                    random_state=None,
                     scoring='balanced_accuracy',
                     **kws,
                    ):
@@ -62,6 +89,7 @@ def get_grid_search(modeln,
     1. https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html
     2. https://scikit-learn.org/stable/modules/model_evaluation.html
     """
+    if random_state is None: logging.warning(f"random_state is None")
     from sklearn.model_selection import GridSearchCV
     from sklearn import ensemble
     estimator = getattr(ensemble,modeln)(random_state=random_state)
@@ -72,6 +100,7 @@ def get_grid_search(modeln,
                                scoring=scoring,
                                **kws)
     grid_search.fit(X, y)
+    info(modeln,grid_search.best_params_)
     info(modeln,grid_search.best_score_)
     return grid_search
 
@@ -83,7 +112,6 @@ def get_estimatorn2grid_search(estimatorn2param_grid,X,y,**kws):
                         param_grid=estimatorn2param_grid[k],
                         cv=5,
                         n_jobs=6,
-                        random_state=88,
                         **kws,
                        )
 #     info({k:estimatorn2grid_search[k].best_params_ for k in estimatorn2grid_search})
@@ -96,17 +124,21 @@ def plot_metrics(outd,plot=False):
     df01=read_table(f'{outd}/input.pqt')
     
     def get_test_scores(d1):
+        """
+        TODO: get best param index
+        """
         d2={}
         for k1 in d1:
+#             info(k1,dict2str(d1[k1].best_params_))
             l1=list(d1[k1].cv_results_.keys())
             l1=[k2 for k2 in l1 if not re.match("^split[0-9]_test_.*",k2) is None]
-            d2[k1]={k2: d1[k1].cv_results_[k2] for k2 in l1}
-        df1=pd.DataFrame(d2).applymap(lambda x: x[0] if (len(x)==1) else None).reset_index()
+            d2[k1+"\n("+dict2str(d1[k1].best_params_,sep='\n')+")"]={k2: d1[k1].cv_results_[k2] for k2 in l1}
+        df1=pd.DataFrame(d2).applymap(lambda x: x[0] if (len(x)==1) else max(x)).reset_index()
         df1['variable']=df1['index'].str.split('_test_',expand=True)[1].str.replace('_',' ')
         df1['cv #']=df1['index'].str.split('_test_',expand=True)[0].str.replace('split','').apply(int)
         df1=df1.rd.clean()
         return df1.melt(id_vars=['variable','cv #'],
-                       value_vars=d1.keys(),
+                       value_vars=d2.keys(),
                        var_name='model',
                        )
     df2=get_test_scores(d1)
@@ -126,6 +158,7 @@ def plot_metrics(outd,plot=False):
                    color='b',
                   label='reference: precision')
         ax.legend(bbox_to_anchor=[1,1])
+        ax.set(xlim=[-0.1,1.1])
     return df2
 
 def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
@@ -158,43 +191,36 @@ def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
     return df1
 
 def run_grid_search(df,
-    colindex,#='genes id',
-    coly,#='robustness mean min',
-    estimatorns,#=[
-#                 'RandomForestClassifier',
-    #     'GradientBoostingClassifier', 
-#     ],
+    colindex,
+    coly,
     n_estimators,
-    qcut=None,#=0.5,
+    qcut=None,
     evaluations=['prediction','feature importances',
                 'partial dependence',
                 ],
     estimatorn2param_grid=None,
-    drop_xs_low_complexity=False,
-    outp=None,#'test/',#=f"data/data_analysed/data71_classification/predict_{coly}/len {len(df)}/qcut {qcut}/",
+      drop_xs_low_complexity=False,
+      min_nunique=5,
+      max_inflation=0.5,      
+    outp=None,
     test=False,
     **kws, ## grid search
     ):
     """
     :params coly: bool if qcut is None else float/int
     """
+    assert('random_state' in kws)
+    if kws['random_state'] is None: logging.warning(f"random_state is None")
     
     if estimatorn2param_grid is None: 
         from sklearn import ensemble
-        estimatorn2param_grid={k:getattr(ensemble,k)().get_params() for k in estimatorns}
+        estimatorn2param_grid={k:getattr(ensemble,k)().get_params() for k in estimatorn2param_grid}
         if test=='estimatorn2param_grid':
             return estimatorn2param_grid
     #     info(estimatorn2param_grid)
         for k in estimatorn2param_grid:
             if 'n_estimators' not in estimatorn2param_grid[k]:
                 estimatorn2param_grid[k]['n_estimators']=[n_estimators]
-        # estimatorn2param_grid['RandomForestClassifier']['criterion']=['gini']
-        # estimatorn2param_grid['RandomForestClassifier']['oob_score']=[True]
-        # estimatorn2param_grid['RandomForestClassifier']['bootstrap']=[True]
-        # estimatorn2param_grid['GradientBoostingClassifier']['loss']=['deviance']
-        # estimatorn2param_grid['RandomForestRegressor']['n_estimators']=estimatorn2param_grid['GradientBoostingRegressor']['n_estimators']=[250,500]
-        # estimatorn2param_grid['RandomForestRegressor']['min_samples_leaf']=estimatorn2param_grid['GradientBoostingRegressor']['min_samples_leaf']=[1,10,100]
-        # estimatorn2param_grid['GradientBoostingRegressor']['loss']=['ls','lad', 'huber','quantile']    
         if test: info(estimatorn2param_grid)
         d={}
         for k1 in estimatorn2param_grid:
@@ -205,7 +231,9 @@ def run_grid_search(df,
         estimatorn2param_grid=d
     if test: info(estimatorn2param_grid)
     params=get_Xy_for_classification(df.set_index(colindex),coly=coly,
-                              qcut=qcut,drop_xs_low_complexity=drop_xs_low_complexity,
+                                    qcut=qcut,drop_xs_low_complexity=drop_xs_low_complexity,
+                                    min_nunique=min_nunique,
+                                    max_inflation=max_inflation,
                                     )
     dn2df={}
     dn2df['input']=params['X'].join(params['y'])
@@ -221,20 +249,22 @@ def run_grid_search(df,
         d1['colindex']=colindex
         d1['coly']=coly
         d1['cols_x']=dn2df['input'].filter(regex=f"^((?!({d1['colindex']}|{d1['coly']})).)*$").columns.tolist()
-        d1['estimatorns']=estimatorns
+        d1['estimatorns']=list(estimatorn2param_grid.keys())
         d1['evaluations']=evaluations
         to_dict(d1,f'{outp}/input.json')
 #     return estimatorn2grid_search
+    ## interpret
+    kws2={'random_state':kws['random_state']}
     if 'prediction' in evaluations:
-        dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],test=True)
+        dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],test=True,**kws2)
 
     if 'feature importances' in evaluations:
         dn2df['feature importances']=get_feature_importances(estimatorn2grid_search,
                                 X=params['X'],y=params['y'],
-                                test=test)
+                                test=test,**kws2)
     if 'partial dependence' in evaluations:
         dn2df['partial dependence']=get_partial_dependence(estimatorn2grid_search,
-                                X=params['X'],y=params['y'],)
+                                X=params['X'],y=params['y'],**kws2)
     ## save data
     if not outp is None:
         for k in dn2df:
@@ -251,12 +281,13 @@ def run_grid_search(df,
 def get_feature_predictive_power(d0,df01,
                                 n_splits=5, 
                                 n_repeats=10,
-                                random_state=88,
+                                random_state=None,
                                  plot=False,
                                **kws):
     """
     x values: scale and sign agnostic.
     """
+    if random_state is None: logging.warning(f"random_state is None")
     def plot_(df3):
         df4=df3.rd.filter_rows({'variable':'ROC AUC'}).rd.groupby_sort_values(col_groupby='feature',
                          col_sortby='value',
@@ -298,10 +329,11 @@ def get_feature_importances(estimatorn2grid_search,
                             scoring='roc_auc',
                             n_repeats=20,
                             n_jobs=6,
-                            random_state=88,
+                            random_state=None,
                             plot=False,
                             test=False,
                            **kws):
+    if random_state is None: logging.warning(f"random_state is None")    
     def plot_(df,ax=None):
         ax=plt.subplot() if ax is None else ax
         dplot=groupby_sort_values(df,
@@ -381,7 +413,6 @@ def get_partial_dependence(estimatorn2grid_search,
 
 
 ## metas
-
 def many_classifiers(dn2dataset={},
                      cv=5,
                      demo=False,test=False,random_state=88):

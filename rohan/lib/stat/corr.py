@@ -260,8 +260,9 @@ def check_collinearity(df3,threshold):
     df6['value']=df6['value'].apply(abs)
     df6['is collinear']=df6['value'].apply(lambda x: x>=threshold)
     perc=(df6['is collinear'].sum()/len(df6))*100
-    logging.info(f"% collinear vars: {perc} ({df6['is collinear'].sum()}/{len(df6)})")
+    logging.info(f"% collinear vars: {perc} ({df6['is collinear'].sum()}/{len(df3.columns)})")
     if perc==0:
+        logging.info(f"max corr={df6['value'].max()}")
         return
     df6=df6.loc[(df6['is collinear']),:]
     from rohan.lib.stat.network import get_subgraphs

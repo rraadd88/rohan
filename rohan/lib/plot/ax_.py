@@ -80,7 +80,10 @@ def set_axlims(ax,off,axes=['x','y']):
     d1=get_axlims(ax)
     for k in axes:
         off_=(d1[k]['len'])*off
-        getattr(ax,f"set_{k}lim")(d1[k]['min']-off_,d1[k]['max']+off_)
+        if not getattr(ax,f"{k}axis").get_inverted():
+            getattr(ax,f"set_{k}lim")(d1[k]['min']-off_,d1[k]['max']+off_)
+        else:
+            getattr(ax,f"set_{k}lim")(d1[k]['max']+off_,d1[k]['min']-off_)            
     return ax
 
 def get_axlimsby_data(X,Y,off=0.2,equal=False):

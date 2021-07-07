@@ -5,6 +5,8 @@ from os import makedirs
 import yaml
 import json
 
+from rohan.lib.io_strs import dict2str
+
 def pprint_dict(d, indent=0):
     """
     thanks to https://stackoverflow.com/a/3229493/3521099
