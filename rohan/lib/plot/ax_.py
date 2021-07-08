@@ -138,6 +138,7 @@ def set_legend_custom(ax,
                       markerfacecolor=True,
                       size=10,color='k',
                       linestyle='',
+                      title_va='center',
                       **kws):
     """
     # TODOS
@@ -168,7 +169,7 @@ def set_legend_custom(ax,
                        linestyle=linestyle if param!='lw' else '-',
                       ) for k in legend2param]   
     ax.legend(handles=legend_elements,
-              **kws)
+              **kws)._legend_box.align=title_va
     return ax
 
 def set_legend_lines(ax,

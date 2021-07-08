@@ -256,7 +256,9 @@ def run_grid_search(df,
     ## interpret
     kws2={'random_state':kws['random_state']}
     if 'prediction' in evaluations:
-        dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],test=True,**kws2)
+        dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],test=True,
+#                                             **kws2,
+                                           )
 
     if 'feature importances' in evaluations:
         dn2df['feature importances']=get_feature_importances(estimatorn2grid_search,
@@ -264,7 +266,9 @@ def run_grid_search(df,
                                 test=test,**kws2)
     if 'partial dependence' in evaluations:
         dn2df['partial dependence']=get_partial_dependence(estimatorn2grid_search,
-                                X=params['X'],y=params['y'],**kws2)
+                                X=params['X'],y=params['y'],
+#                                                            **kws2,
+                                                          )
     ## save data
     if not outp is None:
         for k in dn2df:

@@ -73,10 +73,12 @@ def get_pval(df,
              colvalue='value',
              colsubset='subset',
              colvalue_bool=False,
+             colindex=None,
              subsets=None,
             test=False):
     """
     either colsubset or subsets are needed 
+    :param colvalue: dtype=bool (dtype=object not supported)
     """
     if not ((colvalue in df) and (colsubset in df)):
         logging.error(f"colvalue or colsubset not found in df: {colvalue} or {colsubset}")
@@ -87,8 +89,6 @@ def get_pval(df,
         return
     else:
         df=df.loc[df[colsubset].isin(subsets),:]
-    if colvalue_bool and df[colvalue].dtype==bool:
-        df[colsubset]=df[colsubset]==subsets[0]
     if colvalue_bool and not df[colvalue].dtype==bool:        
         logging.warning(f"colvalue_bool {colvalue} is not bool")
         return
@@ -101,8 +101,9 @@ def get_pval(df,
             #if empty list: RuntimeWarning: divide by zero encountered in double_scalars  z = (bigu - meanrank) / sd
             return np.nan,np.nan
     else:
-#         df.to_csv('test/get_pval_bool.tsv',sep='\t')
-        ct=pd.crosstab(df[colvalue],df[colsubset])
+        assert(not colindex is None)
+        df1=df.pivot(index=colindex,columns=colsubset,values=colvalue)
+        ct=pd.crosstab(df1[subsets[0]],df1[subsets[1]])
         if ct.shape==(2,2):
             ct=ct.sort_index(axis=0,ascending=False).sort_index(axis=1,ascending=False)
             if test:
@@ -119,6 +120,7 @@ def get_stat(df1,
               stats=[np.mean,np.median,np.var]+[len],
 #               debug=False,
              verb=False,
+             **kws,
              ):
     """
     Either MWU or FE
@@ -144,6 +146,7 @@ def get_stat(df1,
                                                             colsubset=colsubset,
                                                             subsets=df.name,
                                                             colvalue_bool=colvalue_bool,
+                                                            **kws,
                                                            )).apply(pd.Series)
     df2=df2.rename(columns={0:f"stat ({'MWU' if not colvalue_bool else 'FE'} test)",
                             1:f"P ({'MWU' if not colvalue_bool else 'FE'} test)",
@@ -167,13 +170,16 @@ def get_stats(df1,
               colsubset,
               cols_value,
               subsets=None,
-              cols_subsets=['subset1', 'subset2'],
               df2=None,
+              cols_subsets=['subset1', 'subset2'],
               stats=[np.mean,np.median,np.var,len],
+#               colindex=None, ## TODO necessary
               axis=1, # concat 
-              **kws_get_stats):
+              **kws):
     """
     :param axis: 1 if different tests else use 0.
+    :param df2: pd.DataFrame({"subset1":['test'],
+                              "subset2":['reference']})
     """
 #     from rohan.lib.io_dfs import to_table
 #     to_table(df1,'test/get_stats.tsv')
@@ -190,7 +196,7 @@ def get_stats(df1,
                           cols_subsets=cols_subsets,
                           df2=df2,
                           stats=stats,
-                          **kws_get_stats,
+                          **kws,
                          ).set_index(cols_subsets)
         else:
             logging.warning(f"not processed: {colvalue}; probably because of dropna")
@@ -207,7 +213,7 @@ def get_stats(df1,
     return df3
 
 @to_class(stat)
-def get_significant_changes(df1,alpha=0.025,
+def get_significant_changes(df1,alpha,
                             changeby="",
                             fdr=True,
                             value_aggs=['mean','median'],
@@ -228,6 +234,8 @@ def get_significant_changes(df1,alpha=0.025,
     for test in ['MWU','FE']:
         if not f'P ({test} test)' in df1:
             continue
+        # without fdr
+        df1[f'change is significant, P ({test} test) < {alpha}']=df1[f'P ({test} test)']<alpha
         if fdr:
             df1[f'change is significant ({test} test, FDR corrected)'],df1[f'P ({test} test, FDR corrected)'],df1[f'{test} alphacSidak'],df1[f'{test} alphacBonf']=multipletests(df1[f'P ({test} test)'],
                                                                    alpha=alpha, method='fdr_bh',

@@ -49,6 +49,25 @@ def rescale(a, range1=None, range2=[0,1]):
     delta2 = range2[1] - range2[0]
     return (delta2 * (a - range1[0]) / delta1) + range2[0]
 
+def rescale_divergent(df1,col,
+#                       rank=True,
+                     ):
+    def apply_(df2,
+#                sign=None,
+              ):
+        sign=df2.name
+#         from rohan.lib.stat.transform import rescale
+        df2[f'{col} rescaled']=rescale(df2[col],range2=[0, 1] if sign=='+' else [-1,0])
+        df2[f'{col} rank']=df2[col].rank(ascending=True if sign=='+' else False)*(1 if sign=='+' else -1)
+        return df2
+    assert(not any(df1[col]==0))
+    df1.loc[df1[col]<0,f'{col} sign']='-'
+    df1.loc[df1[col]>0,f'{col} sign']='+'
+#     return pd.concat({k:apply_(df1.loc[(df1[f'{col} sign']==k),:],k) for k in df1[f'{col} sign'].unique()},
+#                     axis=0)
+    return df1.groupby([f'{col} sign']).apply(lambda df: apply_(df))
+
+
 def get_bins(ds,bins,value='mid',ignore=False):
     if not ignore: logging.warning('assuming 1:1 mapping between index and values')
     i=len(ds.unique())/len(ds)
