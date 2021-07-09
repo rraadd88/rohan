@@ -177,6 +177,7 @@ def get_stats(df1,
               axis=1, # concat 
               **kws):
     """
+    Iterate over cols_value,
     :param axis: 1 if different tests else use 0.
     :param df2: pd.DataFrame({"subset1":['test'],
                               "subset2":['reference']})
@@ -315,13 +316,13 @@ def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
             assert(df1['c'].isnull().sum()==0)
     if color:
         import itertools
-        from rohan.lib.stat.transform import rescale
+        from rohan.lib.stat.transform import rescale,log_pval
         d3={}
         for i,(k,coff) in enumerate(list(itertools.product(['increase','decrease'],coffs))):
             col=f"{preffix}significant change, P ({testn}) < {coff}"
             d4={}
             d4['y alpha']=rescale(1-(list(coffs).index(coff))/len(coffs),[0,1],[0.5,1])
-            d4['y']=-1*(np.log10(coff))
+            d4['y']=log_pval(coff)
             d4['y text']=f" P < {coff}"
             d4['x']=df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].min() if k=='increase' \
                                         else df1.loc[(df1[col]==k),f'{preffix}difference between mean (subset1-subset2)'].max()

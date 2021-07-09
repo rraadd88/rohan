@@ -1,7 +1,10 @@
 from rohan.global_imports import *
 
 # currate data 
-def drop_low_complexity(df1,min_nunique,max_inflation,cols=None,test=False):  
+def drop_low_complexity(df1,min_nunique,max_inflation,
+                        cols=None,
+                        cols_keep=[],
+                        test=False):  
     if cols is None:
         cols=df1.columns.tolist()
     df_=pd.concat([df1.rd.check_nunique(cols),df1.rd.check_inflation(cols)],axis=1,)
@@ -15,6 +18,11 @@ def drop_low_complexity(df1,min_nunique,max_inflation,cols=None,test=False):
 #     l1=df1.loc[:,cols].apply(lambda x: apply_(x,df1,min_nunique=min_nunique,max_inflation=max_inflation)).loc[lambda x: x].index.tolist()
     logging.info(f"{len(l1)}(/{len(cols)}) low complexity columns {'could be ' if test else ''}dropped:")
     info(df_)
+    if len(cols_keep)!=0:
+        assert(all([c in df1 for c in cols_keep]))
+        cols_kept=[c for c in l1 if c in cols_keep]
+        info(cols_kept)
+        l1=[c for c in l1 if not c in cols_keep]
     if not test:
         return df1.log.drop(labels=l1,axis=1)
     else:
@@ -25,6 +33,7 @@ def get_Xy_for_classification(df1,coly,qcut=None,
                               drop_xs_low_complexity=False,
                               min_nunique=5,
                               max_inflation=0.5,
+                              **kws,
                              ):
     """
     Get X matrix and y vector 
@@ -50,8 +59,10 @@ def get_Xy_for_classification(df1,coly,qcut=None,
     X=X.rd.clean(drop_constants=True)
     X=drop_low_complexity(X,cols=None,
                           min_nunique=min_nunique,
-                          max_inflation=max_inflation,                          
-                          test=False if drop_xs_low_complexity else True)
+                          max_inflation=max_inflation,
+                          test=False if drop_xs_low_complexity else True,
+                          **kws,
+                         )
     return {'X':X,'y':y}
 
 def get_cvsplits(X,y,cv=5,random_state=None,outtest=True):
@@ -196,12 +207,13 @@ def run_grid_search(df,
     n_estimators,
     qcut=None,
     evaluations=['prediction','feature importances',
-                'partial dependence',
-                ],
+    'partial dependence',
+    ],
     estimatorn2param_grid=None,
-      drop_xs_low_complexity=False,
-      min_nunique=5,
-      max_inflation=0.5,      
+    drop_xs_low_complexity=False,
+    min_nunique=5,
+    max_inflation=0.5,      
+    cols_keep=[],
     outp=None,
     test=False,
     **kws, ## grid search
@@ -234,6 +246,7 @@ def run_grid_search(df,
                                     qcut=qcut,drop_xs_low_complexity=drop_xs_low_complexity,
                                     min_nunique=min_nunique,
                                     max_inflation=max_inflation,
+                                    cols_keep=cols_keep,
                                     )
     dn2df={}
     dn2df['input']=params['X'].join(params['y'])
@@ -339,7 +352,8 @@ def get_feature_importances(estimatorn2grid_search,
                            **kws):
     if random_state is None: logging.warning(f"random_state is None")    
     def plot_(df,ax=None):
-        ax=plt.subplot() if ax is None else ax
+        if ax is None:
+            fig,ax=plt.subplots(figsize=[4,(df['estimator name'].nunique()*0.5)+2])
         dplot=groupby_sort_values(df,
              col_groupby=['estimator name','feature'],
              col_sortby='importance rescaled',

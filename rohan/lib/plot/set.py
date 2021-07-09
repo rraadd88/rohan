@@ -1,29 +1,34 @@
 from rohan.global_imports import *
 
 def plot_enrichment(dplot,
-                   x,y,size,
+                   x,y,
                    s,
+                   size=None,
+                    xlim=[-1,110],
                    **kws_set):
+    from rohan.lib.stat.transform import log_pval
     if y.startswith('P '):
-        dplot['significance\n(-log10(P))']=dplot[y].apply(lambda x: -1*(np.log10(x)))
+        dplot['significance\n(-log10(P))']=dplot[y].apply(log_pval)
         y='significance\n(-log10(P))'
-    dplot[size]=pd.qcut(dplot[size],q=np.arange(0,1.25,0.25),duplicates='drop')
-    dplot=dplot.sort_values(size,ascending=False)
-    dplot[size]=dplot[size].apply(lambda x: f"({x.left:.0f}, {x.right:.0f}]")
-
+    if not size is None:
+        dplot[size]=pd.qcut(dplot[size],q=np.arange(0,1.25,0.25),duplicates='drop')
+        dplot=dplot.sort_values(size,ascending=False)
+        dplot[size]=dplot[size].apply(lambda x: f"({x.left:.0f}, {x.right:.0f}]")
     fig,ax=plt.subplots(figsize=[1.5,4])
     sns.scatterplot(
                     data=dplot,
-                    x=x,y=y,size=size,
-                    size_order=dplot[size].unique(),
+                    x=x,y=y,
+                    size=size if not size is None else None,
+                    size_order=dplot[size].unique() if not size is None else None,
                     ax=ax)
-    ax.legend(loc='upper left',
-              bbox_to_anchor=(1.1, 0.1),
-             title=size,
-              frameon=True,
-    #          nrow=3,
-              ncol=2,)
-    ax.set(xlim=[-1,110])
+    if not size is None:
+        ax.legend(loc='upper left',
+                  bbox_to_anchor=(1.1, 0.1),
+                 title=size,
+                  frameon=True,
+        #          nrow=3,
+                  ncol=2,)
+    ax.set(xlim=xlim)
     from rohan.lib.plot.annot import annot_side
     ax=annot_side(
         ax=ax,

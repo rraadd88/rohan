@@ -37,10 +37,10 @@ def plot_dists(dplot,colx,coly,colindex,order,
                           ax=ax,
                        )
         ax=sns.boxplot(
-            **params_dist,
-                       zorder=1,
-            showbox=False,showcaps=False,showfliers=False,
-                      ax=ax)    
+                    **params_dist,
+                    zorder=1,
+                    showbox=False,showcaps=False,showfliers=False,
+                    ax=ax)    
         if xlims is None:
     #         xlims=dplot[colx].quantile(0.05),dplot[colx].quantile(0.95)
             xlims=dplot[colx].min(),dplot[colx].max()

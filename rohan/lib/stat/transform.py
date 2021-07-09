@@ -31,6 +31,8 @@ def plog(x,p = 0.5,base=None):
         return np.log(x+p)
     else:
         return np.log2(x+p)/np.log(base)
+    
+def log_pval(x): return -1*(np.log10(x))
 
 def glog(x,l = 2):
     """
@@ -88,3 +90,4 @@ def get_qbins(ds,bins,value='mid',error='raise'):
         if error=='raise':
             return 
     return pd.qcut(ds,bins,duplicates='drop').apply(lambda x: getattr(x,value)).astype(float).to_dict()
+

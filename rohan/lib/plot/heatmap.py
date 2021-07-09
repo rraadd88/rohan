@@ -88,7 +88,9 @@ def plot_heatmap_symmetric_twosides(df,index,columns,values1,values2):
                ax=ax)
     return ax
 
-def plot_crosstab(df1,cols,ax=None):
+def plot_crosstab(df1,cols,ax=None,
+                 alpha=0.05,
+                 ):
     dplot=pd.crosstab(df1[cols[0]],df1[cols[1]])
     stat,pval=sc.stats.fisher_exact(dplot)
 
@@ -113,6 +115,6 @@ def plot_crosstab(df1,cols,ax=None):
                ax=ax)
     ax.xaxis.set_ticks_position('top')
     # set_label(ax, label=pval, title=False, x=0, y=-0.2, ha='left', va='top', )
-    ax.set_xlabel(f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=None, fmt='<', linebreak=False),
+    ax.set_xlabel(f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=alpha, fmt='<', linebreak=False),
                  labelpad=15)
     return ax
