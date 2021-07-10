@@ -146,7 +146,10 @@ def append_dfs(dfs,cols_index=None,cols_value=None):
 def merge_dfs(dfs,
              **params_merge):
     from functools import reduce
-    return reduce(lambda df1,df2: pd.merge(df1,df2,**params_merge), dfs)
+    logging.info(f"merge_dfs: shape changed from : dfs shape={[df.shape for df in dfs]}")
+    df3=reduce(lambda df1,df2: pd.merge(df1,df2,**params_merge), dfs)
+    logging.info(f"merge_dfs: shape changed to   : {df3.shape}")
+    return df3
 
 def merge_dfs_auto(dfs,how='left',suffixes=['','_'],
               test=False,fast=False,drop_duplicates=True,

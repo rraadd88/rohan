@@ -88,22 +88,67 @@ def plot_heatmap_symmetric_twosides(df,index,columns,values1,values2):
                ax=ax)
     return ax
 
-def plot_crosstab(df1,cols,ax=None,
+def annot_confusion_matrix(df_,
+                           ax,
+                          off=0.5):
+    from rohan.lib.stat.binary import get_stats_confusion_matrix
+    df1=get_stats_confusion_matrix(df_)
+    df2=pd.DataFrame({
+                    'TP': [0,0],
+                    'TN': [1,1],
+                    'FP': [0,1],
+                    'FN': [1,0],
+                    'TPR':[0,2],
+                    'TNR': [1,2],
+                    'PPV': [2,0],
+                    'NPV': [2,1],
+                    'FPR': [1,3],
+                    'FNR': [0,3],
+                    'FDR': [3,0],
+                    'ACC': [2,2],
+                    },
+                     index=['x','y']).T
+    df2.index.name='variable'
+    df2=df2.reset_index()
+    df3=df1.merge(df2,
+              on='variable',
+              how='inner',
+              validate="1:1")
+    
+    _=df3.loc[(df3['variable'].isin(['TP','TN','FP','FN'])),:].apply(lambda x: ax.text(x['x']+off,
+                                                                                       x['y']+(off*2),
+    #                               f"{x['variable']}\n{x['value']:.0f}",
+                                  x['variable'],
+    #                               f"({x['T|F']+x['P|N']})",
+                                ha='center',va='bottom',
+                               ),axis=1)
+    _=df3.loc[~(df3['variable'].isin(['TP','TN','FP','FN'])),:].apply(lambda x: ax.text(x['x']+off,
+                                                                                        x['y']+(off*2),
+                                  f"{x['variable']}\n{x['value']:.2f}",
+    #                               f"({x['T|F']+x['P|N']})",
+                                ha='center',va='bottom',
+                               ),axis=1)
+    return ax
+def plot_crosstab(df1,cols=None,ax=None,
+                  pval=True,
                  alpha=0.05,
+                  confusion=False,
                  ):
-    dplot=pd.crosstab(df1[cols[0]],df1[cols[1]])
-    stat,pval=sc.stats.fisher_exact(dplot)
+    if not cols is None:
+        dplot=pd.crosstab(df1[cols[0]],df1[cols[1]])
+        stat,pval=sc.stats.fisher_exact(dplot)
 
-    dplot=dplot.sort_index(ascending=False,axis=1).sort_index(ascending=False,axis=0)
-    dplot=dplot.rename(columns={True:dplot.columns.name,
-    #                       False:f'not {dplot.columns.name}',
-                               False:'not'},
-                index={True:dplot.index.name,
-    #                       False:f'not {dplot.index.name}',
-                      False:'not'},)
-
-    dplot.columns.name=None
-    dplot.index.name=None
+        dplot=dplot.sort_index(ascending=False,axis=1).sort_index(ascending=False,axis=0)
+        dplot=dplot.rename(columns={True:dplot.columns.name,
+        #                       False:f'not {dplot.columns.name}',
+                                   False:'not'},
+                    index={True:dplot.index.name,
+        #                       False:f'not {dplot.index.name}',
+                          False:'not'},)
+        dplot.columns.name=None
+        dplot.index.name=None
+    else:
+        dplot=df1.copy()
     if ax is None:
         fig,ax=plt.subplots(figsize=[1.5,1.5])
     sns.heatmap(dplot,
@@ -113,8 +158,15 @@ def plot_crosstab(df1,cols,ax=None,
                 linewidths=0.1,
                cmap='Reds',
                ax=ax)
+    ax.xaxis.set_label_position('top') 
     ax.xaxis.set_ticks_position('top')
+    for tick in ax.yaxis.get_majorticklabels():
+        tick.set_verticalalignment("center")    
     # set_label(ax, label=pval, title=False, x=0, y=-0.2, ha='left', va='top', )
-    ax.set_xlabel(f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=alpha, fmt='<', linebreak=False),
-                 labelpad=15)
+    if pval:
+        ax.set_xlabel(f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=alpha, fmt='<', linebreak=False),
+                     labelpad=15)
+    if confusion:    
+        ax=annot_confusion_matrix(dplot,ax=ax,
+                          off=0.5)
     return ax

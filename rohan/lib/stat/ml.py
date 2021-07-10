@@ -172,37 +172,72 @@ def plot_metrics(outd,plot=False):
         ax.set(xlim=[-0.1,1.1])
     return df2
 
-def get_probability(estimatorn2grid_search,X,y,coff=0.5,test=False):
+def get_probability(estimatorn2grid_search,X,y,coff=0.5,
+#                     plot=False,
+                   test=False):
     """
-    TODO: for non-binary classification
     """
-    df1=dellevelcol(pd.concat({k:pd.DataFrame({'sample name':X.index,
-                                              'true':y,
-                                              'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search,
-                                              'prediction':estimatorn2grid_search[k].best_estimator_.predict(X) for k in estimatorn2grid_search,
-                              },
-                             axis=0,names=['estimator name'],
-                             ).reset_index())
-    info(df1.shape)
-    df1.loc[:,'correct by truth']=df1.apply(lambda x: ((x['true'] and x['probability']>coff) or (not x['true'] and x['probability']<1-coff)),axis=1)
-    info(df1.loc[:,'correct by truth'].sum())
+    assert(all(X.index==y.index))
+    df0=y.to_frame('actual').reset_index()
+    df1=pd.DataFrame({k:estimatorn2grid_search[k].best_estimator_.predict(X) for k in estimatorn2grid_search})#.add_prefix('prediction ')
+    df1.index=X.index
+    df1=df1.melt(ignore_index=False,
+            var_name='estimator',
+            value_name='prediction').reset_index()
+    df2=pd.DataFrame({k:estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1] for k in estimatorn2grid_search})#.add_prefix('prediction probability ')
+    df2.index=X.index
+    df2=df2.melt(ignore_index=False,
+            var_name='estimator',
+            value_name='prediction probability').reset_index()
 
-    df1['probability per class']=df1.apply(lambda x: np.nan if not x['correct by truth'] else 1-x['probability'] if x['probability']<0.5 else x['probability'],axis=1)
-    if test:
-        plt.figure(figsize=[4,4])
-        ax=plt.subplot()
-        df1.groupby('estimator name').apply(lambda df: df['probability'].hist(bins=50,label=df.name,histtype='step'))
-        ax.axvline(coff,label='cut off')
-        ax.set(xlim=[0.5,1])
-        ax.legend(loc=2)
-        _=ax.set(xlabel='probability',ylabel='count')
+    df3=df1.log.merge(right=df2,
+                  on=['estimator',colindex],
+                 how='inner',
+                 validate="1:1")\
+           .log.merge(right=df0,
+                  on=[colindex],
+                 how='inner',
+    #              validate="1:1",
+                )
 
-    df1=df1.merge(df1.groupby(['sample name']).agg({'probability per class': lambda x: all([i>coff or i<1-coff for i in x])}).rename(columns={'probability per class':'correct by estimators'}).reset_index(),
-             on='sample name',how='left')
+    df4=df3.groupby('estimator').apply(lambda df: pd.crosstab(df['prediction'],df['actual']).melt(ignore_index=False,value_name='count')).reset_index()
 
-    info('total samples\t',len(df1))
-    info(df1.groupby(['sample name']).agg({c:lambda x: any(x) for c in df1.filter(regex='^correct ')}).sum())
-    return df1
+    if plot:
+        def plot_(df5):
+            assert(len(df5)==4)
+            df6=df5.pivot(index='prediction',columns='actual',values='count').sort_index(axis=0,ascending=False).sort_index(axis=1,ascending=False)
+            from rohan.lib.plot.heatmap import plot_crosstab
+            ax=plot_crosstab(df_,pval=False,
+                            confusion=True)
+        df4.groupby('estimator').apply(plot_)
+    return df4
+#     df1=dellevelcol(pd.concat({k:pd.DataFrame({'sample name':X.index,
+#                                               'true':y,
+#                                               'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search,
+#                                               'prediction':estimatorn2grid_search[k].best_estimator_.predict(X) for k in estimatorn2grid_search,
+#                               },
+#                              axis=0,names=['estimator name'],
+#                              ).reset_index())
+#     info(df1.shape)
+#     df1.loc[:,'correct by truth']=df1.apply(lambda x: ((x['true'] and x['probability']>coff) or (not x['true'] and x['probability']<1-coff)),axis=1)
+#     info(df1.loc[:,'correct by truth'].sum())
+
+#     df1['probability per class']=df1.apply(lambda x: np.nan if not x['correct by truth'] else 1-x['probability'] if x['probability']<0.5 else x['probability'],axis=1)
+#     if test:
+#         plt.figure(figsize=[4,4])
+#         ax=plt.subplot()
+#         df1.groupby('estimator name').apply(lambda df: df['probability'].hist(bins=50,label=df.name,histtype='step'))
+#         ax.axvline(coff,label='cut off')
+#         ax.set(xlim=[0.5,1])
+#         ax.legend(loc=2)
+#         _=ax.set(xlabel='probability',ylabel='count')
+
+#     df1=df1.merge(df1.groupby(['sample name']).agg({'probability per class': lambda x: all([i>coff or i<1-coff for i in x])}).rename(columns={'probability per class':'correct by estimators'}).reset_index(),
+#              on='sample name',how='left')
+
+#     info('total samples\t',len(df1))
+#     info(df1.groupby(['sample name']).agg({c:lambda x: any(x) for c in df1.filter(regex='^correct ')}).sum())
+#     return df1
 
 def run_grid_search(df,
     colindex,
@@ -272,7 +307,11 @@ def run_grid_search(df,
     ## interpret
     kws2={'random_state':kws['random_state']}
     if 'prediction' in evaluations:
-        dn2df['prediction']=get_probability(estimatorn2grid_search,X=params['X'],y=params['y'],test=True,
+        dn2df['prediction']=get_probability(estimatorn2grid_search,
+                                            X=params['X'],y=params['y'],
+                                            colindex=colindex,
+#                                             coly=coly,
+                                            test=True,
 #                                             **kws2,
                                            )
 

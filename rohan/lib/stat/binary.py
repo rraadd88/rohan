@@ -61,3 +61,31 @@ def classify_bools(l): return 'both' if all(l) else 'either' if any(l) else 'nei
 
 ## agg
 def perc(x): return (sum(x)/len(x))*100
+
+## confusion_matrix
+def get_stats_confusion_matrix(df_):
+    d0={}
+    d0['TP']=df_.loc[True,True]
+    d0['TN']=df_.loc[False,False]
+    d0['FP']=df_.loc[False,True]
+    d0['FN']=df_.loc[True,False]
+    # Sensitivity, hit rate, recall, or true positive rate
+    d0['TPR'] = d0['TP']/(d0['TP']+d0['FN'])
+    # Specificity or true negative rate
+    d0['TNR'] = d0['TN']/(d0['TN']+d0['FP']) 
+    # Precision or positive predictive value
+    d0['PPV'] = d0['TP']/(d0['TP']+d0['FP'])
+    # Negative predictive value
+    d0['NPV'] = d0['TN']/(d0['TN']+d0['FN'])
+    # Fall out or false positive rate
+    d0['FPR'] = d0['FP']/(d0['FP']+d0['TN'])
+    # False negative rate
+    d0['FNR'] = d0['FN']/(d0['TP']+d0['FN'])
+    # False discovery rate
+    d0['FDR'] = d0['FP']/(d0['TP']+d0['FP'])
+    # Overall accuracy
+    d0['ACC'] = (d0['TP']+d0['TN'])/(d0['TP']+d0['FP']+d0['FN']+d0['TN'])
+    df1=pd.Series(d0).to_frame('value')
+    df1.index.name='variable'
+    df1=df1.reset_index()
+    return df1
