@@ -392,6 +392,7 @@ def annot_side(ax,
     offx3=0.15,
     offymin=0.1,
     break_pt=25,
+    length_axhline=3,
     ):
     df1=df1.sort_values(coly,ascending=True)
     from rohan.lib.plot.ax_ import get_axlims
@@ -401,8 +402,8 @@ def annot_side(ax,
                         len(df1))
     x2=d1['x']['min'] if loc=='left' else d1['x']['max']
     x3=d1['x']['min'] if loc=='left' else d1['x']['max']+d1['x']['len']*offx3
-    df1.apply(lambda x: ax.plot([x[colx],x2,x2],
-                               [x[coly],x['y'],x['y']],
+    df1.apply(lambda x: ax.plot([x[colx],x2],
+                               [x[coly],x['y']],
                               color='gray',lw=1),axis=1)
     df1.apply(lambda x: ax.text(x3,x['y'],linebreaker(x[cols],break_pt=break_pt,),
                               ha='right' if loc=='left' else 'left',
@@ -411,7 +412,23 @@ def annot_side(ax,
                               zorder=2),axis=1)
     df1.apply(lambda x:ax.axhline(y = x['y'], 
                                  xmin=0 if loc=='left' else 1,
-                                 xmax=0-offx3 if loc=='left' else 3+offx3,
+                                 xmax=0-offx3 if loc=='left' else length_axhline+offx3,
                                          clip_on = False,color='gray',lw=1,
                                 ),axis=1)
+    ax.set_xlim([d1['x']['min'],d1['x']['max']])
     return ax
+
+# unicode
+def get_circled_digit(i): 
+    d1={1:'\u2460',
+ 2:'\u2461',
+ 3:'\u2462',
+ 4:'\u2463',
+ 5:'\u2464',
+ 6:'\u2465',
+ 7:'\u2466',
+ 8:'\u2467',
+ 9:'\u2468',
+ 10:'\u2469',
+    }
+    return d1[i]

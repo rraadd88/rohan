@@ -172,14 +172,17 @@ def plot_metrics(outd,plot=False):
         ax.set(xlim=[-0.1,1.1])
     return df2
 
-def get_probability(estimatorn2grid_search,X,y,coff=0.9,test=False):
+def get_probability(estimatorn2grid_search,X,y,coff=0.5,test=False):
     """
     TODO: for non-binary classification
     """
     df1=dellevelcol(pd.concat({k:pd.DataFrame({'sample name':X.index,
-                                                  'true':y,
-                                                  'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search},
-             axis=0,names=['estimator name']).reset_index())
+                                              'true':y,
+                                              'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search,
+                                              'prediction':estimatorn2grid_search[k].best_estimator_.predict(X) for k in estimatorn2grid_search,
+                              },
+                             axis=0,names=['estimator name'],
+                             ).reset_index())
     info(df1.shape)
     df1.loc[:,'correct by truth']=df1.apply(lambda x: ((x['true'] and x['probability']>coff) or (not x['true'] and x['probability']<1-coff)),axis=1)
     info(df1.loc[:,'correct by truth'].sum())
