@@ -172,7 +172,9 @@ def plot_metrics(outd,plot=False):
         ax.set(xlim=[-0.1,1.1])
     return df2
 
-def get_probability(estimatorn2grid_search,X,y,coff=0.5,
+def get_probability(estimatorn2grid_search,X,y,
+                    colindex,
+                    coff=0.5,
 #                     plot=False,
                    test=False):
     """
@@ -199,18 +201,19 @@ def get_probability(estimatorn2grid_search,X,y,coff=0.5,
                  how='inner',
     #              validate="1:1",
                 )
-
-    df4=df3.groupby('estimator').apply(lambda df: pd.crosstab(df['prediction'],df['actual']).melt(ignore_index=False,value_name='count')).reset_index()
-
-    if plot:
+    ## predicted correctly
+    df3['TP']=df3.loc[:,['prediction','actual']].all(axis=1)
+    if test:
         def plot_(df5):
             assert(len(df5)==4)
             df6=df5.pivot(index='prediction',columns='actual',values='count').sort_index(axis=0,ascending=False).sort_index(axis=1,ascending=False)
             from rohan.lib.plot.heatmap import plot_crosstab
-            ax=plot_crosstab(df_,pval=False,
+            ax=plot_crosstab(df6,pval=False,
                             confusion=True)
+            ax.set_title(df5.name,loc='left')
+        df4=df3.groupby('estimator').apply(lambda df: pd.crosstab(df['prediction'],df['actual']).melt(ignore_index=False,value_name='count')).reset_index()
         df4.groupby('estimator').apply(plot_)
-    return df4
+    return df3
 #     df1=dellevelcol(pd.concat({k:pd.DataFrame({'sample name':X.index,
 #                                               'true':y,
 #                                               'probability':estimatorn2grid_search[k].best_estimator_.predict_proba(X)[:,1],}) for k in estimatorn2grid_search,
