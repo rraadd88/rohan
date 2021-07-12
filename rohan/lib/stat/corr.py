@@ -252,6 +252,9 @@ def get_partial_corrs(df,xs,ys,method='spearman',splits=5):
 
 
 def check_collinearity(df3,threshold):
+    """
+    :TODO: calculate variance inflation factor (VIF).
+    """
     df4=df3.corr(method='spearman')
     # df4=df4.applymap(abs)
     from rohan.lib.io_dfs import get_offdiagonal_values
