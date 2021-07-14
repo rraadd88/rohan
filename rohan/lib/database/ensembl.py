@@ -304,8 +304,8 @@ def read_idmapper(outd=None,ini=75,
     ps=glob(f'{outd}/*.idmapper.txt')
     ic(ps)
     outp=f"{outd}/{ini}_{end}.tsv"
-    if exists(outp) and not force:
-        return read_table(outp)
+    if exists(dirname(outp)) and not force:
+        return read_table(basenamenoext(outp)+"/*.tsv")
     l1=[]
     for p in ps:
         lines=open(p,'r').read().split('\n\n')

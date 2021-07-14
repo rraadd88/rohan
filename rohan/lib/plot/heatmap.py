@@ -131,22 +131,23 @@ def annot_confusion_matrix(df_,
     return ax
 def plot_crosstab(df1,cols=None,ax=None,
                   pval=True,
-                 alpha=0.05,
+                  alpha=0.05,
                   confusion=False,
+                  rename_cols=True,
                  ):
     if not cols is None:
         dplot=pd.crosstab(df1[cols[0]],df1[cols[1]])
         stat,pval=sc.stats.fisher_exact(dplot)
-
         dplot=dplot.sort_index(ascending=False,axis=1).sort_index(ascending=False,axis=0)
-        dplot=dplot.rename(columns={True:dplot.columns.name,
-        #                       False:f'not {dplot.columns.name}',
-                                   False:'not'},
-                    index={True:dplot.index.name,
-        #                       False:f'not {dplot.index.name}',
-                          False:'not'},)
-        dplot.columns.name=None
-        dplot.index.name=None
+        if rename_cols:
+            dplot=dplot.rename(columns={True:dplot.columns.name,
+            #                       False:f'not {dplot.columns.name}',
+                                       False:'not'},
+                        index={True:dplot.index.name,
+            #                       False:f'not {dplot.index.name}',
+                              False:'not'},)
+            dplot.columns.name=None
+            dplot.index.name=None
     else:
         dplot=df1.copy()
     if ax is None:
@@ -164,8 +165,11 @@ def plot_crosstab(df1,cols=None,ax=None,
         tick.set_verticalalignment("center")    
     # set_label(ax, label=pval, title=False, x=0, y=-0.2, ha='left', va='top', )
     if pval:
-        ax.set_xlabel(f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=alpha, fmt='<', linebreak=False),
-                     labelpad=15)
+        set_label(s=f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=alpha, fmt='<', linebreak=False),
+                 x=0.5,y=-0.2,ha='center',va='center',
+                 ax=ax)
+#         ax.set_xlabel(f'OR={stat:.1f}, '+pval2annot(pval, alternative='two-sided', alpha=alpha, fmt='<', linebreak=False),
+#                      labelpad=15)
     if confusion:    
         ax=annot_confusion_matrix(dplot,ax=ax,
                           off=0.5)

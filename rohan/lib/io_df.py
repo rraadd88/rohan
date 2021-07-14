@@ -168,7 +168,7 @@ def check_mappings(df,cols=None):
     return pd.concat(d,axis=0,ignore_index=False,names=['from','to','map to']).to_frame('map from').sort_index().reset_index(-1).loc[:,['map from','map to']]
 
 @to_class(rd)
-def get_mappings(df1,cols=None,keep='1:1'):
+def get_mappings(df1,cols=None,keep='1:1',clean=False):
     """
     validate by df1.rd.check_mappings(cols)
     """
@@ -176,23 +176,41 @@ def get_mappings(df1,cols=None,keep='1:1'):
         cols=df1.columns.tolist()
     if df1.rd.check_duplicated(cols):
         df1=df1.loc[:,cols].log.drop_duplicates()
-    d1={'1:1':df1.copy(),
-       }
-    if keep!='1:1':
-        d1['not']=pd.DataFrame()
-    import itertools
-#     for t in list(itertools.permutations(cols,2)):
-    for c in cols:
-        d1['1:1']=d1['1:1'].groupby(c).filter(lambda df: len(df)==1)
-        if keep!='1:1':
-            d1['not']=d1['not'].append(df1.copy().groupby(c).filter(lambda df: len(df)!=1))
-    if keep=='1:1':
-        logging.info(df1.shape)
-        logging.info(d1['1:1'].shape)
-        return d1['1:1']
+    if len(cols)==2:
+        from rohan.lib.io_sets import get_alt
+        df2=df1.copy()
+        cols2=[]
+        for c in cols:
+            d1=df2.groupby(c)[get_alt(cols,c)].nunique().to_dict()
+            c2=f"{c}:{get_alt(cols,c)}"
+            df2[c2]=df2[c].map(d1)
+            cols2.append(c2)
+        df2['mapping']=df2.loc[:,cols2].apply(lambda x: ':'.join(["1" if i==1 else 'm' for i in x]),axis=1)
+        if clean:
+            df2=df2.drop(cols2,axis=1)
+        if keep=='1:1':
+            return df2.rd.filter_rows({'mapping':'1:1'})
+        else:
+            logging.info(df2['mapping'].value_counts())
+            return df2
     else:
-        assert(len(df1)==len(d1['1:1'])+len(d1['not']))
-        return pd.concat(d1,axis=0,names=['mapping']).reset_index()
+        d1={'1:1':df1.copy(),
+           }
+        if keep!='1:1':
+            d1['not']=pd.DataFrame()
+        import itertools
+    #     for t in list(itertools.permutations(cols,2)):
+        for c in cols:
+            d1['1:1']=d1['1:1'].groupby(c).filter(lambda df: len(df)==1)
+            if keep!='1:1':
+                d1['not']=d1['not'].append(df1.copy().groupby(c).filter(lambda df: len(df)!=1))
+        if keep=='1:1':
+            logging.info(df1.shape)
+            logging.info(d1['1:1'].shape)
+            return d1['1:1']
+        else:
+            assert(len(df1)==len(d1['1:1'])+len(d1['not']))
+            return pd.concat(d1,axis=0,names=['mapping']).reset_index()
 
 @to_class(rd)
 def filterby_mappings(df1,cols=None,maps=['1:1'],test=False):
