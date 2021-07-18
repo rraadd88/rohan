@@ -203,16 +203,17 @@ def plot_volcano(dplot,
         if not all([isinstance(s,str) for s in filter_rows.values()]):
             filter_rows={k:df1.sort_values(by=x).iloc[0,:][colindex] if v==min else df1.sort_values(by=x).iloc[0,:][colindex] if v==max else None for k,v in filter_rows.items()}
         ## TODOS more than one color
-        assert(len(filter_rows.keys())==1)
+#         assert(len(filter_rows.keys())==1)
         assert(all([isinstance(s,str) for s in filter_rows.values()]))
-        df_=df1.rd.filter_rows(filter_rows)
-        df_.groupby(colindex).apply(lambda df: ax.scatter(x=df_[x],
-                                                            y=df_[y],
-                                                            marker='o', 
-                                                            facecolors='none',
-                                                            edgecolors='k',
-                                                            label=f"{df.name}\n(n={len(df)})",
-                                                            ))
+        for k in filter_rows:
+            df_=df1.rd.filter_rows({k:filter_rows[k]})
+            df_.groupby(k).apply(lambda df: ax.scatter(x=df_[x],
+                                                                y=df_[y],
+                                                                marker='o', 
+                                                                facecolors='none',
+                                                                edgecolors='k',
+                                                                label=f"{df.name}\n(n={len(df)})",
+                                                                ))
     ax.legend(loc='upper left',
              bbox_to_anchor=[1,1])
     ax.set_title(label=title,loc='left')

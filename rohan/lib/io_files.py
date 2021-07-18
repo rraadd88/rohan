@@ -178,6 +178,8 @@ def read_table(p,
                kws_clean={},
                **kws_manytables,):
     """
+    :param replaces_index: 'basenamenoext' if path to basename
+
     'decimal':'.'
     
     examples:
