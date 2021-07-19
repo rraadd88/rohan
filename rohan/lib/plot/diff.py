@@ -121,8 +121,8 @@ def plot_stats_diff(df2,
         posx=ax.get_xlim()[0]+w+(w*(i*0.3))
         ax.text(posx,
                 ax.get_ylim()[1],
-                f"P {c.split(' ')[0]}",
-                va='top',
+                f" P {c.split(' ')[0]}",
+                va='bottom',
                 color='gray',
                )
         df3.drop_duplicates(subset=['y',f'P ({c})']).apply(lambda x: ax.text(posx,x['y'],
@@ -135,13 +135,13 @@ def plot_stats_diff(df2,
                                                                    color='gray'),
                                                   axis=1)
     ax.legend(
-#                 bbox_to_anchor=[len(tests),1],
               loc='upper left', 
               bbox_to_anchor=(1, 0),)
     from rohan.lib.plot.ax_ import format_ticklabels
-    ax=format_ticklabels(ax=ax)
-    ax.set(ylim=(len(ax.get_yticklabels()),-1),
+#     ax=format_ticklabels(ax=ax)
+    ax.set(ylim=(len(ax.get_yticklabels())-0.5,-0.5),
           )
+    set_ylabel(ax,y=1.05)
     return ax
 
 ## volcano

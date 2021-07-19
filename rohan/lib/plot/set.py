@@ -4,6 +4,7 @@ def plot_enrichment(dplot,
                    x,y,
                    s,
                    size=None,
+                    annots_side=5,
                     xlim=[-1,110],
                    **kws_set):
     from rohan.lib.stat.transform import log_pval
@@ -32,7 +33,7 @@ def plot_enrichment(dplot,
     from rohan.lib.plot.annot import annot_side
     ax=annot_side(
         ax=ax,
-        df1=dplot.sort_values(y,ascending=False).head(5),
+        df1=dplot.sort_values(y,ascending=False).head(annots_side),
         colx=x,
         coly=y,
         cols=s,

@@ -274,6 +274,15 @@ def apply_get_significant_changes(df1,cols_value,
     assert(not df2.columns.duplicated().any())
     return df2
 
+def get_stats_groupby(df1,cols,
+                      alpha,
+                      **kws):
+    """
+    Iterate over groups
+    """
+    df2=df1.groupby(cols).apply(lambda df: get_stats(df1=df,**kws)).reset_index().rd.clean()
+    return get_significant_changes(df1=df2,alpha=alpha)
+    
 @to_class(stat)
 def binby_pvalue_coffs(df1,coffs=[0.01,0.05,0.25],
                       color=False,
